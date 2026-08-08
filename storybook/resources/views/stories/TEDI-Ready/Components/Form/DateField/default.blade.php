@@ -30,7 +30,7 @@
     ],
     'argTypes' => [
         'inputId' => [
-            'description' => 'Unique ID for label association and accessibility. Bind the sibling `<tedi:form.label :for>` to the same value.',
+            'description' => 'Unique ID for label association and accessibility. Bind the sibling `tedi:form.label` `:for` to the same value.',
             'control' => ['type' => 'text'],
             'table' => [
                 'category' => 'inputs',
@@ -100,7 +100,7 @@
             ],
         ],
         'size' => [
-            'description' => "Field size — should match the surrounding `tedi-form-field`'s `size`. Declared for API parity only: it emits no class of its own, so set it on `<tedi:form-field>` too.",
+            'description' => "Field size — should match the surrounding `tedi-form-field`'s `size`. Declared for API parity only: it emits no class of its own, so set it on `tedi:form-field` too.",
             'control' => ['type' => 'radio'],
             'options' => ['default', 'small'],
             'table' => [
@@ -157,7 +157,7 @@
             ],
         ],
         'required' => [
-            'description' => 'Marks the input as required (sets the native `required` attribute for validation). The asterisk indicator lives on the sibling `<tedi:form.label :required>` — bind it there too, since DateField owns no label.',
+            'description' => 'Marks the input as required (sets the native `required` attribute for validation). The asterisk indicator lives on the sibling `tedi:form.label` `:required` — bind it there too, since DateField owns no label.',
             'control' => ['type' => 'boolean'],
             'table' => [
                 'category' => 'inputs',
