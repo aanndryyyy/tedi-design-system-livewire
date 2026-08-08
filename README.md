@@ -34,7 +34,7 @@ Tailwind on top if you want; nothing here depends on it.
 ## Installation
 
 ```bash
-composer require tedi-design-system/livewire
+composer require aanndryyyy/tedi-design-system-livewire
 php artisan vendor:publish --tag=tedi-assets
 ```
 

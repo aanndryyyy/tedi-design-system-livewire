@@ -1,6 +1,6 @@
 {
-    "name": "tedi-design-system/livewire-storybook",
-    "description": "Blast (Storybook for Blade) host app for tedi-design-system/livewire",
+    "name": "aanndryyyy/tedi-design-system-livewire-storybook",
+    "description": "Blast (Storybook for Blade) host app for aanndryyyy/tedi-design-system-livewire",
     "type": "project",
     "license": "MIT",
     "require": {
@@ -8,7 +8,7 @@
         "area17/blast": "^1.11",
         "laravel/framework": "^12.0",
         "livewire/livewire": "^4.3",
-        "tedi-design-system/livewire": "@dev"
+        "aanndryyyy/tedi-design-system-livewire": "@dev"
     },
     "repositories": [
         {
@@ -33,6 +33,10 @@
         "start": [
             "Composer\\Config::disableProcessTimeout",
             "./start.sh"
+        ],
+        "build": [
+            "Composer\\Config::disableProcessTimeout",
+            "./build.sh"
         ]
     },
     "config": {

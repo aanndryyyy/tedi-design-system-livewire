@@ -1,7 +1,7 @@
 {
   "name": "@tedi-design-system/livewire-build",
   "private": true,
-  "description": "Stylesheet build pipeline for tedi-design-system/livewire",
+  "description": "Stylesheet build pipeline for aanndryyyy/tedi-design-system-livewire",
   "scripts": {
     "build": "npm run build:css && npm run build:js && npm run build:fonts",
     "build:css": "sass --load-path=node_modules --no-source-map --style=compressed resources/scss/index.scss dist/tedi.css && replace-in-file \"//fonts//g\" \"./fonts/\" dist/tedi.css --isRegex",

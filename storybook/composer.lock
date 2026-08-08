@@ -4,8 +4,77 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3457be8400987eee57c9fc1b32eff2a0",
+    "content-hash": "ff6c5a2f2ca4f81e0a917adcba42d615",
     "packages": [
+        {
+            "name": "aanndryyyy/tedi-design-system-livewire",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "..",
+                "reference": "ca0c9098a6ffc16d3c1f12e3307ee4b745cd60a8"
+            },
+            "require": {
+                "illuminate/support": "^11.0|^12.0",
+                "illuminate/view": "^11.0|^12.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "livewire/livewire": "^4.3",
+                "orchestra/testbench": "^9.0|^10.0",
+                "phpunit/phpunit": "^11.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Tedi\\Livewire\\TediServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Tedi\\Livewire\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tedi\\Livewire\\Tests\\": "tests/",
+                    "Workbench\\App\\": "workbench/app/"
+                }
+            },
+            "scripts": {
+                "post-autoload-dump": [
+                    "@clear",
+                    "@prepare"
+                ],
+                "clear": [
+                    "@php vendor/bin/testbench package:purge-skeleton --ansi"
+                ],
+                "prepare": [
+                    "@php vendor/bin/testbench package:discover --ansi"
+                ],
+                "test": [
+                    "@php vendor/bin/phpunit"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "TEDI Design System components for Laravel Blade and Livewire",
+            "keywords": [
+                "blade",
+                "design-system",
+                "laravel",
+                "livewire",
+                "tedi",
+                "tehik"
+            ],
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
         {
             "name": "area17/blast",
             "version": "1.11.0",
@@ -5739,83 +5808,6 @@
             "time": "2026-07-21T15:13:06+00:00"
         },
         {
-            "name": "tedi-design-system/livewire",
-            "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "..",
-                "reference": "f154c1280a060f61d8711b73112a2e7842d37eac"
-            },
-            "require": {
-                "illuminate/support": "^11.0|^12.0",
-                "illuminate/view": "^11.0|^12.0",
-                "php": "^8.2"
-            },
-            "require-dev": {
-                "livewire/livewire": "^4.3",
-                "orchestra/testbench": "^9.0|^10.0",
-                "phpunit/phpunit": "^11.0"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Tedi\\Livewire\\TediServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Tedi\\Livewire\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "Tedi\\Livewire\\Tests\\": "tests/",
-                    "Workbench\\App\\": "workbench/app/"
-                }
-            },
-            "scripts": {
-                "post-autoload-dump": [
-                    "@clear",
-                    "@prepare"
-                ],
-                "clear": [
-                    "@php vendor/bin/testbench package:purge-skeleton --ansi"
-                ],
-                "prepare": [
-                    "@php vendor/bin/testbench package:discover --ansi"
-                ],
-                "serve": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@build",
-                    "@php vendor/bin/testbench serve --ansi"
-                ],
-                "build": [
-                    "@php vendor/bin/testbench workbench:build --ansi"
-                ],
-                "test": [
-                    "@php vendor/bin/phpunit"
-                ]
-            },
-            "license": [
-                "MIT"
-            ],
-            "description": "TEDI Design System components for Laravel Blade and Livewire",
-            "keywords": [
-                "blade",
-                "design-system",
-                "laravel",
-                "livewire",
-                "tedi",
-                "tehik"
-            ],
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
-        },
-        {
             "name": "tijsverkoyen/css-to-inline-styles",
             "version": "v2.4.0",
             "source": {
@@ -6033,7 +6025,7 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "tedi-design-system/livewire": 20
+        "aanndryyyy/tedi-design-system-livewire": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,
