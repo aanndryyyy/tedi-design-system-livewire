@@ -1,0 +1,1 @@
+The slots variant renders each predefined time as a secondary radio card. By default the radio indicator dot is hidden — set `[showSlotIndicator]="true"` to surface it (e.g. when consumers want a more explicit radio-style affordance).

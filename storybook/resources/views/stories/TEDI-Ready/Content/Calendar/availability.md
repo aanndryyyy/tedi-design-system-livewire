@@ -1,0 +1,1 @@
+`availableDays` whitelists specific days as selectable; `unavailableDays` does the inverse. Both accept a `Date[]` or a predicate. Left calendar marks four specific days as available; right marks three specific days as unavailable.

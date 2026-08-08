@@ -1,0 +1,1 @@
+Predefined time slots rendered as a grid of selectable cards. Set `[showSlotIndicator]="true"` to surface the radio indicator dot. When the picker offers a fixed set of choices (`slots` / `dropdown`), prefer `pickerTrigger="input"` so the user is signalled the input is not free-form — button-trigger is shown for completeness.

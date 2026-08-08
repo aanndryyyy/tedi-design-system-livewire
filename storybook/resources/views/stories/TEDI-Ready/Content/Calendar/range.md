@@ -1,0 +1,1 @@
+`mode='range'` builds a `{ from, to }` range. The first click sets `from`; the second click sets `to` (or replaces `from` if it falls earlier). Pair with `numberOfMonths` to render multiple consecutive months side by side — each gets its own header.

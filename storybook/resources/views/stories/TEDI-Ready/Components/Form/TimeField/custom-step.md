@@ -1,0 +1,1 @@
+`minuteStep` sets the increment between minute values on the scroll wheel. `[minuteStep]="15"` renders the minute wheel as `00, 15, 30, 45`. Any divisor of 60 works (`1`, `5`, `10`, `15`, `20`, `30`).
