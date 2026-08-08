@@ -12,5 +12,9 @@
 /vendor
 .env
 .phpunit.result.cache
-!.gitkeep
 /bootstrap/cache/*
+
+# Last match wins, so this has to stay below every rule above: the directories
+# themselves must exist in a fresh clone. `composer install` runs
+# `artisan package:discover`, which aborts if bootstrap/cache is missing.
+!.gitkeep
