@@ -38,14 +38,22 @@
     * The `select` output, `ControlValueAccessor` and the breakpoint form of
       `numberOfMonths` are not ported (CONVENTIONS.md §7 items 1, 2). Bind
       `wire:click` on the rendered day buttons instead.
-    * `selectionLevel` and `required` are declared for API parity but are
-      behavioural only — they change nothing in the rendered markup, and are
-      declared (rather than omitted) so they do not leak into the DOM as stray
-      attributes.
+    * `selectionLevel` SEEDS `view`. Angular's constructor runs
+      `effect(() => this.view.set(this.selectionLevel()))`
+      (calendar.component.ts:216-219), so at first paint the rendered grid is
+      always the `selectionLevel` one — `view` is a `model()` that only diverges
+      later, when header navigation writes back to it. Server-side there is no
+      "later", so `view` defaults to `selectionLevel` and an explicitly-passed
+      `view` still wins (Angular would overwrite it at init; letting it win here
+      is what makes the MonthView / YearView stories expressible, and is the §5
+      explicit-prop stand-in for the runtime signal).
+    * `required` is declared for API parity but is behavioural only — it changes
+      nothing in the rendered markup, and is declared (rather than omitted) so it
+      does not leak into the DOM as a stray attribute.
 --}}
 @props([
-    /** days|months|years — which view renders. */
-    'view' => 'days',
+    /** days|months|years — which view renders. Defaults to `selectionLevel`. */
+    'view' => null,
     /** First (left-most) month shown. Any strtotime()-able value; null → the current month. */
     'currentMonth' => null,
     /**
@@ -57,7 +65,7 @@
     'value' => null,
     /** single|multiple|range */
     'mode' => 'single',
-    /** days|months|years — lowest level the user can commit to. Behavioural only. */
+    /** days|months|years — lowest level the user can commit to; also seeds `view`. */
     'selectionLevel' => 'days',
     /** Render the leading/trailing days of the adjacent months. */
     'showOutsideDays' => true,
@@ -92,6 +100,11 @@
 ])
 
 @php
+    // Angular: effect(() => this.view.set(this.selectionLevel())) — the grid at
+    // first paint is always the selectionLevel one. An explicit `view` still
+    // wins here; see the header comment.
+    $view = $view ?? $selectionLevel;
+
     $monthTs = time();
     if ($currentMonth instanceof \DateTimeInterface) {
         $monthTs = $currentMonth->getTimestamp();

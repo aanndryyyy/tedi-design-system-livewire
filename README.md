@@ -82,7 +82,18 @@ binds directly:
 ```blade
 <tedi:checkbox wire:model.live="accepted" name="accepted" label="Nõustun" />
 <tedi:select wire:model="county" :options="$counties" placeholder="Vali maakond" />
+<tedi:text-field wire:model="name" :value="$name" />
+<tedi:textarea wire:model="bio" :value="$bio" />
+<tedi:number-field wire:model="quantity" :value="$quantity" :min="0" />
+<tedi:toggle wire:model.live="enabled" :checked="$enabled" />
+<tedi:slider wire:model="volume" :value="$volume" :min="0" :max="100" />
 ```
+
+Pass `:value` alongside `wire:model` on the text-like controls. Blade renders
+once on the server, so the control's initial paint comes from the `value` you
+give it — Livewire takes over only from the first client update. For the same
+reason the `value` attribute is omitted entirely when empty, rather than
+rendered as `value=""`, which would blank a bound field on first paint.
 
 Livewire is **not** a required dependency — the package works in plain Blade.
 
@@ -119,24 +130,51 @@ summary:
 | `tabs`, `tabs.list` | Overflow "More" dropdown dropped; `dropdownLabel` accepted for API parity but inert |
 | `alert` | `closeDelay` accepted for API parity but inert |
 | `toast` | Placement/animation not ported; `pauseOnHover` accepted but inert |
-| `checkbox`, `radio` | Managed-group `ControlValueAccessor` not ported — use `wire:model`; the `*-group` components are out of scope |
+| `checkbox`, `radio`, `checkbox-group`, `radio-group` | Managed-group `ControlValueAccessor` not ported — `wire:model` on each child replaces it. The group's `managed` flag is an explicit prop (default `false`, matching Angular) gating `role` / `aria-labelledby` / `aria-label` / `aria-disabled` |
+| `checkbox-group`, `radio-group` | `disabled` (and `name`, for radio) reach children via `@aware`. Angular's auto-generated group `name` cannot cross that boundary — pass `name` explicitly |
+| `text-field`, `textarea`, `number-field`, `search`, `date-input` | The `value` attribute is emitted only when non-empty; an unconditional `value=""` would blank a `wire:model`-bound field on the initial server render. `slider` is the deliberate exception — a `type="range"` input has no empty state |
+| `number-field` | Increment/decrement buttons are inert; attach handlers via `decrement-attributes` / `increment-attributes`. `LiveAnnouncer` and wrapper click-to-focus not ported |
+| `slider` | Thumb tooltip not ported (needs CDK Overlay). `tedi-slider--invalid` and `--dragging` dropped |
+| `textarea` | Slot content is a Blade extension used when `value` is empty; Angular has no `ng-content` here |
+| `calendar-header`, `date-picker-header` | `monthYearSelectType` / `monthMode` / `yearMode` keep their `dropdown` default, but only the trigger renders — the dropdown panel needs an unported `dropdown` component |
+| `calendar`, `date-picker`, `date-field` | Month/weekday names come from the `date-picker.*` translation keys, not `Intl` (`ext-intl` is not a declared dependency), so `localeCode` is dropped. No narrow weekday key exists, so narrow names fall back to `-short` |
+| `date-field`, `time-field` | Popover positioning dropped — the panel renders inline under an explicit `open` prop. The modal branch, `useNativePicker`, `fullscreen` and `modal` are not ported |
+| `date-field` | Matcher machinery (`disabledMatchers`, `minDate`/`maxDate`, `disablePast`/`disableFuture`, …) collapses to a flat `disabledDays` array; `formatDate`/`parseDate` become the explicit `display` and `tags` props. `size` is accepted for API parity but inert — set it on the wrapping `<tedi:form-field>` |
+| `time-picker` | All three `tedi-time-picker--{scroll,slots,dropdown}` classes are unstyled and dropped; `variant` still selects the markup branch. Only `--disabled` and `--bordered` are emitted |
+| `tag` | `tedi-tag--primary` not emitted — TEDI ships no rule for it; the base `.tedi-tag` block is the primary appearance |
 | `select` | Native-`<select>` subset (see table above) |
 | `ellipsis` | CSS clamp only; no overflow measurement, so no reveal-on-hover tooltip |
 | `accordion`, `tabs`, `carousel`, `header.toggle`, `footer.section` | Inert without the bundled Alpine behaviour; markup and classes are still correct |
 
-A handful of classes are emitted that TEDI ships **no CSS rule** for
-(`tedi-text--inherit`, `tedi-empty-state--default`, `tedi-feedback-text--hint`
-and five others). These are faithful — the Angular components emit them too —
-and are allowlisted in `tests/IntegrityTest.php`.
+Five classes are emitted that TEDI ships **no CSS rule** for
+(`tedi-empty-state--default`, `tedi-empty-state--separate`,
+`tedi-feedback-text--hint`, `tedi-form-field__icon`,
+`tedi-text-group--vertical`). These are faithful — the Angular components emit
+them too — and are allowlisted as `$deadUpstream` in `tests/IntegrityTest.php`,
+which fails if an entry ever goes stale.
+
+Everywhere else the guardrail wins and the class is **dropped**: a class with no
+rule is DOM noise a consumer may mistake for a hook (CONVENTIONS.md §4). Each
+drop is recorded in its component's docblock — among them all three
+`tedi-time-picker--<variant>` classes, `tedi-slider--invalid`, the `__label`
+class on both group components, and `tedi-tag--primary` (the base `.tedi-tag`
+block already *is* the primary appearance).
 
 ## What's implemented
 
-This phase ports the **template-only** components: those whose rendered markup is
-a pure function of their inputs. The set was derived mechanically from the
-Angular sources (no `ControlValueAccessor`, no CDK Overlay positioning, no
-open/close state, no DOM event handling) — **39 of the 67** components in
-Angular's `tedi/` tree, which expand to **79 Blade components** once
-sub-components are counted.
+The first phase ported the **template-only** components: those whose rendered
+markup is a pure function of their inputs (no `ControlValueAccessor`, no CDK
+Overlay positioning, no open/close state, no DOM event handling).
+
+The second phase added the **form-value-binding** components — the ones whose
+Angular implementation is a `ControlValueAccessor`. Livewire makes that binding
+the framework's job rather than the component's: `wire:model` goes on the native
+control, so `{{ $attributes }}` sits on the `<input>` / `<textarea>` / `<select>`
+rather than on the wrapper (CONVENTIONS.md §6). The calendar and date/time
+components came with it, as documented subsets wherever they need an overlay.
+
+Together that is **55 of the 67** components in Angular's `tedi/` tree, which
+expand to **101 Blade components** once sub-components are counted.
 
 | Angular component | Blade tag |
 |---|---|
@@ -149,17 +187,30 @@ sub-components are counted.
 | `content/accordion` | `<tedi:accordion>`, `<tedi:accordion-item>`, `<tedi:accordion-item-header>`, `<tedi:accordion-item-content>` |
 | `content/card` | `<tedi:card>`, `<tedi:card-header>`, `<tedi:card-content>`, `<tedi:card-icon>`, `<tedi:card-row>` |
 | `content/carousel` | `<tedi:carousel>` + `-header`, `-content`, `-slide`, `-indicators`, `-navigation`, `-footer` |
+| `content/calendar` | `<tedi:calendar>`, `<tedi:calendar-header>`, `<tedi:calendar-day-grid>`, `<tedi:calendar-month-grid>`, `<tedi:calendar-year-grid>` |
 | `content/list` | `<tedi:list>` |
 | `content/text-group` | `<tedi:text-group>`, `<tedi:text-group-label>`, `<tedi:text-group-value>` |
 | `form/checkbox` | `<tedi:checkbox>` |
 | `form/checkbox-card` | `<tedi:checkbox-card>`, `<tedi:checkbox-card-group>` |
+| `form/checkbox-group` | `<tedi:checkbox-group>` |
+| `form/date-field` | `<tedi:date-field>`, `<tedi:date-input>` ⁴ |
+| `form/date-picker` | `<tedi:date-picker>` + `-header`, `-calendar-grid`, `-month-grid`, `-year-grid` |
 | `form/feedback-text` | `<tedi:feedback-text>` |
 | `form/form-field` | `<tedi:form-field>` |
 | `form/input-group` | `<tedi:input-group>` |
 | `form/label` | `<tedi:form.label>` ¹ |
 | `form/label-row` | `<tedi:label-row>` |
+| `form/number-field` | `<tedi:number-field>` |
 | `form/radio` | `<tedi:radio>` |
 | `form/radio-card` | `<tedi:radio-card>`, `<tedi:radio-card-group>` |
+| `form/radio-group` | `<tedi:radio-group>` |
+| `form/search` | `<tedi:search>` |
+| `form/slider` | `<tedi:slider>` |
+| `form/text-field` | `<tedi:text-field>` |
+| `form/textarea` | `<tedi:textarea>` |
+| `form/time-field` | `<tedi:time-field>` ⁴ |
+| `form/time-picker` | `<tedi:time-picker>` |
+| `form/toggle` | `<tedi:toggle>` |
 | `helpers/attachment` | `<tedi:attachment>` |
 | `helpers/empty-state` | `<tedi:empty-state>` |
 | `helpers/grid` | `<tedi:row>`, `<tedi:col>` ² |
@@ -183,6 +234,10 @@ name in the library and a future collision is likely.
 ² Named after the CSS classes it emits (`.tedi-row` / `.tedi-col`) rather than
 after the Angular directory.
 ³ Visual markup only — overlay placement is out of scope (see divergences).
+⁴ Angular's `date-field-modal` and `time-picker-modal` are not ported: they
+compose `tedi-modal*` components this package does not have, and their styles
+were inline in the Angular decorator rather than vendored, so no rule for them
+exists in `dist/tedi.css`. Both fields always take the popover branch.
 
 ### Shipped as a documented subset
 
@@ -191,15 +246,27 @@ after the Angular directory.
 | `<tedi:select>` | Native `<select>` styled with `tedi-input` | Searchable / multi-select custom combobox (needs CDK Overlay) |
 | `<tedi:ellipsis>` | CSS line-clamped truncation | Reveal-on-hover tooltip (needs `ResizeObserver` measurement) |
 | `<tedi:scroll-fade>` | Static markup | Scroll-driven fade state |
+| `<tedi:slider>` | Full track, thumb, labels and progress fill | Thumb tooltip (needs CDK Overlay); `--dragging` drag state |
+| `<tedi:calendar-header>`, `<tedi:date-picker-header>` | The month/year trigger buttons | The dropdown panel itself (needs a `dropdown` component) |
+| `<tedi:time-picker>` | All three variants' markup | The variant host classes, which TEDI ships no rules for |
+| `<tedi:date-field>`, `<tedi:time-field>` | Input, tags, trigger, and the panel inline under an `open` prop | Popover placement, and the mobile modal branch |
+| `<tedi:number-field>` | Full markup with correct disabled states | Button behaviour — wire it via `increment-attributes` / `decrement-attributes` |
 
 ### Not in this phase
 
-The remaining 28 Angular components need form-value binding, overlay
-positioning, or open/close state: `button-group`, `collapse`, `collapse-button`,
-`calendar`, `table`, `checkbox-group`, `date-field`, `date-picker`,
-`number-field`, `radio-group`, `search`, `slider`, `text-field`, `textarea`,
-`time-field`, `time-picker`, `toggle`, `sidenav`, `breadcrumbs`,
-`horizontal-stepper`, `dropdown`, `info-tooltip`, `modal`, `popover`, `tooltip`.
+The remaining **12** Angular components all need either overlay positioning or
+open/close state, and most of them need the same three missing primitives:
+
+| Component | Blocked on |
+|---|---|
+| `dropdown`, `modal`, `popover`, `tooltip`, `info-tooltip` | Overlay positioning (CDK Overlay / floating-ui) — the primitives everything else waits on |
+| `breadcrumbs`, `button-group`, `collapse`, `collapse-button`, `horizontal-stepper`, `sidenav` | Open/close state, and `dropdown` for the overflow menus |
+| `table` | Sorting/filtering/selection state, plus `dropdown` for its column filters |
+
+Porting `dropdown` and `modal` first would also let five components already in
+the library drop their documented subsets: `calendar-header` and
+`date-picker-header` would gain their real month/year pickers, and `date-field`,
+`time-field` and `pagination` their overlay branches.
 
 ## Storybook
 
@@ -292,7 +359,9 @@ rather than faked:
 | `Tabs`: OverflowBehavior, WithSubTabs · `Pagination`: ResponsiveVisibility, ShowAll | Overflow "More" dropdown and the option-picker modal |
 | `Card`: BreakpointProps · `TextGroup`, `ProgressBar`: Responsive | Breakpoint props |
 | `ProgressBar`: Animated · `InputGroup`: StartDynamic, EndDynamic, AllControls · `Attachment`: LabeledActions | Runtime state / `output()` events |
-| `Header`: LoggedInWithSidenav · `FormField`: WithTextarea · `Card`: WithDottedSeparator, PrescriptionExample | Compose a component not in this phase (`sidenav`, `textarea`) or a style this port doesn't emit |
+| `Header`: LoggedInWithSidenav · `Card`: WithDottedSeparator, PrescriptionExample | Compose a component not in this phase (`sidenav`) or a style this port doesn't emit |
+| `DatePicker`, `TimePicker`, `TimeField`, `DateField`: WithReactiveForms | Angular reactive forms — use `wire:model` instead |
+| `DateField`, `TimeField`: NativePicker, MobileModal · `DateField`: CustomFormatAndParse, CustomLocale | Breakpoint props, the unported modal branch, JS format/parse callables, and `localeCode` |
 
 Angular's Hover / Active / Focus matrix rows are reproduced in full.
 `storybook-addon-pseudo-states` isn't one of Blast's dependencies, so

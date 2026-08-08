@@ -27,7 +27,14 @@
 
 <span {{ $attributes->class([
     'tedi-tag',
-    'tedi-tag--'.$type,
+    {{-- NOTE: `tedi-tag--primary` is deliberately not emitted. Angular's
+         classes() emits it for the default type, but tag.component.scss defines
+         only `&--secondary` and `&--danger` — the base `.tedi-tag` block IS the
+         primary appearance. Per CONVENTIONS.md §4 ("classes Angular emits but
+         TEDI never styles") the guardrail wins and the class is dropped;
+         dropping it is behaviourally identical. Restore on a re-sync if TEDI
+         ever ships a `--primary` rule. --}}
+    'tedi-tag--'.$type => $type !== 'primary',
     'tedi-tag--loading' => (bool) $loading,
     'tedi-tag--closable' => (bool) $closable,
     'tedi-tag--ellipsis' => $ellipsis !== false,

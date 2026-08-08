@@ -58,6 +58,15 @@
     * `size` is declared for API parity but emits NO class: `tedi-date-field--small`
       has no rule in dist/tedi.css (grep 0), and Angular only forwards `size` to
       the wrapping `tedi-form-field`. Set `size` on <tedi:form-field> instead.
+    * `selectionLevel` is forwarded to <tedi:calendar> but is behavioural only
+      there too — it changes nothing in the rendered markup (the calendar always
+      opens on the view its own `view` prop names). It is declared rather than
+      omitted so it does not leak into the DOM as a stray attribute.
+    * `canClear` reads an array `value` as "has a value" only when it is
+      non-empty. Angular's `!!value` is true for `[]` as well, so a
+      `mode="multiple"` field holding an explicitly-empty array shows a clear
+      button in Angular and none here. That is the PHP-natural reading of a
+      degenerate case, but it is a real difference.
     * `currentMonth` and `open` are explicit props standing in for Angular's
       runtime signals (CONVENTIONS.md §5); `closeOnSelect` and the `openChange`
       output are runtime-only and not ported (§7 item 2).
