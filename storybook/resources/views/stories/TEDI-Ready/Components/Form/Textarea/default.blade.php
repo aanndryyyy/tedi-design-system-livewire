@@ -126,7 +126,7 @@
     <tedi:textarea
         id="default"
         rows="5"
-        :placeholder="$placeholder"
+        :placeholder="$placeholder ?: null"
         :resizable="(bool) $resizable"
         :auto-grow="(bool) $autoGrow"
         :min-rows="$minRows"

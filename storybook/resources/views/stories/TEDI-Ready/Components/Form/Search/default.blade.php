@@ -109,7 +109,7 @@
     :clearable="(bool) $clearable"
     :search-icon="$searchIcon"
     :disabled="(bool) $disabled"
-    :button="$button"
-    :feedback-text="$feedbackText"
+    :button="is_array($button) ? $button : ($button ?: null)"
+    :feedback-text="$feedbackText ?: null"
     :aria-label="$ariaLabel ?: null"
 />

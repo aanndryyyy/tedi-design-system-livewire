@@ -58,10 +58,12 @@
     * `size` is declared for API parity but emits NO class: `tedi-date-field--small`
       has no rule in dist/tedi.css (grep 0), and Angular only forwards `size` to
       the wrapping `tedi-form-field`. Set `size` on <tedi:form-field> instead.
-    * `selectionLevel` is forwarded to <tedi:calendar> but is behavioural only
-      there too — it changes nothing in the rendered markup (the calendar always
-      opens on the view its own `view` prop names). It is declared rather than
-      omitted so it does not leak into the DOM as a stray attribute.
+    * `selectionLevel` is forwarded to <tedi:calendar>, which seeds its opening
+      grid from it when `view` is omitted (Angular's constructor effect:
+      `this.view.set(this.selectionLevel())`). This component has no `view` prop
+      of its own — Angular's `tedi-date-field` doesn't either — so a stray
+      `view="…"` attribute on the field lands on the root <div> and never reaches
+      the calendar.
     * `canClear` reads an array `value` as "has a value" only when it is
       non-empty. Angular's `!!value` is true for `[]` as well, so a
       `mode="multiple"` field holding an explicitly-empty array shows a clear
