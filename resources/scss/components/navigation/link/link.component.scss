@@ -1,0 +1,102 @@
+@mixin link-variant($color, $color-hover, $color-active, $color-focus) {
+  color: $color;
+
+  &:hover:not(:disabled, [aria-disabled="true"]) {
+    color: $color-hover;
+
+    .tedi-link__text {
+      text-decoration: underline;
+    }
+  }
+
+  &:active:not(:disabled, [aria-disabled="true"]) {
+    color: $color-active;
+
+    .tedi-link__text {
+      text-decoration: underline;
+    }
+  }
+
+  &:focus-visible:not(:disabled) {
+    color: $color-focus;
+    outline: 2px solid $color-focus;
+    outline-offset: 1px;
+    border-radius: 0;
+
+    .tedi-link__text {
+      text-decoration: underline;
+    }
+  }
+}
+
+.tedi-link {
+  display: inline-flex;
+  text-decoration: none;
+  cursor: pointer;
+
+  @include link-variant(
+    var(--link-primary-default),
+    var(--link-primary-hover),
+    var(--link-primary-active),
+    var(--link-primary-focus)
+  );
+
+  // A tedi-link may be applied to a <button> for actions that don't navigate.
+  // Strip the native button chrome so it renders identically to an anchor link.
+  // :where() keeps zero specificity so the size/variant modifiers still win.
+  &:where(button) {
+    padding: 0;
+    font: inherit;
+    text-align: inherit;
+    appearance: none;
+    background: none;
+    border: 0;
+  }
+
+  &--inverted {
+    @include link-variant(
+      var(--link-inverted-default),
+      var(--link-inverted-hover),
+      var(--link-inverted-active),
+      var(--link-inverted-focus)
+    );
+  }
+
+  &--small {
+    font-size: var(--body-small-regular-size);
+  }
+
+  &:not(.tedi-link--no-underline) {
+    :not(tedi-icon) {
+      text-decoration: underline;
+    }
+  }
+
+  &:hover {
+    :not(tedi-icon) {
+      text-decoration: underline;
+    }
+  }
+
+  tedi-icon {
+    --_tedi-icon-size: var(--icon-03);
+
+    height: fit-content;
+    margin-right: var(--button-sm-inner-spacing);
+    margin-left: var(--button-sm-inner-spacing);
+    line-height: inherit;
+    color: inherit;
+
+    &:first-child {
+      margin-left: 0;
+    }
+
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+
+  &--small tedi-icon {
+    --_tedi-icon-size: var(--icon-02);
+  }
+}

@@ -1,0 +1,22 @@
+# Patterns here are anchored with a leading slash on purpose. Unanchored, they
+# match at every depth and swallow files that have to be committed — notably
+# `vendor/` would take `storybook/resources/views/vendor/blast/`, which is
+# project-owned Blade, and `composer.lock` would take the storybook app's lock.
+# `storybook/.gitignore` covers everything under that directory.
+/.reference/
+/node_modules/
+/vendor/
+
+# The library's lock is not committed (consumers resolve their own); the
+# storybook app's lock is, so the deploy is reproducible.
+/composer.lock
+
+# Not ignored, and deliberately so:
+#   dist/              built CSS/JS — Composer consumers never run npm, so the
+#                      package has to ship it. Regenerate with `npm run build`.
+#   package-lock.json  pins the sass/@tedi-design-system/core versions dist/ was
+#                      built from.
+
+.phpunit.result.cache
+.DS_Store
+.omc/

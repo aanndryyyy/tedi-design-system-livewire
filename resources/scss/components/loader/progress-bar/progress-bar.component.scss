@@ -1,0 +1,99 @@
+.tedi-progress-bar {
+  --_bar-height: var(--progress-bar-height);
+  --_bar-radius: var(--progress-bar-radius);
+  --_bar-background: var(--progress-bar-background-passive);
+  --_bar-border: var(--progress-bar-border-default);
+  --_progress-background: var(--progress-bar-background-active);
+  --_value-color: var(--progress-bar-range-label-text);
+
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+
+  &__label {
+    display: inline-flex;
+  }
+
+  &__row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--layout-grid-gutters-08);
+    min-width: 0;
+  }
+
+  &--label-horizontal &__row {
+    flex-direction: row;
+    gap: var(--layout-grid-gutters-16);
+    align-items: flex-start;
+  }
+
+  &__main {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__track-row {
+    display: flex;
+    gap: var(--layout-grid-gutters-08);
+    align-items: center;
+    min-height: var(--body-regular-line-height);
+  }
+
+  &__track {
+    flex: 1 1 auto;
+    width: 100%;
+    height: var(--_bar-height);
+    overflow: hidden;
+    appearance: none;
+    background: var(--_bar-background);
+    border: 1px solid var(--_bar-border);
+    border-radius: var(--_bar-radius);
+
+    &::-webkit-progress-bar {
+      background: var(--_bar-background);
+      border-radius: var(--_bar-radius);
+    }
+
+    &::-webkit-progress-value {
+      background: var(--_progress-background);
+      border-radius: var(--_bar-radius) 0 0 var(--_bar-radius);
+    }
+
+    &::-moz-progress-bar {
+      background: var(--_progress-background);
+      border-radius: var(--_bar-radius) 0 0 var(--_bar-radius);
+    }
+  }
+
+  &__value {
+    flex-shrink: 0;
+    color: var(--_value-color);
+  }
+
+  &__hint-row {
+    display: flex;
+    gap: var(--layout-grid-gutters-08);
+    align-items: flex-start;
+    min-width: 0;
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  &__hint-row .tedi-feedback-text {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  &__value--bottom {
+    margin-left: auto;
+    color: var(--progress-bar-range-label-text);
+  }
+
+  &--small {
+    --_bar-height: var(--progress-bar-height-sm);
+  }
+}

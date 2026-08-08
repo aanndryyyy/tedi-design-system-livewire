@@ -1,0 +1,56 @@
+.tedi-info-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--button-xs-icon-size);
+  height: var(--button-xs-icon-size);
+  vertical-align: bottom;
+  color: var(--button-main-neutral-text-default);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-radius: var(--button-radius-default);
+
+  &:hover {
+    color: var(--button-main-neutral-text-hover);
+    background: var(--button-main-neutral-icon-only-background-hover);
+  }
+
+  &:active {
+    color: var(--button-main-neutral-text-active);
+    background: var(--button-main-neutral-icon-only-background-active);
+  }
+
+  &:focus-visible {
+    color: var(--button-main-neutral-text-focus);
+    outline: var(--tedi-borders-02) solid var(--button-main-primary-border-focus);
+    outline-offset: calc(-1 * var(--tedi-borders-02));
+    background-color: var(--button-main-neutral-background-focus);
+    border-color: var(--button-main-neutral-border-default);
+  }
+
+  tedi-icon {
+    color: inherit;
+  }
+
+  &--inverted {
+    color: var(--button-main-neutral-inverted-text-default);
+
+    &:hover {
+      color: var(--button-main-neutral-inverted-text-hover);
+      background: var(--button-main-neutral-inverted-icon-only-background-hover);
+    }
+
+    &:active {
+      color: var(--button-main-neutral-inverted-text-active);
+      background: var(--button-main-neutral-inverted-icon-only-background-active);
+    }
+
+    &:focus-visible {
+      color: var(--button-main-neutral-inverted-text-focus);
+      outline: none;
+      background-color: var(--button-main-neutral-inverted-background-focus);
+      box-shadow: 0 0 0 var(--tedi-borders-02) var(--tedi-neutral-100);
+    }
+  }
+}

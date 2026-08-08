@@ -1,0 +1,58 @@
+.tedi-table-header-button {
+  display: inline-flex;
+  gap: var(--layout-grid-gutters-04);
+  align-items: center;
+  justify-content: center;
+  min-width: var(--button-xs-icon-size);
+  min-height: var(--button-xs-icon-size);
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: var(--button-radius-sm);
+  transition:
+    background-color 120ms ease,
+    color 120ms ease,
+    outline-color 120ms ease;
+
+  &:hover:not(:disabled) {
+    background: var(--button-main-neutral-icon-only-background-hover);
+  }
+
+  &:active:not(:disabled) {
+    color: var(--button-main-primary-background-default);
+    background: var(--button-main-neutral-icon-only-background-active);
+  }
+
+  &:focus-visible {
+    color: var(--button-main-primary-background-default);
+
+    // Anchor the outline ring to this transparent border so it always renders
+    outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+    outline-offset: var(--tedi-borders-02);
+    background: transparent;
+    border-color: transparent;
+  }
+
+  &--selected {
+    color: var(--button-main-primary-background-default);
+
+    &:focus-visible {
+      // Merge base focus-visible with the selected state
+      color: var(--button-main-primary-background-default);
+      outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+      outline-offset: var(--tedi-borders-02);
+      background: transparent;
+      border-color: transparent;
+    }
+  }
+
+  &:disabled {
+    color: var(--general-text-disabled);
+    cursor: not-allowed;
+    background: transparent;
+  }
+}

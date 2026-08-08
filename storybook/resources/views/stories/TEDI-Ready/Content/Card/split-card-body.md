@@ -1,0 +1,1 @@
+**Tip**: `tedi-card-row` lays its blocks out in a row by default. Since it is a flex container, you can change its direction at lower breakpoints with flex-direction utility classes. Here `class="flex-column flex-sm-row"` stacks the two content blocks vertically below the `sm` breakpoint

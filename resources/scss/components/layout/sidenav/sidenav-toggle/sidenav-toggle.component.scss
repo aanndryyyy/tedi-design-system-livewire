@@ -1,0 +1,35 @@
+.tedi-sidenav-toggle {
+  position: relative;
+  z-index: var(--z-index-sidenav);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 1rem;
+  cursor: pointer;
+  background: var(--button-main-primary-background-default);
+  border: 0;
+  border-radius: 0;
+
+  &__icon.tedi-icon {
+    color: var(--button-main-primary-text-default);
+  }
+
+  &--hidden {
+    display: none;
+  }
+
+  &:hover {
+    background: var(--button-main-primary-background-hover);
+  }
+
+  &:active {
+    background: var(--button-main-primary-background-active);
+  }
+
+  &:focus-visible {
+    outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+    outline-offset: var(--tedi-borders-01);
+  }
+}

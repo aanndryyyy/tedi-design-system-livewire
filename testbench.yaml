@@ -1,0 +1,5 @@
+providers:
+  # Livewire is a dev dependency only — it is registered here so the test suite
+  # resolves the same way an app with Livewire installed would.
+  - Livewire\LivewireServiceProvider
+  - Tedi\Livewire\TediServiceProvider

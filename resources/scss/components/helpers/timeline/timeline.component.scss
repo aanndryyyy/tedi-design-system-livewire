@@ -1,0 +1,53 @@
+@use "@tedi-design-system/core/bootstrap-utility/breakpoints";
+
+.tedi-timeline {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  grid-auto-rows: auto;
+  grid-auto-flow: row dense;
+  column-gap: var(--layout-grid-gutters-12);
+
+  @include breakpoints.media-breakpoint-up(lg) {
+    grid-template-columns: max-content max-content 1fr;
+    grid-auto-flow: row;
+    row-gap: 0;
+  }
+}
+
+.tedi-timeline--card {
+  --_timeline-card-padding: var(--card-padding-md-default);
+
+  background: var(--card-background-primary);
+  border: 1px solid var(--card-border-primary);
+  border-radius: var(--card-radius-rounded);
+
+  .tedi-timeline-item {
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 1 / -1;
+    padding: var(--_timeline-card-padding);
+    border-bottom: 1px solid var(--card-border-primary);
+  }
+
+  .tedi-timeline-item:last-child {
+    border-bottom: 0;
+  }
+
+  .tedi-timeline-item:not(:last-child) .tedi-timeline__marker {
+    margin-bottom: calc(-2 * var(--_timeline-card-padding) - 10px);
+  }
+
+  .tedi-timeline__marker .tedi-separator--dot-only-outlined::before {
+    background-color: var(--card-background-primary);
+  }
+
+  @include breakpoints.media-breakpoint-down(lg) {
+    .tedi-timeline-item .tedi-timeline__marker {
+      grid-row: 1 / span 2;
+    }
+
+    .tedi-timeline-item.tedi-timeline__item--has-bottom .tedi-timeline__marker {
+      grid-row: 1 / span 3;
+    }
+  }
+}

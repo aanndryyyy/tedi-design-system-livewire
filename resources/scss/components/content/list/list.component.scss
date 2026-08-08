@@ -1,0 +1,93 @@
+$bullet-colors: (
+  "primary": "general-icon-primary",
+  "secondary": "general-icon-secondary",
+  "tertiary": "general-icon-tertiary",
+  "brand": "general-icon-brand",
+  "brand-dark": "general-icon-brand-dark",
+  "success": "general-icon-success",
+  "warning": "general-icon-warning",
+  "warning-dark": "general-icon-warning-dark",
+  "danger": "general-icon-danger",
+  "white": "general-icon-white",
+);
+
+.tedi-list {
+  li {
+    margin-top: var(--list-list-item-margin-y);
+    margin-bottom: var(--list-list-item-margin-y);
+  }
+}
+
+ul.tedi-list {
+  padding-left: var(--list-padding-left-level-1);
+  list-style: none;
+
+  li {
+    position: relative;
+    padding-left: calc(var(--list-inner-spacing-x) + var(--list-icon-size));
+
+    &::before {
+      position: absolute;
+      top: 0.5em;
+      left: 0;
+      width: var(--list-icon-size);
+      height: var(--list-icon-size);
+      content: "";
+      border: 2px solid var(--general-icon-brand);
+      border-radius: 50%;
+    }
+
+    ul.tedi-list li::before {
+      border-width: 1px;
+    }
+
+    ul.tedi-list li ul.tedi-list li::before {
+      width: calc(var(--list-icon-size) * 0.9);
+      height: calc(var(--list-icon-size) * 0.9);
+    }
+  }
+
+  @each $name, $var in $bullet-colors {
+    &--bullet-color-#{$name} {
+      li::before {
+        border-color: var(--#{$var});
+      }
+    }
+  }
+
+  ul.tedi-list {
+    padding-left: 0;
+  }
+
+  &--unstyled {
+    padding-left: 0;
+    list-style: none;
+
+    li::before {
+      display: none;
+    }
+  }
+}
+
+ol.tedi-list {
+  list-style: none;
+  counter-reset: item;
+
+  li {
+    padding-left: var(--list-padding-left-level-1);
+    counter-increment: item;
+
+    &::before {
+      content: counters(item, ".") ". ";
+    }
+  }
+
+  &--unstyled {
+    padding-left: 0;
+    list-style: none;
+
+    li::before {
+      display: none;
+    }
+  }
+}

@@ -1,0 +1,1 @@
+Project `[tediPaginationResults]` content to replace the default "X results" label entirely — useful when the count is an approximation (`1000+`), a status pill, or a more complex DOM than a plain count.

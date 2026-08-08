@@ -1,0 +1,92 @@
+.tedi-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  &__title {
+    display: flex;
+    flex: 1;
+    gap: var(--layout-grid-gutters-08);
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__nav-button {
+    flex-shrink: 0;
+
+    &.tedi-button .tedi-icon {
+      font-size: var(--icon-03);
+    }
+  }
+
+  &__select,
+  &__label-button {
+    display: inline-flex;
+    gap: var(--layout-grid-gutters-04);
+    align-items: center;
+    padding-left: var(--layout-grid-gutters-04);
+    font-family: inherit;
+    font-size: var(--body-regular-size);
+    font-weight: 500;
+    color: var(--general-text-primary);
+    text-transform: capitalize;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    border-radius: var(--button-radius-sm);
+
+    &:hover:not(:disabled) {
+      color: var(--button-main-neutral-text-hover);
+      background: var(--button-main-neutral-icon-only-background-hover);
+
+      .tedi-calendar-header__select-arrow.tedi-icon {
+        color: inherit;
+      }
+    }
+
+    &[aria-expanded="true"] {
+      color: var(--button-main-neutral-text-active);
+      background: var(--button-main-neutral-icon-only-background-active);
+
+      .tedi-calendar-header__select-arrow.tedi-icon {
+        color: inherit;
+      }
+    }
+
+    &:focus-visible {
+      outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+      outline-offset: var(--tedi-borders-01);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+
+  &__select-arrow.tedi-icon {
+    flex-shrink: 0;
+    font-size: var(--tedi-size-09);
+    color: var(--general-icon-tertiary);
+  }
+
+  &__dropdown {
+    max-height: 15rem;
+  }
+
+  &__static-label {
+    font-size: var(--body-regular-size);
+    font-weight: 500;
+    color: var(--general-text-primary);
+    text-transform: capitalize;
+  }
+
+  &--disabled {
+    .tedi-calendar-header__select,
+    .tedi-calendar-header__label-button {
+      pointer-events: none;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+}

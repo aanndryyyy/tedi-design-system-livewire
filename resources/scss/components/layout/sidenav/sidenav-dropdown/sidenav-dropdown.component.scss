@@ -1,0 +1,26 @@
+.tedi-sidenav-dropdown-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--_sidenav-transition-duration) ease;
+
+  &:has(.tedi-sidenav-dropdown--open) {
+    grid-template-rows: 1fr;
+  }
+}
+
+.tedi-sidenav-dropdown {
+  visibility: hidden;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  list-style: none;
+
+  // z-index and block offsets for correct focus visuals
+  &--open {
+    position: relative;
+    z-index: 1;
+    visibility: visible;
+    padding-block: 4px;
+    margin-block: -4px;
+  }
+}

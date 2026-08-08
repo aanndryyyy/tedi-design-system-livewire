@@ -1,0 +1,45 @@
+.tedi-filter-group {
+  display: inline-flex;
+
+  .tedi-filter {
+    --_filter-radius: 0;
+  }
+
+  .tedi-filter--secondary+.tedi-filter--secondary {
+    margin-left: calc(-1 * var(--tedi-borders-01));
+  }
+
+  .tedi-filter--primary:not(:last-child) .tedi-filter__button {
+    border-right: var(--tedi-borders-01) solid var(--filter-secondary-default-border);
+
+    &:hover {
+      border-right-color: transparent;
+    }
+  }
+
+  .tedi-filter--primary.tedi-filter--selected:not(:last-child) .tedi-filter__button {
+    border-right-color: var(--filter-primary-selected-border);
+  }
+
+  .tedi-filter--selected,
+  .tedi-filter:focus-within {
+    z-index: 1;
+  }
+
+  .tedi-filter--secondary.tedi-filter--selected+.tedi-filter--secondary,
+  .tedi-filter--secondary+.tedi-filter--secondary.tedi-filter--selected {
+    margin-left: calc(-1 * var(--general-selected-border-width));
+  }
+
+  .tedi-filter:first-child {
+    --_filter-radius: var(--form-checkbox-radio-card-radius) 0 0 var(--form-checkbox-radio-card-radius);
+  }
+
+  .tedi-filter:last-child {
+    --_filter-radius: 0 var(--form-checkbox-radio-card-radius) var(--form-checkbox-radio-card-radius) 0;
+  }
+
+  .tedi-filter:only-child {
+    --_filter-radius: var(--form-checkbox-radio-card-radius);
+  }
+}

@@ -1,0 +1,13 @@
+.tedi-header-top {
+  display: flex;
+  gap: var(--layout-grid-gutters-08);
+  align-items: center;
+  align-self: stretch;
+  justify-content: space-between;
+  min-height: var(--layout-header-top-header-min-height);
+  padding: var(--layout-header-top-header-padding-y)
+    var(--layout-header-top-header-padding-x);
+  background: var(--header-background);
+  border-bottom: var(--tedi-borders-01) solid
+    var(--header-top-header-border-bottom);
+}

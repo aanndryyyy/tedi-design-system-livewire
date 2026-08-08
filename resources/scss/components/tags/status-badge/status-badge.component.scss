@@ -1,0 +1,75 @@
+$badge-colors: (
+  "neutral",
+  "brand",
+  "accent",
+  "success",
+  "danger",
+  "warning",
+  "transparent"
+);
+$badge-variants: ("filled", "filled-bordered", "bordered");
+
+.tedi-status-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--tag-default-padding-y) var(--tag-default-padding-x);
+  font-size: var(--body-small-regular-size);
+  font-weight: var(--body-small-regular-weight);
+  line-height: var(--body-small-regular-line-height);
+  color: var(--_status-badge-text);
+  text-decoration: none;
+  background: var(--_status-badge-background);
+  border-radius: var(--tag-default-radius);
+  box-shadow: var(--_status-badge-box-shadow);
+
+  &__text {
+    min-width: fit-content;
+    padding: 0 var(--tag-default-padding-x);
+  }
+
+  &--large {
+    min-width: var(--tag-status-large-min-width);
+    padding: var(--tag-status-large-padding-y) var(--tag-status-large-padding-x);
+  }
+
+  @each $variant in $badge-variants {
+    &.tedi-status-badge--variant-#{$variant} {
+      @each $color in $badge-colors {
+        &.tedi-status-badge--color-#{$color} {
+          --_status-badge-text: var(--status-badge-text-#{$color});
+          --_status-badge-box-shadow: inset
+            0
+            0
+            0
+            1px
+            var(--status-badge-border-#{$color});
+
+          @if $variant == "bordered" {
+            --_status-badge-background: transparent;
+          } @else {
+            --_status-badge-background: var(
+              --status-badge-background-#{$color}
+            );
+          }
+
+          @if $variant == "filled" {
+            --_status-badge-box-shadow: none;
+          }
+        }
+      }
+    }
+  }
+
+  .tedi-status-badge__icon {
+    color: inherit;
+  }
+
+  &__icon-only {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--tag-status-icon-padding-y) var(--tag-status-icon-padding-x);
+    line-height: var(--body-small-regular-line-height);
+  }
+}

@@ -1,0 +1,14 @@
+.tedi-sidenav-overlay {
+  display: none;
+
+  &--visible {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: calc(var(--z-index-sidenav) - 1);
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: rgb(0 0 0 / 25%);
+  }
+}

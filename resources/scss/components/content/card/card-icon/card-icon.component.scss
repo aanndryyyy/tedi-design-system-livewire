@@ -1,0 +1,18 @@
+@use "../card-mixins";
+
+.tedi-card-icon {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--layout-grid-gutters-08);
+  align-items: flex-start;
+  color: var(--general-icon-secondary);
+
+  @include card-mixins.card-padding;
+
+  .tedi-icon {
+    color: inherit;
+  }
+}
+
+@include card-mixins.card-backgrounds("tedi-card-icon");
+@include card-mixins.card-cell("tedi-card-icon");

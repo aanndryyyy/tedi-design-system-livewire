@@ -1,0 +1,1 @@
+Use `arrowVariant` to apply any `tedi-button` variant to the prev/next buttons. Pair with `showArrowLabels` to render a regular labelled button — useful when the pager needs to read as a primary navigation action rather than a subtle icon-only control.

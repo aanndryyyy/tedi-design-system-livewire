@@ -1,0 +1,110 @@
+.tedi-attachment {
+  display: block;
+  width: 100%;
+
+  &__card {
+    display: grid;
+    grid-template-areas: "title actions";
+    grid-template-columns: 1fr auto;
+    background: var(--card-background-tertiary);
+    border-radius: var(--card-radius-rounded);
+  }
+
+  &--has-progress &__card {
+    grid-template-areas:
+      "title actions"
+      "progress actions";
+  }
+
+  &__title-row {
+    display: flex;
+    grid-area: title;
+    gap: var(--layout-grid-gutters-08);
+    align-items: center;
+    min-width: 0;
+    padding: var(--card-padding-xs);
+  }
+
+  &__title-group {
+    display: flex;
+    flex: 1 1 auto;
+    gap: var(--layout-grid-gutters-08);
+    align-items: center;
+    min-width: 0;
+  }
+
+  &__title {
+    min-width: 0;
+    font-size: var(--body-regular-size);
+    font-weight: var(--body-regular-weight);
+    line-height: var(--body-regular-line-height);
+    color: var(--general-text-primary);
+    overflow-wrap: anywhere;
+  }
+
+  &__icon {
+    flex-shrink: 0;
+  }
+
+  &__error-icon {
+    flex-shrink: 0;
+
+    --general-icon-danger: var(--status-badge-text-danger);
+  }
+
+  &__size {
+    flex-shrink: 0;
+    font-size: var(--body-small-regular-size);
+    font-weight: var(--body-small-regular-weight);
+    line-height: var(--body-small-regular-line-height);
+    color: var(--general-text-tertiary);
+  }
+
+  &__progress {
+    grid-area: progress;
+    min-width: 0;
+    padding: 0 var(--card-padding-xs) var(--card-padding-xs);
+  }
+
+  &__progress--empty {
+    display: none;
+  }
+
+  &__actions {
+    display: flex;
+    flex-shrink: 0;
+    grid-area: actions;
+    align-items: center;
+    align-self: start;
+    min-height: var(--button-md-icon-size);
+    padding-inline-start: var(--layout-grid-gutters-08);
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  &__feedback {
+    margin-top: var(--layout-grid-gutters-04);
+  }
+
+  &--error &__card {
+    background: var(--card-background-danger);
+  }
+
+  &--vertical#{&}--has-progress &__card {
+    grid-template-areas:
+      "title actions"
+      "progress progress";
+  }
+
+  &--vertical &__title-row {
+    flex-direction: column;
+    gap: var(--layout-grid-gutters-02);
+    align-items: stretch;
+  }
+
+  &--vertical &__title-group {
+    flex: 0 0 auto;
+  }
+}

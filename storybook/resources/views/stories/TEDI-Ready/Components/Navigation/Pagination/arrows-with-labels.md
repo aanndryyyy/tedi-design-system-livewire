@@ -1,0 +1,1 @@
+Set `showArrowLabels=true` to render the `previous` / `next` translation labels as visible text next to the icon. Use the `labels` input to override the wording (e.g. "Previous" instead of "Previous page") when shorter button text is preferred.

@@ -1,0 +1,69 @@
+.tedi-calendar {
+  // One month grid = 7 day columns (8 with week numbers) plus the month's
+  // horizontal padding. The component sets --_tedi-calendar-month-count from
+  // numberOfMonths, so the calendar width is exactly N month grids side by
+  // side — it hugs the content (no leftover whitespace) and never collapses
+  // the months into a column when they fit. Control the count per screen size
+  // with a BreakpointInput (e.g. [numberOfMonths]="{ xs: 1, lg: 2 }").
+  --_tedi-calendar-day-columns: 7;
+  --_tedi-calendar-month-width: calc(
+    var(--_tedi-calendar-day-columns) * var(--form-calendar-date-width) + 2 *
+      var(--card-padding-md-default)
+  );
+
+  display: flex;
+  flex-direction: column;
+
+  // Width is exactly the number of month grids that fit side by side. The
+  // component measures the available width and sets --_tedi-calendar-fit-columns
+  // (1..numberOfMonths); months beyond that wrap into a new row, and the box
+  // still hugs the columns it shows — no leftover whitespace. The fallback to
+  // --_tedi-calendar-month-count keeps it correct before/without the measurement
+  // (e.g. SSR): all months side by side.
+  width: calc(
+    var(
+        --_tedi-calendar-fit-columns,
+        var(--_tedi-calendar-month-count, 1)
+      ) * var(--_tedi-calendar-month-width)
+  );
+  min-width: var(--_tedi-calendar-month-width);
+  height: fit-content;
+  background: var(--card-background-primary);
+
+  &--with-week-numbers {
+    --_tedi-calendar-day-columns: 8;
+  }
+
+  &__months {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  &__month {
+    display: flex;
+    flex-direction: column;
+    padding: var(--card-padding-md-default);
+  }
+
+  &__footer {
+    padding-top: var(--layout-grid-gutters-08);
+    margin: 0 var(--card-padding-md-default) var(--card-padding-xs);
+    border-top: var(--tedi-borders-01) solid var(--general-border-primary);
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  &--bordered {
+    border: var(--tedi-borders-01) solid var(--card-border-primary);
+    border-radius: var(--card-radius-rounded);
+  }
+
+  &--disabled {
+    pointer-events: none;
+    opacity: 0.6;
+  }
+}

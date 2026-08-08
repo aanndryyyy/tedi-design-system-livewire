@@ -1,0 +1,48 @@
+{
+    "name": "tedi-design-system/livewire-storybook",
+    "description": "Blast (Storybook for Blade) host app for tedi-design-system/livewire",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "area17/blast": "^1.11",
+        "laravel/framework": "^12.0",
+        "livewire/livewire": "^4.3",
+        "tedi-design-system/livewire": "@dev"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "@php artisan package:discover --ansi"
+        ],
+        "assets": "@php artisan vendor:publish --tag=tedi-assets --force --ansi",
+        "stories": "@php artisan blast:generate-stories --ansi",
+        "start": [
+            "Composer\\Config::disableProcessTimeout",
+            "./start.sh"
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": true,
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

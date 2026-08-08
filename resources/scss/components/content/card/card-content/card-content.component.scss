@@ -1,0 +1,12 @@
+@use "../card-mixins";
+
+@include card-mixins.card-backgrounds("tedi-card-content");
+
+.tedi-card-content {
+  display: block;
+  flex: 1 1 1px;
+
+  @include card-mixins.card-padding;
+}
+
+@include card-mixins.card-cell("tedi-card-content");

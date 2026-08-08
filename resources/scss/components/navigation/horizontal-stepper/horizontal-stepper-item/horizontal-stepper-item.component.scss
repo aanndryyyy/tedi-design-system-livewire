@@ -1,0 +1,230 @@
+.tedi-horizontal-stepper-item {
+  $host: &;
+
+  position: relative;
+  display: flex;
+
+  &__step {
+    position: relative;
+    display: flex;
+    gap: var(--stepper-item-horizontal-inner-spacing);
+    align-items: flex-start;
+    width: auto;
+    min-height: var(--stepper-item-horizontal-min-height);
+    padding: var(--stepper-item-horizontal-padding-y) var(--stepper-item-horizontal-padding-x);
+    font-family: var(--family-default);
+    text-align: left;
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-radius: 0;
+
+    &:focus-visible {
+      z-index: 2;
+      outline: none;
+      box-shadow: 0 0 0 1px var(--tedi-neutral-100), 0 0 0 3px var(--tedi-primary-400);
+    }
+
+    &:disabled {
+      cursor: default;
+    }
+  }
+
+  &__indicator {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: var(--stepper-item-vertical-step-size-lg);
+    height: var(--stepper-item-vertical-step-size-lg);
+    background-color: var(--stepper-step-default-bg);
+    border: 1px solid var(--stepper-step-default-border);
+    border-radius: 100%;
+  }
+
+  &__number {
+    font-size: var(--body-small-bold-size);
+    font-weight: var(--body-bold-weight);
+    line-height: var(--body-small-bold-line-height);
+    color: var(--general-text-secondary);
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    white-space: nowrap;
+  }
+
+  &__label {
+    font-size: var(--body-regular-size);
+    font-weight: var(--body-regular-weight);
+    line-height: var(--body-regular-line-height);
+    color: var(--stepper-item-horizontal-text-default);
+  }
+
+  &__description {
+    font-size: var(--body-small-regular-size);
+    font-weight: var(--body-small-regular-weight);
+    line-height: var(--body-small-regular-line-height);
+    color: var(--general-text-tertiary);
+  }
+
+  &:not(#{$host}--selected):not(#{$host}--completed):not(#{$host}--error) {
+    #{$host}__step:hover:not(:disabled) {
+      #{$host}__indicator {
+        background-color: var(--stepper-step-default-bg-hover);
+        border-color: var(--stepper-step-default-border-hover);
+      }
+
+      #{$host}__number {
+        color: var(--general-text-white);
+      }
+
+      #{$host}__label {
+        color: var(--stepper-item-horizontal-text-hover);
+      }
+    }
+
+    #{$host}__step:active:not(:disabled) {
+      #{$host}__indicator {
+        background-color: var(--stepper-step-default-bg-active);
+        border-color: var(--stepper-step-default-border-active);
+      }
+
+      #{$host}__number {
+        color: var(--general-text-white);
+      }
+
+      #{$host}__label {
+        color: var(--stepper-item-horizontal-text-hover);
+      }
+    }
+  }
+
+  // -------------------------------------------------------
+  // Selected
+  // -------------------------------------------------------
+  &--selected {
+    --_step-arrow-width: 1rem;
+
+    z-index: 1;
+
+    #{$host}__step {
+      padding-right: calc(var(--stepper-item-horizontal-padding-x) + var(--_step-arrow-width));
+      cursor: default;
+      background-color: var(--stepper-item-horizontal-type-selected-bg-default);
+      clip-path: polygon(0 0, calc(100% - var(--_step-arrow-width)) 0, 100% 50%, calc(100% - var(--_step-arrow-width)) 100%, 0 100%);
+
+      &:focus-visible {
+        clip-path: none;
+      }
+    }
+
+    #{$host}__indicator {
+      background-color: var(--stepper-step-default-bg);
+      border-color: transparent;
+    }
+
+    #{$host}__number {
+      font-weight: var(--body-bold-weight);
+      color: var(--general-text-brand);
+    }
+
+    #{$host}__label {
+      font-weight: var(--body-bold-weight);
+      line-height: var(--body-bold-line-height);
+      color: var(--stepper-item-horizontal-text-selected);
+    }
+
+    #{$host}__description {
+      color: var(--general-text-white);
+    }
+  }
+
+  &--completed {
+    #{$host}__step {
+      background-color: var(--stepper-item-horizontal-type-completed-bg-default);
+    }
+
+    #{$host}__indicator {
+      background-color: var(--stepper-step-completed-bg);
+      border-color: transparent;
+    }
+
+    #{$host}__label {
+      color: var(--stepper-item-horizontal-text-completed-default);
+    }
+
+    #{$host}__description {
+      color: var(--stepper-item-horizontal-text-completed-default);
+    }
+
+    #{$host}__step:hover:not(:disabled) {
+      #{$host}__indicator {
+        background-color: var(--stepper-step-completed-bg-hover);
+      }
+
+      #{$host}__label,
+      #{$host}__description {
+        color: var(--stepper-item-horizontal-text-completed-hover);
+      }
+    }
+
+    #{$host}__step:active:not(:disabled) {
+      background-color: var(--stepper-item-horizontal-type-completed-bg-active);
+
+      #{$host}__indicator {
+        background-color: var(--stepper-step-completed-bg-hover);
+      }
+
+      #{$host}__label,
+      #{$host}__description {
+        color: var(--stepper-item-horizontal-text-completed-hover);
+      }
+    }
+  }
+
+  &--error {
+    #{$host}__step {
+      background-color: var(--stepper-item-horizontal-type-danger-bg-default);
+    }
+
+    #{$host}__indicator {
+      background-color: var(--stepper-step-danger-bg);
+      border-color: transparent;
+    }
+
+    #{$host}__label {
+      color: var(--stepper-item-horizontal-text-danger-default);
+    }
+
+    #{$host}__description {
+      color: var(--stepper-item-horizontal-text-danger-default);
+    }
+
+    #{$host}__step:hover:not(:disabled) {
+      #{$host}__indicator {
+        background-color: var(--stepper-step-danger-bg-hover);
+      }
+
+      #{$host}__label,
+      #{$host}__description {
+        color: var(--stepper-item-horizontal-text-danger-hover);
+      }
+    }
+
+    #{$host}__step:active:not(:disabled) {
+      background-color: var(--stepper-item-horizontal-type-danger-bg-active);
+
+      #{$host}__indicator {
+        background-color: var(--stepper-step-danger-bg-hover);
+      }
+
+      #{$host}__label,
+      #{$host}__description {
+        color: var(--stepper-item-horizontal-text-danger-hover);
+      }
+    }
+  }
+}

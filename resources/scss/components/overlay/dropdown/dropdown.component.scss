@@ -1,0 +1,7 @@
+tedi-dropdown {
+  display: inline-flex;
+}
+
+.tedi-dropdown__panel {
+  z-index: var(--z-index-dropdown);
+}

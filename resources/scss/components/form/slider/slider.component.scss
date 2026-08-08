@@ -1,0 +1,205 @@
+.tedi-slider {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.tedi-slider__label--reserve-space {
+  min-height: var(--body-regular-line-height);
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.tedi-slider__container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--form-slider-inner-spacing);
+  align-items: center;
+  width: 100%;
+}
+
+// added min-width so that the slider wouldn't squash and addon would move to next line
+.tedi-slider__container:has(.tedi-slider__addon:not(:empty)) .tedi-slider__track-row {
+  min-width: 8rem;
+}
+
+.tedi-slider__track-row {
+  display: flex;
+  flex: 1 0 0;
+  gap: var(--layout-grid-gutters-08);
+  align-items: center;
+  min-width: 0;
+}
+
+.tedi-slider__range-label {
+  flex-shrink: 0;
+  font-size: var(--body-regular-size);
+  line-height: var(--body-regular-line-height);
+  color: var(--form-slider-range-label-text);
+  white-space: nowrap;
+}
+
+.tedi-slider__track {
+  --tedi-slider-progress: 0%;
+  --tedi-slider-progress-ratio: 0;
+
+  position: relative;
+  flex: 1 0 0;
+  min-width: 0;
+  height: var(--form-slider-height);
+  background: linear-gradient(to right,
+      var(--form-slider-active-background-default) 0%,
+      var(--form-slider-active-background-default) var(--tedi-slider-progress),
+      var(--form-slider-passive-background-default) var(--tedi-slider-progress),
+      var(--form-slider-passive-background-default) 100%);
+  border: 1px solid var(--form-slider-border-default);
+  border-radius: var(--form-slider-radius);
+}
+
+.tedi-slider__thumb-anchor {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--form-slider-thumb-size) / 2 + var(--tedi-slider-progress-ratio) * (100% - var(--form-slider-thumb-size)));
+  display: block;
+  width: var(--form-slider-thumb-size);
+  height: var(--form-slider-thumb-size);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.tedi-slider__input {
+  --tedi-slider-hit-padding: 0.625rem;
+
+  position: absolute;
+  inset: calc(var(--tedi-slider-hit-padding) * -1) 0;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  appearance: none;
+  cursor: pointer;
+  outline: none;
+  background: transparent;
+  border: 0;
+  border-radius: inherit;
+
+  &::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: 0;
+  }
+
+  &::-moz-range-track {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: 0;
+  }
+
+  &::-webkit-slider-thumb {
+    width: var(--form-slider-thumb-size);
+    height: var(--form-slider-thumb-size);
+    margin-top: calc((var(--form-slider-height) - var(--form-slider-thumb-size)) / 2 + var(--tedi-slider-hit-padding));
+    appearance: none;
+    cursor: pointer;
+    background: var(--form-slider-thumb-background-default);
+    border: var(--tedi-borders-02) solid var(--form-slider-thumb-border-default);
+    border-radius: 50%;
+  }
+
+  &::-moz-range-thumb {
+    box-sizing: border-box;
+    width: var(--form-slider-thumb-size);
+    height: var(--form-slider-thumb-size);
+    cursor: pointer;
+    background: var(--form-slider-thumb-background-default);
+    border: var(--tedi-borders-02) solid var(--form-slider-thumb-border-default);
+    border-radius: 50%;
+  }
+
+  &:hover:not(:disabled)::-webkit-slider-thumb {
+    background: var(--form-slider-thumb-background-hover);
+    border-color: var(--form-slider-thumb-border-hover);
+  }
+
+  &:hover:not(:disabled)::-moz-range-thumb {
+    background: var(--form-slider-thumb-background-hover);
+    border-color: var(--form-slider-thumb-border-hover);
+  }
+
+  &:active:not(:disabled)::-webkit-slider-thumb {
+    background: var(--form-slider-thumb-background-active);
+    border-color: var(--form-slider-thumb-border-active);
+  }
+
+  &:active:not(:disabled)::-moz-range-thumb {
+    background: var(--form-slider-thumb-background-active);
+    border-color: var(--form-slider-thumb-border-active);
+  }
+
+  &:focus-visible:not(:disabled)::-webkit-slider-thumb {
+    background: var(--form-slider-thumb-background-focus);
+    border-color: var(--form-slider-thumb-border-focus);
+    box-shadow: 0 0 0 var(--tedi-borders-01) var(--tedi-neutral-100),
+      0 0 0 calc(var(--tedi-borders-01) + var(--tedi-borders-02)) var(--form-slider-thumb-border-focus);
+  }
+
+  &:focus-visible:not(:disabled)::-moz-range-thumb {
+    background: var(--form-slider-thumb-background-focus);
+    border-color: var(--form-slider-thumb-border-focus);
+    box-shadow: 0 0 0 var(--tedi-borders-01) var(--tedi-neutral-100),
+      0 0 0 calc(var(--tedi-borders-01) + var(--tedi-borders-02)) var(--form-slider-thumb-border-focus);
+  }
+}
+
+.tedi-slider__addon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+
+  &:empty {
+    display: none;
+  }
+}
+
+.tedi-slider:hover:not(.tedi-slider--disabled) .tedi-slider__track {
+  background: linear-gradient(to right,
+      var(--form-slider-active-background-hover) 0%,
+      var(--form-slider-active-background-hover) var(--tedi-slider-progress),
+      var(--form-slider-passive-background-default) var(--tedi-slider-progress),
+      var(--form-slider-passive-background-default) 100%);
+}
+
+.tedi-slider--dragging:not(.tedi-slider--disabled) .tedi-slider__track {
+  background: linear-gradient(to right,
+      var(--form-slider-active-background-active) 0%,
+      var(--form-slider-active-background-active) var(--tedi-slider-progress),
+      var(--form-slider-passive-background-default) var(--tedi-slider-progress),
+      var(--form-slider-passive-background-default) 100%);
+}
+
+.tedi-slider--disabled {
+  .tedi-slider__track {
+    background: linear-gradient(to right,
+        var(--form-slider-active-background-disabled) 0%,
+        var(--form-slider-active-background-disabled) var(--tedi-slider-progress),
+        var(--form-slider-passive-background-default) var(--tedi-slider-progress),
+        var(--form-slider-passive-background-default) 100%);
+  }
+
+  .tedi-slider__input {
+    cursor: not-allowed;
+
+    &::-webkit-slider-thumb {
+      cursor: not-allowed;
+      background: var(--form-slider-thumb-background-disabled);
+      border-color: var(--form-slider-thumb-border-disabled);
+    }
+
+    &::-moz-range-thumb {
+      cursor: not-allowed;
+      background: var(--form-slider-thumb-background-disabled);
+      border-color: var(--form-slider-thumb-border-disabled);
+    }
+  }
+}

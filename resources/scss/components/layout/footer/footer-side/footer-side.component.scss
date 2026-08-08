@@ -1,0 +1,36 @@
+.tedi-footer-side {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  &--vertical-start {
+    justify-content: flex-start;
+  }
+
+  &--vertical-end {
+    justify-content: flex-end;
+  }
+
+  &--mobile {
+    width: 100%;
+    padding: 16px;
+  }
+
+  &--start {
+    padding-left: var(--layout-footer-padding-x);
+
+    &.tedi-footer-side--mobile {
+      padding-bottom: 0;
+    }
+  }
+
+  &--end {
+    padding-right: var(--layout-footer-padding-x);
+
+    &.tedi-footer-side--mobile {
+      padding-top: 0;
+    }
+  }
+}

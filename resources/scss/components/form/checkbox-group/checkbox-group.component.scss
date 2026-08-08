@@ -1,0 +1,23 @@
+.tedi-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--form-checkbox-radio-label-gutter-y);
+
+  &__checks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--form-checkbox-radio-gutter-y) var(--form-checkbox-radio-gutter-x);
+
+    &--vertical {
+      flex-direction: column;
+    }
+  }
+
+  &__subtexts {
+    padding-top: var(--form-field-inner-spacing-sm);
+
+    &:empty {
+      display: none;
+    }
+  }
+}

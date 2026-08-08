@@ -1,0 +1,105 @@
+@use "@tedi-design-system/core/bootstrap-utility/breakpoints";
+
+input[tedi-radio][type="radio"] {
+  --_radio-dot-size: calc(var(--form-checkbox-radio-size-responsive) * 0.67);
+
+  position: relative;
+  width: var(--form-checkbox-radio-size-responsive);
+  min-width: var(--form-checkbox-radio-size-responsive);
+  height: var(--form-checkbox-radio-size-responsive);
+  padding: 0;
+  margin: 0;
+  vertical-align: middle;
+  appearance: none;
+  cursor: pointer;
+  background-color: var(--form-checkbox-radio-default-background-default);
+  border: 1px solid var(--form-checkbox-radio-default-border-default);
+  border-radius: var(--form-checkbox-radio-indicator-radius-radio);
+
+  &::before {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--_radio-dot-size);
+    height: var(--_radio-dot-size);
+    content: "";
+    background: transparent;
+    border-radius: var(--form-checkbox-radio-indicator-radius-radio);
+    transform: translate(-50%, -50%);
+    transition: background-color 150ms ease;
+  }
+
+  &:not(:disabled):hover {
+    border-color: var(--form-checkbox-radio-default-border-hover);
+    box-shadow: 0 0 0 1px var(--form-checkbox-radio-default-border-hover);
+  }
+
+  &:not(:disabled):active {
+    border-color: var(--form-checkbox-radio-default-border-active);
+    box-shadow: none;
+
+    &::before {
+      background: var(--form-checkbox-radio-default-background-active);
+    }
+  }
+
+  &:not(:checked):disabled {
+    cursor: not-allowed;
+    background-color: var(--form-general-background-disabled);
+    border-color: var(--form-general-border-disabled);
+  }
+
+  &:checked {
+    border-color: var(--form-checkbox-radio-default-border-selected);
+
+    &::before {
+      background: var(--form-checkbox-radio-default-background-selected);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      border-color: var(--form-checkbox-radio-default-border-selected-disabled);
+
+      &::before {
+        background: var(--form-checkbox-radio-default-background-selected-disabled);
+      }
+    }
+  }
+
+  &:focus-visible {
+    outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+    outline-offset: var(--tedi-borders-01);
+  }
+
+  &:not(:checked, :disabled).tedi-radio--invalid,
+  &:not(:checked, :disabled):user-invalid,
+  &:not(:checked, :disabled).ng-invalid.ng-touched {
+    background-color: var(--form-checkbox-radio-default-background-error);
+    border-color: var(--form-general-feedback-error-border);
+
+    &:hover {
+      border-color: var(--form-general-feedback-error-border);
+      box-shadow: 0 0 0 1px var(--form-general-feedback-error-border);
+    }
+  }
+
+  &.tedi-radio--large {
+    --_radio-dot-size: calc(var(--form-checkbox-radio-size-large) * 0.67);
+
+    width: var(--form-checkbox-radio-size-large);
+    height: var(--form-checkbox-radio-size-large);
+  }
+}
+
+label:has(input[tedi-radio]:not(:disabled)) {
+  cursor: pointer;
+}
+
+label:has(input[tedi-radio]:disabled) {
+  cursor: not-allowed;
+}
+
+label:has(input[tedi-radio])+tedi-feedback-text {
+  padding-left: var(--form-checkbox-radio-size-responsive);
+  margin-left: var(--form-checkbox-radio-inner-spacing);
+}

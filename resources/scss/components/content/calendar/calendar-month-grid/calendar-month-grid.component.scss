@@ -1,0 +1,81 @@
+.tedi-calendar-month-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-grid-gutters-08);
+  width: 100%;
+  margin-top: var(--card-padding-md-default);
+
+  &__row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--layout-grid-gutters-08);
+  }
+
+  &__cell {
+    display: flex;
+  }
+
+  &__month {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    padding: var(--form-checkbox-radio-card-radio-padding-y)
+      var(--form-checkbox-radio-card-radio-padding-x);
+    font-size: var(--body-regular-size);
+    color: var(--form-checkbox-radio-card-primary-default-text);
+    cursor: pointer;
+    background: var(--form-checkbox-radio-card-secondary-default-background);
+    border: var(--tedi-borders-01) solid
+      var(--form-checkbox-radio-card-secondary-default-border);
+    border-radius: var(--form-checkbox-radio-card-radius);
+
+    &:hover {
+      color: var(--form-checkbox-radio-card-secondary-hover-text);
+      background: var(--form-checkbox-radio-card-secondary-hover-background);
+      border-color: var(--form-checkbox-radio-card-secondary-hover-border);
+    }
+
+    &:focus-visible {
+      outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+      outline-offset: var(--tedi-borders-01);
+    }
+
+    &--current {
+      border-color: var(--form-datepicker-today-border);
+    }
+
+    &--selected {
+      color: var(--form-checkbox-radio-card-secondary-selected-text);
+      background: var(--form-checkbox-radio-card-secondary-selected-background);
+      border-color: var(--form-checkbox-radio-card-secondary-selected-border);
+      box-shadow: 0 0 0 1px
+        var(--form-checkbox-radio-card-secondary-selected-border);
+    }
+
+    &--disabled,
+    &[aria-disabled="true"] {
+      color: var(--form-checkbox-radio-card-secondary-disabled-default-text);
+      pointer-events: none;
+      cursor: not-allowed;
+      background: var(
+        --form-checkbox-radio-card-secondary-disabled-default-background
+      );
+      border-color: var(
+        --form-checkbox-radio-card-secondary-disabled-default-border
+      );
+    }
+
+    &--selected#{&}--disabled {
+      color: var(--form-checkbox-radio-card-secondary-disabled-selected-text);
+      background: var(
+        --form-checkbox-radio-card-secondary-disabled-selected-background
+      );
+      border-color: var(
+        --form-checkbox-radio-card-secondary-disabled-selected-border
+      );
+      box-shadow: 0 0 0 1px
+        var(--form-checkbox-radio-card-secondary-disabled-selected-border);
+    }
+  }
+}

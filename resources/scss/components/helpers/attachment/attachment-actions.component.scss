@@ -1,0 +1,13 @@
+.tedi-attachment-actions {
+  display: flex;
+  align-items: center;
+
+  .tedi-button {
+    border-radius: var(--tedi-radius-02-default);
+  }
+
+  &--padded {
+    gap: var(--tedi-dimensions-07);
+    padding-inline: var(--card-padding-xs);
+  }
+}

@@ -1,0 +1,13 @@
+.tedi-sidenav-group-title {
+  .tedi-sidenav-group-title__text {
+    padding: var(--layout-grid-gutters-16)
+      var(--navigation-vertical-item-padding-right)
+      var(--layout-grid-gutters-02)
+      var(--navigation-vertical-item-padding-left-level-1);
+    font-size: var(--body-extra-small-bold-size);
+    font-weight: var(--body-extra-small-bold-weight);
+    line-height: var(--body-extra-small-bold-line-height);
+    color: var(--navigation-vertical-group-title-text);
+    text-transform: uppercase;
+  }
+}

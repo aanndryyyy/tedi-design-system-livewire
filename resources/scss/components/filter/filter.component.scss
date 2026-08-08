@@ -1,0 +1,237 @@
+.tedi-filter {
+  --_filter-bg: transparent;
+  --_filter-text: inherit;
+  --_filter-border: transparent;
+  --_filter-border-width: var(--tedi-borders-01);
+  --_filter-padding-x: var(--filter-default-padding-x);
+  --_filter-radius: var(--form-checkbox-radio-card-radius);
+
+  display: inline-flex;
+
+  &__button {
+    display: inline-flex;
+    align-items: center;
+    max-width: var(--button-width-max);
+    padding: 0 var(--_filter-padding-x);
+    font-family: var(--family-default);
+    font-size: var(--body-regular-size);
+    font-weight: var(--body-regular-weight);
+    line-height: var(--body-regular-line-height);
+    color: var(--_filter-text);
+    cursor: pointer;
+    background-color: var(--_filter-bg);
+    border: var(--_filter-border-width) solid var(--_filter-border);
+    border-radius: var(--_filter-radius);
+
+    &:focus-visible {
+      outline: var(--tedi-borders-02) solid var(--form-input-border-active);
+      outline-offset: var(--tedi-borders-01);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  &__button:not(:disabled):hover .tedi-icon {
+    color: inherit;
+  }
+
+  &--selected .tedi-icon {
+    color: inherit;
+  }
+
+  &__text {
+    padding: calc(var(--filter-default-padding-y) - var(--_filter-border-width)) var(--filter-default-inner-spacing);
+    white-space: nowrap;
+  }
+
+  &__icon {
+    padding: 0 var(--filter-default-inner-spacing-sm);
+  }
+
+  &__prepend {
+    display: flex;
+    align-items: center;
+    padding: 0 var(--filter-default-inner-spacing-sm);
+    color: var(--_filter-text);
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  &__append {
+    display: flex;
+    align-items: center;
+    padding: 0 var(--layout-grid-gutters-02);
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  &__prepend--hidden {
+    display: none;
+  }
+
+  &__count {
+    padding-left: var(--layout-grid-gutters-04);
+  }
+
+  &--primary {
+    --_filter-border-width: 0px;
+    --_filter-bg: var(--filter-primary-default-background);
+    --_filter-text: var(--filter-primary-default-text);
+
+    .tedi-filter__button:not(:disabled):hover {
+      --_filter-bg: var(--filter-primary-hover-background);
+      --_filter-text: var(--filter-primary-hover-text);
+    }
+
+    .tedi-filter__button:not(:disabled):active {
+      --_filter-bg: var(--filter-primary-active-background);
+      --_filter-text: var(--filter-primary-active-text);
+    }
+
+    &.tedi-filter--selected {
+      --_filter-bg: var(--filter-primary-selected-background);
+      --_filter-text: var(--filter-primary-selected-text);
+
+      .tedi-filter__button:not(:disabled):hover {
+        --_filter-bg: var(--filter-primary-hover-background);
+        --_filter-text: var(--filter-primary-hover-text);
+      }
+
+      .tedi-filter__button:not(:disabled):active {
+        --_filter-bg: var(--filter-primary-active-background);
+        --_filter-text: var(--filter-primary-active-text);
+      }
+    }
+
+    &.tedi-filter--disabled {
+      --_filter-bg: var(--filter-primary-disabled-background);
+      --_filter-text: var(--filter-primary-disabled-text);
+    }
+  }
+
+  &--secondary {
+    --_filter-bg: var(--filter-secondary-default-background);
+    --_filter-text: var(--filter-secondary-default-text);
+    --_filter-border: var(--filter-secondary-default-border);
+
+    .tedi-filter__button:not(:disabled):hover {
+      --_filter-bg: var(--filter-secondary-hover-background);
+      --_filter-text: var(--filter-secondary-hover-text);
+      --_filter-border: var(--filter-secondary-hover-border);
+    }
+
+    .tedi-filter__button:not(:disabled):active {
+      --_filter-bg: var(--filter-secondary-active-background);
+      --_filter-text: var(--filter-secondary-active-text);
+      --_filter-border: var(--filter-secondary-active-border);
+    }
+
+    &.tedi-filter--selected {
+      --_filter-bg: var(--filter-secondary-selected-background);
+      --_filter-text: var(--filter-secondary-selected-text);
+      --_filter-border: var(--filter-secondary-selected-border);
+      --_filter-border-width: var(--general-selected-border-width);
+    }
+
+    &.tedi-filter--disabled {
+      --_filter-bg: var(--filter-secondary-disabled-background);
+      --_filter-text: var(--filter-secondary-disabled-text);
+      --_filter-border: var(--filter-secondary-disabled-border);
+      --_filter-border-width: var(--tedi-borders-01);
+    }
+  }
+
+  &--large {
+    --_filter-padding-x: var(--filter-lg-padding-x);
+
+    .tedi-filter__text {
+      padding-top: calc(var(--filter-lg-padding-y) - var(--_filter-border-width));
+      padding-bottom: calc(var(--filter-lg-padding-y) - var(--_filter-border-width));
+    }
+  }
+
+}
+
+.tedi-filter-dropdown {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--dropdown-item-default-background);
+
+  &__custom-content {
+    padding: var(--dropdown-item-padding-y) var(--dropdown-item-padding-x);
+  }
+
+  &__search {
+    padding: var(--dropdown-item-padding-y) var(--dropdown-item-padding-x);
+  }
+
+  &__options {
+    flex: 1;
+    max-height: var(--form-select-area-max-height);
+    overflow-y: auto;
+    outline: none;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: var(--form-field-height);
+    padding: var(--dropdown-item-padding-y) var(--dropdown-item-padding-x);
+    color: var(--dropdown-item-default-text);
+    cursor: pointer;
+    background: var(--dropdown-item-default-background);
+
+    &:hover:not(&--disabled) {
+      color: var(--dropdown-item-hover-text);
+      background: var(--dropdown-item-hover-background);
+    }
+
+    &:focus-visible {
+      outline: var(--tedi-borders-02) solid var(--form-input-border-active);
+      outline-offset: calc(-1 * var(--tedi-borders-02));
+    }
+
+    &--disabled {
+      cursor: not-allowed;
+    }
+
+    &--selected {
+      color: var(--dropdown-item-active-text);
+      background: var(--dropdown-item-active-background);
+
+      .tedi-dropdown-item-value__label,
+      .tedi-dropdown-item-value__meta {
+        color: inherit;
+      }
+
+      &:hover:not(&--disabled) {
+        color: var(--dropdown-item-active-text);
+        background: var(--dropdown-item-active-background);
+      }
+    }
+
+    &--focused {
+      outline: var(--tedi-borders-02) solid var(--form-input-border-active);
+      outline-offset: calc(-1 * var(--tedi-borders-02));
+    }
+  }
+
+  &__clear {
+    display: flex;
+    justify-content: center;
+    padding: var(--dropdown-item-padding-y) var(--dropdown-item-padding-x);
+    background: var(--dropdown-item-default-background);
+
+    .tedi-icon {
+      font-size: var(--button-icon-inner-size);
+    }
+  }
+}

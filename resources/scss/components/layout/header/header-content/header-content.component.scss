@@ -1,0 +1,29 @@
+.tedi-header-content {
+  display: flex;
+  flex: 1 0 0;
+  gap: var(--layout-header-items-center-gutter-x);
+  align-items: center;
+
+  a,
+  .tedi-link {
+    color: var(--header-link-default);
+
+    &:hover:not(:disabled, [aria-disabled="true"]) {
+      color: var(--header-link-hover);
+    }
+
+    &:active:not(:disabled, [aria-disabled="true"]) {
+      color: var(--header-link-active);
+    }
+
+    &:focus-visible:not(:disabled) {
+      outline: var(--tedi-borders-02) solid var(--header-link-focus);
+      outline-offset: var(--tedi-borders-01);
+    }
+  }
+
+  > * {
+    display: flex;
+    gap: var(--layout-header-items-center-gutter-x);
+  }
+}

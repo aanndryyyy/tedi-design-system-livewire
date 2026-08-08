@@ -1,0 +1,13 @@
+.tedi-date-field {
+  display: flex;
+  flex: 1;
+  gap: var(--form-field-inner-spacing);
+  align-items: center;
+  min-width: 0;
+
+  &__overlay {
+    background: var(--card-background-primary);
+    border-radius: var(--card-radius-rounded);
+    box-shadow: 0 1px 5px 0 var(--tedi-alpha-20);
+  }
+}

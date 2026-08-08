@@ -1,0 +1,51 @@
+.tedi-header-mobile-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: var(--layout-header-mobile-button-size);
+  min-width: var(--layout-header-mobile-button-min-size);
+  height: var(--layout-header-mobile-button-min-size);
+  padding: var(--layout-grid-gutters-08);
+  color: var(--header-mobile-button-text-default);
+  text-decoration: none;
+  cursor: pointer;
+  background-color: var(--header-mobile-button-background-default);
+  border: transparent;
+  border-radius: unset;
+
+  &__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  &__text {
+    color: inherit;
+  }
+
+  &:not(&--disabled):hover {
+    color: var(--header-mobile-button-text-hover);
+  }
+
+  &:not(&--disabled):active {
+    color: var(--header-mobile-button-text-active);
+  }
+
+  &:not(&--disabled):focus-visible {
+    outline: none;
+    box-shadow:
+      inset 0 0 0 1px var(--tedi-neutral-100),
+      inset 0 0 0 3px var(--tedi-blue-500);
+  }
+
+  &--selected {
+    background: var(--header-mobile-button-background-selected);
+  }
+
+  &--disabled {
+    color: var(--header-mobile-button-text-disabled);
+    cursor: default;
+    background: var(--header-mobile-button-background-disabled);
+  }
+}

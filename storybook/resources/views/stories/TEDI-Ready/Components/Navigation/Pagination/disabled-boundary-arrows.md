@@ -1,0 +1,1 @@
+By default the prev/next button is removed from the DOM at the first/last page so the pager looks balanced. Set `disableArrowsAtBoundary=true` to keep it rendered as a disabled button instead — useful when a stable footprint matters more than a clean look.

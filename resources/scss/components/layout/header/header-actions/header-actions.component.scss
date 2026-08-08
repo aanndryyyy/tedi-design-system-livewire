@@ -1,0 +1,30 @@
+@use "@tedi-design-system/core/bootstrap-utility/breakpoints";
+
+.tedi-header-actions {
+  display: flex;
+  gap: var(--layout-header-items-right-gutter-x);
+  align-items: center;
+  height: 100%;
+  margin-left: auto;
+
+  > * {
+    display: flex;
+    align-items: center;
+    height: 100%;
+
+    &:has(.tedi-header-login__button--mobile),
+    &:has(.tedi-header-profile--mobile) {
+      padding-left: 0;
+    }
+  }
+
+  > .tedi-separator--vertical {
+    align-self: stretch;
+    height: auto !important;
+    margin: var(--layout-header-separator-padding-y) 0;
+  }
+
+  @include breakpoints.media-breakpoint-only(md) {
+    max-height: 2.75rem;
+  }
+}

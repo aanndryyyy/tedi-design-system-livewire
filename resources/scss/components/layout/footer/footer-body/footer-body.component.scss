@@ -1,0 +1,15 @@
+.tedi-footer-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--layout-grid-gutters-24);
+  align-items: flex-start;
+  justify-content: space-around;
+  width: 100%;
+  padding: var(--layout-footer-padding-y) var(--layout-footer-padding-x);
+
+  &--mobile {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: var(--layout-footer-padding-y) var(--layout-footer-padding-x);
+  }
+}

@@ -1,0 +1,46 @@
+@use "@tedi-design-system/core/bootstrap-utility/breakpoints";
+
+@mixin compact-styles {
+  .tedi-horizontal-stepper-item {
+    flex: 1 0 0;
+
+    &--selected {
+      flex: 0 0 auto;
+    }
+
+    .tedi-horizontal-stepper-item__step {
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .tedi-horizontal-stepper-item__content {
+      display: none;
+    }
+
+    &--selected .tedi-horizontal-stepper-item__content {
+      display: flex;
+    }
+  }
+}
+
+.tedi-horizontal-stepper {
+  display: flex;
+  background-color: var(--stepper-background);
+
+  &--transparent {
+    background-color: transparent;
+  }
+
+  &--compact {
+    @include compact-styles;
+  }
+
+  @each $bp in (sm, md, lg, xl, xxl) {
+    &--compact-#{$bp} {
+      @include breakpoints.media-breakpoint-down($bp) {
+        @include compact-styles;
+      }
+    }
+  }
+}

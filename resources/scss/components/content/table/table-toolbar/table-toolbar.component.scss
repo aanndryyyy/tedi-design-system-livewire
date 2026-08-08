@@ -1,0 +1,7 @@
+.tedi-table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tedi-dimensions-8);
+  align-items: center;
+  justify-content: flex-end;
+}

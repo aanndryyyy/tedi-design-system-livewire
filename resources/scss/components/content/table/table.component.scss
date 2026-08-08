@@ -1,0 +1,533 @@
+.tedi-table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tedi-dimensions-10);
+  width: 100%;
+}
+
+.tedi-table__scroll {
+  overflow-x: auto;
+  background: var(--table-default);
+  border: var(--tedi-borders-01) solid var(--table-border);
+  border-radius: var(--table-radius);
+}
+
+.tedi-table__table {
+  width: 100%;
+  font-size: var(--body-regular-size);
+  line-height: var(--body-regular-line-height);
+  color: var(--general-text-primary);
+  border-spacing: 0;
+  border-collapse: collapse;
+  background: var(--table-default);
+}
+
+.tedi-table__caption {
+  padding: var(--tedi-dimensions-10) var(--table-header-padding-x);
+  font-weight: var(--body-regular-weight);
+  color: var(--general-text-primary);
+  text-align: left;
+  caption-side: top;
+}
+
+.tedi-table__head {
+  background: var(--table-default);
+}
+
+.tedi-table__header-cell {
+  padding: var(--table-header-padding-y) var(--table-header-padding-x);
+  font-size: var(--body-regular-size);
+  font-weight: var(--body-regular-weight);
+  color: var(--general-text-tertiary);
+  text-align: left;
+  white-space: nowrap;
+  background: var(--table-default);
+
+  // Border on the cell (not the <thead>) so it spans the full scroll width —
+  // section/row borders clip to the table's `width: 100%` on horizontal scroll.
+  border-bottom: 1px solid var(--table-border-th);
+}
+
+.tedi-table__header-content {
+  display: inline-flex;
+  gap: var(--layout-grid-gutters-04);
+  align-items: center;
+}
+
+.tedi-table__filter-popover {
+  display: inline-flex;
+  align-items: center;
+}
+
+.tedi-table__body .tedi-table__row>.tedi-table__cell {
+  border-bottom: var(--tedi-borders-01) solid var(--table-border);
+}
+
+.tedi-table__body .tedi-table__row:last-child>.tedi-table__cell {
+  border-bottom: 0;
+}
+
+.tedi-table--group-dividers-between {
+  .tedi-table__body .tedi-table__row>.tedi-table__cell {
+    border-bottom: 0;
+  }
+
+  .tedi-table__body .tedi-table__row--group-start>.tedi-table__cell {
+    border-top: var(--tedi-borders-01) solid var(--table-border);
+  }
+}
+
+.tedi-table--group-dividers-none .tedi-table__body .tedi-table__row>.tedi-table__cell {
+  border-bottom: 0;
+}
+
+.tedi-table__cell {
+  padding: var(--table-data-padding-y) var(--table-data-padding-x);
+  vertical-align: middle;
+  color: var(--general-text-primary);
+
+  // Backgrounds live on cells (not <tr>/<tbody>) so they span the full scroll
+  // width — table-section/row backgrounds clip to `width: 100%` on horizontal
+  // scroll. Row-state rules below override per cell.
+  background: var(--table-default);
+}
+
+.tedi-table__cell--align-left {
+  text-align: left;
+}
+
+.tedi-table__cell--align-center {
+  text-align: center;
+
+  .tedi-table__expand-toggle {
+    justify-content: center;
+  }
+}
+
+.tedi-table__cell--align-right {
+  text-align: right;
+}
+
+.tedi-table__cell--valign-top {
+  vertical-align: top;
+}
+
+.tedi-table__cell--valign-middle {
+  vertical-align: middle;
+}
+
+.tedi-table__cell--valign-bottom {
+  vertical-align: bottom;
+}
+
+// Reserve the icon-only toggle's height on every expand cell — including the
+// empty ones on non-expandable rows / sub-rows — so all rows in a collapsible
+// table share the taller height (Figma: equal row heights). Label-mode toggles
+// already fit the regular row height, so the reservation is skipped there.
+.tedi-table__expand-toggle {
+  // Block-level flex (not inline-flex) so the empty spacer on non-expandable
+  // rows doesn't pick up the cell's line-box baseline gap — that mismatch made
+  // placeholder rows a few px taller than button rows.
+  display: flex;
+  align-items: center;
+
+  &--icon-only {
+    min-height: var(--button-sm-icon-size);
+  }
+}
+
+.tedi-table__cell--placeholder {
+  padding: var(--tedi-dimensions-14) var(--table-data-padding-x);
+  color: var(--general-text-secondary);
+  text-align: center;
+}
+
+.tedi-table--small {
+  .tedi-table__header-cell {
+    padding: var(--table-header-padding-y-sm) var(--table-header-padding-x-sm);
+  }
+
+  .tedi-table__cell {
+    padding: var(--table-data-padding-y-sm) var(--table-data-padding-x-sm);
+  }
+}
+
+.tedi-table__foot {
+  font-weight: var(--heading-weight);
+  background: var(--table-default);
+}
+
+.tedi-table__cell--footer {
+  color: var(--general-text-primary);
+  border-top: var(--tedi-borders-01) solid var(--table-border-th);
+}
+
+.tedi-table__row--selected>.tedi-table__cell {
+  background: var(--table-active);
+}
+
+.tedi-table__row--clickable {
+  cursor: pointer;
+
+  &:focus-visible {
+    // Anchor the outline ring to this transparent border so it always renders
+    outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+    outline-offset: calc(var(--tedi-borders-02) * -1);
+    background: transparent;
+    border-color: transparent;
+  }
+}
+
+.tedi-table__body .tedi-table__row--sub-component>.tedi-table__cell {
+  background: var(--table-striped);
+  border-bottom: 0;
+}
+
+.tedi-table__body .tedi-table__row--sub-component-open>.tedi-table__cell {
+  border-bottom: var(--tedi-borders-01) solid var(--table-border);
+}
+
+.tedi-table__row--sub-row>.tedi-table__cell {
+  background: var(--table-striped);
+}
+
+.tedi-table__cell--sub-component {
+  padding: 0;
+}
+
+.tedi-table__sub-component-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 300ms ease;
+
+  .tedi-table__row--sub-component-open & {
+    grid-template-rows: 1fr;
+  }
+}
+
+.tedi-table__sub-component-content {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tedi-table__sub-component-inner {
+  padding: var(--table-data-padding-y) var(--table-data-padding-x);
+}
+
+.tedi-table__row--filter {
+  background: var(--general-surface-primary);
+}
+
+.tedi-table__row--filter .tedi-table__header-cell {
+  padding-top: var(--tedi-dimensions-05);
+  padding-bottom: var(--tedi-dimensions-05);
+  font-weight: var(--body-regular-weight);
+  background: var(--general-surface-primary);
+}
+
+.tedi-table--striped .tedi-table__body .tedi-table__row:nth-of-type(even)>.tedi-table__cell {
+  background: var(--table-striped);
+}
+
+.tedi-table.tedi-table--row-hover .tedi-table__body .tedi-table__row:hover>.tedi-table__cell {
+  background: var(--table-hover);
+}
+
+.tedi-table .tedi-table__body .tedi-table__row.tedi-table__row--active>.tedi-table__cell,
+.tedi-table .tedi-table__body .tedi-table__row.tedi-table__row--active:hover>.tedi-table__cell {
+  background: var(--table-hover);
+}
+
+// Keyboard-reorder picked-up row — same highlight as the drag-hover state.
+// Scoped with enough specificity to win over striped / active backgrounds.
+.tedi-table .tedi-table__body .tedi-table__row.tedi-table__row--picked-up>.tedi-table__cell {
+  background: var(--table-hover);
+}
+
+.tedi-table--vertical-borders {
+
+  .tedi-table__header-cell,
+  .tedi-table__cell {
+    border-right: var(--tedi-borders-01) solid var(--table-border);
+  }
+
+  thead tr:first-child .tedi-table__header-cell:last-child,
+  .tedi-table__row>.tedi-table__cell:last-child {
+    border-right: 0;
+  }
+}
+
+.tedi-table--borderless {
+  .tedi-table__scroll {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+.tedi-table--has-pagination {
+  gap: 0;
+}
+
+.tedi-table--has-pagination-bottom .tedi-table__scroll {
+  border-bottom: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.tedi-table--has-pagination-top .tedi-table__scroll {
+  border-top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.tedi-table__pagination {
+  border: var(--tedi-borders-01) solid var(--table-border);
+}
+
+.tedi-table__pagination--bottom {
+  border-top: 0;
+  border-bottom-right-radius: var(--table-radius);
+  border-bottom-left-radius: var(--table-radius);
+}
+
+.tedi-table__pagination--top {
+  border-bottom: 0;
+  border-top-left-radius: var(--table-radius);
+  border-top-right-radius: var(--table-radius);
+}
+
+.tedi-table--borderless .tedi-table__pagination {
+  background: transparent;
+  border: 0;
+}
+
+.tedi-table--sticky-first-column {
+  // The frozen block = leading control columns + the first content column.
+  // Per-cell `left` offsets come from the component; the divider is drawn only
+  // on the block's right edge. Targeting the frozen columns by class (not
+  // `:first-child`) keeps rowspan-covered rows — whose first *rendered* cell is
+  // a later column — from picking up sticky styling.
+  .tedi-table__header-cell.tedi-table__cell--sticky-left {
+    position: sticky;
+    z-index: 2;
+    background: var(--table-default);
+  }
+
+  .tedi-table__cell--sticky-left {
+    position: sticky;
+    z-index: 1;
+    background: var(--table-default);
+  }
+
+  .tedi-table__cell--sticky-left-edge {
+    box-shadow: inset -1px 0 0 var(--table-border);
+  }
+
+  // Sticky cells must match their row's background so the scrolled body never
+  // shows through.
+  .tedi-table__body .tedi-table__row--sub-row>.tedi-table__cell--sticky-left {
+    background: var(--table-striped);
+  }
+
+  &.tedi-table--striped .tedi-table__body .tedi-table__row:nth-of-type(even)>.tedi-table__cell--sticky-left {
+    background: var(--table-striped);
+  }
+
+  .tedi-table__body .tedi-table__row--picked-up>.tedi-table__cell--sticky-left {
+    background: var(--table-hover);
+  }
+
+  &.tedi-table--striped .tedi-table__body .tedi-table__row--picked-up:nth-of-type(even)>.tedi-table__cell--sticky-left {
+    background: var(--table-hover);
+  }
+
+  .tedi-table__head .tedi-table__header-cell--picked-up.tedi-table__cell--sticky-left {
+    background: var(--table-hover);
+  }
+
+  // The sticky cells paint above the row (z-index), clipping the row's inset
+  // focus outline. Re-draw the ring on the frozen block: top/bottom on every
+  // sticky cell, the left edge on the start cell, the divider on the edge cell.
+  .tedi-table__row--clickable:focus-visible>.tedi-table__cell--sticky-left {
+    box-shadow:
+      inset 0 var(--tedi-borders-02) 0 var(--tedi-primary-500),
+      inset 0 calc(var(--tedi-borders-02) * -1) 0 var(--tedi-primary-500);
+  }
+
+  .tedi-table__row--clickable:focus-visible>.tedi-table__cell--sticky-left-start {
+    box-shadow:
+      inset var(--tedi-borders-02) 0 0 var(--tedi-primary-500),
+      inset 0 var(--tedi-borders-02) 0 var(--tedi-primary-500),
+      inset 0 calc(var(--tedi-borders-02) * -1) 0 var(--tedi-primary-500);
+  }
+
+  .tedi-table__row--clickable:focus-visible>.tedi-table__cell--sticky-left-edge {
+    box-shadow:
+      inset -1px 0 0 var(--table-border),
+      inset 0 var(--tedi-borders-02) 0 var(--tedi-primary-500),
+      inset 0 calc(var(--tedi-borders-02) * -1) 0 var(--tedi-primary-500);
+  }
+
+  .tedi-table__row--clickable:focus-visible>.tedi-table__cell--sticky-left-start.tedi-table__cell--sticky-left-edge {
+    box-shadow:
+      inset -1px 0 0 var(--table-border),
+      inset var(--tedi-borders-02) 0 0 var(--tedi-primary-500),
+      inset 0 var(--tedi-borders-02) 0 var(--tedi-primary-500),
+      inset 0 calc(var(--tedi-borders-02) * -1) 0 var(--tedi-primary-500);
+  }
+}
+
+.tedi-table--sticky-header {
+  .tedi-table__head {
+    border-bottom: 0;
+  }
+
+  // The header row itself is made sticky alongside its cells so the
+  // column-reorder cdkDropList (hosted on this row) keeps a bounding rect
+  // aligned with the pinned header. CDK gates drag-sorting on the pointer
+  // being near the drop list's rect; with only the cells sticky, the row's
+  // rect scrolls out of view and reordering silently stops working once
+  // scrolled. The background + z-index keep the row opaque and above the
+  // scrolled body, so the gaps that open between cells during a column drag
+  // (and the translucent drag placeholder) don't reveal the rows behind.
+  .tedi-table__head .tedi-table__row {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--table-default);
+  }
+
+  .tedi-table__head .tedi-table__header-cell {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--table-default);
+    box-shadow: inset 0 -1px 0 var(--table-border-th);
+  }
+
+  &.tedi-table--sticky-first-column .tedi-table__head .tedi-table__header-cell.tedi-table__cell--sticky-left {
+    z-index: 3;
+  }
+
+  &.tedi-table--sticky-first-column .tedi-table__head .tedi-table__header-cell.tedi-table__cell--sticky-left-edge {
+    box-shadow:
+      inset -1px 0 0 var(--table-border),
+      inset 0 -1px 0 var(--table-border-th);
+  }
+}
+
+// `fixedLayout` makes column size / minSize / maxSize authoritative — content
+// wraps within the allotted width instead of stretching the column.
+.tedi-table--fixed-layout .tedi-table__table {
+  table-layout: fixed;
+}
+
+// Drag-and-drop: keep widths stable during drag (CDK preview otherwise
+// collapses table cells to their natural width).
+.tedi-table--draggable {
+  .tedi-table__table {
+    // table-layout: fixed;
+  }
+}
+
+.tedi-table__drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  color: var(--general-text-tertiary);
+  cursor: grab;
+  background: transparent;
+  border: 0;
+  border-radius: var(--button-radius-sm);
+
+  &:hover {
+    color: var(--general-text-primary);
+    background: var(--button-main-neutral-icon-only-background-hover);
+  }
+
+  &:focus-visible {
+    outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+    outline-offset: 0;
+  }
+
+  &.cdk-drag-disabled {
+    color: var(--general-text-disabled);
+    cursor: not-allowed;
+  }
+
+  &--picked-up {
+    color: var(--tedi-primary-500);
+    cursor: grabbing;
+  }
+}
+
+.cdk-drag-preview .tedi-table__drag-handle,
+.cdk-drop-list-dragging .tedi-table__drag-handle {
+  cursor: grabbing;
+}
+
+.cdk-drag-preview.tedi-table__row,
+.cdk-drag-preview.tedi-table__header-cell {
+  display: table;
+  cursor: grabbing;
+  background: var(--table-hover);
+  border: var(--tedi-borders-01) solid var(--card-border-primary);
+  border-radius: var(--table-radius);
+  box-shadow: 0 6px 16px var(--tedi-alpha-20);
+}
+
+.cdk-drag-preview.tedi-table__row>.tedi-table__cell {
+  background: var(--table-hover);
+}
+
+.cdk-drag-placeholder.tedi-table__row,
+.cdk-drag-placeholder.tedi-table__header-cell {
+  opacity: 0.3;
+}
+
+.cdk-drop-list-dragging .tedi-table__row:not(.cdk-drag-placeholder),
+.cdk-drop-list-dragging .tedi-table__header-cell:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.tedi-table__filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tedi-dimensions-12);
+  width: 100%;
+}
+
+.tedi-table__filter-actions {
+  display: flex;
+  gap: var(--button-gutter-x-sm);
+
+  >* {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+}
+
+// ── Keyboard column-reorder picked-up state ──────────────────────────────────
+
+// Scoped under `.tedi-table__head` so the highlight wins over the higher-
+// specificity sticky-header cell rules (which would otherwise reset the
+// background).
+.tedi-table .tedi-table__head .tedi-table__header-cell--picked-up {
+  cursor: grabbing;
+  background: var(--table-hover);
+}
+
+// Screen-reader-only utility for the live region.
+.tedi-table__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  white-space: nowrap;
+  border: 0;
+  clip-path: inset(50%);
+}

@@ -1,0 +1,29 @@
+@use "../tabs.mixins" as *;
+
+.tedi-tabs-trigger {
+  @include tedi-tab-button-base;
+
+  position: relative;
+  text-decoration: none;
+
+  &--selected {
+    --_tab-background: var(--tab-item-selected-background);
+    --_tab-color: var(--tab-item-selected-text);
+
+    font-weight: var(--body-bold-weight);
+
+    &::after {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      content: "";
+      border-top: 3px solid var(--tab-item-selected-border);
+    }
+  }
+
+  &--disabled {
+    pointer-events: none;
+    opacity: 0.4;
+  }
+}

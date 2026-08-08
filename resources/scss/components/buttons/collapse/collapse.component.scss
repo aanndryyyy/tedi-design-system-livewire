@@ -1,0 +1,33 @@
+$transition-duration: 300ms;
+
+:host {
+  display: block;
+}
+
+.tedi-collapse {
+  &--inverted {
+    color: var(--general-text-white);
+  }
+
+  &__extender {
+    visibility: hidden;
+    min-height: 0;
+    padding-top: var(--tedi-dimensions-05);
+    transition: visibility $transition-duration;
+  }
+
+  &__content {
+    display: grid;
+    grid-template-rows: 0fr;
+    overflow: hidden;
+    transition: grid-template-rows $transition-duration;
+
+    .tedi-collapse--open > & {
+      grid-template-rows: 1fr;
+
+      .tedi-collapse__extender {
+        visibility: visible;
+      }
+    }
+  }
+}

@@ -1,0 +1,56 @@
+$icon-colors: (
+  "primary": "general-icon-primary",
+  "secondary": "general-icon-secondary",
+  "tertiary": "general-icon-tertiary",
+  "brand": "general-icon-brand",
+  "brand-dark": "general-icon-brand-dark",
+  "success": "general-icon-success",
+  "warning": "general-icon-warning",
+  "warning-dark": "general-icon-warning-dark",
+  "danger": "general-icon-danger",
+  "white": "general-icon-white",
+);
+$icon-backgrounds: (
+  "primary": "general-icon-background-primary",
+  "secondary": "general-icon-background-secondary",
+  "brand-primary": "general-icon-background-brand-primary",
+  "brand-secondary": "general-icon-background-brand-secondary",
+);
+.tedi-icon {
+  --_tedi-icon-size: var(--icon-05);
+
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--_tedi-icon-size);
+  vertical-align: middle;
+
+  @each $name, $var in $icon-colors {
+    &--color-#{$name} {
+      color: var(--#{$var});
+    }
+  }
+
+  &--color-inherit {
+    color: inherit;
+  }
+
+  &--size-inherit {
+    font-size: inherit;
+  }
+
+  &--bg {
+    padding: var(--_tedi-icon-bg-padding);
+    border-radius: 100%;
+
+    @each $name, $var in $icon-backgrounds {
+      &-#{$name} {
+        background-color: var(--#{$var});
+      }
+    }
+  }
+
+  &--filled {
+    font-variation-settings: "FILL" 1;
+    font-optical-sizing: auto;
+  }
+}

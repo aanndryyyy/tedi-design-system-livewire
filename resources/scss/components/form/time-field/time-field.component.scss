@@ -1,0 +1,133 @@
+@use "@tedi-design-system/core/bootstrap-utility/breakpoints";
+
+.tedi-time-field {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+
+  &__popover {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__field {
+    display: flex;
+    flex: 1;
+    gap: var(--form-field-inner-spacing);
+    align-items: center;
+    min-width: 0;
+
+    &:focus,
+    &:focus-visible {
+      outline: none;
+    }
+
+    // Button-trigger: the wrapper anchors the popover but only the icon opens it.
+    // Disabling pointer events on the wrapper's dead areas keeps stray clicks off
+    // the trigger directive; the controls re-enable events below.
+    &--button-trigger {
+      pointer-events: none;
+
+      .tedi-time-field__input,
+      .tedi-time-field__clear,
+      .tedi-time-field__icon {
+        pointer-events: auto;
+      }
+    }
+  }
+
+  &__input {
+    flex: 1;
+    min-width: 0;
+
+    // Chrome straddles the caret across the insertion point, so with no left
+    // padding most of it falls outside the input's clip box at offset 0. Give it a
+    // pixel of room and pull the box back by the same amount so the value's
+    // position is unchanged — the field's own padding still sets the inset.
+    padding-inline-start: 1px;
+    margin-inline-start: -1px;
+    font-family: inherit;
+    font-size: var(--body-regular-size);
+    color: var(--form-input-text-filled);
+    background: transparent;
+    border: 0;
+    border-radius: var(--form-field-radius);
+
+    &::placeholder {
+      color: var(--form-input-text-placeholder);
+    }
+
+    &:disabled {
+      color: var(--form-input-text-disabled);
+      cursor: not-allowed;
+    }
+
+    &::-webkit-calendar-picker-indicator,
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button,
+    &::-webkit-clear-button,
+    &::-webkit-list-button {
+      display: none;
+      margin: 0;
+      appearance: none;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: var(--layout-grid-gutters-04);
+    align-items: center;
+    align-self: center;
+    justify-content: center;
+  }
+
+  &__clear {
+    flex-shrink: 0;
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  &__popover-content.tedi-popover-content {
+    padding: 0;
+  }
+}
+
+.tedi-time-field .tedi-time-field__icon {
+  flex-shrink: 0;
+
+  // 24px, growing to a 32px touch target below md. Feeding the size into the
+  // token tedi-button reads avoids overrides — its default jumps to 44px on mobile.
+  --button-sm-icon-size: var(--form-field-button-height-sm);
+
+  width: var(--button-sm-icon-size);
+  height: var(--button-sm-icon-size);
+  font-size: 1.125rem;
+  border-radius: var(--button-radius-sm);
+
+  @include breakpoints.media-breakpoint-down(md) {
+    --button-sm-icon-size: var(--form-field-button-height);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  &--open:not(:disabled),
+  &--open:not(:disabled):hover,
+  &--open:not(:disabled):active {
+    color: var(--_btn-active-text);
+    background: var(--_btn-active-bg);
+    border-color: var(--_btn-active-border);
+  }
+
+  &--static {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--form-input-text-placeholder);
+  }
+}

@@ -1,0 +1,16 @@
+# /.storybook used to be ignored as generated output. It is now project-owned
+# config (published with `php artisan blast:publish-storybook-config`) and
+# carries the docs inline-rendering fix, so it has to be committed.
+/node_modules
+/public/blast
+/public/vendor
+/public/storybook-static
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+/vendor
+.env
+.phpunit.result.cache
+!.gitkeep
+/bootstrap/cache/*

@@ -1,0 +1,41 @@
+@use "@tedi-design-system/core/mixins";
+@use "@tedi-design-system/core/bootstrap-utility/breakpoints";
+
+.tedi-header-language {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+
+  [tedi-popover-trigger] .tedi-header-language__chevron {
+    margin: 0;
+    transition: transform 0.2s ease-in-out;
+  }
+
+  [tedi-popover-trigger][aria-expanded="true"] .tedi-header-language__chevron {
+    transform: rotate(-180deg);
+  }
+
+  &--label-left {
+    flex-direction: row;
+    gap: var(--layout-grid-gutters-08);
+    align-items: center;
+  }
+
+  @include breakpoints.media-breakpoint-down(md) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--layout-header-mobile-button-size);
+    min-width: var(--layout-header-mobile-button-min-size);
+    height: var(--layout-header-mobile-button-min-size);
+  }
+
+  &__label {
+    display: none;
+
+    @include breakpoints.media-breakpoint-up(lg) {
+      display: block;
+    }
+  }
+}

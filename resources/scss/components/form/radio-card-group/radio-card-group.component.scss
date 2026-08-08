@@ -1,0 +1,11 @@
+.tedi-radio-card-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--form-checkbox-radio-card-gutter);
+
+  &--grouped {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    gap: 0;
+  }
+}

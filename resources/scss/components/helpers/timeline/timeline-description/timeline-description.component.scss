@@ -1,0 +1,16 @@
+tedi-timeline-description {
+  display: flex;
+  gap: var(--layout-grid-gutters-04);
+  align-items: center;
+  min-height: var(--timeline-text-min-height);
+  font-size: var(--body-small-regular-size);
+  font-weight: var(--body-small-regular-weight);
+  line-height: var(--body-small-regular-line-height);
+  color: var(--general-text-tertiary);
+
+  > * {
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+  }
+}

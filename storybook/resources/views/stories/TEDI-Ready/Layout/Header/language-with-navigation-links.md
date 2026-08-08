@@ -1,0 +1,3 @@
+By default each language option switches the language client-side. For apps that switch language by navigating to a localized URL, pass `[languageHrefs]` — each option then renders as a real `<a href>` anchor, keeping native link behavior (open in new tab, middle-click, works without JS).
+
+This demo uses hash fragments (`#et`, `#en`, `#ru`) so selecting a language stays within Storybook; real apps would point these at localized URLs (e.g. `/et`, `/en`).

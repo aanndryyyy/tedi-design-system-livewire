@@ -1,0 +1,72 @@
+.tedi-sidenav-dropdown-item {
+  --_padding-left: var(--navigation-vertical-item-padding-left-level-2);
+  --_gap: var(--navigation-vertical-item-inner-spacing);
+
+  position: relative;
+  display: block;
+  min-height: var(--_sidenav-dropdown-item-height);
+  color: var(--navigation-vertical-item-text-default);
+
+  &:hover {
+    background: var(--navigation-vertical-item-background-hover);
+  }
+
+  &--selected {
+    font-weight: var(--body-bold-weight);
+    background: var(--navigation-vertical-item-background-active);
+  }
+
+  &__trigger {
+    display: block;
+    padding: var(--_sidenav-item-padding-y) var(--_sidenav-item-padding-right)
+      var(--_sidenav-item-padding-y)
+      calc(var(--_padding-left) + var(--_sidenav-tree-container) + var(--_gap));
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: none;
+      background: var(--navigation-vertical-item-background-focus);
+      box-shadow: var(--_sidenav-focus-ring);
+    }
+  }
+
+  &::before {
+    position: absolute;
+    top: 0;
+    left: calc(var(--_padding-left) + var(--_sidenav-tree-left-padding));
+    width: var(--_sidenav-tree-trunk-width);
+    height: 100%;
+    content: "";
+    background-color: var(--navigation-vertical-tree-brand-default);
+  }
+
+  &::after {
+    position: absolute;
+    top: 50%;
+    left: calc(var(--_padding-left) + var(--_sidenav-tree-left-padding));
+    width: var(--_sidenav-tree-branch-width);
+    height: var(--_sidenav-tree-trunk-width);
+    content: "";
+    background-color: var(--navigation-vertical-tree-brand-default);
+    transform: translateY(-50%);
+  }
+
+  &--parent {
+    .tedi-sidenav-dropdown-item__trigger {
+      padding-left: var(--dropdown-item-padding-x);
+    }
+
+    &::before,
+    &::after {
+      display: none;
+    }
+  }
+}
+
+tedi-sidenav-dropdown-item:last-child > .tedi-sidenav-dropdown-item::before,
+tedi-sidenav-dropdown-item:has(+ tedi-sidenav-dropdown-group)
+  > .tedi-sidenav-dropdown-item::before {
+  height: 50%;
+}

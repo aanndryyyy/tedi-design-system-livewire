@@ -1,0 +1,13 @@
+@use "@tedi-design-system/core/bootstrap-utility/breakpoints";
+
+.tedi-header-bottom {
+  display: block;
+  padding: var(--layout-grid-gutters-12) var(--layout-page-spacing-x);
+  background: var(--general-surface-primary);
+  border-top: var(--tedi-borders-01) solid var(--general-border-primary);
+  border-bottom: var(--tedi-borders-01) solid var(--general-border-primary);
+
+  @include breakpoints.media-breakpoint-up(md) {
+    display: none;
+  }
+}

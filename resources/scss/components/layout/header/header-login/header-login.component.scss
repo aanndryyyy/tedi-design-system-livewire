@@ -1,0 +1,9 @@
+tedi-header-login {
+  display: flex;
+  align-items: center;
+  padding-left: 0;
+
+  .tedi-header-login__button {
+    flex-shrink: 0;
+  }
+}

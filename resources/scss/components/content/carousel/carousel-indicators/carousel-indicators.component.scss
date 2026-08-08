@@ -1,0 +1,46 @@
+tedi-carousel-indicators {
+  display: flex;
+  gap: var(--layout-grid-gutters-04);
+  align-items: center;
+  min-height: 24px;
+}
+
+.tedi-carousel__indicator {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  background: none;
+  border: none;
+
+  &::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 22px;
+    height: 8px;
+    content: "";
+    background-color: transparent;
+    border: 1px solid var(--tedi-primary-600);
+    border-radius: 100px;
+    transform: translate(-50%, -50%);
+  }
+
+  &:hover::after {
+    border-color: var(--tedi-primary-700);
+  }
+
+  &:active::after {
+    background-color: var(--tedi-primary-800);
+    border-color: var(--tedi-primary-800);
+  }
+
+  &:focus-visible::after {
+    outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+    outline-offset: var(--tedi-borders-01);
+  }
+
+  &--active::after {
+    background-color: var(--tedi-primary-600);
+  }
+}

@@ -1,0 +1,159 @@
+@use "@tedi-design-system/core/bootstrap-utility/breakpoints";
+
+.tedi-number-field {
+  display: flex;
+
+  &:hover:not(.tedi-number-field--disabled) {
+    .tedi-number-field__button:not(:disabled),
+    .tedi-number-field__input-wrapper:not(:disabled) {
+      border-color: var(--form-input-border-hover);
+    }
+  }
+
+  .tedi-number-field__button {
+    --general-icon-primary: currentcolor;
+
+    width: var(--form-field-height);
+    height: var(--form-field-height);
+    border: var(--tedi-borders-01) solid var(--form-input-border-default);
+
+    &:disabled {
+      background-color: var(--form-input-background-disabled);
+      border: var(--tedi-borders-01) solid var(--form-input-border-disabled);
+      opacity: 0.5;
+    }
+
+    &--decrement {
+      z-index: 2;
+      margin-right: calc(-1 * var(--tedi-borders-01));
+      border-radius: 0;
+      border-top-left-radius: var(--button-radius-sm);
+      border-bottom-left-radius: var(--button-radius-sm);
+    }
+
+    &--increment {
+      margin-left: calc(-1 * var(--tedi-borders-01));
+      border-radius: 0;
+      border-top-right-radius: var(--button-radius-sm);
+      border-bottom-right-radius: var(--button-radius-sm);
+    }
+
+    &--small {
+      width: var(--form-field-height-sm);
+      height: var(--form-field-height-sm);
+    }
+  }
+
+  &--invalid:not(.tedi-number-field--disabled) {
+    .tedi-number-field__button,
+    .tedi-number-field__button:disabled,
+    .tedi-number-field__button:hover,
+    .tedi-number-field__input-wrapper {
+      border-color: var(--form-general-feedback-error-border);
+    }
+
+    .tedi-number-field__input-wrapper {
+      &:focus-within {
+        outline-color: var(--form-general-feedback-error-border);
+      }
+
+      &:active {
+        z-index: 2;
+        outline: none;
+        border-color: var(--form-general-feedback-error-border);
+        border-radius: 0;
+      }
+    }
+  }
+
+  &--disabled {
+    .tedi-number-field__button,
+    .tedi-number-field__button:disabled,
+    .tedi-number-field__input-wrapper {
+      background-color: var(--form-input-background-disabled);
+      border-color: var(--form-input-border-disabled);
+    }
+
+    .tedi-number-field__input-wrapper {
+      background-color: var(--form-input-background-disabled);
+      opacity: 0.5;
+
+      .tedi-number-field__input {
+        background-color: var(--form-input-background-disabled);
+      }
+    }
+  }
+}
+
+.tedi-number-field__input-wrapper {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--form-field-inner-spacing-sm);
+  align-items: stretch;
+  width: var(--form-number-input-min-width);
+  height: var(--form-field-height);
+  padding-right: var(--form-field-padding-y-3-default);
+  padding-left: var(--form-field-padding-y-3-default);
+  background-color: var(--form-input-background-default);
+  border: var(--tedi-borders-01) solid var(--form-input-border-default);
+
+  &:focus-within {
+    z-index: 2;
+    outline: calc(2 * var(--tedi-borders-01)) solid
+      var(--form-input-border-active);
+    outline-offset: var(--tedi-borders-01);
+    border-color: var(--form-input-border-active);
+    border-radius: var(--button-radius-sm);
+  }
+
+  &:active:not(.tedi-number-field__input-wrapper--disabled) {
+    z-index: 2;
+    outline: none;
+    border-color: var(--form-input-border-active);
+    border-radius: 0;
+  }
+
+  &--small {
+    height: var(--form-field-height-sm);
+  }
+
+  &--with-suffix {
+    .tedi-number-field__input {
+      grid-column: span 1;
+      text-align: right;
+    }
+
+    .tedi-number-field__suffix {
+      align-self: center;
+      text-align: left;
+      user-select: none;
+    }
+  }
+
+  &--full-width {
+    width: 100%;
+  }
+}
+
+.tedi-number-field__input {
+  grid-column: span 2;
+  width: 100%;
+  font-size: var(--heading-h6-size);
+  color: var(--form-input-text-filled);
+  text-align: center;
+  outline: none;
+  background-color: var(--form-input-background-default);
+  border: 0;
+  border-radius: 0;
+
+  /* Chrome, Safari, Edge, Opera */
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    appearance: none;
+  }
+
+  /* Firefox */
+  &[type="number"] {
+    appearance: textfield;
+  }
+}

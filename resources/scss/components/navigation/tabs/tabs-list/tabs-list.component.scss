@@ -1,0 +1,66 @@
+@use "../tabs.mixins" as *;
+
+.tedi-tabs-list {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  background: var(--tab-background);
+  border-top-left-radius: var(--tab-top-radius);
+  border-top-right-radius: var(--tab-top-radius);
+
+  &--fade-start::before,
+  &--fade-end::after {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 1;
+    width: 3rem;
+    pointer-events: none;
+    content: "";
+  }
+
+  &--fade-start::before {
+    left: 0;
+    background: linear-gradient(to right,
+        var(--tab-background) 10%,
+        transparent 80%);
+  }
+
+  &--fade-end::after {
+    right: 0;
+    background: linear-gradient(to left,
+        var(--tab-background) 10%,
+        transparent 80%);
+  }
+
+  &__items {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+
+    &--overflow {
+      .tedi-tabs-trigger:not(.tedi-tabs-trigger--selected) {
+        display: none;
+      }
+
+      .tedi-tabs-trigger--selected {
+        flex-grow: 1;
+        min-width: 0;
+      }
+    }
+
+    &--scroll {
+      overflow-x: auto;
+    }
+  }
+
+  &__more {
+    display: flex;
+    flex-shrink: 0;
+  }
+
+  &__more-btn {
+    @include tedi-tab-button-base;
+  }
+}

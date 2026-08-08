@@ -1,0 +1,14 @@
+.tedi-time-picker-modal {
+  --_tedi-modal-body-padding: 0;
+
+  .tedi-time-picker {
+    width: 100%;
+
+    --tedi-time-picker-width: 100%;
+  }
+}
+
+.tedi-time-picker-modal__content {
+  display: flex;
+  justify-content: center;
+}

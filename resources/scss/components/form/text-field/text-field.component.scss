@@ -1,0 +1,41 @@
+.tedi-text-field {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+
+  // Chrome straddles the caret across the insertion point, so with no left
+  // padding most of it falls outside the input's clip box at offset 0. Give it a
+  // pixel of room and pull the box back by the same amount so the value's
+  // position is unchanged — the field's own padding still sets the inset.
+  padding-inline-start: 1px;
+  margin-inline-start: -1px;
+  font-size: var(--body-regular-size);
+  font-weight: var(--body-regular-weight);
+  line-height: var(--body-regular-line-height);
+  color: var(--form-input-text-filled);
+  outline: none;
+  background: transparent;
+  border: 0;
+  border-radius: var(--form-field-radius);
+
+  &::placeholder {
+    color: var(--form-input-text-placeholder);
+  }
+
+  &:disabled {
+    color: var(--form-input-text-disabled);
+    cursor: not-allowed;
+    background: transparent;
+  }
+
+  /* Chrome, Safari, Edge, Opera */
+  &--arrows-hidden::-webkit-outer-spin-button,
+  &--arrows-hidden::-webkit-inner-spin-button {
+    appearance: none;
+  }
+
+  /* Firefox */
+  &--arrows-hidden[type="number"] {
+    appearance: textfield;
+  }
+}

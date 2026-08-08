@@ -1,0 +1,357 @@
+tedi-date-picker {
+  display: flex;
+  gap: var(--form-field-inner-spacing);
+  align-self: stretch;
+  min-height: var(--form-field-height);
+  padding-right: var(--form-field-padding-x-md-default);
+  background: var(--form-input-background-default);
+  border: var(--tedi-borders-01) solid var(--form-input-border-default);
+  border-radius: var(--form-field-radius);
+
+  &:has(.tedi-date-picker__input:hover):not(
+      :has(.tedi-date-picker__input:disabled)
+    ) {
+    border-color: var(--form-input-border-hover);
+  }
+
+  &:has(.tedi-date-picker__input:active):not(
+      :has(.tedi-date-picker__input:disabled)
+    ),
+  &:has(.tedi-date-picker__input:focus):not(
+      :has(.tedi-date-picker__input:disabled)
+    ) {
+    border-color: var(--form-input-border-active);
+    box-shadow: inset 0 0 0 1px var(--form-input-border-active);
+  }
+
+  &:has(.tedi-date-picker__input:disabled) {
+    cursor: not-allowed;
+    background: var(--form-input-background-disabled);
+    border-color: var(--form-input-border-disabled);
+  }
+
+  &:has(.tedi-date-picker__input--valid) {
+    border-color: var(--form-general-feedback-success-border);
+  }
+
+  &:has(.tedi-date-picker__input--error) {
+    border-color: var(--form-general-feedback-error-border);
+  }
+
+  &:has(.tedi-date-picker__input--small) {
+    min-height: var(--form-field-height-sm);
+  }
+}
+
+.tedi-date-picker {
+  &__input {
+    flex: 1;
+    min-width: 0;
+    padding-left: var(--form-field-padding-x-md-default);
+    font-size: var(--body-regular-size);
+    color: var(--form-input-text-filled);
+    background: transparent;
+    border: 0;
+    border-radius: var(--form-field-radius);
+
+    &::placeholder {
+      color: var(--form-input-text-placeholder);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      background: transparent;
+    }
+  }
+
+  &__input-buttons {
+    display: flex;
+    gap: var(--layout-grid-gutters-04);
+    align-items: center;
+    align-self: center;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  &__clear {
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  &__toggle {
+    width: var(--button-xs-icon-size) !important;
+    height: var(--form-field-button-height-sm) !important;
+    font-size: 1.125rem !important;
+    border-radius: var(--button-radius-sm) !important;
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  &__calendar {
+    display: block;
+    width: fit-content;
+    user-select: none;
+    background: var(--card-background-primary);
+    border-radius: var(--card-radius-rounded);
+  }
+
+  &__header {
+    display: flex;
+    gap: var(--layout-grid-gutters-08);
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--card-padding-md-default) var(--card-padding-md-default)
+      var(--card-padding-xs) var(--card-padding-md-default);
+  }
+
+  &__controls {
+    display: flex;
+    gap: var(--layout-grid-gutters-08);
+    align-items: center;
+    margin: 0 auto;
+  }
+
+  &__dropdown-trigger {
+    display: inline-flex;
+    gap: var(--layout-grid-gutters-02);
+    align-items: center;
+    padding: 0;
+    padding-left: var(--layout-grid-gutters-04);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--general-text-primary);
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    border-radius: var(--button-radius-sm);
+
+    &:hover {
+      color: var(--button-main-neutral-text-hover);
+      background: var(--button-main-neutral-icon-only-background-hover);
+
+      tedi-icon {
+        color: var(--button-main-neutral-text-hover);
+      }
+    }
+
+    &:active {
+      color: var(--button-main-neutral-text-active);
+      background: var(--button-main-neutral-icon-only-background-active);
+
+      tedi-icon {
+        color: var(--button-main-neutral-text-active);
+      }
+    }
+
+    &:focus-visible {
+      outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+      outline-offset: var(--tedi-borders-01);
+    }
+
+    tedi-icon {
+      font-size: 2rem;
+      color: var(--general-icon-tertiary);
+    }
+  }
+
+  &__dropdown-content {
+    max-height: 15rem;
+
+    &--month {
+      width: 10rem;
+    }
+
+    &--year {
+      width: 8.75rem;
+    }
+  }
+
+  &__label {
+    font-weight: 500;
+    color: var(--general-text-primary);
+  }
+
+  &__nav {
+    font-size: var(--button-icon-inner-icon-only-size) !important;
+  }
+
+  &__weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    padding: 0 var(--card-padding-md-default);
+
+    &--numbered {
+      grid-template-columns: repeat(8, 1fr);
+    }
+  }
+
+  &__weekday {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--form-calendar-date-width);
+    height: var(--form-calendar-date-width);
+    font-size: var(--body-small-regular-size);
+    color: var(--general-text-tertiary);
+    text-align: center;
+    text-transform: uppercase;
+    border-bottom: var(--tedi-borders-01) solid var(--general-border-primary);
+  }
+
+  &__grid {
+    display: flex;
+    flex-direction: column;
+    padding: 0 var(--card-padding-md-default) var(--card-padding-md-default)
+      var(--card-padding-md-default);
+  }
+
+  &__row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+
+    &--numbered {
+      grid-template-columns: repeat(8, 1fr);
+    }
+  }
+
+  &__weeknumber {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: var(--form-calendar-date-width);
+    height: var(--form-calendar-date-width);
+    font-size: var(--body-small-regular-size);
+    color: var(--general-text-tertiary);
+    border-right: var(--tedi-borders-01) solid var(--general-border-primary);
+  }
+
+  &__day {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: var(--form-calendar-date-width);
+    height: var(--form-calendar-date-width);
+    font-size: var(--body-regular-size);
+    color: var(--general-text-primary);
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-radius: var(--button-radius-sm);
+
+    &:hover {
+      background: var(--form-datepicker-date-hover);
+    }
+
+    &:active {
+      background: var(--form-datepicker-date-active);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.3;
+    }
+
+    &:focus-visible {
+      outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+      outline-offset: var(--tedi-borders-01);
+    }
+
+    &--other-month {
+      color: var(--form-datepicker-date-text-muted);
+    }
+
+    &--selected {
+      color: var(--form-datepicker-date-text-selected);
+      background: var(--form-datepicker-date-selected);
+      border-radius: var(--button-radius-sm);
+
+      &:hover {
+        background: var(--form-datepicker-date-selected);
+      }
+
+      .tedi-date-picker__today {
+        border-color: var(--form-datepicker-today-border-secondary);
+      }
+    }
+  }
+
+  &__today {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: var(--form-calendar-date-width);
+    height: var(--form-calendar-date-width);
+    border: var(--tedi-borders-01) solid var(--form-datepicker-today-border);
+    border-radius: var(--button-radius-default);
+  }
+
+  &__month-year-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--layout-grid-gutters-08);
+    padding: var(--card-padding-md-default);
+  }
+
+  &__month-year-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--form-checkbox-radio-card-radio-padding-y)
+      var(--form-checkbox-radio-card-radio-padding-x);
+    font-size: var(--body-regular-size);
+    color: var(--form-checkbox-radio-card-primary-default-text);
+    background: var(--form-checkbox-radio-card-secondary-default-background);
+    border: var(--tedi-borders-01) solid
+      var(--form-checkbox-radio-card-secondary-default-border);
+    border-radius: var(--form-checkbox-radio-card-radius);
+
+    &:hover {
+      color: var(--form-checkbox-radio-card-secondary-hover-text);
+      background: var(--form-checkbox-radio-card-secondary-hover-background);
+      border-color: var(--form-checkbox-radio-card-secondary-hover-border);
+    }
+
+    &:focus-visible {
+      outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+      outline-offset: var(--tedi-borders-01);
+    }
+
+    &:disabled {
+      color: var(--form-checkbox-radio-card-secondary-disabled-default-text);
+      cursor: not-allowed;
+      background: var(
+        --form-checkbox-radio-card-secondary-disabled-default-background
+      );
+      border-color: var(
+        --form-checkbox-radio-card-secondary-disabled-default-border
+      );
+    }
+
+    &--selected {
+      color: var(--form-checkbox-radio-card-secondary-selected-text);
+      background: var(--form-checkbox-radio-card-secondary-selected-background);
+      border-color: var(--form-checkbox-radio-card-secondary-selected-border);
+      box-shadow: 0 0 0 1px
+        var(--form-checkbox-radio-card-secondary-selected-border);
+
+      &:disabled {
+        color: var(--form-checkbox-radio-card-secondary-disabled-selected-text);
+        cursor: not-allowed;
+        background: var(
+          --form-checkbox-radio-card-secondary-disabled-selected-background
+        );
+        border-color: var(
+          --form-checkbox-radio-card-secondary-disabled-selected-border
+        );
+        box-shadow: 0 0 0 1px
+          var(--form-checkbox-radio-card-secondary-disabled-selected-border);
+      }
+    }
+  }
+}

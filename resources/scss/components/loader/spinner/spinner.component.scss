@@ -1,0 +1,74 @@
+$spinner-colors: (
+  "primary": "loader-spinner-color-primary",
+  "secondary": "loader-spinner-color-secondary",
+);
+$spinner-viewbox: 44;
+$spinner-sizes: (
+  10: 1,
+  16: 2,
+  48: 4,
+);
+
+.tedi-spinner {
+  display: flex;
+  width: calc(var(--tedi-spinner-size, 16) * 1rem / 16);
+  height: calc(var(--tedi-spinner-size, 16) * 1rem / 16);
+  animation: 1.4s linear 0s infinite normal none running tedi-spinner-outer;
+
+  &--inner {
+    stroke-width: var(--tedi-spinner-stroke-width);
+    stroke-dasharray: 80, 200;
+    stroke-dashoffset: 0;
+    animation: 1.4s ease-in-out 0s infinite normal none running tedi-spinner-inner;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+
+  @each $color, $var in $spinner-colors {
+    &--color-#{$color} {
+      stroke: var(--#{$var});
+    }
+  }
+
+  @each $size, $stroke in $spinner-sizes {
+    $stroke-width: $stroke * $spinner-viewbox / $size;
+
+    &--size-#{$size} {
+      --tedi-spinner-size: #{$size};
+      --tedi-spinner-stroke-width: #{$stroke-width};
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes tedi-spinner-outer {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes tedi-spinner-inner {
+  0% {
+    stroke-dasharray: 1, 200;
+    stroke-dashoffset: 0;
+  }
+
+  50% {
+    stroke-dasharray: 100, 200;
+    stroke-dashoffset: -15;
+  }
+
+  100% {
+    stroke-dasharray: 100, 200;
+    stroke-dashoffset: -125;
+  }
+}

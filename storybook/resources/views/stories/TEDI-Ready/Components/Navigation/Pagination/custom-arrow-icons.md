@@ -1,0 +1,1 @@
+Override the default `arrow_back` / `arrow_forward` Material Symbols icons via `previousIcon` and `nextIcon`. Useful when the surrounding design system uses a different arrow style (chevrons, double arrows, etc.).

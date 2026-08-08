@@ -1,0 +1,99 @@
+$tooltip-max-width: (
+  "none": none,
+  "small": 10rem,
+  "medium": 15rem,
+  "large": 30rem,
+);
+
+tedi-tooltip {
+  display: contents;
+}
+
+.tedi-tooltip__container {
+  position: relative;
+  z-index: var(--z-index-tooltip);
+  width: max-content;
+  max-width: calc(100dvw - 1rem);
+  border-radius: var(--popover-radius-rounded);
+  box-shadow: 0 1px 5px 0 var(--tedi-alpha-20);
+
+  .tedi-tooltip__arrow {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: var(--tooltip-background);
+    clip-path: inset(0 -5px -5px 0);
+  }
+
+  &[data-placement="top"] {
+    .tedi-tooltip__arrow {
+      bottom: 0;
+      transform: translateX(-50%) translateY(50%) rotate(45deg);
+    }
+  }
+
+  &[data-placement="bottom"] {
+    .tedi-tooltip__arrow {
+      top: 0;
+      transform: translateX(-50%) translateY(-50%) rotate(-135deg);
+    }
+  }
+
+  &[data-placement="left"] {
+    .tedi-tooltip__arrow {
+      right: 0;
+      transform: translateY(-50%) translateX(50%) rotate(-45deg);
+    }
+  }
+
+  &[data-placement="right"] {
+    .tedi-tooltip__arrow {
+      left: 0;
+      transform: translateY(-50%) translateX(-50%) rotate(135deg);
+    }
+  }
+}
+
+tedi-tooltip-trigger {
+  display: inline-flex;
+
+  .tedi-tooltip-trigger--focus {
+    &:focus-visible {
+      outline: 2px solid var(--tedi-primary-500);
+      outline-offset: 2px;
+    }
+  }
+
+  .tedi-tooltip-trigger__text {
+    text-decoration: underline dashed var(--general-border-secondary);
+    text-underline-offset: 0.5em;
+    cursor: default;
+
+    &:hover {
+      color: var(--link-primary-default);
+      text-decoration-color: var(--general-border-brand);
+    }
+  }
+
+  &.tedi-tooltip-trigger--clickable .tedi-tooltip-trigger__text {
+    cursor: pointer;
+  }
+}
+
+.tedi-tooltip-content {
+  position: relative;
+  display: block;
+  max-width: var(--tooltip-max-width);
+  padding: var(--tooltip-padding-y) var(--tooltip-padding-x);
+  color: var(--tooltip-text);
+  overflow-wrap: break-word;
+  background: var(--tooltip-background);
+  border-radius: var(--tooltip-radius);
+  box-shadow: 0 1px 5px 0 var(--tedi-alpha-20);
+
+  @each $name, $width in $tooltip-max-width {
+    &--#{$name} {
+      max-width: $width;
+    }
+  }
+}

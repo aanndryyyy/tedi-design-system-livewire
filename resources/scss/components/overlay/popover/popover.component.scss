@@ -1,0 +1,210 @@
+$popover-max-width: (
+  "small": 240px,
+  "medium": 480px,
+  "large": 840px,
+);
+$arrow-offset: -1rem;
+
+.tedi-popover {
+  display: inline-flex;
+  align-items: center;
+}
+
+[tedi-popover-trigger] {
+  cursor: pointer;
+
+  &:not(button, a[href]):focus-visible {
+    outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+    outline-offset: var(--tedi-borders-01);
+  }
+}
+
+.tedi-popover__container {
+  position: relative;
+  z-index: var(--z-index-dropdown);
+  border: var(--popover-border-width-md) solid var(--popover-border-default);
+  border-radius: var(--popover-radius-rounded);
+  box-shadow: 0 1px 5px 0 var(--tedi-alpha-20);
+
+  &--arrow {
+    .tedi-popover__arrow {
+      position: absolute;
+      z-index: 0;
+      width: 1.5rem;
+      height: 1.5rem;
+      background: var(--popover-background);
+      filter: drop-shadow(0 0 5px var(--tedi-alpha-20));
+      clip-path: inset(0 -5px -5px 0);
+    }
+
+    .tedi-popover-content {
+      z-index: 1;
+    }
+
+    &[data-placement="top"] .tedi-popover__arrow {
+      bottom: -0.75rem;
+      transform: translateX(-50%) rotate(45deg);
+    }
+
+    &[data-placement="bottom"] .tedi-popover__arrow {
+      top: -0.75rem;
+      transform: translateX(-50%) rotate(-135deg);
+    }
+
+    &[data-placement="left"] .tedi-popover__arrow {
+      right: -0.75rem;
+      transform: translateY(-50%) rotate(-45deg);
+    }
+
+    &[data-placement="right"] .tedi-popover__arrow {
+      left: -0.75rem;
+      transform: translateY(-50%) rotate(135deg);
+    }
+  }
+
+  &--border {
+    position: relative;
+
+    &::before {
+      position: absolute;
+
+      // Sit above the content (z-index: 1) so the prominent bar stays visible
+      // even where it overlaps the content's top edge.
+      z-index: 2;
+      content: "";
+      background: var(--popover-border-prominent);
+    }
+
+    .tedi-popover__arrow {
+      // Sit above both the content and the ::before bar so the arrow's white
+      // body can mask the bar segment that crosses the arrow opening.
+      z-index: 3;
+      box-sizing: border-box;
+      width: 1.5rem;
+      height: 1.5rem;
+      background: var(--popover-background);
+      border-right: var(--popover-border-width-lg) solid var(--popover-border-prominent);
+      border-bottom: var(--popover-border-width-lg) solid var(--popover-border-prominent);
+      filter: drop-shadow(0 0 5px var(--tedi-alpha-20));
+      clip-path: polygon(75% 0, 100% 0, 100% 100%, 0 100%, 0 75%);
+    }
+
+    &[data-placement="top"] {
+      border-bottom-right-radius: var(--popover-radius-sharp);
+      border-bottom-left-radius: var(--popover-radius-sharp);
+
+      &::before {
+        right: calc(-1 * var(--popover-border-width-md));
+        bottom: calc(-1 * var(--popover-border-width-md));
+        left: calc(-1 * var(--popover-border-width-md));
+        height: var(--popover-border-width-lg);
+      }
+
+      .tedi-popover__arrow {
+        bottom: $arrow-offset;
+        transform: translateX(-50%)
+          translateY(calc(-1 * var(--popover-border-width-lg))) rotate(45deg);
+      }
+    }
+
+    &[data-placement="bottom"] {
+      border-top-left-radius: var(--popover-radius-sharp);
+      border-top-right-radius: var(--popover-radius-sharp);
+
+      &::before {
+        top: calc(-1 * var(--popover-border-width-md));
+        right: calc(-1 * var(--popover-border-width-md));
+        left: calc(-1 * var(--popover-border-width-md));
+        height: var(--popover-border-width-lg);
+      }
+
+      .tedi-popover__arrow {
+        top: $arrow-offset;
+        transform: translateX(-50%) translateY(var(--popover-border-width-lg))
+          rotate(-135deg);
+      }
+    }
+
+    &[data-placement="left"] {
+      border-top-right-radius: var(--popover-radius-sharp);
+      border-bottom-right-radius: var(--popover-radius-sharp);
+
+      &::before {
+        top: calc(-1 * var(--popover-border-width-md));
+        right: calc(-1 * var(--popover-border-width-md));
+        bottom: calc(-1 * var(--popover-border-width-md));
+        width: var(--popover-border-width-lg);
+      }
+
+      .tedi-popover__arrow {
+        right: $arrow-offset;
+        transform: translateY(-50%)
+          translateX(calc(-1 * var(--popover-border-width-lg))) rotate(-45deg);
+      }
+    }
+
+    &[data-placement="right"] {
+      border-top-left-radius: var(--popover-radius-sharp);
+      border-bottom-left-radius: var(--popover-radius-sharp);
+
+      &::before {
+        top: calc(-1 * var(--popover-border-width-md));
+        bottom: calc(-1 * var(--popover-border-width-md));
+        left: calc(-1 * var(--popover-border-width-md));
+        width: var(--popover-border-width-lg);
+      }
+
+      .tedi-popover__arrow {
+        left: $arrow-offset;
+        transform: translateY(-50%) translateX(var(--popover-border-width-lg))
+          rotate(135deg);
+      }
+    }
+  }
+}
+
+.tedi-popover-trigger__text {
+  text-decoration: underline dashed var(--general-border-secondary);
+  text-underline-offset: 0.5em;
+
+  &:hover {
+    color: var(--link-primary-default);
+    text-decoration-color: var(--general-border-brand);
+  }
+}
+
+.tedi-popover-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-grid-gutters-08);
+  max-width: calc(100dvw - 1rem);
+  padding: var(--popover-padding-sm);
+  color: var(--popover-text);
+  background: var(--popover-background);
+  border-radius: var(--popover-radius-rounded);
+
+  @each $name, $width in $popover-max-width {
+    &--#{$name} {
+      width: $width;
+    }
+  }
+
+  &__head {
+    display: flex;
+    gap: var(--layout-grid-gutters-08);
+    justify-content: space-between;
+
+    >div {
+      display: flex;
+      flex: 1 1 0;
+      flex-direction: column;
+      gap: var(--layout-grid-gutters-08);
+      min-width: 0;
+    }
+  }
+
+  &__title {
+    align-self: center;
+  }
+}

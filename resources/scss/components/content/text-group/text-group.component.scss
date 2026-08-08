@@ -1,0 +1,30 @@
+tedi-text-group {
+  display: block;
+}
+
+.tedi-text-group {
+  &--horizontal {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  &--fixed-label>dt {
+    flex-shrink: 0;
+  }
+
+  >dt {
+    width: var(--_label-width);
+  }
+}
+
+tedi-text-group-label {
+  display: flex;
+  flex-shrink: 0;
+}
+
+tedi-text-group-value {
+  display: flex;
+  gap: var(--text-group-value-inner-spacing);
+  align-items: center;
+}

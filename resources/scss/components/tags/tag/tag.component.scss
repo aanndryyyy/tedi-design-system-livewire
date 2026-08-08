@@ -1,0 +1,94 @@
+.tedi-tag {
+  --_background-color: var(--tag-primary-background);
+  --_border-color: var(--tag-primary-border);
+  --_line-height: var(--body-small-regular-line-height);
+
+  display: inline-flex;
+  gap: var(--tag-default-padding-x);
+  align-items: flex-start;
+  padding: 0 var(--tag-default-padding-x);
+  font-family: var(--family-default);
+  font-size: var(--body-small-regular-size);
+  font-weight: var(--body-small-regular-weight);
+  line-height: var(--_line-height);
+  color: var(--general-text-primary);
+  background-color: var(--_background-color);
+  border-radius: var(--tag-default-radius);
+  box-shadow: inset 0 0 0 1px var(--_border-color);
+
+  &__content {
+    padding: var(--tag-default-padding-y) 0;
+  }
+
+  &--ellipsis {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  &--ellipsis &__content {
+    min-width: 0;
+  }
+
+  &--ellipsis &__icon-wrapper,
+  &--ellipsis .tedi-closing-button {
+    flex-shrink: 0;
+  }
+
+  &__icon-wrapper {
+    line-height: var(--_line-height);
+  }
+
+  &--ellipsis {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  &--ellipsis &__content {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &--ellipsis &__icon-wrapper,
+  &--ellipsis .tedi-closing-button {
+    flex-shrink: 0;
+  }
+
+  // Truncate from the start (ellipsis on the left) — flipping the text
+  // direction moves the overflow/ellipsis to the leading edge while keeping the
+  // content left-aligned.
+  &--ellipsis-start &__content {
+    text-align: left;
+    direction: rtl;
+  }
+
+  &__spinner-wrapper {
+    display: flex;
+    align-items: center;
+    height: calc(var(--_line-height) + var(--tag-default-padding-y));
+
+    tedi-spinner {
+      --tedi-spinner-size: 12;
+      --tedi-spinner-stroke: 2;
+    }
+  }
+
+  &--closable:not(.tedi-tag--loading) {
+    padding-right: 0;
+
+    .tedi-closing-button {
+      border-radius: 0 var(--button-radius-sm) var(--button-radius-sm) 0;
+    }
+  }
+
+  &--secondary {
+    --_background-color: var(--tag-secondary-background);
+    --_border-color: var(--tag-secondary-border);
+  }
+
+  &--danger {
+    --_background-color: var(--tag-danger-background);
+    --_border-color: var(--tag-danger-border);
+  }
+}

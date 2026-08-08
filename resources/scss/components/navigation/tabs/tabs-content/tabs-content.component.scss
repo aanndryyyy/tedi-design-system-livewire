@@ -1,0 +1,7 @@
+.tedi-tabs-content {
+  background: var(--tab-item-selected-background);
+
+  &:not([hidden]) {
+    display: block;
+  }
+}

@@ -1,0 +1,31 @@
+@mixin tedi-tab-button-base {
+  --_tab-background: var(--tab-item-default-background);
+  --_tab-color: var(--tab-item-default-text);
+
+  display: inline-flex;
+  gap: var(--tab-inner-spacing);
+  align-items: center;
+  justify-content: center;
+  padding: var(--tab-spacing-y) var(--tab-spacing-x);
+  font-size: var(--body-regular-size);
+  color: var(--_tab-color);
+  white-space: nowrap;
+  cursor: pointer;
+  background: var(--_tab-background);
+  border: none;
+
+  &:hover {
+    --_tab-background: var(--tab-item-hover-background);
+    --_tab-color: var(--tab-item-hover-text);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 var(--tedi-borders-02) var(--general-border-brand);
+  }
+
+  &:active {
+    --_tab-background: var(--tab-item-active-background);
+    --_tab-color: var(--tab-item-active-text);
+  }
+}

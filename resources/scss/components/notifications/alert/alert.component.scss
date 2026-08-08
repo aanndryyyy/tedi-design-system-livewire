@@ -1,0 +1,151 @@
+@use "@tedi-design-system/core/bootstrap-utility/breakpoints";
+
+@mixin alert-variant($background, $border) {
+  color: var(--general-text-primary);
+  background-color: $background;
+  border-color: $border;
+}
+
+.tedi-alert {
+  --_close-button-size: 18px;
+  --_padding-y: var(--alert-default-padding-y);
+  --_padding-x: var(--alert-default-padding-x);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-grid-gutters-04);
+  padding: var(--_padding-y) var(--_padding-x);
+  border: 1px solid;
+  border-radius: var(--alert-radius);
+
+  @include alert-variant(var(--alert-default-background-info),
+    var(--alert-default-border-info));
+
+  &__body {
+    display: contents;
+  }
+
+  &__head {
+    display: flex;
+    gap: var(--layout-grid-gutters-04);
+    align-items: center;
+  }
+
+  &:has(&__close):not(:has(&__action > *)) {
+    padding-right: calc(var(--layout-grid-gutters-04) + var(--_close-button-size) + var(--_padding-x));
+  }
+
+  &__close {
+    position: absolute;
+    top: var(--_padding-y);
+    right: var(--_padding-x);
+  }
+
+  &__action {
+    display: none;
+
+    &:has(> *) {
+      display: flex;
+      flex-shrink: 0;
+      align-items: center;
+    }
+  }
+
+  &:has(&__action > *) {
+    flex-direction: row;
+    gap: var(--layout-grid-gutters-12);
+    align-items: center;
+
+    .tedi-alert__body {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: var(--layout-grid-gutters-04);
+    }
+
+    .tedi-alert__close {
+      display: none;
+    }
+
+    @include breakpoints.media-breakpoint-down(sm) {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  &__content {
+    display: flex;
+    gap: var(--layout-grid-gutters-08);
+    align-items: flex-start;
+
+    .tedi-alert__content-icon {
+      line-height: var(--body-regular-line-height);
+    }
+  }
+
+  &__title {
+    font-size: var(--heading-h5-size);
+    font-weight: var(--heading-h5-weight);
+    line-height: var(--heading-h5-line-height);
+  }
+
+  &--size-default {
+    font-size: var(--body-regular-size);
+  }
+
+  &--size-small {
+    --_padding-y: var(--alert-default-padding-y-sm);
+    --_padding-x: var(--alert-default-padding-x-sm);
+
+    gap: var(--layout-grid-gutters-02);
+    font-size: var(--body-small-regular-size);
+    line-height: var(--body-small-regular-line-height);
+
+    .tedi-alert__content {
+      gap: var(--layout-grid-gutters-04);
+
+      .tedi-alert__content-icon {
+        line-height: var(--body-small-regular-line-height);
+      }
+    }
+  }
+
+  &--info {
+    @include alert-variant(var(--alert-default-background-info),
+      var(--alert-default-border-info));
+  }
+
+  &--success {
+    @include alert-variant(var(--alert-default-background-success),
+      var(--alert-default-border-success));
+  }
+
+  &--warning {
+    @include alert-variant(var(--alert-default-background-warning),
+      var(--alert-default-border-warning));
+  }
+
+  &--danger {
+    @include alert-variant(var(--alert-default-background-danger),
+      var(--alert-default-border-danger));
+  }
+
+  &--global {
+    width: 100%;
+    border: 0;
+    border-radius: 0;
+  }
+
+  &--no-side-borders {
+    border-right: none;
+    border-left: none;
+    border-radius: 0;
+  }
+}
+
+@media print {
+  .tedi-alert {
+    @include alert-variant(var(--tedi-neutral-100), var(--tedi-neutral-350));
+  }
+}

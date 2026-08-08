@@ -1,0 +1,114 @@
+@use "@tedi-design-system/core/bootstrap-utility/breakpoints";
+@use "../button/button.component";
+
+.tedi-button-group {
+  display: flex;
+
+  &--stretch {
+    .tedi-button {
+      flex: 1;
+    }
+  }
+
+  .tedi-button {
+    &:focus-visible {
+      z-index: 2;
+    }
+
+    &[aria-pressed="true"] {
+      z-index: 1;
+    }
+
+    &[aria-pressed="true"]:not(:disabled) {
+      color: var(--_btn-active-text);
+      background: var(--_btn-active-bg);
+      border-color: var(--_btn-active-border);
+    }
+  }
+
+  // Connected geometry for bare strip items (direct children only, so the mobile
+  // dropdown trigger inside `tedi-dropdown` keeps its own radius).
+  >.tedi-button {
+    &:not(:first-child) {
+      margin-left: calc(var(--tedi-borders-01) * -1);
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+
+    &:not(:last-child) {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+  }
+
+  // Tooltip-wrapped items: tedi-tooltip is display:contents, so the flex item is
+  // the inline-flex trigger. Collapse against the previous item and flatten the
+  // joining corners the same way bare buttons do.
+  tedi-tooltip {
+    &:not(:first-child) tedi-tooltip-trigger {
+      margin-left: calc(var(--tedi-borders-01) * -1);
+    }
+
+    &:not(:first-child) .tedi-button {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+
+    &:not(:last-child) .tedi-button {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+  }
+
+  @include breakpoints.media-breakpoint-down(md) {
+    .tedi-button {
+      flex: 1;
+    }
+  }
+
+  &--dropdown-mode {
+
+    >.tedi-button,
+    >tedi-tooltip {
+      display: none;
+    }
+  }
+
+  &__dropdown {
+    display: flex;
+    flex: 1 1 auto;
+  }
+
+  &__dropdown-trigger {
+    flex: 1;
+
+    &[aria-expanded="true"] {
+      color: var(--_btn-active-text);
+      background: var(--_btn-active-bg);
+      border-color: var(--_btn-active-border);
+    }
+  }
+
+  // A *-button-group group collapses to a trigger that looks like the matching
+  // plain button but keeps the small (segmented) radius instead of the pill radius.
+  &--segmented &__dropdown-trigger {
+    border-radius: var(--button-radius-sm);
+  }
+
+  &--segmented &__dropdown-trigger.tedi-button--secondary {
+    padding: calc(var(--_btn-padding-y) - var(--tedi-borders-02)) calc(var(--_btn-padding-x) - var(--tedi-borders-02));
+    border-width: var(--tedi-borders-02);
+
+    &:not([aria-expanded="true"]) {
+      border-color: var(--button-group-secondary-selected-border);
+    }
+  }
+}
+
+.tedi-button.tedi-button-group-button {
+  gap: 0;
+}
+
+.tedi-button-group-button__label {
+  padding-inline: var(--_btn-inner-spacing);
+}

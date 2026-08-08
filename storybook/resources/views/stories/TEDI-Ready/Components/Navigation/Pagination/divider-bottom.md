@@ -1,0 +1,1 @@
+When pagination sits *above* the content, set `dividerPosition="bottom"` so the line separates the strip from the rows below it. Use `"none"` to remove the divider when the wrapping container already has one.

@@ -1,0 +1,34 @@
+$indicator-types: ("success", "danger", "warning", "inactive");
+
+.tedi-status-indicator {
+  display: inline-block;
+  flex-shrink: 0;
+  border-radius: 50%;
+
+  &--top-right {
+    position: absolute;
+    top: -0.25rem;
+    right: -0.25rem;
+    z-index: 1;
+  }
+
+  &--sm {
+    width: var(--status-indicator-sm);
+    height: var(--status-indicator-sm);
+  }
+
+  &--lg {
+    width: var(--status-indicator-lg);
+    height: var(--status-indicator-lg);
+  }
+
+  &--bordered {
+    box-shadow: 0 0 0 2px var(--tedi-neutral-100);
+  }
+
+  @each $type in $indicator-types {
+    &--#{$type} {
+      background-color: var(--status-badge-indicator-#{$type});
+    }
+  }
+}

@@ -1,0 +1,38 @@
+.tedi-header-logout {
+  display: inline-flex;
+  align-items: center;
+
+  &__button {
+    display: flex;
+    gap: var(--link-inner-spacing-x);
+    align-items: center;
+    min-width: max-content;
+    padding: 0;
+    font-size: var(--body-regular-size);
+
+    tedi-icon.tedi-icon {
+      --_tedi-icon-size: var(--icon-03);
+
+      margin: 0;
+    }
+  }
+
+  &__button:not(.tedi-link) {
+    color: var(--header-mobile-button-text-default);
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+
+    &:hover {
+      color: var(--header-mobile-button-text-hover);
+
+      span {
+        text-decoration: underline;
+      }
+    }
+
+    &:active {
+      color: var(--header-mobile-button-text-active);
+    }
+  }
+}

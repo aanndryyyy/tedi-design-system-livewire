@@ -1,0 +1,355 @@
+@use "@tedi-design-system/core/bootstrap-utility/breakpoints";
+
+.tedi-pagination {
+  display: grid;
+  grid-template-areas: "results pager page-size";
+  grid-template-columns: 1fr auto 1fr;
+  gap: var(--layout-grid-gutters-16);
+  align-items: center;
+  width: 100%;
+  padding: var(--pagination-padding-y) var(--pagination-padding-x);
+
+  &.tedi-pagination--no-pager {
+    grid-template-areas: "results page-size";
+    grid-template-columns: 1fr auto;
+  }
+
+  // Mobile uses flex (not grid) so hidden slots actually collapse out of the
+  // layout — named grid areas would otherwise reserve an empty row even when
+  // the only visible slot is the pager.
+  @include breakpoints.media-breakpoint-down(md) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--layout-grid-gutters-08);
+
+    &.tedi-pagination--no-pager {
+      flex-direction: row;
+      gap: var(--layout-grid-gutters-16);
+      justify-content: space-between;
+    }
+  }
+
+  &--bg-white {
+    background: var(--general-surface-primary);
+  }
+
+  &--bg-transparent {
+    background: transparent;
+  }
+
+  // Divider sits above or below the row. `--bg-transparent` opts out entirely
+  // since transparent placements typically have their own surrounding border.
+  &--divider-top:not(.tedi-pagination--bg-transparent) {
+    border-top: var(--tedi-borders-01) solid var(--general-border-secondary);
+  }
+
+  &--divider-bottom:not(.tedi-pagination--bg-transparent) {
+    border-bottom: var(--tedi-borders-01) solid var(--general-border-secondary);
+  }
+
+  // Empty grid slots would otherwise reserve an implicit row/column, so hide
+  // their wrappers when the modifier class indicates the content is absent.
+  &--no-results .tedi-pagination__slot-start,
+  &--no-pager .tedi-pagination__slot-center,
+  &--no-page-size .tedi-pagination__slot-end {
+    display: none;
+  }
+
+  &__status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    border: 0;
+    clip-path: inset(50%);
+  }
+
+  &__slot-start {
+    display: inline-flex;
+    grid-area: results;
+    align-items: center;
+    justify-self: start;
+    min-width: 0;
+
+    @include breakpoints.media-breakpoint-down(md) {
+      justify-content: center;
+      justify-self: center;
+      order: 2;
+    }
+
+    .tedi-pagination--no-pager & {
+      @include breakpoints.media-breakpoint-down(md) {
+        justify-content: flex-start;
+        justify-self: start;
+        order: 0;
+      }
+    }
+  }
+
+  &__slot-center {
+    display: inline-flex;
+    grid-area: pager;
+    align-items: center;
+    justify-self: center;
+
+    @include breakpoints.media-breakpoint-down(md) {
+      order: 3;
+    }
+  }
+
+  &__slot-end {
+    display: flex;
+    grid-area: page-size;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
+
+    @include breakpoints.media-breakpoint-down(md) {
+      flex-direction: column;
+      gap: var(--layout-grid-gutters-04);
+      justify-content: center;
+      justify-self: center;
+      order: 1;
+    }
+
+    .tedi-pagination--no-pager & {
+      @include breakpoints.media-breakpoint-down(md) {
+        flex-direction: row;
+        gap: var(--form-field-inner-spacing);
+        justify-content: flex-end;
+        justify-self: end;
+      }
+    }
+  }
+
+  &__results {
+    flex: 0 0 auto;
+    font-family: var(--family-default);
+    font-size: var(--body-small-regular-size);
+    font-weight: var(--body-small-regular-weight);
+    line-height: var(--body-small-regular-line-height);
+    color: var(--general-text-secondary);
+    white-space: nowrap;
+
+    @include breakpoints.media-breakpoint-down(md) {
+      font-size: var(--body-regular-size);
+      font-weight: var(--body-regular-weight);
+      line-height: var(--body-regular-line-height);
+    }
+  }
+
+  &__nav {
+    display: flex;
+    gap: var(--layout-grid-gutters-08);
+    align-items: center;
+    justify-content: center;
+
+    @include breakpoints.media-breakpoint-down(md) {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: var(--layout-grid-gutters-16);
+    }
+  }
+
+  &__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--layout-grid-gutters-08);
+    align-items: center;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  &__item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__item--ellipsis {
+    width: var(--pagination-button-size);
+    height: var(--pagination-button-size);
+    font-family: var(--family-default);
+    font-size: var(--body-small-regular-size);
+    line-height: var(--body-small-regular-line-height);
+    color: var(--general-text-secondary);
+    user-select: none;
+  }
+
+  &__page {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--pagination-button-size);
+    height: var(--pagination-button-size);
+    padding: 0 var(--layout-grid-gutters-04);
+    font-family: var(--family-default);
+    font-size: var(--body-small-regular-size);
+    font-weight: var(--body-small-regular-weight);
+    line-height: var(--body-small-regular-line-height);
+    color: var(--general-text-secondary);
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    border-radius: var(--button-radius-default);
+
+    // Extend the touch target to 32×32 without changing the visual size —
+    // satisfies WCAG 2.5.8 with margin for touch error.
+    &::before {
+      position: absolute;
+      inset: -4px;
+      content: "";
+    }
+
+    &:hover {
+      color: var(--button-main-neutral-text-hover);
+      background: var(--button-main-neutral-icon-only-background-hover);
+    }
+
+    &:active {
+      color: var(--button-main-neutral-text-active);
+      background: var(--button-main-neutral-icon-only-background-active);
+    }
+
+    &:focus-visible {
+      color: var(--button-main-neutral-text-focus);
+      outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+      outline-offset: var(--tedi-borders-01);
+    }
+
+    &--selected {
+      color: var(--general-text-white);
+      cursor: default;
+      background: var(--general-surface-brand-secondary);
+
+      &:hover,
+      &:active,
+      &:focus-visible {
+        color: var(--general-text-white);
+        background: var(--general-surface-brand-secondary);
+      }
+    }
+  }
+
+  &__nav-button--previous {
+    @include breakpoints.media-breakpoint-down(md) {
+      grid-column: 1;
+      justify-self: end;
+    }
+  }
+
+  &__nav-button--next {
+    @include breakpoints.media-breakpoint-down(md) {
+      grid-column: 3;
+      justify-self: start;
+    }
+  }
+
+  &__mobile-trigger {
+    display: inline-flex;
+    gap: var(--form-field-inner-spacing);
+    align-items: center;
+    justify-self: center;
+    min-height: var(--form-field-height-sm);
+    padding: var(--form-field-padding-y-sm) var(--form-field-padding-x-md-default);
+    color: var(--form-input-text-filled);
+    cursor: pointer;
+    background: var(--form-input-background-default);
+    border: var(--tedi-borders-01) solid var(--form-input-border-default);
+    border-radius: var(--form-field-radius);
+
+    @include breakpoints.media-breakpoint-down(md) {
+      grid-column: 2;
+    }
+
+    &:focus-visible {
+      outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+      outline-offset: var(--tedi-borders-01);
+    }
+  }
+
+  &__mobile-trigger-label {
+    display: inline-flex;
+    gap: var(--layout-grid-gutters-04);
+    align-items: center;
+    font-family: var(--family-default);
+    font-size: var(--body-regular-size);
+    font-weight: var(--body-regular-weight);
+    line-height: var(--body-regular-line-height);
+
+    strong {
+      font-weight: var(--body-bold-weight);
+      color: var(--general-text-brand);
+    }
+  }
+
+  &__page-size {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--form-field-inner-spacing);
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
+
+    @include breakpoints.media-breakpoint-down(md) {
+      flex-direction: column;
+      gap: var(--layout-grid-gutters-04);
+      align-items: center;
+    }
+
+    .tedi-pagination--no-pager & {
+      @include breakpoints.media-breakpoint-down(md) {
+        flex-direction: row;
+        gap: var(--form-field-inner-spacing);
+      }
+    }
+  }
+
+  &__page-size-label {
+    font-family: var(--family-default);
+    font-size: var(--body-small-regular-size);
+    font-weight: var(--body-small-regular-weight);
+    line-height: var(--body-small-regular-line-height);
+    color: var(--general-text-secondary);
+    white-space: nowrap;
+    cursor: default;
+
+    @include breakpoints.media-breakpoint-down(md) {
+      font-size: var(--body-regular-size);
+      font-weight: var(--body-regular-weight);
+      line-height: var(--body-regular-line-height);
+    }
+  }
+
+  &__page-size-select.tedi-select {
+    width: auto;
+    min-width: 64px;
+  }
+
+  &__page-size-trigger {
+    display: inline-flex;
+    gap: var(--form-field-inner-spacing);
+    align-items: center;
+    min-height: var(--form-field-height-sm);
+    padding: var(--form-field-padding-y-sm) var(--form-field-padding-x-md-default);
+    font-family: var(--family-default);
+    font-size: var(--body-regular-size);
+    font-weight: var(--body-regular-weight);
+    line-height: var(--body-regular-line-height);
+    color: var(--form-input-text-filled);
+    cursor: pointer;
+    background: var(--form-input-background-default);
+    border: var(--tedi-borders-01) solid var(--form-input-border-default);
+    border-radius: var(--form-field-radius);
+
+    &:focus-visible {
+      outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+      outline-offset: var(--tedi-borders-01);
+    }
+  }
+}

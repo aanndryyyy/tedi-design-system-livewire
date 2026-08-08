@@ -1,0 +1,40 @@
+.tedi-header-logo {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+
+  img,
+  svg {
+    display: block;
+    width: auto;
+    height: var(--layout-header-logo-size);
+    max-height: 100%;
+  }
+
+  &--hidden {
+    display: none;
+  }
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  &__default {
+    display: contents;
+  }
+
+  &__dark {
+    display: none;
+  }
+
+  &--dark {
+    .tedi-header-logo__default {
+      display: none;
+    }
+
+    .tedi-header-logo__dark {
+      display: contents;
+    }
+  }
+}

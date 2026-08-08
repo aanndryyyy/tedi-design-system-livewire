@@ -1,0 +1,49 @@
+.tedi-carousel__content {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  cursor: grab;
+
+  &:focus-visible {
+    outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+    outline-offset: calc(-1 * var(--tedi-borders-03));
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &--fade-right {
+    mask-image: linear-gradient(to right, black 90%, transparent 100%);
+  }
+
+  &--fade-x {
+    mask-image:
+      linear-gradient(to right, black 85%, transparent 100%),
+      linear-gradient(to left, black 85%, transparent 100%);
+    mask-composite: intersect;
+  }
+}
+
+.tedi-carousel__track {
+  display: flex;
+  will-change: transform;
+}
+
+.tedi-carousel__slide {
+  user-select: none;
+  scroll-snap-align: none;
+  scroll-margin: 0;
+  -webkit-user-drag: none;
+
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+    outline-offset: calc(-1 * var(--tedi-borders-03));
+  }
+}

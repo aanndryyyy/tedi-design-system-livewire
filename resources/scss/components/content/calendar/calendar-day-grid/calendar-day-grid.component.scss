@@ -1,0 +1,193 @@
+.tedi-calendar-day-grid {
+  width: max-content;
+  border-spacing: 0;
+  border-collapse: collapse;
+
+  &__header {
+    display: grid;
+    grid-template-columns: repeat(7, var(--form-calendar-date-width));
+  }
+
+  &__weekday {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--form-calendar-date-width);
+    height: var(--form-calendar-date-width);
+    font-size: var(--body-small-regular-size);
+    font-weight: 400;
+    color: var(--general-text-tertiary);
+    text-align: center;
+    text-transform: uppercase;
+    border-bottom: var(--tedi-borders-01) solid var(--general-border-primary);
+  }
+
+  &__week-number-header {
+    display: flex;
+    width: var(--form-calendar-date-width);
+    height: var(--form-calendar-date-width);
+    border-bottom: var(--tedi-borders-01) solid var(--general-border-primary);
+  }
+
+  &__row {
+    display: grid;
+    grid-template-columns: repeat(7, var(--form-calendar-date-width));
+  }
+
+  &--with-week-numbers {
+
+    .tedi-calendar-day-grid__header,
+    .tedi-calendar-day-grid__row {
+      grid-template-columns: repeat(8, var(--form-calendar-date-width));
+    }
+  }
+
+  &__cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  &__week-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--form-calendar-date-width);
+    height: var(--form-calendar-date-width);
+    font-size: var(--body-small-regular-size);
+    font-weight: 400;
+    color: var(--general-text-tertiary);
+    border-right: var(--tedi-borders-01) solid var(--general-border-primary);
+  }
+
+  &__day {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--form-calendar-date-width);
+    height: var(--form-calendar-date-width);
+    font-size: var(--body-regular-size);
+    color: var(--general-text-primary);
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-radius: var(--button-radius-sm);
+
+    &:hover {
+      background: var(--form-datepicker-date-hover);
+    }
+
+    &:active {
+      background: var(--form-datepicker-date-active);
+    }
+
+    &:focus-visible {
+      z-index: 1;
+      outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+      outline-offset: var(--tedi-borders-01);
+    }
+
+    &--outside {
+      color: var(--form-datepicker-date-text-muted);
+
+      &:hover {
+        color: var(--general-text-primary);
+      }
+    }
+
+    &--today::before {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      content: "";
+      border: var(--tedi-borders-01) solid var(--form-datepicker-today-border);
+      border-radius: 50%;
+    }
+
+    &--available-day {
+      color: var(--form-datepicker-date-text-available);
+      background: var(--form-datepicker-date-available);
+
+      &:hover {
+        color: var(--general-text-primary);
+        background: var(--form-datepicker-date-hover);
+      }
+    }
+
+    &--selected {
+      color: var(--form-datepicker-date-text-selected);
+      background: var(--form-datepicker-date-selected);
+
+      &:hover {
+        color: var(--form-datepicker-date-text-selected);
+        background: var(--form-datepicker-date-selected-hover);
+      }
+
+      &.tedi-calendar-day-grid__day--today::before {
+        inset: var(--tedi-borders-01);
+        border-color: var(--form-datepicker-today-border-secondary);
+      }
+    }
+
+    &--range-start,
+    &--range-end {
+      color: var(--form-datepicker-date-text-selected);
+      background: var(--form-datepicker-date-selected);
+    }
+
+    &--range-start {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    &--range-end {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+
+    &--range-middle,
+    &--range-preview-middle {
+      color: var(--general-text-primary);
+      background: var(--form-datepicker-date-active);
+      border-radius: 0;
+    }
+
+    &--range-preview-start,
+    &--range-preview-end {
+      color: var(--general-text-primary);
+      background: var(--form-datepicker-date-active);
+    }
+
+    &--range-preview-start {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    &--range-preview-end {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+
+    &--unavailable-day {
+      color: var(--general-text-primary);
+      text-decoration: line-through;
+      opacity: 0.3;
+    }
+
+    &--disabled,
+    &[aria-disabled="true"] {
+      pointer-events: none;
+      cursor: not-allowed;
+      opacity: 0.3;
+    }
+  }
+
+  &__status {
+    position: absolute;
+    top: var(--tedi-borders-02);
+    right: 0;
+    pointer-events: none;
+  }
+}

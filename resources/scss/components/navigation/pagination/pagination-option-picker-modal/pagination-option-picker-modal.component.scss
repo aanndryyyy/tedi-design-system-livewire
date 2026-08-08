@@ -1,0 +1,89 @@
+.tedi-pagination-option-picker-modal {
+  --_tedi-modal-body-padding: 0;
+  --_tedi-pagination-option-picker-item-size: 48px;
+
+  .tedi-modal-content {
+    overflow: hidden;
+  }
+
+  &__viewport {
+    display: block;
+    visibility: hidden;
+    width: 100%;
+    height: min(calc(var(--_tedi-pagination-option-picker-count, 1) * var(--_tedi-pagination-option-picker-item-size)),
+        calc(95dvh));
+
+    &--ready {
+      visibility: visible;
+    }
+  }
+
+  &__item {
+    box-sizing: border-box;
+    display: flex;
+    gap: var(--form-checkbox-radio-inner-spacing);
+    align-items: center;
+    width: 100%;
+    height: var(--_tedi-pagination-option-picker-item-size);
+    padding: var(--dropdown-item-padding-y) var(--dropdown-item-padding-x);
+    font-family: var(--family-default);
+    font-size: var(--body-regular-size);
+    font-weight: var(--body-regular-weight);
+    line-height: var(--body-regular-line-height);
+    color: var(--general-text-primary);
+    text-align: left;
+    cursor: pointer;
+    background: var(--dropdown-item-default-background);
+    border: none;
+    border-bottom: var(--tedi-borders-01) solid var(--general-border-primary);
+
+    &:hover {
+      background: var(--general-surface-tertiary);
+    }
+
+    &:focus-visible {
+      outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
+      outline-offset: calc(var(--tedi-borders-02) * -1);
+    }
+
+    &--selected {
+      color: var(--general-text-white);
+      background: var(--dropdown-item-active-background);
+
+      &:hover {
+        background: var(--dropdown-item-active-background);
+      }
+    }
+
+    &--last {
+      border-bottom: none;
+    }
+  }
+
+  &__radio {
+    position: relative;
+    flex-shrink: 0;
+    width: var(--form-checkbox-radio-size-responsive);
+    height: var(--form-checkbox-radio-size-responsive);
+    background: var(--form-checkbox-radio-default-background-default);
+    border: var(--tedi-borders-01) solid var(--form-checkbox-radio-default-border-default);
+    border-radius: var(--form-checkbox-radio-indicator-radius-radio);
+
+    &--selected {
+      background: var(--dropdown-item-active-background);
+      border-color: var(--general-text-white);
+
+      &::after {
+        position: absolute;
+        inset: 4px;
+        content: "";
+        background: var(--general-text-white);
+        border-radius: 50%;
+      }
+    }
+  }
+
+  &__label {
+    flex: 1;
+  }
+}

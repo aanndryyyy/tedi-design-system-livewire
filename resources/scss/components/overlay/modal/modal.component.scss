@@ -1,0 +1,360 @@
+@use "@tedi-design-system/core/typography";
+@use "@tedi-design-system/core/bootstrap-utility/breakpoints";
+
+@mixin modal-heading($size) {
+  .tedi-modal-header__head {
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      @include typography.heading-styles($size);
+    }
+  }
+}
+
+@mixin modal-size-default {
+  --_tedi-modal-heading-padding-x: var(--modal-heading-padding-x);
+  --_tedi-modal-heading-padding-y: var(--modal-heading-padding-y);
+  --_tedi-modal-body-padding: var(--modal-body-padding);
+  --_tedi-modal-footer-padding-x: var(--modal-footer-padding-x);
+  --_tedi-modal-footer-padding-y: var(--modal-footer-padding-y);
+  --_tedi-modal-footer-gap: var(--button-gutter-x);
+
+  @include modal-heading(h3);
+}
+
+@mixin modal-size-small {
+  --_tedi-modal-heading-padding-x: var(--modal-heading-padding-x-sm);
+  --_tedi-modal-heading-padding-y: var(--modal-heading-padding-y-sm);
+  --_tedi-modal-body-padding: var(--modal-body-padding-sm);
+  --_tedi-modal-footer-padding-x: var(--modal-footer-padding-x-sm);
+  --_tedi-modal-footer-padding-y: var(--modal-footer-padding-y-sm);
+  --_tedi-modal-footer-gap: var(--button-gutter-x-sm);
+
+  @include modal-heading(h4);
+}
+
+@mixin modal-dialog-box {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background-color: var(--modal-background);
+  border: var(--tedi-borders-01) solid var(--modal-border-outer);
+  border-radius: var(--modal-radius);
+}
+
+@mixin modal-content-styles {
+  .tedi-modal-header {
+    padding: var(--_tedi-modal-heading-padding-y) var(--_tedi-modal-heading-padding-x);
+    border-bottom: var(--tedi-borders-01) solid var(--modal-border-inner);
+
+    .tedi-modal-header__head {
+      display: flex;
+      gap: var(--layout-grid-gutters-08);
+      align-items: center;
+
+      .tedi-modal-header__close {
+        margin-left: auto;
+      }
+    }
+
+    [tedi-modal-description] {
+      margin-top: var(--layout-grid-gutters-08);
+    }
+  }
+
+  .tedi-modal-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--layout-grid-gutters-16);
+    padding: var(--_tedi-modal-body-padding);
+    overflow-y: auto;
+
+    &:has(.tedi-scroll-fade) {
+      overflow: hidden;
+    }
+
+    .tedi-scroll-fade {
+      flex: 1;
+      min-height: 0;
+    }
+  }
+
+  .tedi-modal-footer {
+    display: flex;
+    gap: var(--_tedi-modal-footer-gap);
+    justify-content: flex-end;
+    padding: var(--_tedi-modal-footer-padding-y) var(--_tedi-modal-footer-padding-x);
+    border-top: var(--tedi-borders-01) solid var(--modal-border-inner);
+  }
+}
+
+$modal-widths: (
+  xs,
+  sm,
+  md,
+  lg,
+  xl
+);
+
+// =============================================================================
+// Legacy template-based modal (deprecated)
+// =============================================================================
+
+.tedi-modal {
+  --_tedi-modal-max-width: 95vw;
+  --_tedi-modal-max-height: 95dvh;
+
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-index-modal);
+  display: none;
+
+  &--open {
+    display: block;
+  }
+
+  &--default {
+    @include modal-size-default;
+  }
+
+  &--small {
+    @include modal-size-small;
+  }
+
+  @each $width in $modal-widths {
+    &--#{$width} {
+      .tedi-modal__dialog {
+        max-width: min(var(--modal-max-width-#{$width}),
+          var(--_tedi-modal-max-width));
+      }
+    }
+  }
+
+  &--center {
+    .tedi-modal__dialog {
+      top: 50%;
+      left: 50%;
+      max-height: var(--_tedi-modal-max-height);
+      transform: translate(-50%, -50%);
+    }
+
+    &.tedi-modal--top {
+      .tedi-modal__dialog {
+        top: var(--modal-top-margin);
+        transform: translateX(-50%);
+      }
+    }
+  }
+
+  &--left {
+    .tedi-modal__dialog {
+      top: 0;
+      left: 0;
+      min-height: 100dvh;
+      border-radius: 0;
+      animation: tedi-modal-slide-left 200ms ease-out;
+    }
+  }
+
+  &--right {
+    .tedi-modal__dialog {
+      top: 0;
+      right: 0;
+      min-height: 100dvh;
+      border-radius: 0;
+      animation: tedi-modal-slide-right 200ms ease-out;
+    }
+  }
+
+  &--service {
+    position: static;
+    inset: auto;
+    z-index: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__dialog {
+    position: fixed;
+    max-width: var(--_tedi-modal-max-width);
+
+    @include modal-dialog-box;
+  }
+
+  &__backdrop {
+    position: fixed;
+    inset: 0;
+    background: var(--general-surface-overlay);
+  }
+
+  @include modal-content-styles;
+}
+
+// =============================================================================
+// CDK Dialog-based modal
+// =============================================================================
+
+.cdk-overlay-container {
+  z-index: var(--z-index-modal);
+}
+
+.tedi-modal-backdrop {
+  background: var(--general-surface-overlay);
+}
+
+.tedi-modal-dialog {
+  --_tedi-modal-max-width: 95vw;
+  --_tedi-modal-max-height: 95dvh;
+
+  width: 100%;
+  max-width: var(--_tedi-modal-max-width);
+
+  &--default {
+    @include modal-size-default;
+  }
+
+  &--small {
+    @include modal-size-small;
+  }
+
+  @each $width in $modal-widths {
+    &--#{$width} {
+      max-width: min(var(--modal-max-width-#{$width}),
+        var(--_tedi-modal-max-width));
+    }
+  }
+
+  &--center {
+    max-height: var(--_tedi-modal-max-height);
+  }
+
+  &--left,
+  &--right {
+    min-height: 100dvh;
+
+    // cdk-dialog-container: third-party, can't add host class
+    cdk-dialog-container {
+      min-height: 100dvh;
+    }
+
+    .tedi-modal {
+      min-height: 100dvh;
+    }
+  }
+
+  &--left {
+    animation: tedi-modal-slide-left 200ms ease-out;
+  }
+
+  &--right {
+    animation: tedi-modal-slide-right 200ms ease-out;
+  }
+
+  &--center {
+    // cdk-dialog-container: third-party, can't add host class
+
+    cdk-dialog-container {
+      display: flex;
+      flex-direction: column;
+      max-height: var(--_tedi-modal-max-height);
+    }
+
+    .tedi-modal {
+      max-height: var(--_tedi-modal-max-height);
+      overflow: hidden;
+    }
+  }
+
+  .tedi-modal {
+    @include modal-dialog-box;
+  }
+
+  &--left,
+  &--right {
+    .tedi-modal {
+      border-radius: 0;
+    }
+  }
+
+  &--scroll-page {
+    --_tedi-modal-max-height: none;
+
+    cdk-dialog-container {
+      max-height: none;
+    }
+
+    .tedi-modal {
+      max-height: none;
+      overflow: visible;
+    }
+
+    .tedi-modal-content {
+      overflow-y: visible;
+    }
+  }
+
+  &--fullscreen {
+    --_tedi-modal-max-width: 100vw;
+    --_tedi-modal-max-height: 100dvh;
+
+    max-width: 100vw;
+    min-height: 100dvh;
+
+    cdk-dialog-container,
+    .tedi-modal {
+      min-height: 100dvh;
+    }
+
+    .tedi-modal {
+      border-radius: 0;
+    }
+  }
+
+  @each $bp in (sm, md, lg, xl, xxl) {
+    &--fullscreen-#{$bp} {
+      @include breakpoints.media-breakpoint-down($bp) {
+        --_tedi-modal-max-width: 100vw;
+        --_tedi-modal-max-height: 100dvh;
+
+        max-width: 100vw;
+        min-height: 100dvh;
+
+        cdk-dialog-container,
+        .tedi-modal {
+          min-height: 100dvh;
+        }
+
+        .tedi-modal {
+          border-radius: 0;
+        }
+      }
+    }
+  }
+
+  @include modal-content-styles;
+}
+
+@keyframes tedi-modal-slide-left {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes tedi-modal-slide-right {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}

@@ -1,0 +1,23 @@
+.tedi-feedback-text {
+  display: block;
+  font-size: var(--body-small-regular-size);
+  color: var(--general-text-tertiary);
+
+  &--valid {
+    color: var(--form-general-feedback-success-text);
+  }
+
+  &--error {
+    color: var(--form-general-feedback-error-text);
+  }
+
+  &--left {
+    flex-grow: 1;
+    text-align: left;
+  }
+
+  &--right {
+    flex-grow: 0;
+    text-align: right;
+  }
+}

@@ -1,0 +1,26 @@
+.tedi-label {
+  font-family: var(--family-default);
+  font-size: var(--body-regular-size);
+
+  &--small {
+    font-size: var(--body-small-regular-size);
+  }
+
+  &--required {
+    margin-left: var(--content-label-inner-spacing-x);
+    color: var(--form-general-feedback-error-border);
+  }
+
+  &--primary {
+    color: var(--general-text-primary);
+  }
+
+  &--secondary {
+    color: var(--general-text-secondary);
+  }
+
+  &:has(input[disabled]),
+  &[for]:has(+ input[disabled]) {
+    color: var(--general-text-disabled);
+  }
+}

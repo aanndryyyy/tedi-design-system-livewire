@@ -1,0 +1,39 @@
+.tedi-ellipsis {
+  display: block;
+  min-width: 0;
+}
+
+.tedi-ellipsis__trigger,
+.tedi-ellipsis__wrapper {
+  display: block;
+  min-width: 0;
+}
+
+.tedi-ellipsis__content {
+  display: -webkit-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  hyphens: auto;
+  /* stylelint-disable-next-line declaration-property-value-keyword-no-deprecated */
+  word-break: break-word;
+  -webkit-box-orient: vertical;
+
+  &--start {
+    display: block;
+    text-align: left;
+    hyphens: none;
+    word-break: normal;
+    white-space: nowrap;
+
+    // Selecting text scrolls the clipped box and breaks the leading ellipsis.
+    // The full text stays selectable through the tooltip.
+    user-select: none;
+    direction: rtl;
+
+    // Bidi-isolate the text so neutral characters (slashes, dots) at its edges
+    // keep their logical position instead of reordering under the rtl box.
+    .tedi-ellipsis__inner {
+      unicode-bidi: plaintext;
+    }
+  }
+}
