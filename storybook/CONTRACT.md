@@ -44,6 +44,14 @@ Every file starts with it. Keys used in this project:
   one: `:disabled="(bool) $disabled"`.
 - Empty-string args standing in for "no value" get normalised in the template:
   `:icon-start="$iconStart ?: null"`.
+- **Never write `null` as an `args` value — use `''`.** Blast serialises `args`
+  into the `.stories.json`, and the JSON-to-CSF loader that Storybook compiles
+  it with (`@storybook/preset-server-webpack/dist/loader.js`) calls
+  `Object.keys()` on every object-typed value. `typeof null === 'object'`, so a
+  null throws, and the loader catches the error and silently hands webpack the
+  raw JSON instead. The dev server merely logs it; `blast:publish` fails the
+  whole preview bundle, so the deployed Storybook renders no stories at all.
+  `''` is falsy exactly where `null` was, so the rendering is unchanged.
 - Prefer one `args` entry per control the Angular story exposes. Composition-only
   stories (a card with a header and three rows) don't need controls for every
   slot — hardcode the composition and expose only what the Angular story exposed.

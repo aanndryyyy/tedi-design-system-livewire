@@ -12,8 +12,8 @@
         'clearable' => true,
         'searchIcon' => 'search',
         'disabled' => false,
-        'button' => null,
-        'feedbackText' => null,
+        'button' => '',
+        'feedbackText' => '',
         'ariaLabel' => '',
     ],
     'argTypes' => [

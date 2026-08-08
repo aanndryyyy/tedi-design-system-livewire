@@ -5,7 +5,7 @@
     'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.65.83?node-id=3486-37618&m=dev',
     'args' => [
         'size' => 'default',
-        'characterLimit' => null,
+        'characterLimit' => '',
         'inputClass' => '',
         'placeholder' => '',
         'resizable' => true,

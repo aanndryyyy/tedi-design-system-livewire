@@ -18,7 +18,7 @@
         'minLabel' => '0%',
         'maxLabel' => '100%',
         'showCurrentValue' => false,
-        'feedbackText' => null,
+        'feedbackText' => '',
         'ariaLabel' => '',
         'ariaLabelledby' => '',
         'ariaValuetext' => '',

@@ -15,7 +15,7 @@
         'size' => 'default',
         'invalid' => false,
         'suffix' => '',
-        'feedbackText' => null,
+        'feedbackText' => '',
         'ariaLabel' => '',
     ],
     'argTypes' => [
