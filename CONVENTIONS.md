@@ -63,6 +63,16 @@ code did not close its own output buffers"). A single space or newline fixes it.
 This is generic Blade behaviour, not a quirk of one component — it reproduces on
 `<tedi:card>` as readily as on the overlay components.
 
+**Never write an angle-bracketed `<tedi:…>` inside a `{{-- --}}` docblock.**
+`BladeCompiler::compileString()` runs the component-tag compiler over the whole
+file *before* it strips comments, so a tag in prose is compiled as a real tag.
+An unpaired one — `<tedi:vertical-stepper>'s defaults` in a header comment —
+swallows the next `@endif` it can reach, and the file dies with
+`syntax error, unexpected end of file, expecting "elseif" or "else" or "endif"`
+pointing at nothing in particular. Write `` `tedi:vertical-stepper` `` instead.
+This is the same trap `storybook/CONTRACT.md` §6a documents for `@storybook`
+blocks; it applies to every Blade file, comments included.
+
 **Never open a component tag in one `@if` branch and close it in another.** The
 component-tag compiler pairs tags before any conditional is evaluated — but it
 does **not** error, which is what makes this dangerous. The compiler emits the
@@ -506,3 +516,38 @@ Every anchored component wires the same three refs, and nothing else:
 
 Every `tediOverlay` config key is documented at the function in `tedi.js`. Do
 not add per-component positioning code to a template.
+
+---
+
+## 12. The `community/` namespace
+
+§1 names `angular/tedi/components/**` as the port source. `angular/community/**`
+is a **second, additive source** and everything above applies to it unchanged:
+its components are `ViewEncapsulation.None` too, so their CSS is global and
+BEM-classed exactly like `tedi/`'s.
+
+Three things differ, and only these three:
+
+1. **Group mapping.** The community tree's own grouping (`components/buttons`,
+   `components/form`, `components/navigation`) maps onto the *existing*
+   `resources/scss/components/<group>/` tree — there is no `community/` folder in
+   this package. The Blade file follows §2's flattening rule as usual.
+2. **Storybook title prefix is `Community/…`, not `TEDI-Ready/…`** — take it
+   verbatim from the community story's `title`, as `Community/Form/FormField`
+   already does.
+3. **Path-only SCSS edits are allowed.** §2 forbids editing vendored SCSS, but a
+   community stylesheet may `@use` a `tedi/` one by relative path
+   (`floating-button.component.scss` reaches four levels up into
+   `tedi/components/buttons/button/button.component.scss`). That path does not
+   survive the move into `resources/scss/`. Rewrite **only the path**, leave
+   every declaration untouched, and note the rewrite in a comment at the top of
+   the vendored file so a re-sync knows what to redo.
+
+Not every community class is `tedi-`-prefixed — `table-of-contents` is not. That
+is upstream's naming, so it ports verbatim; note that the two class-existence
+guardrails in `tests/IntegrityTest.php` only harvest `tedi-*` tokens, so an
+unprefixed component's classes are covered by its parity test alone.
+
+Upstream's own `CLAUDE.md` warns that `community/` is "not a reference for TEDI
+patterns" — that is a warning about *their* code style, not about the rendered
+markup. The port still mirrors the markup and class list exactly, per §4.
