@@ -125,4 +125,101 @@ class CommunityComponentsTest extends TestCase
         $default = Blade::render('<tedi:choicegroup>x</tedi:choicegroup>');
         $this->assertMissingClass('tedi-choicegroup--plain', $default, 'tedi-choicegroup');
     }
+
+    // -- file-dropzone --------------------------------------------------
+
+    public function test_file_dropzone_renders_the_custom_element_and_a_native_input(): void
+    {
+        $html = Blade::render('<tedi:file-dropzone />');
+
+        $this->assertStringContainsString('<tedi-file-dropzone', $html);
+        $this->assertMatchesRegularExpression('/<input[^>]*type="file"/', $html);
+        $this->assertHasClass('tedi-file-dropzone__input', $html, 'tedi-file-dropzone__input');
+        $this->assertHasClass('tedi-file-dropzone', $html, 'tedi-file-dropzone');
+    }
+
+    public function test_file_dropzone_binds_wire_model_to_the_input(): void
+    {
+        $html = Blade::render('<tedi:file-dropzone wire:model="attachment" />');
+
+        $this->assertMatchesRegularExpression('/<input[^>]*wire:model="attachment"/', $html,
+            'wire:model must be on the <input>, not the wrapper.');
+    }
+
+    public function test_file_dropzone_state_classes(): void
+    {
+        foreach (['valid', 'invalid'] as $state) {
+            $html = Blade::render('<tedi:file-dropzone state="'.$state.'" />');
+
+            $this->assertHasClass('tedi-file-dropzone--'.$state, $html, 'tedi-file-dropzone');
+        }
+
+        $none = Blade::render('<tedi:file-dropzone state="none" />');
+        $this->assertMissingClass('tedi-file-dropzone--valid', $none, 'tedi-file-dropzone');
+        $this->assertMissingClass('tedi-file-dropzone--invalid', $none, 'tedi-file-dropzone');
+        $this->assertMissingClass('tedi-file-dropzone--none', $none, 'tedi-file-dropzone');
+    }
+
+    public function test_file_dropzone_has_error_overrides_the_state(): void
+    {
+        $html = Blade::render('<tedi:file-dropzone has-error state="valid" />');
+
+        $this->assertHasClass('tedi-file-dropzone--invalid', $html, 'tedi-file-dropzone');
+        $this->assertMissingClass('tedi-file-dropzone--valid', $html, 'tedi-file-dropzone');
+    }
+
+    public function test_file_dropzone_disabled_class_and_attribute(): void
+    {
+        $html = Blade::render('<tedi:file-dropzone disabled />');
+
+        $this->assertHasClass('tedi-file-dropzone--disabled', $html, 'tedi-file-dropzone');
+        $this->assertMatchesRegularExpression('/<input[^>]*disabled/', $html);
+    }
+
+    public function test_file_dropzone_native_attributes(): void
+    {
+        $html = Blade::render('<tedi:file-dropzone accept=".pdf,.docx" multiple upload-folder name="fail" />');
+
+        $this->assertStringContainsString('accept=".pdf,.docx"', $html);
+        $this->assertStringContainsString('multiple', $html);
+        $this->assertStringContainsString('webkitdirectory', $html);
+        $this->assertStringContainsString('name="fail"', $html);
+    }
+
+    public function test_file_dropzone_hint_is_generated_from_accept_and_max_size(): void
+    {
+        // getDefaultHelpers() + formatBytes(): IEC by default, so 5 MiB.
+        $html = Blade::render('<tedi:file-dropzone accept=".pdf,.docx" :max-size="5242880" />');
+
+        $this->assertStringContainsString('.pdf, .docx', $html);
+        $this->assertStringContainsString('5 MiB', $html);
+
+        $si = Blade::render('<tedi:file-dropzone :max-size="5242880" size-display-standard="SI" />');
+        $this->assertStringContainsString('5.24 MB', $si);
+    }
+
+    public function test_file_dropzone_renders_no_hint_without_accept_or_max_size(): void
+    {
+        $html = Blade::render('<tedi:file-dropzone />');
+
+        $this->assertStringNotContainsString('tedi-feedback-text', $html);
+    }
+
+    public function test_file_dropzone_file_list(): void
+    {
+        $html = Blade::render(
+            '<tedi:file-dropzone :files="[[\'name\' => \'avaldus.pdf\', \'size\' => 943718]]" />'
+        );
+
+        $this->assertHasClass('tedi-file-dropzone__file-list', $html, 'tedi-file-dropzone__file-list');
+        $this->assertStringContainsString('avaldus.pdf', $html);
+        $this->assertStringContainsString('921.6 KiB', $html);
+    }
+
+    public function test_file_dropzone_error_message(): void
+    {
+        $html = Blade::render('<tedi:file-dropzone error="Fail on liiga suur" />');
+
+        $this->assertStringContainsString('Fail on liiga suur', $html);
+    }
 }

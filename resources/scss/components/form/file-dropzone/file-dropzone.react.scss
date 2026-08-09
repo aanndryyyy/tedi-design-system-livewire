@@ -1,0 +1,78 @@
+// identical to libs/react-components/src/tedi/components/form/file-dropzone/file-dropzone.module.scss,
+
+.tedi-file-dropzone {
+  text-align: center;
+  cursor: pointer;
+  background-color: var(--file-dropzone-background-default);
+  border: 2px dotted var(--file-dropzone-border-default);
+  transition:
+    border-color 0.2s ease-in-out,
+    background-color 0.2s ease-in-out;
+  border-radius: var(--form-field-radius);
+  padding: var(--file-dropzone-padding-y) var(--file-dropzone-padding-x);
+  margin-bottom: var(--layout-grid-gutters-04);
+
+  &:hover {
+    background-color: var(--file-dropzone-background-hover);
+    border-color: var(--file-dropzone-border-hover);
+  }
+
+  .tedi-file-dropzone__label-wrapper {
+    display: flex;
+    justify-content: center;
+
+    .tedi-file-dropzone__label {
+      font-weight: 500;
+      color: var(--file-dropzone-text-default);
+      font-size: var(--body-regular-size);
+
+      &:hover {
+        cursor: pointer;
+      }
+    }
+  }
+
+  &--disabled {
+    pointer-events: none;
+    cursor: not-allowed;
+    background-color: var(--file-dropzone-background-disabled);
+    border-color: var(--file-dropzone-border-disabled);
+
+    .tedi-file-dropzone__label-wrapper .tedi-file-dropzone__label {
+      color: var(--general-text-disabled);
+    }
+  }
+
+  &--invalid {
+    border-color: var(--form-general-feedback-error-border);
+  }
+
+  &--valid {
+    border-color: var(--form-general-feedback-success-border);
+  }
+
+  &--drop-over {
+    color: var(--file-dropzone-text-drop-over);
+    background-color: var(--file-dropzone-background-drop-over);
+    border-color: var(--file-dropzone-border-drop-over);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--file-dropzone-border-hover);
+    outline-offset: 1px;
+  }
+}
+
+.tedi-file-dropzone__input {
+  display: none;
+}
+
+.tedi-file-dropzone__file-list {
+  width: 100%;
+  list-style: none;
+  margin-top: var(--layout-grid-gutters-04);
+}
+
+.tedi-file-dropzone__file-name {
+  overflow-wrap: anywhere;
+}

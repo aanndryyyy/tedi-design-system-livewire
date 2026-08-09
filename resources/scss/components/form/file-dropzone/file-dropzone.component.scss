@@ -1,0 +1,8 @@
+.tedi-file-dropzone {
+  width: 100%;
+
+  &__label-wrapper {
+    // prevent the wrapper from interfering with drag events
+    pointer-events: none;
+  }
+}

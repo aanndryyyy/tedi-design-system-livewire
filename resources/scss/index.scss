@@ -58,6 +58,10 @@
 @use 'components/form/date-field/date-input/date-input.component';
 @use 'components/form/date-picker/date-picker.component';
 @use 'components/form/feedback-text/feedback-text.component';
+// Both sheets, in the order the Angular component lists them in `styleUrls`.
+// They share a Sass module namespace, so one is aliased.
+@use 'components/form/file-dropzone/file-dropzone.react' as file-dropzone-react;
+@use 'components/form/file-dropzone/file-dropzone.component';
 @use 'components/form/form-field/form-field.component';
 @use 'components/form/input-group/input-group.component';
 @use 'components/form/label-row/label-row.component';

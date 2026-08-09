@@ -55,4 +55,32 @@
             @endforeach
         </div>
     </div>
+
+    <h3>File dropzone</h3>
+
+    <div class="gx-case">
+        <div class="gx-case__label">state × error × disabled</div>
+        <div class="gx-case__demo">
+            @foreach (['none', 'valid', 'invalid'] as $state)
+                <tedi:file-dropzone :state="$state" name="matrix-{{ $state }}" accept=".pdf,.docx" :max-size="5242880" />
+            @endforeach
+
+            <tedi:file-dropzone name="matrix-error" has-error error="Faili ei õnnestunud laadida" />
+            <tedi:file-dropzone name="matrix-disabled" disabled />
+        </div>
+    </div>
+
+    <div class="gx-case">
+        <div class="gx-case__label">file list</div>
+        <div class="gx-case__demo">
+            <tedi:file-dropzone
+                name="matrix-files"
+                multiple
+                :files="[
+                    ['name' => 'avaldus.pdf', 'size' => 943718],
+                    ['name' => 'lisa.docx', 'size' => 1200, 'error' => 'Vale laiend'],
+                ]"
+            />
+        </div>
+    </div>
 </div>
