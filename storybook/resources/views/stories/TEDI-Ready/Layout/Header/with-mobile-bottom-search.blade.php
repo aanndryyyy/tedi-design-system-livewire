@@ -58,7 +58,7 @@
     <x-slot:bottom>
         <tedi:header.bottom>
             <tedi:header.search mobile-variant="inline">
-                <input type="search" class="tedi-input" placeholder="Otsi">
+                <tedi:search input-id="header-bottom-search" placeholder="Otsi" />
             </tedi:header.search>
         </tedi:header.bottom>
     </x-slot:bottom>

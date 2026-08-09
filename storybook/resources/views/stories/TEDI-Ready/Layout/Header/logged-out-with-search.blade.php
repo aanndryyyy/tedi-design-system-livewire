@@ -39,7 +39,7 @@
         </div>
         <tedi:header.search>
             <div style="width: 100%; max-width: 22.5rem;">
-                <input type="search" class="tedi-input" placeholder="Otsi">
+                <tedi:search input-id="header-logged-out-search" placeholder="Otsi" />
             </div>
         </tedi:header.search>
     </tedi:header.content>

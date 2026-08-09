@@ -34,7 +34,7 @@
 
     <tedi:header.actions>
         <tedi:header.search>
-            <input type="search" class="tedi-input" placeholder="Otsi">
+            <tedi:search input-id="header-inline-search" placeholder="Otsi" />
         </tedi:header.search>
         <tedi:separator axis="vertical" />
 

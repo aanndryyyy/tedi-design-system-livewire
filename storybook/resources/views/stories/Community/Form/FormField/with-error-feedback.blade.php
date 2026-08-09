@@ -32,6 +32,15 @@
     so validation state is explicit (see form-field.blade.php's docblock).
     Here it is derived from which feedback text is filled in, exactly as the
     Angular story's template chooses its feedback type.
+
+    Angular's control is `<input tedi-input>` — community/form/input, which
+    upstream marks @deprecated and which this package does not port (README,
+    "From Angular's community/ entry point": superseded by <tedi:text-field>).
+    So the control here is <tedi:text-field>. Do NOT write the literal
+    `class="tedi-input"`: that class does exist in this package's vendored SCSS
+    (select.component.scss defines it for the select trigger) and it paints its
+    own 1px border plus form-field-height padding, which double-boxes the
+    control inside .tedi-form-field__input.
 --}}
 <tedi:form-field
     :invalid="(bool) $errorText"
@@ -42,13 +51,13 @@
         <tedi:form.label for="storybook-input" :required="(bool) $required">{{ $label }}</tedi:form.label>
     </x-slot:label>
 
-    <input
+    <tedi:text-field
         type="text"
         id="storybook-input"
-        class="tedi-input"
         placeholder="{{ $placeholder }}"
-        @disabled($disabled)
-    >
+        :invalid="(bool) $errorText"
+        :disabled="(bool) $disabled"
+    />
 
     <x-slot:feedback>
         @if ($errorText)
