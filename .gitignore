@@ -7,6 +7,9 @@
 /node_modules/
 /vendor/
 
+# Laravel Cloud CLI writes the org/app IDs here; local-only.
+/.cloud/
+
 # The library's lock is not committed (consumers resolve their own); the
 # storybook app's lock is, so the deploy is reproducible.
 /composer.lock
