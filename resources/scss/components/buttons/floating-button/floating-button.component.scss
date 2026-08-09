@@ -1,0 +1,49 @@
+@use "@tedi-design-system/core/mixins";
+@use "@tedi-design-system/core/bootstrap-utility/breakpoints";
+// PATH REWRITE (CONVENTIONS.md §12.3): upstream reaches out of `community/`
+// into the sibling `tedi/` tree with
+//   @use "../../../../tedi/components/buttons/button/button.component.scss"
+// That path does not exist here — both trees are vendored side by side under
+// resources/scss/components — so only the path below was changed. Every
+// declaration in this file is verbatim.
+@use "../button/button.component.scss" as buttonMixins;
+
+button.tedi-floating-button {
+  box-shadow: 0 4px 10px 0 var(--tedi-alpha-14);
+
+  @include buttonMixins.button-main-styles();
+
+  &--vertical {
+    min-width: max-content;
+    white-space: nowrap;
+    border-radius: 0;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    border-top-right-radius: var(--button-radius-sm);
+    border-top-left-radius: var(--button-radius-sm);
+  }
+
+  &.tedi-floating-button--primary {
+    @include buttonMixins.button-variant-color-vars(
+      "primary",
+      false,
+      "floating"
+    );
+  }
+
+  &.tedi-floating-button--secondary {
+    @include buttonMixins.button-variant-color-vars(
+      "secondary",
+      false,
+      "floating"
+    );
+  }
+
+  &--default {
+    @include buttonMixins.button-size("md");
+  }
+
+  &--large {
+    @include buttonMixins.button-size("lg");
+  }
+}
