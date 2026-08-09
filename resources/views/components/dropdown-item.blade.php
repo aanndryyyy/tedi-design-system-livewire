@@ -28,6 +28,11 @@
     `output()` (`itemSelect`) is not re-emitted (§7.2) — bind wire:click or
     x-on:click yourself. `close-on-select` still works: it decides whether this
     item closes the dropdown (and returns focus to the trigger) on click.
+
+    Keyboard activation reaches those handlers the same way a mouse does:
+    Enter/Space in `tediDropdown.menuKeydown` calls `item.click()` rather than
+    reimplementing Angular's `onItemSelect()`, so a consumer's wire:click and
+    the `close-on-select` binding below both fire from the keyboard.
 --}}
 @aware([
     'dropdownRole' => 'menu',
@@ -55,6 +60,13 @@
     ])) }}
     @if (! $disabled && $closeOnSelect)
         x-on:click="hide(true)"
+    @endif
+    @if ($disabled)
+        {{-- Angular's @HostListener('mousedown'): a disabled item keeps its
+             roving tabindex (in menus) so it stays discoverable, but must not
+             take focus on a mouse press — that focus would paint mouse-focus
+             styling on a non-interactive item. --}}
+        x-on:mousedown.prevent
     @endif
 >
     @isset($itemValue)

@@ -6,6 +6,17 @@
     resize-observer/clone-window physics — minimal Alpine index state only).
     `slidesPerView`/`gap` are exposed to tedi-carousel-slide children via
     @aware so each slide can compute its own flex-basis.
+
+    KNOWN GAP — keyboard navigation is NOT ported. Upstream's
+    `@HostListener('keydown')` (carousel-content.component.ts) moves between
+    slides on ArrowLeft/ArrowRight/Home/End/PageUp/PageDown. This root is
+    `tabindex="0"` with `role="region"` exactly as upstream renders it, so it
+    takes focus and advertises itself as an operable widget — but the arrow
+    keys currently do nothing, which is worse than not being focusable at all.
+    `tediCarousel` (resources/js/tedi.js) already has next()/prev(),
+    so closing this is a keydown binding on this element, not new machinery.
+    Unlike the overlay exclusions in CONVENTIONS.md §11 this is an omission,
+    not a decision — see the dropdown's keyboard layer for the pattern.
 --}}
 @props([
     /** Slides visible at once (fractional allowed, e.g. 1.25 for peeking). */

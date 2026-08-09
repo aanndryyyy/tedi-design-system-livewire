@@ -6,9 +6,11 @@
     the vendored SCSS's element selector (`tedi-dropdown { display: inline-flex }`),
     so the custom tag is emitted literally (CONVENTIONS.md §4).
 
-    Positioning is CDK Overlay upstream; here it is the shared `tediOverlay`
-    Alpine component from resources/js/tedi.js (CONVENTIONS.md §11), which is a
-    direct port of upstream's overlay-position.util.ts. Config mapping:
+    Positioning is CDK Overlay upstream; here it comes from the shared
+    `tediOverlay` engine in resources/js/tedi.js (CONVENTIONS.md §11), a direct
+    port of upstream's overlay-position.util.ts. This component's `x-data` is
+    `tediDropdown`, which composes that engine and adds the keyboard layer.
+    Config mapping:
 
       position        -> placement
       offset          -> offset - 8, because tediOverlay's `offset` is *extra* px
@@ -42,10 +44,16 @@
       trigger `id`/`aria-controls` to the panel's `id` and the content's
       `aria-labelledby`; omitted, those attributes are left off entirely rather
       than emitted dangling.
-    - Focus management is not ported (CONVENTIONS.md §11): no focus trap, no
-      roving tabindex over items, no `tabOutOfDropdown`, no ArrowDown/ArrowUp
-      open-and-focus. Escape-to-close, outside-click dismissal and focus return
-      to the trigger DO work, via tediOverlay.
+    - Focus management IS ported, via `tediDropdown` — `tediOverlay` plus the
+      keyboard layer from dropdown.component.ts / dropdown-item.component.ts /
+      dropdown-trigger.directive.ts (roving tabindex, Arrow/Home/End, Enter and
+      Space activation, `tabOutOfDropdown`, ArrowDown/ArrowUp open-and-focus).
+      Upstream has no focus trap in the dropdown either — Tab leaves the panel
+      by design — so nothing is missing here. See CONVENTIONS.md §11.
+      One divergence: Angular reads items and their disabled/selected state from
+      `contentChildren` signals; Blade has no instances to query, so the engine
+      reads the DOM the templates already emit (`li[tedi-dropdown-item]`,
+      `aria-disabled`, `aria-selected`).
     - The panel stays in the document instead of being re-parented into a CDK
       overlay container, so a dropdown inside a `transform`ed ancestor is
       positioned relative to that ancestor (CONVENTIONS.md §11).
@@ -67,7 +75,7 @@
 
 <tedi-dropdown
     {{ $attributes }}
-    x-data="tediOverlay({
+    x-data="tediDropdown({
         placement: '{{ $position }}',
         offset: {{ (int) $offset - 8 }},
         preventOverflow: {{ $preventOverflow ? 'true' : 'false' }},

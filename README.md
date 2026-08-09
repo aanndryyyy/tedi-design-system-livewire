@@ -116,6 +116,10 @@ These are deliberate and documented in [CONVENTIONS.md](CONVENTIONS.md) §7:
    so panels stay where they are written. Inside a `transform`ed ancestor a
    fixed/absolute panel is positioned relative to that ancestor
    (CONVENTIONS.md §11). The toast's placement is still the consumer's job.
+   The dropdown takes `tediDropdown` instead — `tediOverlay` plus upstream's
+   keyboard layer: a roving `tabindex` over the items, Arrow/Home/End, Enter and
+   Space activation, ArrowDown/ArrowUp to open, and `tabOutOfDropdown`. Like
+   upstream, it has no focus trap; Tab leaves the panel by design.
 4. **Runtime DOM introspection becomes explicit props.** Angular's button
    inspects its projected children to decide `--icon-only` / padding modifiers;
    Blade uses `icon-start`, `icon-end` and `icon-only` instead.
@@ -192,8 +196,9 @@ components came with it, as documented subsets wherever they need an overlay.
 
 The third phase added the **stateful and overlay-anchored** components — the
 ones Angular builds on CDK Overlay, CDK Dialog or an injectable service. They
-run on this package's own Alpine layer instead (`tediOverlay`, `tediModal`, and
-per-component inline state), documented in CONVENTIONS.md §8 and §11.
+run on this package's own Alpine layer instead (`tediOverlay`, `tediDropdown`,
+`tediModal`, and per-component inline state), documented in CONVENTIONS.md §8
+and §11.
 
 Together that is **all 67** components in Angular's `tedi/` tree, which expand
 to **138 Blade components** once sub-components are counted. A fourth pass added

@@ -15,6 +15,14 @@
     this package ships in resources/scss/_alpine.scss. Per §8 the panel is in
     the DOM with its real class list even while closed.
 
+    The panel also carries the ONE keydown listener for the whole item list.
+    Angular binds `keydown` per item (dropdown-item.component.ts); here the item
+    is an anonymous Blade component with nowhere to hang per-instance state, and
+    the handler needs its siblings anyway, so `tediDropdown.menuKeydown` is
+    delegated from here and resolves the item with `event.target.closest()`.
+    The listener sits on the panel rather than the `<ul>` so it still fires for
+    anything the `before` slot renders above the list.
+
     `<tedi-dropdown-content>` is the literal Angular element selector (§4).
     Angular's untargeted `<ng-content />` renders above the `<ul>`; that is the
     `before` slot here, while the default slot holds the `li[tedi-dropdown-item]`
@@ -34,6 +42,7 @@
     x-ref="panel"
     x-show="open"
     x-cloak
+    x-on:keydown="menuKeydown($event)"
     x-bind:data-placement="side"
 >
     <tedi-dropdown-content {{ $attributes->class(['tedi-dropdown-content'])->merge(array_filter([

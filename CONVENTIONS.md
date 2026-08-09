@@ -363,9 +363,9 @@ JS, or the parity tests in §10 have nothing to assert against.
 **Where the behaviour lives.** Inline in the template by default. Move it into
 `resources/js/tedi.js` as an `Alpine.data()` only when it is too large to read
 inline or is shared by several components — currently `tediCarousel`,
-`tediOverlay` (§11) and `tediModal`. `tedi.js` is copied verbatim to
-`dist/tedi.js` by `npm run build:js`; there is no bundler, so it stays
-dependency-free ES5-compatible script, not a module.
+`tediOverlay` and `tediDropdown` (§11), `tediModal` and `tediTableOfContents`.
+`tedi.js` is copied verbatim to `dist/tedi.js` by `npm run build:js`; there is
+no bundler, so it stays a dependency-free ES5-compatible script, not a module.
 
 ---
 
@@ -458,10 +458,58 @@ the upstream algorithm's observable behaviour:
 | `calculateArrowOffset`, incl. the `padding + size * 0.7` edge margin | yes, verbatim |
 | `getPlacementFromPositionChange` → `data-placement` | yes, as the `side` property |
 
-**Deliberately not ported:** focus trapping inside the panel, the roving
-`tabindex` across dropdown items, and `tabOutOfDropdown`. Escape-to-close,
+**Deliberately not ported:** focus trapping inside the panel. Escape-to-close,
 outside-click dismissal and focus-return-to-trigger **are** ported — they are
 what makes the component usable rather than merely correct.
+
+### The dropdown keyboard layer (`tediDropdown`)
+
+`overlay()` positions and dismisses; it does not know what is inside the panel.
+Tooltip and popover need nothing more. The dropdown does, because ARIA's
+menu/listbox pattern puts the items outside the tab order and expects the
+component to move focus between them — and the port emitted exactly that markup
+(`role="menuitem"`, `tabindex="-1"` on every item) while shipping nothing to
+drive it, which left keyboard users unable to reach the items at all.
+
+`Alpine.data('tediDropdown')` composes `overlay()` and adds the focus half of
+upstream's dropdown, spread across three files there:
+
+| Upstream | Ported |
+|---|---|
+| `dropdown.component.ts` — `activeIndex`, `updateTabindexes()`, `focusFirst/Last/Active/Next/PrevItem()`, `setActiveToSelectedOrFirst()` | yes |
+| `dropdown-item.component.ts` — `@HostListener('keydown')`: Arrow / Home / End / Enter / Space / Tab, and the disabled-`mousedown` guard | yes |
+| `dropdown-trigger.directive.ts` — ArrowDown/ArrowUp open-and-focus | yes |
+| `tabOutOfDropdown` + `getFocusableElements` (`tedi/utils/elements.util.ts`) | yes, verbatim |
+| Focus **trap** inside the panel | no — and upstream has none either. Tab leaves the dropdown by design |
+
+Behaviours that are easy to "improve" by accident, and must not be: arrow keys
+do **not** wrap at the ends; disabled items keep their roving `tabindex` in a
+menu but lose it in a listbox; opening focuses the selected (or first enabled)
+item **even when opened by mouse**. All three are upstream's.
+
+Two divergences, both because Blade has no component instances to query:
+
+1. Angular reads items from `contentChildren(DropdownItemComponent)` and their
+   `disabled()` / `value()` signals. The engine reads the DOM instead — the
+   registry is `li[tedi-dropdown-item]`, disabled is `aria-disabled="true"`,
+   and the listbox selection `setActiveToSelectedOrFirst` keys on is
+   `aria-selected="true"`. Those attributes are already emitted, so this adds
+   no markup; it does mean **the item template's ARIA is now load-bearing**.
+2. Angular binds `keydown` per item; here one delegated listener sits on the
+   panel (`x-on:keydown="menuKeydown($event)"`) and resolves the item with
+   `closest()`. An anonymous Blade component has nowhere to hang per-instance
+   Alpine state, and the handler needs the sibling list anyway.
+
+**Enter/Space call `item.click()`.** Upstream invokes its own `onItemSelect()`;
+this port must not, because the item's behaviour lives in the click handlers —
+`x-on:click="hide(true)"` and whatever `wire:click` the consumer bound.
+Synthesising the click is what keeps keyboard activation and mouse activation
+on one path. Any future keyboard layer on a component whose actions are bound
+in the template should do the same.
+
+**Escape stays in `overlay()`.** It is already a document-level listener there
+that closes and returns focus to the trigger, so neither the trigger's nor the
+item's keydown handler re-binds it — a second handler would fire `hide` twice.
 
 **One structural divergence.** CDK re-parents the pane into a
 `.cdk-overlay-container` at `<body>`. The Blade panel stays where it was
@@ -475,10 +523,13 @@ on the component; do not work around it by re-parenting.
 Every anchored component wires the same three refs, and nothing else:
 
 ```blade
-<tedi-dropdown x-data="tediOverlay({ placement: 'bottom-start', offset: -4, matchTriggerWidth: true })">
-    <tedi-dropdown-trigger x-ref="trigger" x-on:click="toggle()" ...>…</tedi-dropdown-trigger>
+{{-- tediDropdown for the dropdown; tooltip and popover use tediOverlay directly. --}}
+<tedi-dropdown x-data="tediDropdown({ placement: 'bottom-start', offset: -4, matchTriggerWidth: true })">
+    <tedi-dropdown-trigger x-ref="trigger" x-on:click="toggle()"
+                           x-on:keydown="triggerKeydown($event)" ...>…</tedi-dropdown-trigger>
 
     <div class="tedi-dropdown__panel" x-ref="panel" x-show="open" x-cloak
+         x-on:keydown="menuKeydown($event)"
          x-bind:data-placement="side">
         <div class="tedi-dropdown__arrow" x-ref="arrow"></div>
         …

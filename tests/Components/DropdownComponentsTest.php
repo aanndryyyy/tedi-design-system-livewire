@@ -32,7 +32,9 @@ class DropdownComponentsTest extends TestCase
     {
         $html = Blade::render('<tedi:dropdown>x</tedi:dropdown>');
 
-        $this->assertStringContainsString('x-data="tediOverlay(', $html);
+        // tediDropdown is tediOverlay plus the keyboard layer (CONVENTIONS.md §11);
+        // the dropdown is the only component that takes the composed one.
+        $this->assertStringContainsString('x-data="tediDropdown(', $html);
         $this->assertStringContainsString('matchTriggerWidth: true', $html);
     }
 
@@ -109,6 +111,13 @@ class DropdownComponentsTest extends TestCase
         $this->assertStringContainsString('x-on:click="toggle()"', $html);
     }
 
+    public function test_trigger_binds_the_arrow_key_open_shortcuts(): void
+    {
+        $html = Blade::render('<tedi:dropdown-trigger>Trigger</tedi:dropdown-trigger>');
+
+        $this->assertStringContainsString('x-on:keydown="triggerKeydown($event)"', $html);
+    }
+
     public function test_trigger_aria_haspopup_union(): void
     {
         foreach (['menu', 'listbox', 'dialog', 'true'] as $value) {
@@ -162,6 +171,15 @@ class DropdownComponentsTest extends TestCase
         $this->assertStringContainsString('x-show="open"', $html);
         $this->assertStringContainsString('x-cloak', $html);
         $this->assertStringContainsString('x-bind:data-placement="side"', $html);
+    }
+
+    public function test_content_panel_delegates_the_item_keyboard_layer(): void
+    {
+        $html = Blade::render('<tedi:dropdown-content>x</tedi:dropdown-content>');
+
+        // One listener on the panel, not one per <li> — see CONVENTIONS.md §11.
+        $this->assertStringContainsString('x-on:keydown="menuKeydown($event)"', $html);
+        $this->assertSame(1, substr_count($html, 'menuKeydown'));
     }
 
     public function test_content_role_union_lands_on_the_list(): void
@@ -307,6 +325,37 @@ class DropdownComponentsTest extends TestCase
 
         $html = Blade::render('<tedi:dropdown-item :disabled="true">x</tedi:dropdown-item>');
         $this->assertStringNotContainsString('x-on:click', $html);
+    }
+
+    public function test_item_guards_mouse_focus_only_when_disabled(): void
+    {
+        // Angular's @HostListener('mousedown'): a disabled item keeps its roving
+        // tabindex so it stays discoverable, but must not take focus on a press.
+        $html = Blade::render('<tedi:dropdown-item :disabled="true">x</tedi:dropdown-item>');
+        $this->assertStringContainsString('x-on:mousedown.prevent', $html);
+
+        $html = Blade::render('<tedi:dropdown-item>x</tedi:dropdown-item>');
+        $this->assertStringNotContainsString('x-on:mousedown', $html);
+    }
+
+    /**
+     * The keyboard layer reads its item registry and their state off the DOM
+     * rather than component instances (CONVENTIONS.md §11), so these attributes
+     * are load-bearing, not decorative.
+     */
+    public function test_item_attributes_the_keyboard_layer_reads_are_present(): void
+    {
+        $html = Blade::render(<<<'BLADE'
+        <tedi:dropdown-content dropdown-role="listbox">
+            <tedi:dropdown-item :selected="true">a</tedi:dropdown-item>
+            <tedi:dropdown-item :disabled="true">b</tedi:dropdown-item>
+        </tedi:dropdown-content>
+        BLADE);
+
+        $this->assertSame(2, preg_match_all('/<li\b[^>]*\btedi-dropdown-item\b/', $html));
+        $this->assertStringContainsString('aria-selected="true"', $html);
+        $this->assertStringContainsString('aria-disabled="true"', $html);
+        $this->assertStringContainsString('<ul role="listbox"', $html);
     }
 
     public function test_item_wraps_plain_content_in_a_value_and_label(): void

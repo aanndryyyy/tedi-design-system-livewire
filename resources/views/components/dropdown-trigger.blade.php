@@ -20,10 +20,11 @@
     `container-id` (see dropdown.blade.php); without one there is no shared id
     to point at, and a dangling reference is worse than none.
 
-    NOT PORTED (CONVENTIONS.md §11): the ArrowDown/ArrowUp "open and focus
-    first/last item" keyboard shortcuts, which depend on the roving tabindex
-    that is itself out of scope. Escape closes the dropdown and returns focus
-    here — that is handled centrally by tediOverlay.
+    ArrowDown/ArrowUp ("open and focus the first/last item", or move to that end
+    when already open) go through `tediDropdown.triggerKeydown`. The directive's
+    Escape branch is deliberately NOT re-bound here: tediOverlay already closes
+    on Escape at the document level and returns focus to this trigger, so a
+    second handler would only fire `hide` twice.
 --}}
 @aware([
     'containerId' => null,
@@ -37,6 +38,7 @@
     {{ $attributes }}
     x-ref="trigger"
     x-on:click="toggle()"
+    x-on:keydown="triggerKeydown($event)"
     x-init="(() => {
         const focusable = $el.matches('button, a[href]')
             ? $el

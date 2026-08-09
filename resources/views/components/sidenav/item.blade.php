@@ -35,10 +35,13 @@
       registry, which does not exist here, so the tooltip branch is keyed on
       `collapsed` alone. The literal `<tedi-tooltip-trigger>` element matters:
       `.tedi-sidenav--collapsed tedi-tooltip-trigger { display: block; width: 100% }`.
-    - Focus management (focus the first dropdown item on open, return focus to
-      the trigger on close/Escape) is not ported, matching the exclusion in
-      CONVENTIONS.md §11. Escape-to-close and outside-click dismissal of the
-      collapsed flyout ARE ported.
+    - Focus management (focus the first flyout item on open, return focus to the
+      trigger on close/Escape) is not ported. This is the sidenav's own flyout —
+      a plain `x-data` below, not <tedi:dropdown> — so it does not get the
+      roving tabindex that CONVENTIONS.md §11's `tediDropdown` gives that
+      component; porting it here would mean a second, separate keyboard layer.
+      Escape-to-close and outside-click dismissal of the collapsed flyout ARE
+      ported.
     - The mobile drill-down (`mobile-item-open`) hides this item's icon in
       Angular whenever its own dropdown is open. That is computed statically
       here from `mobileItemOpen`/`open`, not re-evaluated by Alpine, because
