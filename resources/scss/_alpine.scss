@@ -16,3 +16,17 @@
 [x-cloak] {
   display: none !important;
 }
+
+/* A wrapper that must be toggleable by `x-show` without existing as a box.
+ *
+ * `<tedi:vertical-stepper-item>` renders its nested sub-items behind an
+ * `x-show`, but the sub-item styles use `grid-template-columns: subgrid` and
+ * `:first-child` / `:last-child`, which need the sub-items to stay direct grid
+ * items of the parent step. `display: contents` gives exactly that, and it has
+ * to come from a stylesheet rather than an inline style: `x-show` writes
+ * `display: none` inline to hide, then *removes* the inline display to show, so
+ * an inline `display: contents` would not survive the first toggle.
+ */
+[data-tedi-contents] {
+  display: contents;
+}

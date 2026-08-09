@@ -104,4 +104,36 @@
             @endforeach
         </div>
     </div>
+
+    <h3>Vertical stepper</h3>
+
+    <div class="gx-case">
+        <div class="gx-case__label">item states</div>
+        <div class="gx-case__demo">
+            <tedi:vertical-stepper aria-label="Menetluse sammud">
+                <tedi:vertical-stepper-item title="Esitatud" :completed="true" href="#1" />
+                <tedi:vertical-stepper-item title="Menetluses" :selected="true">
+                    <x-slot:description>Tähtaeg 12.03</x-slot:description>
+                </tedi:vertical-stepper-item>
+                <tedi:vertical-stepper-item title="Puudustega" :error="true" />
+                <tedi:vertical-stepper-item title="Ootel" :disabled="true" />
+                <tedi:vertical-stepper-item title="Teadmiseks" :informative="true" />
+            </tedi:vertical-stepper>
+        </div>
+    </div>
+
+    <div class="gx-case">
+        <div class="gx-case__label">compact + enumerated, with sub-items</div>
+        <div class="gx-case__demo">
+            <tedi:vertical-stepper aria-label="Kompaktne" :compact="true" :enumerated="true">
+                <tedi:vertical-stepper-item title="Esitatud" :completed="true" />
+                <tedi:vertical-stepper-item title="Menetluses" :selected="true" :opened="true">
+                    <x-slot:sub-items>
+                        <tedi:vertical-stepper-item title="Kontroll" :sub-item="true" :completed="true" />
+                        <tedi:vertical-stepper-item title="Otsus" :sub-item="true" :error="true" />
+                    </x-slot:sub-items>
+                </tedi:vertical-stepper-item>
+            </tedi:vertical-stepper>
+        </div>
+    </div>
 </div>

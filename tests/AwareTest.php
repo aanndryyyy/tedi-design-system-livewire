@@ -528,4 +528,63 @@ class AwareTest extends TestCase
         $this->assertStringContainsString('role="menuitem"', $html);
         $this->assertStringNotContainsString('role="option"', $html);
     }
+
+    // -- vertical-stepper-item @aware(['compact', 'enumerated']) -----------
+
+    private const STEPPER = '<tedi:vertical-stepper%s>'
+        .'<tedi:vertical-stepper-item title="Samm" />'
+        .'</tedi:vertical-stepper>';
+
+    public function test_vertical_stepper_compact_and_enumerated_reach_the_item(): void
+    {
+        $html = Blade::render(sprintf(self::STEPPER, ' :compact="true" :enumerated="true"'));
+
+        $this->assertHasClass('tedi-vertical-stepper-item--compact', $html, 'tedi-vertical-stepper-item');
+        $this->assertHasClass('tedi-vertical-stepper-item--enumerated', $html, 'tedi-vertical-stepper-item');
+    }
+
+    public function test_vertical_stepper_item_fallback_matches_stepper_defaults_when_omitted(): void
+    {
+        $omitted = Blade::render(sprintf(self::STEPPER, ''));
+        $explicit = Blade::render(sprintf(self::STEPPER, ' :compact="false" :enumerated="false"'));
+
+        $this->assertMissingClass('tedi-vertical-stepper-item--compact', $omitted, 'tedi-vertical-stepper-item');
+        $this->assertMissingClass('tedi-vertical-stepper-item--enumerated', $omitted, 'tedi-vertical-stepper-item');
+        $this->assertSame($explicit, $omitted,
+            'Omitting compact/enumerated must render identically to passing their defaults.');
+    }
+
+    public function test_vertical_stepper_item_renders_standalone_without_a_stepper(): void
+    {
+        $html = Blade::render('<tedi:vertical-stepper-item title="Samm" />');
+
+        $this->assertHasClass('tedi-vertical-stepper-item', $html, 'tedi-vertical-stepper-item');
+        $this->assertMissingClass('tedi-vertical-stepper-item--compact', $html, 'tedi-vertical-stepper-item');
+        $this->assertMissingClass('tedi-vertical-stepper-item--enumerated', $html, 'tedi-vertical-stepper-item');
+    }
+
+    /**
+     * `sub-item` is deliberately NOT @aware: the child declares it itself, and
+     * Laravel resolves the child's own data first (CONVENTIONS.md §3), so an
+     * @aware would always read the child's value and never the parent's.
+     */
+    public function test_sub_item_is_an_explicit_prop_not_inherited(): void
+    {
+        $html = Blade::render(
+            '<tedi:vertical-stepper-item title="Samm">'
+            .'<x-slot:sub-items><tedi:vertical-stepper-item title="Alam" /></x-slot:sub-items>'
+            .'</tedi:vertical-stepper-item>'
+        );
+
+        // Nesting alone does not make the child a sub-item — the consumer must say so.
+        $this->assertMissingClass('tedi-vertical-stepper-item--sub-item', $html, 'tedi-vertical-stepper-item');
+
+        $explicit = Blade::render(
+            '<tedi:vertical-stepper-item title="Samm">'
+            .'<x-slot:sub-items><tedi:vertical-stepper-item title="Alam" :sub-item="true" /></x-slot:sub-items>'
+            .'</tedi:vertical-stepper-item>'
+        );
+
+        $this->assertHasClass('tedi-vertical-stepper-item--sub-item', $explicit, 'tedi-vertical-stepper-item--sub-item');
+    }
 }

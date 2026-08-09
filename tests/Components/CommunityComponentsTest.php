@@ -294,4 +294,161 @@ class CommunityComponentsTest extends TestCase
             $this->assertHasClass($class, $html, 'table-of-contents__item-anchor');
         }
     }
+
+    // -- vertical-stepper -----------------------------------------------
+
+    public function test_vertical_stepper_renders_the_custom_element_and_a_list(): void
+    {
+        $html = Blade::render('<tedi:vertical-stepper>x</tedi:vertical-stepper>');
+
+        $this->assertStringContainsString('<tedi-vertical-stepper', $html);
+        $this->assertHasClass('tedi-vertical-stepper', $html, 'tedi-vertical-stepper');
+        $this->assertStringContainsString('role="list"', $html);
+    }
+
+    public function test_vertical_stepper_compact_class_is_dropped(): void
+    {
+        // No rule matches it in the vendored SCSS (CONVENTIONS.md §4); the
+        // compact appearance comes from the items' own --compact class.
+        $html = Blade::render('<tedi:vertical-stepper :compact="true">x</tedi:vertical-stepper>');
+
+        $this->assertMissingClass('tedi-vertical-stepper--compact', $html, 'tedi-vertical-stepper');
+    }
+
+    public function test_vertical_stepper_aria_label(): void
+    {
+        $labelled = Blade::render('<tedi:vertical-stepper aria-label="Sammud">x</tedi:vertical-stepper>');
+        $this->assertStringContainsString('aria-label="Sammud"', $labelled);
+
+        $bare = Blade::render('<tedi:vertical-stepper>x</tedi:vertical-stepper>');
+        $this->assertStringNotContainsString('aria-label', $bare);
+    }
+
+    public function test_vertical_stepper_item_state_classes(): void
+    {
+        $states = [
+            'completed' => 'tedi-vertical-stepper-item--completed',
+            'error' => 'tedi-vertical-stepper-item--error',
+            'selected' => 'tedi-vertical-stepper-item--selected',
+            'disabled' => 'tedi-vertical-stepper-item--disabled',
+            'informative' => 'tedi-vertical-stepper-item--informative',
+            'sub-item' => 'tedi-vertical-stepper-item--sub-item',
+        ];
+
+        foreach ($states as $prop => $class) {
+            $html = Blade::render('<tedi:vertical-stepper-item title="Samm" :'.$prop.'="true" />');
+
+            $this->assertHasClass($class, $html, 'tedi-vertical-stepper-item');
+        }
+
+        $bare = Blade::render('<tedi:vertical-stepper-item title="Samm" />');
+
+        foreach ($states as $class) {
+            $this->assertMissingClass($class, $bare, 'tedi-vertical-stepper-item');
+        }
+    }
+
+    public function test_vertical_stepper_item_has_listitem_role(): void
+    {
+        $html = Blade::render('<tedi:vertical-stepper-item title="Samm" />');
+
+        $this->assertStringContainsString('role="listitem"', $html);
+    }
+
+    public function test_vertical_stepper_item_inherits_compact_and_enumerated_through_aware(): void
+    {
+        $html = Blade::render(
+            '<tedi:vertical-stepper :compact="true" :enumerated="true">'
+            .'<tedi:vertical-stepper-item title="Samm" />'
+            .'</tedi:vertical-stepper>'
+        );
+
+        $this->assertHasClass('tedi-vertical-stepper-item--compact', $html, 'tedi-vertical-stepper-item');
+        $this->assertHasClass('tedi-vertical-stepper-item--enumerated', $html, 'tedi-vertical-stepper-item');
+    }
+
+    public function test_vertical_stepper_item_renders_a_link_when_href_is_given(): void
+    {
+        $html = Blade::render('<tedi:vertical-stepper-item title="Samm" href="/samm" />');
+        $this->assertStringContainsString('href="/samm"', $html);
+
+        $disabled = Blade::render('<tedi:vertical-stepper-item title="Samm" href="/samm" :disabled="true" />');
+        $this->assertStringNotContainsString('href="/samm"', $disabled);
+        $this->assertStringContainsString('aria-disabled="true"', $disabled);
+    }
+
+    public function test_vertical_stepper_item_marks_the_selected_step(): void
+    {
+        $html = Blade::render('<tedi:vertical-stepper-item title="Samm" :selected="true" />');
+
+        $this->assertStringContainsString('aria-current="step"', $html);
+    }
+
+    public function test_vertical_stepper_item_status_icon_only_outside_compact(): void
+    {
+        $regular = Blade::render('<tedi:vertical-stepper-item title="Samm" :completed="true" />');
+        $this->assertHasClass('tedi-vertical-stepper-item__status-icon', $regular, 'tedi-vertical-stepper-item__status-icon');
+
+        // A compact top-level step shows the state inside the indicator instead.
+        $compact = Blade::render(
+            '<tedi:vertical-stepper :compact="true">'
+            .'<tedi:vertical-stepper-item title="Samm" :completed="true" />'
+            .'</tedi:vertical-stepper>'
+        );
+        $this->assertMissingClass('tedi-vertical-stepper-item__status-icon', $compact, 'tedi-vertical-stepper-item__status-icon');
+        $this->assertStringContainsString('tedi-icon--color-white', $compact);
+    }
+
+    public function test_vertical_stepper_item_with_sub_items_renders_a_toggle(): void
+    {
+        $html = Blade::render(
+            '<tedi:vertical-stepper-item title="Samm">'
+            .'<x-slot:sub-items><tedi:vertical-stepper-item title="Alam" :sub-item="true" /></x-slot:sub-items>'
+            .'</tedi:vertical-stepper-item>'
+        );
+
+        $this->assertHasClass('tedi-vertical-stepper-item__toggle', $html, 'tedi-vertical-stepper-item__toggle');
+        $this->assertStringContainsString('aria-expanded="false"', $html);
+        $this->assertStringContainsString('data-tedi-contents', $html);
+        $this->assertStringContainsString('x-show="opened"', $html);
+        // Per CONVENTIONS.md §8 the collapsed sub-items are in the DOM already.
+        $this->assertHasClass('tedi-vertical-stepper-item--sub-item', $html, 'tedi-vertical-stepper-item--sub-item');
+    }
+
+    public function test_vertical_stepper_item_without_sub_items_has_no_toggle(): void
+    {
+        $html = Blade::render('<tedi:vertical-stepper-item title="Samm" />');
+
+        $this->assertStringNotContainsString('x-data', $html);
+        $this->assertStringNotContainsString('aria-expanded', $html);
+    }
+
+    /**
+     * The `item-title` slot must REPLACE the generated link/button, not sit
+     * beside it — a silent fallthrough would still render valid markup.
+     */
+    public function test_vertical_stepper_item_title_slot_replaces_the_generated_control(): void
+    {
+        $html = Blade::render(
+            '<tedi:vertical-stepper-item title="Samm">'
+            .'<x-slot:item-title><a href="#samm">Samm</a></x-slot:item-title>'
+            .'</tedi:vertical-stepper-item>'
+        );
+
+        $this->assertStringContainsString('href="#samm"', $html);
+        $this->assertStringNotContainsString('<button', $html,
+            'The item-title slot must replace the generated <button>, not render alongside it.');
+    }
+
+    public function test_vertical_stepper_item_description_slot(): void
+    {
+        $html = Blade::render(
+            '<tedi:vertical-stepper-item title="Samm">'
+            .'<x-slot:description>Tähtaeg</x-slot:description>'
+            .'</tedi:vertical-stepper-item>'
+        );
+
+        $this->assertStringContainsString('Tähtaeg', $html);
+        $this->assertHasClass('tedi-vertical-stepper-item__description', $html, 'tedi-vertical-stepper-item__description');
+    }
 }
