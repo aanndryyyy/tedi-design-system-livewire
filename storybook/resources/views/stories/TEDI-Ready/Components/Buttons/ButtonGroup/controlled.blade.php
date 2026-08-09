@@ -1,8 +1,11 @@
 {{--
     Angular's Controlled story two-way binds [(value)] and reads it back into a
-    live label. Output events aren't re-emitted (CONVENTIONS.md §7.2), so this
-    port renders the initial value statically; a consumer wires wire:click /
-    x-on:click on the items and re-renders with the new `value`.
+    live label.
+
+    Output events aren't re-emitted (CONVENTIONS.md §7.2), but the selection
+    itself is live (CONVENTIONS.md §8): <tedi:button-group> declares the Alpine
+    state, so `tediValue` on the group is the value to read back. A consumer
+    wanting the server to know binds wire:click on the items instead.
 --}}
 @storybook([
     'name' => 'Controlled',
@@ -17,6 +20,11 @@
         ['value' => '1', 'label' => 'Tabel'],
         ['value' => '2', 'label' => 'Loend'],
         ['value' => '3', 'label' => 'Kalender'],
-    ]" />
-    <p style="margin-top: 8px;">Valitud: {{ $selected }}</p>
+    ]">
+        <template x-teleport="#button-group-controlled-value">
+            <span x-text="tediValue ?? '—'">{{ $selected }}</span>
+        </template>
+    </tedi:button-group>
+
+    <p style="margin-top: 8px;">Valitud: <span id="button-group-controlled-value"></span></p>
 </div>

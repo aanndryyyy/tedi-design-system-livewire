@@ -250,6 +250,105 @@ class ButtonGroupComponentsTest extends TestCase
         $this->assertSame(0, substr_count($html, 'aria-pressed="true"'));
     }
 
+    // -- live selection (CONVENTIONS.md §8) ---------------------------------
+
+    public function test_the_group_seeds_the_alpine_state_from_value(): void
+    {
+        $html = Blade::render('<tedi:button-group value="2" :items="'.self::ITEMS.'" />');
+
+        $this->assertStringContainsString('x-data=', $html);
+        $this->assertStringContainsString("tediValue: '2',", $html);
+        $this->assertStringContainsString('tediMultiple: false', $html);
+    }
+
+    public function test_multiple_mode_seeds_the_alpine_state_with_an_array(): void
+    {
+        $html = Blade::render(
+            '<tedi:button-group :multiple="true" :value="[\'1\', \'3\']" :items="'.self::ITEMS.'" />'
+        );
+
+        $this->assertStringContainsString('tediMultiple: true', $html);
+        $this->assertStringContainsString('tediValue: JSON.parse(', $html);
+        $this->assertStringContainsString('1\\u0022,\\u00223', $html);
+    }
+
+    public function test_a_valueless_group_seeds_null_in_single_mode_and_an_empty_array_in_multiple(): void
+    {
+        $html = Blade::render('<tedi:button-group :items="'.self::ITEMS.'" />');
+        $this->assertStringContainsString('tediValue: null', $html);
+
+        $html = Blade::render('<tedi:button-group :multiple="true" :items="'.self::ITEMS.'" />');
+        $this->assertStringContainsString('tediValue: []', $html);
+    }
+
+    public function test_each_item_toggles_the_group_state_and_binds_its_pressed_state(): void
+    {
+        $html = Blade::render('<tedi:button-group :items="'.self::ITEMS.'" />');
+
+        $this->assertSame(3, substr_count($html, 'x-on:click="tediToggle('));
+        $this->assertStringContainsString('x-on:click="tediToggle(&quot;1&quot;)"', $html);
+        $this->assertStringContainsString(
+            'x-bind:aria-pressed="tediIsSelected(&quot;1&quot;).toString()"',
+            $html
+        );
+    }
+
+    public function test_the_server_rendered_pressed_state_survives_alongside_the_binding(): void
+    {
+        // §8: stripping the JS must still leave the selected item painted, since
+        // [aria-pressed="true"] carries the entire selected appearance.
+        $html = Blade::render('<tedi:button-group value="2" :items="'.self::ITEMS.'" />');
+
+        $this->assertSame(1, substr_count($html, 'aria-pressed="true"'));
+    }
+
+    public function test_dropdown_items_toggle_the_same_state_and_disabled_ones_do_not(): void
+    {
+        $items = "[['value' => '1', 'label' => 'Tabel'], ['value' => '2', 'label' => 'Loend', 'disabled' => true]]";
+
+        $html = Blade::render('<tedi:button-group :dropdown-mode="true" :items="'.$items.'" />');
+
+        // .capture, so it does not collide with dropdown-item's own x-on:click.
+        $this->assertStringContainsString('x-on:click.capture="tediToggle(&quot;1&quot;)"', $html);
+        $this->assertStringContainsString('x-on:click.capture="null"', $html);
+        $this->assertStringContainsString(
+            'x-bind:class="{ &#039;tedi-dropdown-item--selected&#039;: tediIsSelected(&quot;1&quot;) }"',
+            $html
+        );
+    }
+
+    public function test_the_dropdown_trigger_tracks_the_selection_when_the_label_mode_is_selected(): void
+    {
+        $items = "[['value' => '1', 'label' => 'Tabel', 'iconLeft' => 'table'], ['value' => '2', 'label' => 'Loend', 'iconLeft' => 'list']]";
+
+        $html = Blade::render(
+            '<tedi:button-group :dropdown-mode="true" dropdown-label-mode="selected" value="2" :items="'.$items.'" />'
+        );
+
+        $this->assertStringContainsString('tediStaticLabel: false', $html);
+        $this->assertStringContainsString('x-text="tediTriggerLabel()"', $html);
+        $this->assertStringContainsString('tediTriggerIcon()', $html);
+        // The static markup still carries the resolved label and icon.
+        $this->assertStringContainsString('>Loend</span>', $html);
+        $this->assertStringContainsString('>list</tedi-icon>', $html);
+    }
+
+    public function test_a_static_trigger_keeps_its_label_even_though_the_bindings_are_unconditional(): void
+    {
+        $html = Blade::render('<tedi:button-group :dropdown-mode="true" :items="'.self::ITEMS.'" />');
+
+        $this->assertStringContainsString('tediStaticLabel: true', $html);
+        $this->assertStringContainsString('>Menu</span>', $html);
+    }
+
+    public function test_a_plain_strip_carries_no_trigger_state(): void
+    {
+        $html = Blade::render('<tedi:button-group :items="'.self::ITEMS.'" />');
+
+        $this->assertStringNotContainsString('tediLabels', $html);
+        $this->assertStringNotContainsString('tediTriggerLabel', $html);
+    }
+
     // -- dropdown branch ---------------------------------------------------
 
     public function test_no_dropdown_is_rendered_unless_dropdown_mode_is_on(): void
@@ -344,9 +443,20 @@ class ButtonGroupComponentsTest extends TestCase
         // Angular emits no class attribute at all; Blade cannot express "attribute
         // absent" here, so an empty class="" stands in. What matters for §4 is
         // that it carries no class tokens — see the note in button-group.blade.php.
+        // The name still appears in the x-bind:class expression that keeps the
+        // item in sync after a click, so this asserts on the class attribute
+        // rather than the raw markup.
         $html = Blade::render('<tedi:button-group :dropdown-mode="true" :items="'.self::ITEMS.'" />');
 
-        $this->assertStringNotContainsString('tedi-dropdown-item--selected', $html);
+        // Same regex as classesOf(): real class attributes only, never a binding.
+        preg_match_all('/(?<![-:.\w])class="([^"]*)"/', $html, $matches);
+
+        foreach ($matches[1] as $classAttr) {
+            $this->assertNotContains(
+                'tedi-dropdown-item--selected',
+                preg_split('/\s+/', trim($classAttr), -1, PREG_SPLIT_NO_EMPTY)
+            );
+        }
     }
 
     // -- variant matrix smoke test ---------------------------------------

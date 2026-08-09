@@ -67,7 +67,22 @@
     to the §4 guardrail; duplicating the whole item markup across two @if
     branches was not worth the repetition.
 
-    `output()` (`selectionChange`) is not re-emitted (§7.2).
+    LIVE SELECTION (CONVENTIONS.md §8). A button group is inert without JS — the
+    whole point of the control is toggling — so the Angular `toggle()` /
+    `isSelected()` pair is mirrored by a small inline Alpine state declared on
+    this root (`tediValue`), with `<tedi:button-group-button>` layering
+    `x-bind:aria-pressed` on top of the server-rendered attribute. The semantics
+    are Angular's exactly: in single mode clicking the selected item clears the
+    selection, in `multiple` mode each click toggles membership of the array.
+
+    The layer is additive: `value` still decides the rendered `aria-pressed` and
+    the dropdown's `--selected` class, so a JS-stripped page keeps the correct
+    static markup. Slot-written items participate too — they sit in the same
+    Alpine scope — but they still pass their own initial `:selected`.
+
+    `output()` (`selectionChange`) is not re-emitted (§7.2); the Alpine state is
+    the source of truth after hydration. A consumer needing the server to know
+    binds `wire:click` on the items through `$attributes`.
 --}}
 @props([
     /** The items. See the shape documented above. */
@@ -136,9 +151,58 @@
         ? 'menu'
         : ($selectedItem['iconLeft'] ?? $selectedItem['icon'] ?? 'menu');
 
+    // value => [label, icon] backing the live trigger, mirroring triggerLabel()
+    // / triggerIcon()'s `iconLeft() ?? icon()` fallback. Only built for the
+    // dropdown branch — a plain strip has no trigger to feed.
+    $triggerLabels = [];
+
+    if ($dropdownMode) {
+        foreach ($groupItems as $item) {
+            $triggerLabels[(string) ($item['value'] ?? '')] = [
+                'label' => $item['label'] ?? '',
+                'icon' => $item['iconLeft'] ?? $item['icon'] ?? 'menu',
+            ];
+        }
+    }
+
+    $initialValue = $multiple ? array_values((array) ($value ?? [])) : $value;
 @endphp
 
-<tedi-button-group {{ $attributes->class([
+<tedi-button-group
+    x-data="{
+        tediValue: @js($initialValue),
+        tediMultiple: @js((bool) $multiple),
+        @if ($dropdownMode)
+        {{-- The trigger's x-effect/x-text are unconditional (a Blade directive
+             inside a <tedi:…> tag leaves its opening tag uncompiled), so these
+             exist whenever the dropdown branch renders and simply return the
+             static label when dropdownLabelMode is `static`. --}}
+        tediLabels: @js($triggerLabels),
+        tediFallbackLabel: @js($labelFallback),
+        tediStaticLabel: @js($staticLabel),
+        tediTriggerEntry() {
+            return this.tediStaticLabel ? null : (this.tediLabels[this.tediValue] ?? null);
+        },
+        tediTriggerLabel() { return this.tediTriggerEntry()?.label ?? this.tediFallbackLabel; },
+        tediTriggerIcon() { return this.tediTriggerEntry()?.icon ?? 'menu'; },
+        @endif
+        tediIsSelected(value) {
+            return this.tediMultiple
+                ? Array.isArray(this.tediValue) && this.tediValue.includes(value)
+                : this.tediValue === value;
+        },
+        tediToggle(value) {
+            if (this.tediMultiple) {
+                const current = Array.isArray(this.tediValue) ? [...this.tediValue] : [];
+                const index = current.indexOf(value);
+                if (index >= 0) { current.splice(index, 1); } else { current.push(value); }
+                this.tediValue = current;
+            } else {
+                this.tediValue = this.tediValue === value ? null : value;
+            }
+        },
+    }"
+    {{ $attributes->class([
     'tedi-button-group',
     'tedi-button-group--stretch' => $stretch,
     'tedi-button-group--dropdown-mode' => $dropdownMode,
@@ -172,7 +236,8 @@
                     :icon-start="$triggerIcon"
                     :aria-label="$ariaLabel"
                     class="tedi-button-group__dropdown-trigger"
-                >{{ $triggerLabel }}</tedi:button>
+                    x-effect="$el.querySelector('tedi-icon').textContent = tediTriggerIcon()"
+                ><span x-text="tediTriggerLabel()">{{ $triggerLabel }}</span></tedi:button>
             </tedi:dropdown-trigger>
 
             <tedi:dropdown-content>
@@ -180,12 +245,30 @@
                     @php
                         // Angular's `iconLeft() ?? icon()` fallback for the menu item.
                         $leadIcon = $item['iconLeft'] ?? $item['icon'] ?? null;
+
+                        // Both Alpine expressions are built here rather than written
+                        // inline: a Blade directive inside a <tedi:…> tag leaves the
+                        // opening tag uncompiled, so the disabled branch cannot be an
+                        // @unless around the attribute.
+                        $itemValueJs = json_encode((string) ($item['value'] ?? ''));
+                        $itemSelectedJs = "{ 'tedi-dropdown-item--selected': tediIsSelected({$itemValueJs}) }";
+
+                        // `null` for a disabled item is Angular's onDropdownItemSelect()
+                        // early return. `.capture` and not a plain `x-on:click`:
+                        // dropdown-item.blade.php already carries its own
+                        // `x-on:click="hide(true)"`, and a second attribute of the same
+                        // name would be dropped by the HTML parser, not merged.
+                        $itemToggleJs = ($item['disabled'] ?? false)
+                            ? 'null'
+                            : "tediToggle({$itemValueJs})";
                     @endphp
 
                     <tedi:dropdown-item
                         :class="$isSelected($item) ? 'tedi-dropdown-item--selected' : ''"
                         :value="$item['value'] ?? ''"
                         :disabled="$item['disabled'] ?? false"
+                        :x-bind:class="$itemSelectedJs"
+                        :x-on:click.capture="$itemToggleJs"
                     >
                         <x-slot:item-value>
                             <tedi:dropdown-item-value>

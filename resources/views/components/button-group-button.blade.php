@@ -47,9 +47,16 @@
     way button.blade.php does.
 
     `output()` (`clicked`) is not re-emitted (CONVENTIONS.md §7.2) — bind
-    `wire:click` / `x-on:click` through $attributes. Angular also toggles the
-    parent's `value` on click; that state round-trip is the consumer's, since
-    Blade renders once.
+    `wire:click` / `x-on:click` through $attributes.
+
+    Angular also toggles the parent's `value` on click, and a group that cannot
+    be toggled is inert, so that round-trip IS ported, as the minimal Alpine
+    layer §8 asks for: the click calls `tediToggle()` on the state
+    <tedi:button-group> declares, and `aria-pressed` is x-bound on top of the
+    server-rendered attribute. Additive, per §8 — the attribute below is emitted
+    unconditionally, so a JS-stripped page still paints the selected item. The
+    two bindings assume the Alpine scope of a surrounding <tedi:button-group>,
+    which the direct-child rule above already requires.
 
     DELIBERATE DIVERGENCE: `type="button"` is emitted. Angular's directive sets
     no type, so an item inside a <form> defaults to `type="submit"` and submits
@@ -99,12 +106,19 @@
     $isIconOnly = (bool) $icon;
     $iconFirst = $isIconOnly || (bool) $iconLeft;
     $iconLast = $isIconOnly || (bool) $iconRight;
+
+    // A disabled <button> never fires click, so only the binding is conditional.
+    $valueJs = json_encode((string) ($value ?? ''));
 @endphp
 
 <button
     tedi-button-group-button
     type="button"
     @disabled($disabled)
+    {{-- Escaped, not raw: json_encode quotes the value with `"`, which e()
+         turns into &quot; so it cannot terminate the attribute. --}}
+    x-on:click="tediToggle({{ $valueJs }})"
+    x-bind:aria-pressed="tediIsSelected({{ $valueJs }}).toString()"
     {{ $attributes->class([
         'tedi-button',
         'tedi-button-group-button',
