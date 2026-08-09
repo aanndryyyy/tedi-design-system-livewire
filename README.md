@@ -158,6 +158,10 @@ summary:
 | `sidenav` | `SideNavService`'s signals become explicit props (`collapsed`, `mobile`, `mobileOpen`, `mobileItemOpen`); the sibling `sidenav.toggle` / `sidenav.overlay` talk to the nav over window events. `desktopBreakpoint` is not declared at all |
 | `button-group` | `enableMobileDropdown` + `mobileBreakpoint` become the explicit `dropdownMode` prop; the collapsed dropdown is built from `items` only, so a slot-only group cannot collapse |
 | `breadcrumbs`, `horizontal-stepper`, `button-group` | Angular's `contentChildren` registration becomes explicit props — an `items` array, or `step-number` on each stepper item |
+| `vertical-stepper-item` | Same `contentChildren` case: nested steps go in the `sub-items` slot and each carries `:sub-item="true"`, because Blade cannot set it on the slot's children. `route`/RouterLink becomes a plain `href`, and `routerLinkActive`'s auto-selection (plus the `opened` effect it drives) becomes explicit `:selected` / `:opened`. `tedi-vertical-stepper--compact` dropped — TEDI ships no rule for it |
+| `choicegroup` | Angular is an attribute directive applied to an existing group host; Blade renders a wrapper element instead. `spacing` only ever decides `--stacked` (upstream never writes a gap either) |
+| `table-of-contents` | The mobile panel is the same nav with `table-of-contents--modal-active` rather than a second copy inside a CDK dialog. `onToggle`/`open` collapse into `default-open` — Angular never reads them. `TableOfContentsNestedWrapperComponent` is an Angular-bug workaround and is not ported. Its classes are not `tedi-`-prefixed upstream, so the stylesheet guardrails skip them |
+| `file-dropzone` | Markup subset — Angular's `FileService`, `ControlValueAccessor` and async validators are the server's job here (see the table above) |
 
 Five classes are emitted that TEDI ships **no CSS rule** for
 (`tedi-empty-state--default`, `tedi-empty-state--separate`,
@@ -192,7 +196,10 @@ run on this package's own Alpine layer instead (`tediOverlay`, `tediModal`, and
 per-component inline state), documented in CONVENTIONS.md §8 and §11.
 
 Together that is **all 67** components in Angular's `tedi/` tree, which expand
-to **138 Blade components** once sub-components are counted.
+to **138 Blade components** once sub-components are counted. A fourth pass added
+the five components that exist only in Angular's `community/` entry point — see
+[From Angular's `community/` entry point](#from-angulars-community-entry-point)
+below — for **145** in total.
 
 | Angular component | Blade tag |
 |---|---|
@@ -285,14 +292,42 @@ back in through `:columns` / `:rows` (see the divergences table above).
 | `<tedi:time-picker>` | All three variants' markup | The variant host classes, which TEDI ships no rules for |
 | `<tedi:date-field>`, `<tedi:time-field>` | Input, tags, trigger, and the panel inline under an `open` prop | Popover placement, and the mobile modal branch |
 | `<tedi:number-field>` | Full markup with correct disabled states | Button behaviour — wire it via `increment-attributes` / `decrement-attributes` |
+| `<tedi:file-dropzone>` | Full markup, a native `<input type="file">` that `wire:model` binds, drag-and-drop into that input, and the file list / states rendered from `:files`, `state`, `has-error`, `error` | Angular's client-side file pipeline: `FileService` (append/replace, duplicate renaming), the `ControlValueAccessor`, and the `validators` / `validateIndividually` async validation that wrote `uploadState` |
+| `<tedi:table-of-contents>` | The list, scroll spy, seek-on-click and the mobile trigger | The CDK dialog — the panel opens in place via `--modal-active` instead of over a backdrop |
+
+### From Angular's `community/` entry point
+
+Angular ships a second entry point, `@tedi-design-system/angular/community`, next
+to `tedi/`. Its components are built the same way — `ViewEncapsulation.None`,
+global BEM classes — so they port under the same rules; CONVENTIONS.md §12
+covers the three things that differ (group mapping, the `Community/…` Storybook
+prefix, and the one path-only SCSS edit `floating-button` needs).
+
+The five components that exist **only** there are ported:
+
+| Angular component | Blade tag |
+|---|---|
+| `community/buttons/floating-button` | `<tedi:floating-button>` |
+| `community/form/choicegroup` | `<tedi:choicegroup>` ⁶ |
+| `community/form/file-dropzone` | `<tedi:file-dropzone>` ⁷ |
+| `community/navigation/table-of-contents` | `<tedi:table-of-contents>`, `<tedi:table-of-contents-item>` ⁷ |
+| `community/navigation/vertical-stepper` | `<tedi:vertical-stepper>`, `<tedi:vertical-stepper-item>` |
+
+⁶ Angular is an attribute directive with no template; Blade has no directives,
+so it ports as a wrapper element carrying the same four host classes. It is the
+community predecessor of `tedi/`'s `<tedi:radio-card>` / `<tedi:checkbox-card>`,
+which is what TEDI-Ready ships — prefer those in new code.
+⁷ Documented subsets — see the table above.
+
+Everything else in `community/` duplicates a `tedi/` component under an older
+name (`accordion`, `card`, `checkbox`, `radio`, `select`, `modal`, `dropdown`,
+`dropdown-item`, `tabs`, `tag`, `status-badge`, `breadcrumbs`, `pagination`,
+`progress-bar`, `search`, `textarea`, `form-field`, `input-group`) and is
+covered by the `tedi/` port. Two community-only components are still **not
+ported**: `input` (superseded by `<tedi:text-field>`) and `table-styles` (a
+styling wrapper superseded by `<tedi:table>`).
 
 ### Not ported
-
-Angular's `community/` tree is a **separate package and out of scope** — the
-components that exist only there (`floating-button`, `choicegroup`,
-`file-dropzone`, `table-of-contents`, `vertical-stepper`, `input`,
-`table-styles`) have no Blade counterpart. `Community/Form/FormField` appears in
-Storybook only because that is where Angular files the shared form-field stories.
 
 Within `tedi/`, every component is ported; what remains are the documented
 subsets above plus five places where a now-available primitive has not been
@@ -353,14 +388,14 @@ its story directory contains any `.md` file:
 
 Both are ported verbatim from the Angular story file — its `parameters.docs.description.component` /
 `.story` if present, otherwise the doc comment above the `export default` / `export const`.
-All 62 components have a `README.md`; 117 stories have a per-story description,
+All 66 components have a `README.md`; 127 stories have a per-story description,
 which is every Angular story that carries one.
 
 Two known gaps. `Community/Form/FormField` has no description because the Angular
 story has none — its `README.md` is an HTML comment that renders nothing and
 exists only to switch the Docs page on. And the props table on a Docs page is
 Storybook's, built from the component's *first* story; because that ordering is
-alphabetical (above) rather than Angular's export order, 23 of the 62 pages land
+alphabetical (above) rather than Angular's export order, 23 of the 66 pages land
 on a story that declares no `argTypes` and show "No inputs found for this
 component" instead of the table. The per-story Controls panel is unaffected.
 
@@ -376,13 +411,18 @@ its Angular export position in the directive's `order` key, so the sequence is
 recorded and applies wherever Storybook honours it.
 
 Every Angular `TEDI-Ready` group now has a Blade counterpart, including
-`TEDI-Ready/Components/Overlay/*`. `Community/Form/FormField` is present because
-that is where Angular files the form-field stories; the rest of Angular's
-`Community` tree is out of scope (see "Not ported" above).
+`TEDI-Ready/Components/Overlay/*`. Under `Community/`, the four components ported
+from Angular's `community/` entry point are present —
+`Buttons/Floating Button`, `Form/FileDropzone`, `Navigation/Table of Contents`
+and `Navigation/VerticalStepper` — plus `Form/FormField`, which is where Angular
+files the shared form-field stories. `<tedi:choicegroup>` has no directory
+because Angular has no story file for it: it is a directive, exercised through
+the community `radio` / `checkbox` stories, which belong to components the
+`tedi/` port already covers.
 
 ### Angular stories with no Blade equivalent
 
-489 stories across 62 components are ported. Some Angular stories exist purely
+510 stories across 66 components are ported. Some Angular stories exist purely
 to demonstrate behaviour this package documents as not ported (see the
 divergences table above). Those are deliberately absent rather than faked:
 
@@ -400,6 +440,7 @@ divergences table above). Those are deliberately absent rather than faked:
 | `Card`: WithDottedSeparator, PrescriptionExample | A style this port doesn't emit |
 | `DatePicker`, `TimePicker`, `TimeField`, `DateField`: WithReactiveForms | Angular reactive forms — use `wire:model` instead |
 | `DateField`, `TimeField`: NativePicker, MobileModal · `DateField`: CustomFormatAndParse, CustomLocale | Breakpoint props, the unported modal branch, JS format/parse callables, and `localeCode` |
+| `FileDropzone`: Replace | Exercises the `mode` input, part of the unported `FileService` file pipeline |
 
 Angular's Hover / Active / Focus matrix rows are reproduced in full.
 `storybook-addon-pseudo-states` isn't one of Blast's dependencies, so
