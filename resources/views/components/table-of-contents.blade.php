@@ -13,7 +13,7 @@
     inside it exactly as upstream nests them.
 
     Behaviour lives in `Alpine.data('tediTableOfContents')` in
-    resources/js/tedi.js — scroll spy, seek-on-click and the mobile panel, all
+    resources/js/src/table-of-contents.js — scroll spy, seek-on-click and the mobile panel, all
     documented at the function. Each `tedi:table-of-contents-item` reports its
     target through `data-toc-id`, which is how the engine finds the headings
     without a `contentChildren()` equivalent.

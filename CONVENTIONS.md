@@ -361,11 +361,37 @@ An `x-show`n panel must be in the DOM with its real class list, not conjured by
 JS, or the parity tests in §10 have nothing to assert against.
 
 **Where the behaviour lives.** Inline in the template by default. Move it into
-`resources/js/tedi.js` as an `Alpine.data()` only when it is too large to read
-inline or is shared by several components — currently `tediCarousel`,
-`tediOverlay` and `tediDropdown` (§11), `tediModal` and `tediTableOfContents`.
-`tedi.js` is copied verbatim to `dist/tedi.js` by `npm run build:js`; there is
-no bundler, so it stays a dependency-free ES5-compatible script, not a module.
+`resources/js/` as an `Alpine.data()` only when it is too large to read inline
+or is shared by several components — currently `tediCarousel`, `tediOverlay`
+and `tediDropdown` (§11), `tediModal` and `tediTableOfContents`.
+
+**The JS layout.** `resources/js/tedi.js` is the entry point and holds nothing
+but imports and the `Alpine.data()` registrations. Each behaviour is a module
+under `resources/js/src/`, exporting a factory of the same name:
+
+| File | Exports | Notes |
+|---|---|---|
+| `src/position.js` | placement maths | Pure functions over rectangles — no Alpine, no DOM writes |
+| `src/overlay.js` | `overlay` | Open/close, dismissal, and the DOM writes that apply `position.js` |
+| `src/dropdown.js` | `dropdown` | Composes `overlay` and adds the ARIA menu keyboard layer (§11) |
+| `src/modal.js` | `modal` | |
+| `src/carousel.js` | `carousel` | |
+| `src/table-of-contents.js` | `tableOfContents` | |
+
+A new behaviour is a new file in `src/` plus two lines in `tedi.js` (an import
+and an `Alpine.data()` call). Do not add a second `Alpine.data()` call site.
+
+`npm run build:js` bundles them with **esbuild** into a single classic (IIFE,
+non-module, es2017) `dist/tedi.js`. That output is unchanged in kind from
+before the split: consumers still load one plain `<script>`, and `dist/` is
+committed so Composer consumers never run npm. npm was already required for
+the sass build, so esbuild adds a devDependency, not a new prerequisite.
+
+Two consequences worth knowing. The bundle is **comment-stripped**, so the
+prose that documents each behaviour lives in `resources/js/` and not in the
+shipped file — a banner at the top of `dist/tedi.js` says so. And the modules
+are real ES modules: `import`/`export` between them is fine, but nothing may
+rely on a shared implicit scope the way the single-IIFE version could.
 
 ---
 
@@ -445,7 +471,7 @@ nowhere.
 
 ### The engine
 
-`Alpine.data('tediOverlay')` in `resources/js/tedi.js` is a **direct port of
+`Alpine.data('tediOverlay')` in `resources/js/src/overlay.js` (with the maths in `src/position.js`) is a **direct port of
 `tedi/components/overlay/overlay-position.util.ts`**, not an invention. It keeps
 the upstream algorithm's observable behaviour:
 
@@ -565,7 +591,7 @@ Every anchored component wires the same three refs, and nothing else:
   Tooltip passes its own `offset` (default 4) and popover passes
   `withArrow ? 12 : 0` — both of which upstream adds on top, as here.
 
-Every `tediOverlay` config key is documented at the function in `tedi.js`. Do
+Every `tediOverlay` config key is documented at the function in `src/overlay.js`. Do
 not add per-component positioning code to a template.
 
 ---

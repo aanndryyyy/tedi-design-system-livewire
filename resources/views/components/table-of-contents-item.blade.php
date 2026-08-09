@@ -15,7 +15,7 @@
     `selected` is a signal upstream, written by the parent's scroll spy and by
     item clicks. Here it comes from `Alpine.data('tediTableOfContents')` on the
     parent, which compares its `activeId` against this item's `id-to` — see the
-    engine in resources/js/tedi.js. `data-toc-id` is how the engine enumerates
+    engine in resources/js/src/table-of-contents.js. `data-toc-id` is how the engine enumerates
     the items, standing in for Angular's `contentChildren()`.
 
     `selected` is also accepted as a prop so the active item is correct in the

@@ -109,7 +109,7 @@ These are deliberate and documented in [CONVENTIONS.md](CONVENTIONS.md) §7:
 2. **`output()` events are not re-emitted.** Bind `wire:click` / `x-on:click`
    directly to the rendered element instead.
 3. **Overlay positioning is this package's own engine, not CDK Overlay.**
-   `Alpine.data('tediOverlay')` in `resources/js/tedi.js` ports upstream's
+   `Alpine.data('tediOverlay')` in `resources/js/src/overlay.js` ports upstream's
    `overlay-position.util.ts`, so tooltip, popover and dropdown anchor the same
    way. The one structural divergence: CDK re-parents its pane into a
    `.cdk-overlay-container` on `<body>`, and Blade renders once on the server,

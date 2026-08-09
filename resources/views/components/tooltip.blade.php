@@ -3,7 +3,7 @@
     Port of angular/tedi/components/overlay/tooltip/tooltip.component.{ts,html}
 
     Positioning is done by this package's own anchoring engine
-    (`Alpine.data('tediOverlay')` in resources/js/tedi.js) rather than CDK
+    (`Alpine.data('tediOverlay')` in resources/js/src/overlay.js) rather than CDK
     Overlay — CONVENTIONS.md §11. `offset` is passed straight through: the
     engine adds it on top of its 8px base gap, exactly as upstream's
     POSITION_MAP does.

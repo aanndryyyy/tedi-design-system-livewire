@@ -7,10 +7,10 @@
     so the custom tag is emitted literally (CONVENTIONS.md §4).
 
     Positioning is CDK Overlay upstream; here it comes from the shared
-    `tediOverlay` engine in resources/js/tedi.js (CONVENTIONS.md §11), a direct
-    port of upstream's overlay-position.util.ts. This component's `x-data` is
-    `tediDropdown`, which composes that engine and adds the keyboard layer.
-    Config mapping:
+    `tediOverlay` engine in resources/js/src/overlay.js (CONVENTIONS.md §11), a
+    direct port of upstream's overlay-position.util.ts. This component's
+    `x-data` is `tediDropdown` (resources/js/src/dropdown.js), which composes
+    that engine and adds the keyboard layer. Config mapping:
 
       position        -> placement
       offset          -> offset - 8, because tediOverlay's `offset` is *extra* px

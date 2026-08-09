@@ -13,7 +13,7 @@
     `tabindex="0"` with `role="region"` exactly as upstream renders it, so it
     takes focus and advertises itself as an operable widget — but the arrow
     keys currently do nothing, which is worse than not being focusable at all.
-    `tediCarousel` (resources/js/tedi.js) already has next()/prev(),
+    `tediCarousel` (resources/js/src/carousel.js) already has next()/prev(),
     so closing this is a keydown binding on this element, not new machinery.
     Unlike the overlay exclusions in CONVENTIONS.md §11 this is an omission,
     not a decision — see the dropdown's keyboard layer for the pattern.

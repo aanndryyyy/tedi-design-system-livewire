@@ -17,8 +17,8 @@
 # Not ignored, and deliberately so:
 #   dist/              built CSS/JS — Composer consumers never run npm, so the
 #                      package has to ship it. Regenerate with `npm run build`.
-#   package-lock.json  pins the sass/@tedi-design-system/core versions dist/ was
-#                      built from.
+#   package-lock.json  pins the sass/esbuild/@tedi-design-system/core versions
+#                      dist/ was built from.
 
 .phpunit.result.cache
 .DS_Store

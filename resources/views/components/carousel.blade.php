@@ -14,7 +14,7 @@
     ResizeObserver-driven widths and LiveAnnouncer slide announcements. This
     port ships correct static markup/classes plus a minimal Alpine
     `tediCarousel` behaviour (index state, next/prev/goToIndex) from
-    resources/js/tedi.js — no drag, no wheel, no wrap-around cloning, no
+    resources/js/src/carousel.js — no drag, no wheel, no wrap-around cloning, no
     live-region announcements. `slidesPerView`/`gap` are accepted as plain
     scalars (breakpoint props aren't ported, §7).
 --}}
