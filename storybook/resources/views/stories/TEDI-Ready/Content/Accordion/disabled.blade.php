@@ -29,16 +29,25 @@
             <div style="display: flex; flex-direction: column; gap: 1rem;">
                 <div style="display: flex; flex-direction: column; gap: 1rem; max-width: 400px;">
                     <tedi:form-field>
-                        <tedi:form.label :required="true" for="first-name">Eesnimi</tedi:form.label>
-                        <input id="first-name" />
+                        <x-slot:label>
+                            <tedi:form.label :required="true" for="first-name">Eesnimi</tedi:form.label>
+                        </x-slot:label>
+
+                        <tedi:text-field id="first-name" />
                     </tedi:form-field>
                     <tedi:form-field>
-                        <tedi:form.label :required="true" for="last-name">Perenimi</tedi:form.label>
-                        <input id="last-name" />
+                        <x-slot:label>
+                            <tedi:form.label :required="true" for="last-name">Perenimi</tedi:form.label>
+                        </x-slot:label>
+
+                        <tedi:text-field id="last-name" />
                     </tedi:form-field>
                     <tedi:form-field>
-                        <tedi:form.label :required="true" for="id-code">Isikukood</tedi:form.label>
-                        <input id="id-code" />
+                        <x-slot:label>
+                            <tedi:form.label :required="true" for="id-code">Isikukood</tedi:form.label>
+                        </x-slot:label>
+
+                        <tedi:text-field id="id-code" />
                     </tedi:form-field>
                 </div>
                 <tedi:separator />

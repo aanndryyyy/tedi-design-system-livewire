@@ -51,6 +51,28 @@ would collide (e.g. `form/label` vs `content/label`).
 **Never edit the copied SCSS.** It is a verbatim vendored copy so it can be
 re-synced when TEDI releases. Divergences belong in the Blade template.
 
+### Two Blade compiler traps the composed components hit
+
+**Always leave whitespace after `</x-slot:…>`.** It compiles to `@endslot`, and
+Blade matches directives on a word boundary — so a word character immediately
+after the closing tag (`</x-slot:trigger>x`) is read as the non-existent
+directive `@endslotx`. The failure is silent and ugly: a literal `@endslot`
+survives into the output, the named slot's content lands in the **default** slot
+instead, and an output buffer is left open (PHPUnit reports "Test code or tested
+code did not close its own output buffers"). A single space or newline fixes it.
+This is generic Blade behaviour, not a quirk of one component — it reproduces on
+`<tedi:card>` as readily as on the overlay components.
+
+**Never open a component tag in one `@if` branch and close it in another.** The
+component-tag compiler pairs tags before any conditional is evaluated — but it
+does **not** error, which is what makes this dangerous. The compiler emits the
+component's own `if ($component->shouldRender()):` guard between your two
+branches, so your first `@endif` closes *that* rather than your own `@if`. The
+result rebalances by accident and everything between the two branches ends up
+inside the condition, so **the false branch silently renders nothing at all**.
+No error, no warning, and no class-parity test can see it. Duplicate the small
+amount of markup, or move the condition inside the component.
+
 ---
 
 ## 3. Mapping table — Angular → Blade
@@ -102,6 +124,23 @@ If the two disagree, `<tedi:radio-card-group>` and
 `<tedi:radio-card-group :grouped="false">` render differently, which is a bug.
 `tests/AwareTest.php` pins this for each parent/child pair — add a case there
 whenever you introduce one.
+
+### Never `@aware` a prop name the child also declares
+
+`@aware` does not read the parent's bag first. Laravel's
+`getConsumableComponentData()` checks `currentComponentData` — the **current**
+component's own data — before walking up. So when a child both declares
+`value` and `@aware`s `value`, it resolves **its own**, not the parent's.
+
+The failure is silent and total: `<tedi:dropdown value="b">` with items that each
+carry their own `value` would have every item compare itself against itself, so
+every item renders selected. No class-parity test catches it, because each
+item's class list is individually plausible.
+
+Where Angular reads a parent's state to decide a child's appearance, and the
+child has its own prop of that name, use an **explicit prop** (§5) instead —
+`<tedi:dropdown-item :selected="…">`. Reserve `@aware` for names the child does
+not own (`containerId`, `dropdownRole`, `size`).
 
 ---
 
@@ -278,8 +317,10 @@ rendering `role=""`.
    attribute. If in doubt, omit.
 2. **`output()` events are not re-emitted.** Consumers bind Livewire/Alpine
    listeners directly to the rendered element.
-3. **Tooltip/dropdown/modal positioning** (CDK Overlay / floating-ui) is out of
-   scope for the template-only phase.
+3. **Tooltip/dropdown/modal positioning** is ported, but by this package's own
+   anchoring engine rather than CDK Overlay — see §11. Anything that was
+   documented as "blocked on overlay positioning" before §11 existed is no
+   longer blocked; a component still carrying that note is stale.
 4. **`form/select` ports as a native-`<select>` subset, not the Angular
    combobox.** Angular's `tedi-select` is a custom combobox built on CDK
    Overlay (a div trigger + an overlaid `<ul cdkListbox>`), with virtual
@@ -299,14 +340,22 @@ rendering `role=""`.
 
 ## 8. Interactivity policy
 
-For this phase, components are **template-only** unless listed below. Where a
-component is inert without JS (tabs, carousel, accordion, pagination), ship the
-correct TEDI markup **plus minimal Alpine** in
-`resources/js/tedi.js`. Alpine ships with Livewire, so this adds no dependency.
+Where a component is inert without JS (tabs, carousel, accordion, pagination),
+ship the correct TEDI markup **plus minimal Alpine**. Alpine ships with Livewire,
+so this adds no dependency.
 
 Alpine usage must be additive: the markup and classes stay identical to Angular,
 with `x-data` / `x-on` layered on top. A consumer who strips the JS still gets
-correct static markup.
+correct static markup — **including the classes that only appear when open**.
+An `x-show`n panel must be in the DOM with its real class list, not conjured by
+JS, or the parity tests in §10 have nothing to assert against.
+
+**Where the behaviour lives.** Inline in the template by default. Move it into
+`resources/js/tedi.js` as an `Alpine.data()` only when it is too large to read
+inline or is shared by several components — currently `tediCarousel`,
+`tediOverlay` (§11) and `tediModal`. `tedi.js` is copied verbatim to
+`dist/tedi.js` by `npm run build:js`; there is no bundler, so it stays
+dependency-free ES5-compatible script, not a module.
 
 ---
 
@@ -369,3 +418,91 @@ values, slot text, `wire:model` presence).
 
 Extract the unions directly from the Angular `export type` declarations — that
 is the authoritative list, and it catches variant-name typos mechanically.
+
+---
+
+## 11. Overlay positioning
+
+Angular anchors `dropdown`, `tooltip` and `popover` with CDK Overlay. This
+package has no CDK, and — importantly — **TEDI ships no placement CSS**. Its
+stylesheet positions nothing: `.tedi-tooltip__container` and
+`.tedi-popover__container` are `position: relative`, and every rule that reacts
+to placement keys off a `data-placement` attribute to rotate the arrow. The
+pane's x/y and the arrow's `left`/`top` are expected to arrive as **inline
+styles**. So the placement maths cannot be dropped the way breakpoint props
+were — without it the panel renders in the document flow and the arrow points
+nowhere.
+
+### The engine
+
+`Alpine.data('tediOverlay')` in `resources/js/tedi.js` is a **direct port of
+`tedi/components/overlay/overlay-position.util.ts`**, not an invention. It keeps
+the upstream algorithm's observable behaviour:
+
+| Upstream | Ported |
+|---|---|
+| `POSITION_MAP` — 12 `side[-align]` placements, each with a ±8px base gap | yes, as `BASE_GAP` + the component's own `offset` |
+| `auto` / `auto-start` / `auto-end` — try top, bottom, right, left | yes, first side with room wins |
+| `preventOverflow` → append the opposite-direction fallback | yes, flip when the preferred side does not fit and the opposite does |
+| `applyHorizontalPush` — horizontal-only shift back into the viewport | yes; the cross axis is deliberately left alone so the panel scrolls with its trigger |
+| `calculateArrowOffset`, incl. the `padding + size * 0.7` edge margin | yes, verbatim |
+| `getPlacementFromPositionChange` → `data-placement` | yes, as the `side` property |
+
+**Deliberately not ported:** focus trapping inside the panel, the roving
+`tabindex` across dropdown items, and `tabOutOfDropdown`. Escape-to-close,
+outside-click dismissal and focus-return-to-trigger **are** ported — they are
+what makes the component usable rather than merely correct.
+
+**One structural divergence.** CDK re-parents the pane into a
+`.cdk-overlay-container` at `<body>`. The Blade panel stays where it was
+written and is positioned `fixed` in viewport coordinates. That keeps the markup
+a single tree and each component one root element (§6) — but a panel inside a
+`transform`ed ancestor is then positioned relative to that ancestor. Document it
+on the component; do not work around it by re-parenting.
+
+### The markup contract
+
+Every anchored component wires the same three refs, and nothing else:
+
+```blade
+<tedi-dropdown x-data="tediOverlay({ placement: 'bottom-start', offset: -4, matchTriggerWidth: true })">
+    <tedi-dropdown-trigger x-ref="trigger" x-on:click="toggle()" ...>…</tedi-dropdown-trigger>
+
+    <div class="tedi-dropdown__panel" x-ref="panel" x-show="open" x-cloak
+         x-bind:data-placement="side">
+        <div class="tedi-dropdown__arrow" x-ref="arrow"></div>
+        …
+    </div>
+</tedi-dropdown>
+```
+
+- `x-ref="trigger"` — the anchor. `x-ref="panel"` — what gets `position/top/left`.
+  `x-ref="arrow"` — optional; gets `left`/`top`.
+- `x-show` (not `x-if`): the panel must exist in the DOM with its real class
+  list even while closed, per §8.
+- `x-cloak` on the panel, so it does not flash before Alpine boots. The rule
+  behind it ships in `resources/scss/_alpine.scss` — Alpine provides no
+  stylesheet of its own.
+- **The panel and its arrow must be phrasing content — use `<span>`, never
+  `<div>`.** An overlay trigger is often inline in running text, and `<p>` may
+  only contain phrasing content, so the HTML parser auto-closes the paragraph
+  and **hoists a `<div>` panel out of the component entirely** — out of the
+  Alpine scope with it. The result is a panel whose `open` flips to `true` while
+  it stays `display: none` forever, and a paragraph that breaks across two
+  lines. Server-rendered HTML is well-formed, so *every class assertion still
+  passes*; only a browser reveals it. Pack the wrapper tags with **no whitespace
+  between them** — a text node renders as a visible gap inside a `<p>`. The SCSS
+  keys on classes rather than elements and the panel is positioned, which
+  blockifies it regardless of the `span` default, so nothing is lost.
+  (Custom elements like `<tedi-tooltip-content>` are parsed as phrasing content
+  already and need no change.)
+- `data-placement` is **bound**, so per §4 it must come after
+  `$attributes->class()` — as must every other `x-bind`.
+- The engine's `offset` is *extra* px on top of the 8px base gap. Upstream
+  dropdown replaces the base rather than adding to it (`Math.sign(offsetY) *
+  offset`, default 4), so a dropdown passes `offset: -4` to land on the same 4px.
+  Tooltip passes its own `offset` (default 4) and popover passes
+  `withArrow ? 12 : 0` — both of which upstream adds on top, as here.
+
+Every `tediOverlay` config key is documented at the function in `tedi.js`. Do
+not add per-component positioning code to a template.

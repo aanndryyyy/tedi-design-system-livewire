@@ -1,0 +1,18 @@
+/* Not vendored from Angular — this package's own Alpine support.
+ *
+ * The interactive components (overlay panels, collapse, sidenav) render their
+ * closed state into the DOM with its real class list and let `x-show` hide it,
+ * so a consumer who strips the JS still gets correct static markup and the
+ * class-parity tests have something to assert against — see CONVENTIONS.md §8.
+ *
+ * The cost of that is a window between first paint and Alpine booting, during
+ * which nothing has hidden the panel yet. `x-cloak` marks those elements, but
+ * Alpine ships no stylesheet — the rule behind the attribute is the consumer's
+ * to provide, and without it every overlay flashes its panel on load. Since
+ * this package both emits the attribute and ships a stylesheet, it provides the
+ * rule too. Alpine removes the attribute once it initialises.
+ */
+
+[x-cloak] {
+  display: none !important;
+}

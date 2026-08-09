@@ -1,0 +1,3 @@
+Render a paginator above and below the table. Each slot has its own visual config — here the top slot shows the results count and page-size selector, while the bottom slot shows only the pager.
+
+Upstream both paginators are driven by the table's own `pagination` state and share it automatically. This port has no such state: pagination is a **slot**, so you compose `<tedi:pagination>` yourself and keep the two in sync. What the table still contributes is the chrome — the `tedi-table__pagination--top` / `--bottom` wrappers and the matching `tedi-table--has-pagination*` host classes that flatten the scroll box's adjoining corners.

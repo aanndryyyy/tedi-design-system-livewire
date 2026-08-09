@@ -1,0 +1,3 @@
+When the trigger sits on a component that wraps its own `<button>`, the directive resolves that inner button and applies the `id`, `aria-*` and focus handling there — keeping a single tab stop with correct screen-reader announcements.
+
+In this port `<tedi:dropdown-trigger>` is itself the wrapper, and the resolution runs in its `x-init` using upstream's own focusable selector. The keyboard handling upstream puts on the resolved element is only partly ported: Escape closes the dropdown and returns focus here, but the ArrowDown/ArrowUp "open and focus the first/last item" shortcuts are not, because they depend on the roving tabindex over items that this package deliberately does not port.

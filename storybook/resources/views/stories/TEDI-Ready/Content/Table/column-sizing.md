@@ -1,0 +1,3 @@
+Columns accept `width`, `minWidth` and `maxWidth`, rendered as `width` / `min-width` / `max-width`. **`fixedLayout` is required** — in the default auto layout the browser sizes columns to content and the widths are only hints. Under fixed layout, leave at least one column **unsized** so it absorbs the leftover space; otherwise every column scales up to fill the table. Here `Kood` is capped at 72px, `Arv` is held to ≥120px (its `width: 64` is lifted by `minWidth: 120`), `Nimi` is capped at 140px, and `Kirjeldus` is left unsized so it extends to fill the remaining width.
+
+Interactive column *resizing* (TanStack's `columnSizing` state) is not ported — these are static, authored widths.

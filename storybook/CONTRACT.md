@@ -76,7 +76,8 @@ The dropped areas, in short:
 
 - Breakpoint props (`xs`/`sm`/`md`/`lg`/`xl`/`xxl`) — not ported anywhere.
 - `output()` events — no event stories.
-- Overlay positioning — tooltip, popover, dropdown, modal, and toast placement.
+- Toast placement — `<tedi:toast>` renders markup only and leaves placement to
+  the consumer.
 - Open/close state driven from Angular — `pagination`'s option-picker modal, the
   `tabs` overflow "More" dropdown, `header.profile` / `header.role` popover
   branch, `footer` mobile layouts.
@@ -157,8 +158,53 @@ the file out, or — when the component would otherwise get no Docs page at all 
 make it an HTML comment saying why (see `Community/Form/FormField/README.md`).
 
 §5 applies here too: when the Angular text documents something this package
-doesn't have (Angular services, overlay placement), don't port it as if it
-worked. Replace it with a note and add a row to the README's divergence table.
+doesn't have (Angular services, CDK re-parenting into an overlay container),
+don't port it as if it worked. Replace it with a note and add a row to the README's divergence table.
+
+## 6a. Never write an angle-bracketed `<tedi:…>` inside `@storybook([...])`
+
+Blade's component-tag compiler runs over the **whole file**, including the text
+inside the `@storybook` block. A `<tedi:modal-header>` written in an `argTypes`
+description is compiled as a real component tag, not read as prose.
+
+Two failure shapes, neither of which names the real cause:
+
+| What you wrote in a description | What you get |
+|---|---|
+| A paired tag (`<tedi:x>…</tedi:x>`) | `PHP Parse error: unexpected token "endif", expecting end of file` |
+| An unpaired opening tag | `Undefined variable $component` — in a file that has no `$component` |
+
+The second is worse when the template further down contains a genuine closing
+tag of the same name: the compiler pairs the *description's* opening tag with
+that real closing tag, the pairing straddles an `@if`, and the `@endif` is
+consumed.
+
+Write the tag without angle brackets — `` `tedi:modal-header` `` — in every
+`description`, `summary` and other prose string.
+
+## 6b. Never write `]` immediately followed by `)` inside `@storybook([...])`
+
+Blast finds the block with an **ungreedy** regex — `/@storybook[ \t]*\(\[(.*)\]\)/sU`
+in `GenerateStories.php` — so it ends the block at the *first* `])` in the file,
+not at the matching one. The most natural way to hit this is a TypeScript array
+type inside parentheses:
+
+```php
+'description' => 'Toggled on (value becomes string[]).',   // ← ends the block here
+```
+
+Everything after that point is discarded, and `eval()` chokes on the truncated
+array with a message that points at a line number inside the *block*, never at
+the string that caused it:
+
+| What you wrote | What you get |
+|---|---|
+| `string[])` mid-description | `syntax error, unexpected string content "…"` |
+| the same, with a `[` still open above it | `Unclosed '[' on line N` |
+
+Spell the type out — "an array of strings" — or move the closing paren away from
+the bracket. The same applies to prose in a `summary`, and to comments: a comment
+that *quotes* the offending sequence breaks the block just as a description does.
 
 ## 7. Before you finish
 

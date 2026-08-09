@@ -108,9 +108,14 @@ These are deliberate and documented in [CONVENTIONS.md](CONVENTIONS.md) §7:
    accept the base props only.
 2. **`output()` events are not re-emitted.** Bind `wire:click` / `x-on:click`
    directly to the rendered element instead.
-3. **Overlay positioning** (CDK Overlay / floating-ui) is out of scope for the
-   template-only phase — this affects tooltip, popover, dropdown, modal and the
-   toast's placement.
+3. **Overlay positioning is this package's own engine, not CDK Overlay.**
+   `Alpine.data('tediOverlay')` in `resources/js/tedi.js` ports upstream's
+   `overlay-position.util.ts`, so tooltip, popover and dropdown anchor the same
+   way. The one structural divergence: CDK re-parents its pane into a
+   `.cdk-overlay-container` on `<body>`, and Blade renders once on the server,
+   so panels stay where they are written. Inside a `transform`ed ancestor a
+   fixed/absolute panel is positioned relative to that ancestor
+   (CONVENTIONS.md §11). The toast's placement is still the consumer's job.
 4. **Runtime DOM introspection becomes explicit props.** Angular's button
    inspects its projected children to decide `--icon-only` / padding modifiers;
    Blade uses `icon-start`, `icon-end` and `icon-only` instead.
@@ -124,7 +129,7 @@ summary:
 |---|---|
 | `card`, `accordion`, `row`/`col`, `link`, `progress-bar`, `text-group`, `header.*`, `footer.*` | Breakpoint props accepted in Angular are absent; base props only |
 | `footer`, `footer.body`, `footer.side`, `footer.bottom` | `mobileLayout` not ported, so the `--mobile` variants never apply |
-| `header.profile`, `header.role` | Always render the modal branch; the popover branch needs overlay positioning |
+| `header.profile`, `header.role` | Always render the modal branch; not yet wired to `<tedi:popover>` |
 | `header.search` | Angular's breakpoint-driven mobile state becomes the explicit `mobile` prop |
 | `pagination` | Always renders the inline branch; `pagination-option-picker-modal` not ported |
 | `tabs`, `tabs.list` | Overflow "More" dropdown dropped; `dropdownLabel` accepted for API parity but inert |
@@ -134,9 +139,9 @@ summary:
 | `checkbox-group`, `radio-group` | `disabled` (and `name`, for radio) reach children via `@aware`. Angular's auto-generated group `name` cannot cross that boundary — pass `name` explicitly |
 | `text-field`, `textarea`, `number-field`, `search`, `date-input` | The `value` attribute is emitted only when non-empty; an unconditional `value=""` would blank a `wire:model`-bound field on the initial server render. `slider` is the deliberate exception — a `type="range"` input has no empty state |
 | `number-field` | Increment/decrement buttons are inert; attach handlers via `decrement-attributes` / `increment-attributes`. `LiveAnnouncer` and wrapper click-to-focus not ported |
-| `slider` | Thumb tooltip not ported (needs CDK Overlay). `tedi-slider--invalid` and `--dragging` dropped |
+| `slider` | Thumb tooltip not ported — it needs `trackPosition`, the one `<tedi:tooltip>` prop that is itself unported. `tedi-slider--invalid` and `--dragging` dropped |
 | `textarea` | Slot content is a Blade extension used when `value` is empty; Angular has no `ng-content` here |
-| `calendar-header`, `date-picker-header` | `monthYearSelectType` / `monthMode` / `yearMode` keep their `dropdown` default, but only the trigger renders — the dropdown panel needs an unported `dropdown` component |
+| `calendar-header`, `date-picker-header` | `monthYearSelectType` / `monthMode` / `yearMode` keep their `dropdown` default, but only the trigger renders. `<tedi:dropdown>` now exists; these two are simply not wired to it yet |
 | `calendar`, `date-picker`, `date-field` | Month/weekday names come from the `date-picker.*` translation keys, not `Intl` (`ext-intl` is not a declared dependency), so `localeCode` is dropped. No narrow weekday key exists, so narrow names fall back to `-short` |
 | `date-field`, `time-field` | Popover positioning dropped — the panel renders inline under an explicit `open` prop. The modal branch, `useNativePicker`, `fullscreen` and `modal` are not ported |
 | `date-field` | Matcher machinery (`disabledMatchers`, `minDate`/`maxDate`, `disablePast`/`disableFuture`, …) collapses to a flat `disabledDays` array; `formatDate`/`parseDate` become the explicit `display` and `tags` props. `size` is accepted for API parity but inert — set it on the wrapping `<tedi:form-field>` |
@@ -144,7 +149,15 @@ summary:
 | `tag` | `tedi-tag--primary` not emitted — TEDI ships no rule for it; the base `.tedi-tag` block is the primary appearance |
 | `select` | Native-`<select>` subset (see table above) |
 | `ellipsis` | CSS clamp only; no overflow measurement, so no reveal-on-hover tooltip |
-| `accordion`, `tabs`, `carousel`, `header.toggle`, `footer.section` | Inert without the bundled Alpine behaviour; markup and classes are still correct |
+| `accordion`, `tabs`, `carousel`, `header.toggle`, `footer.section`, `collapse`, `dropdown`, `popover`, `tooltip`, `modal`, `sidenav`, `button-group`, `table` | Inert without the bundled Alpine behaviour; markup and classes are still correct |
+| `dropdown`, `popover`, `tooltip` | Panels stay where they are written instead of being re-parented into a `.cdk-overlay-container` (divergence 3 above) |
+| `dropdown` | `value` does not drive item selection — Angular's items read it through `inject(DROPDOWN_API)`, which `@aware` cannot reproduce. Pass `:selected` on each `<tedi:dropdown-item>`. `container-id` replaces Angular's generated `containerId` |
+| `tooltip` | `trackPosition` (rAF repositioning against a moving origin) and the touch handling are not ported. The sr-only description Angular reads from projected `textContent` is the explicit `description` prop |
+| `modal` | Only the `[(open)]` template branch is ported. `ModalService` / `ModalRef` / `MODAL_DATA` and the `ConfigKey`s that exist only for them (`scrollBehavior`, `fullscreen`, `maxWidth`, `closeOnEscape`, `ariaLabel`, `ariaLabelledBy`, `data`) are not, nor is the CDK focus trap. `tedi-modal--bottom` dropped — TEDI ships no rule for it |
+| `table` | Markup layer only, the same spirit as `select`. `@tanstack/angular-table` is not ported, so sorting, filtering, selection and expansion **state** are the consumer's and come back in through `:columns` / `:rows`. With the engine go row virtualisation, drag reorder, column resizing, `state` persistence and the built-in filter popover |
+| `sidenav` | `SideNavService`'s signals become explicit props (`collapsed`, `mobile`, `mobileOpen`, `mobileItemOpen`); the sibling `sidenav.toggle` / `sidenav.overlay` talk to the nav over window events. `desktopBreakpoint` is not declared at all |
+| `button-group` | `enableMobileDropdown` + `mobileBreakpoint` become the explicit `dropdownMode` prop; the collapsed dropdown is built from `items` only, so a slot-only group cannot collapse |
+| `breadcrumbs`, `horizontal-stepper`, `button-group` | Angular's `contentChildren` registration becomes explicit props — an `items` array, or `step-number` on each stepper item |
 
 Five classes are emitted that TEDI ships **no CSS rule** for
 (`tedi-empty-state--default`, `tedi-empty-state--separate`,
@@ -173,22 +186,31 @@ control, so `{{ $attributes }}` sits on the `<input>` / `<textarea>` / `<select>
 rather than on the wrapper (CONVENTIONS.md §6). The calendar and date/time
 components came with it, as documented subsets wherever they need an overlay.
 
-Together that is **55 of the 67** components in Angular's `tedi/` tree, which
-expand to **101 Blade components** once sub-components are counted.
+The third phase added the **stateful and overlay-anchored** components — the
+ones Angular builds on CDK Overlay, CDK Dialog or an injectable service. They
+run on this package's own Alpine layer instead (`tediOverlay`, `tediModal`, and
+per-component inline state), documented in CONVENTIONS.md §8 and §11.
+
+Together that is **all 67** components in Angular's `tedi/` tree, which expand
+to **138 Blade components** once sub-components are counted.
 
 | Angular component | Blade tag |
 |---|---|
 | `base/icon` | `<tedi:icon>` |
 | `base/text` | `<tedi:text>` |
 | `buttons/button` | `<tedi:button>` |
+| `buttons/button-group` | `<tedi:button-group>`, `<tedi:button-group-button>` |
 | `buttons/card-button` | `<tedi:card-button>` |
 | `buttons/closing-button` | `<tedi:closing-button>` |
+| `buttons/collapse` | `<tedi:collapse>` |
+| `buttons/collapse-button` | `<tedi:collapse-button>` |
 | `buttons/info-button` | `<tedi:info-button>` |
 | `content/accordion` | `<tedi:accordion>`, `<tedi:accordion-item>`, `<tedi:accordion-item-header>`, `<tedi:accordion-item-content>` |
 | `content/card` | `<tedi:card>`, `<tedi:card-header>`, `<tedi:card-content>`, `<tedi:card-icon>`, `<tedi:card-row>` |
 | `content/carousel` | `<tedi:carousel>` + `-header`, `-content`, `-slide`, `-indicators`, `-navigation`, `-footer` |
 | `content/calendar` | `<tedi:calendar>`, `<tedi:calendar-header>`, `<tedi:calendar-day-grid>`, `<tedi:calendar-month-grid>`, `<tedi:calendar-year-grid>` |
 | `content/list` | `<tedi:list>` |
+| `content/table` | `<tedi:table>`, `<tedi:table-toolbar>`, `<tedi:table-header-button>`, `<tedi:table-columns-menu>` ⁵ |
 | `content/text-group` | `<tedi:text-group>`, `<tedi:text-group-label>`, `<tedi:text-group-value>` |
 | `form/checkbox` | `<tedi:checkbox>` |
 | `form/checkbox-card` | `<tedi:checkbox-card>`, `<tedi:checkbox-card-group>` |
@@ -218,13 +240,21 @@ expand to **101 Blade components** once sub-components are counted.
 | `helpers/timeline` | `<tedi:timeline>`, `<tedi:timeline-item>` |
 | `layout/footer` | `<tedi:footer>` + `.body`, `.section`, `.side`, `.bottom` |
 | `layout/header` | `<tedi:header>` + `.top`, `.bottom`, `.content`, `.logo`, `.login`, `.logout`, `.profile`, `.role`, `.search`, `.language`, `.actions`, `.toggle`, `.mobile-button` |
+| `layout/sidenav` | `<tedi:sidenav>` + `.item`, `.toggle`, `.overlay`, `.group-title`, `.dropdown`, `.dropdown-group`, `.dropdown-item` |
 | `loader/progress-bar` | `<tedi:progress-bar>` |
 | `loader/spinner` | `<tedi:spinner>` |
+| `navigation/breadcrumbs` | `<tedi:breadcrumbs>` |
+| `navigation/horizontal-stepper` | `<tedi:horizontal-stepper>`, `<tedi:horizontal-stepper-item>` |
 | `navigation/link` | `<tedi:link>` |
 | `navigation/pagination` | `<tedi:pagination>` |
 | `navigation/tabs` | `<tedi:tabs>`, `<tedi:tabs.list>`, `<tedi:tabs.trigger>`, `<tedi:tabs.content>` |
 | `notifications/alert` | `<tedi:alert>` |
 | `notifications/toast` | `<tedi:toast>` ³ |
+| `overlay/dropdown` | `<tedi:dropdown>` + `-trigger`, `-content`, `-item`, `-item-value`, `-item-value-label`, `-item-value-meta` |
+| `overlay/info-tooltip` | `<tedi:info-tooltip>` |
+| `overlay/modal` | `<tedi:modal>`, `<tedi:modal-header>`, `<tedi:modal-content>`, `<tedi:modal-footer>` |
+| `overlay/popover` | `<tedi:popover>`, `<tedi:popover-trigger>`, `<tedi:popover-content>` |
+| `overlay/tooltip` | `<tedi:tooltip>`, `<tedi:tooltip-trigger>`, `<tedi:tooltip-content>` |
 | `tags/status-badge` | `<tedi:status-badge>` |
 | `tags/status-indicator` | `<tedi:status-indicator>` |
 | `tags/tag` | `<tedi:tag>` |
@@ -234,10 +264,13 @@ name in the library and a future collision is likely.
 ² Named after the CSS classes it emits (`.tedi-row` / `.tedi-col`) rather than
 after the Angular directory.
 ³ Visual markup only — overlay placement is out of scope (see divergences).
-⁴ Angular's `date-field-modal` and `time-picker-modal` are not ported: they
-compose `tedi-modal*` components this package does not have, and their styles
-were inline in the Angular decorator rather than vendored, so no rule for them
-exists in `dist/tedi.css`. Both fields always take the popover branch.
+⁴ Angular's `date-field-modal` and `time-picker-modal` are still not ported.
+`<tedi:modal>` now exists, but their styles were inline in the Angular decorator
+rather than vendored, so no rule for them exists in `dist/tedi.css`. Both fields
+always take the popover branch.
+⁵ The markup layer only — the TanStack table engine is not ported. Sorting,
+filtering, selection and expansion state are the consumer's and are rendered
+back in through `:columns` / `:rows` (see the divergences table above).
 
 ### Shipped as a documented subset
 
@@ -247,26 +280,31 @@ exists in `dist/tedi.css`. Both fields always take the popover branch.
 | `<tedi:ellipsis>` | CSS line-clamped truncation | Reveal-on-hover tooltip (needs `ResizeObserver` measurement) |
 | `<tedi:scroll-fade>` | Static markup | Scroll-driven fade state |
 | `<tedi:slider>` | Full track, thumb, labels and progress fill | Thumb tooltip (needs CDK Overlay); `--dragging` drag state |
-| `<tedi:calendar-header>`, `<tedi:date-picker-header>` | The month/year trigger buttons | The dropdown panel itself (needs a `dropdown` component) |
+| `<tedi:table>` | The full markup: toolbar, sortable headers, control columns, expandable and clickable rows, column menu | The `@tanstack/angular-table` engine — sorting/filtering/selection/expansion state, virtualisation, drag reorder, column resizing, persistence, the filter popover |
+| `<tedi:calendar-header>`, `<tedi:date-picker-header>` | The month/year trigger buttons | The dropdown panel itself — `<tedi:dropdown>` exists but these are not wired to it yet |
 | `<tedi:time-picker>` | All three variants' markup | The variant host classes, which TEDI ships no rules for |
 | `<tedi:date-field>`, `<tedi:time-field>` | Input, tags, trigger, and the panel inline under an `open` prop | Popover placement, and the mobile modal branch |
 | `<tedi:number-field>` | Full markup with correct disabled states | Button behaviour — wire it via `increment-attributes` / `decrement-attributes` |
 
-### Not in this phase
+### Not ported
 
-The remaining **12** Angular components all need either overlay positioning or
-open/close state, and most of them need the same three missing primitives:
+Angular's `community/` tree is a **separate package and out of scope** — the
+components that exist only there (`floating-button`, `choicegroup`,
+`file-dropzone`, `table-of-contents`, `vertical-stepper`, `input`,
+`table-styles`) have no Blade counterpart. `Community/Form/FormField` appears in
+Storybook only because that is where Angular files the shared form-field stories.
 
-| Component | Blocked on |
+Within `tedi/`, every component is ported; what remains are the documented
+subsets above plus five places where a now-available primitive has not been
+wired up yet:
+
+| Component | Would gain |
 |---|---|
-| `dropdown`, `modal`, `popover`, `tooltip`, `info-tooltip` | Overlay positioning (CDK Overlay / floating-ui) — the primitives everything else waits on |
-| `breadcrumbs`, `button-group`, `collapse`, `collapse-button`, `horizontal-stepper`, `sidenav` | Open/close state, and `dropdown` for the overflow menus |
-| `table` | Sorting/filtering/selection state, plus `dropdown` for its column filters |
-
-Porting `dropdown` and `modal` first would also let five components already in
-the library drop their documented subsets: `calendar-header` and
-`date-picker-header` would gain their real month/year pickers, and `date-field`,
-`time-field` and `pagination` their overlay branches.
+| `calendar-header`, `date-picker-header` | Their real month/year pickers, from `<tedi:dropdown>` |
+| `date-field`, `time-field`, `pagination` | Their overlay / modal branches |
+| `header.profile`, `header.role` | The popover branch instead of the always-on modal branch |
+| `tabs.list` | The overflow "More" dropdown behind the inert `dropdownLabel` |
+| `slider` | Its thumb tooltip, once `<tedi:tooltip>` gains `trackPosition` |
 
 ## Storybook
 
@@ -315,14 +353,14 @@ its story directory contains any `.md` file:
 
 Both are ported verbatim from the Angular story file — its `parameters.docs.description.component` /
 `.story` if present, otherwise the doc comment above the `export default` / `export const`.
-All 38 components have a `README.md`; 54 stories have a per-story description,
+All 62 components have a `README.md`; 117 stories have a per-story description,
 which is every Angular story that carries one.
 
 Two known gaps. `Community/Form/FormField` has no description because the Angular
 story has none — its `README.md` is an HTML comment that renders nothing and
 exists only to switch the Docs page on. And the props table on a Docs page is
 Storybook's, built from the component's *first* story; because that ordering is
-alphabetical (above) rather than Angular's export order, 13 of the 38 pages land
+alphabetical (above) rather than Angular's export order, 23 of the 62 pages land
 on a story that declares no `argTypes` and show "No inputs found for this
 component" instead of the table. The per-story Controls panel is unaffected.
 
@@ -337,29 +375,29 @@ alphabetically rather than in Angular's export order. Each story still carries
 its Angular export position in the directive's `order` key, so the sequence is
 recorded and applies wherever Storybook honours it.
 
-Two Angular groups have no Blade counterpart at all and so are absent:
-`TEDI-Ready/Components/Overlay/*` and the components listed under "Not in this
-phase" above. `Community/Form/FormField` is present because that is where
-Angular files the form-field stories.
+Every Angular `TEDI-Ready` group now has a Blade counterpart, including
+`TEDI-Ready/Components/Overlay/*`. `Community/Form/FormField` is present because
+that is where Angular files the form-field stories; the rest of Angular's
+`Community` tree is out of scope (see "Not ported" above).
 
 ### Angular stories with no Blade equivalent
 
-274 stories across 38 components are ported. The port is template-only, so some
-Angular stories exist purely to demonstrate behaviour this package documents as
-not ported (see the divergences table above). Those are deliberately absent
-rather than faked:
+489 stories across 62 components are ported. Some Angular stories exist purely
+to demonstrate behaviour this package documents as not ported (see the
+divergences table above). Those are deliberately absent rather than faked:
 
 | Skipped Angular story | Why |
 |---|---|
 | `Checkbox`: Vertical, Horizontal, VerticalTree, Group, WithReactiveForms · `Radio`: Vertical, Horizontal, Group, WithReactiveForms | Managed-group `ControlValueAccessor` / reactive forms — use `wire:model` instead |
 | `Select`: ValueType, EllipsisTags, Examples, Tooltip, ReactiveForms, CustomSearchFunction, Outputs, VirtualScroll | The searchable/multi-select combobox; the port is the native-`<select>` subset |
-| `ClosingButton`, `StatusBadge`: WithTooltip · `InfoButton`: UsageWithTooltipAndPopover · `Ellipsis`: NoTooltip | Overlay positioning |
+| `Ellipsis`: NoTooltip | Needs the `ResizeObserver` overflow measurement the CSS-clamp subset does not do |
 | `Toast`: Positions, HoverBehavior, CustomTimerForAutoclose, PersistentToast | Overlay placement and the JS auto-close timer |
 | `Toast` Docs page: the "Usage" section | Documents Angular's `ToastService`, which spawns toasts into a CDK Overlay container. `<tedi:toast>` renders markup only and leaves placement to the consumer, so the section is replaced by a note saying so |
-| `Tabs`: OverflowBehavior, WithSubTabs · `Pagination`: ResponsiveVisibility, ShowAll | Overflow "More" dropdown and the option-picker modal |
+| `Tabs`: OverflowBehavior, WithSubTabs · `Pagination`: ResponsiveVisibility, ShowAll | The overflow "More" dropdown and the option-picker modal — both primitives now exist, but `tabs.list` and `pagination` are not wired to them |
 | `Card`: BreakpointProps · `TextGroup`, `ProgressBar`: Responsive | Breakpoint props |
 | `ProgressBar`: Animated · `InputGroup`: StartDynamic, EndDynamic, AllControls · `Attachment`: LabeledActions | Runtime state / `output()` events |
-| `Header`: LoggedInWithSidenav · `Card`: WithDottedSeparator, PrescriptionExample | Compose a component not in this phase (`sidenav`) or a style this port doesn't emit |
+| `Header`: LoggedInWithSidenav | Composes `header` and `sidenav`, which are ported separately; the combined story is not |
+| `Card`: WithDottedSeparator, PrescriptionExample | A style this port doesn't emit |
 | `DatePicker`, `TimePicker`, `TimeField`, `DateField`: WithReactiveForms | Angular reactive forms — use `wire:model` instead |
 | `DateField`, `TimeField`: NativePicker, MobileModal · `DateField`: CustomFormatAndParse, CustomLocale | Breakpoint props, the unported modal branch, JS format/parse callables, and `localeCode` |
 

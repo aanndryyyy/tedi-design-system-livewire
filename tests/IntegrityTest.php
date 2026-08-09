@@ -75,6 +75,9 @@ class IntegrityTest extends TestCase
             'feedback-text' => 'text="Viga"',
             'pagination' => ':page-count="3" :current-page="1"',
             'tabs.trigger' => 'id="a"',
+            'horizontal-stepper-item' => 'label="Kutse"',
+            'button-group-button' => 'label="Kuu"',
+            'table-header-button' => 'icon="sort"',
             'header.mobile-button' => 'icon="menu"',
             'header.language' => ':languages="[\'et\' => \'Eesti\']"',
             'header.role' => ':representatives="[[\'id\' => 1, \'name\' => \'Firma\']]"'

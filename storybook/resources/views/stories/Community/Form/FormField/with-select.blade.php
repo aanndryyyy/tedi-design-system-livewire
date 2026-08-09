@@ -33,7 +33,9 @@
     :valid="(bool) $validText"
     :disabled="(bool) $disabled"
 >
-    <tedi:form.label for="storybook-select" :required="(bool) $required">{{ $label }}</tedi:form.label>
+    <x-slot:label>
+        <tedi:form.label for="storybook-select" :required="(bool) $required">{{ $label }}</tedi:form.label>
+    </x-slot:label>
 
     <tedi:select
         input-id="storybook-select"
@@ -43,11 +45,13 @@
         :options="['option1' => 'Option 1', 'option2' => 'Option 2', 'option3' => 'Option 3', 'option4' => 'Option 4']"
     />
 
-    @if ($errorText)
-        <tedi:feedback-text type="error" :text="$errorText" />
-    @elseif ($validText)
-        <tedi:feedback-text type="valid" :text="$validText" />
-    @elseif ($hintText)
-        <tedi:feedback-text type="hint" :text="$hintText" />
-    @endif
+    <x-slot:feedback>
+        @if ($errorText)
+            <tedi:feedback-text type="error" :text="$errorText" />
+        @elseif ($validText)
+            <tedi:feedback-text type="valid" :text="$validText" />
+        @elseif ($hintText)
+            <tedi:feedback-text type="hint" :text="$hintText" />
+        @endif
+    </x-slot:feedback>
 </tedi:form-field>

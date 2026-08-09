@@ -1,0 +1,1 @@
+Pass `selectionMode: 'single'` to swap the checkbox column for radios. All radios share one HTML `name`, so picking a row auto-deselects the previously selected one through native radio-group behaviour, and the header's select-all control is omitted entirely.

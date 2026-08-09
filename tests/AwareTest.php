@@ -360,4 +360,172 @@ class AwareTest extends TestCase
         $this->assertStringContainsString('name="own"', $html);
         $this->assertStringNotContainsString('name="g"', $html);
     }
+
+    // -- tooltip / tooltip-trigger @aware(['openWith']) ---------------------
+
+    private const TOOLTIP = '<tedi:tooltip%s>'
+        .'<tedi:tooltip-trigger>x</tedi:tooltip-trigger>'
+        .'<tedi:tooltip-content>c</tedi:tooltip-content>'
+        .'</tedi:tooltip>';
+
+    /**
+     * The trigger emits no base class — Angular's host has none — so
+     * `classesOf()`'s class-token scoping has nothing to key on. Slice the
+     * element out and assert against that instead, which keeps the assertion
+     * exact-token rather than falling back to a substring match (§10).
+     */
+    private function triggerTag(string $html): string
+    {
+        preg_match('/<tedi-tooltip-trigger\b[^>]*>/s', $html, $m);
+
+        return $m[0] ?? '';
+    }
+
+    public function test_tooltip_open_with_reaches_the_trigger(): void
+    {
+        $html = Blade::render(sprintf(self::TOOLTIP, ' open-with="click"'));
+
+        // Angular adds --clickable only for openWith === 'click'.
+        $this->assertHasClass('tedi-tooltip-trigger--clickable', $this->triggerTag($html));
+    }
+
+    public function test_tooltip_trigger_fallback_matches_parent_default_when_omitted(): void
+    {
+        $omitted = Blade::render(sprintf(self::TOOLTIP, ''));
+        $explicit = Blade::render(sprintf(self::TOOLTIP, ' open-with="both"'));
+
+        $this->assertMissingClass('tedi-tooltip-trigger--clickable', $this->triggerTag($omitted));
+        $this->assertSame($explicit, $omitted,
+            'Omitting open-with must render identically to passing its default.');
+    }
+
+    public function test_tooltip_trigger_renders_standalone_without_a_parent(): void
+    {
+        $html = Blade::render('<tedi:tooltip-trigger>x</tedi:tooltip-trigger>');
+
+        $this->assertStringContainsString('<tedi-tooltip-trigger', $html);
+        $this->assertMissingClass('tedi-tooltip-trigger--clickable', $this->triggerTag($html));
+    }
+
+    // -- popover / popover-trigger + popover-content @aware(['containerId']) --
+
+    private const POPOVER = '<tedi:popover%s>'
+        .'<x-slot:trigger><tedi:popover-trigger>t</tedi:popover-trigger></x-slot:trigger> '
+        .'<tedi:popover-content title="T">c</tedi:popover-content>'
+        .'</tedi:popover>';
+
+    public function test_popover_container_id_reaches_trigger_and_content(): void
+    {
+        $html = Blade::render(sprintf(self::POPOVER, ' container-id="p1"'));
+
+        $this->assertStringContainsString('id="p1_trigger"', $html);
+        $this->assertStringContainsString('id="p1_title"', $html);
+    }
+
+    public function test_popover_children_fall_back_to_the_parent_default_when_omitted(): void
+    {
+        $html = Blade::render(sprintf(self::POPOVER, ''));
+
+        // Default is null: rather than dangle a reference to an id that the
+        // trigger never received, both attributes are omitted entirely.
+        $this->assertStringNotContainsString('_trigger"', $html);
+        $this->assertStringNotContainsString('aria-labelledby', $html);
+    }
+
+    public function test_popover_children_render_standalone_without_a_parent(): void
+    {
+        $trigger = Blade::render('<tedi:popover-trigger>t</tedi:popover-trigger>');
+        $content = Blade::render('<tedi:popover-content title="T">c</tedi:popover-content>');
+
+        $this->assertStringContainsString('tedi-popover-trigger', $trigger);
+        $this->assertHasClass('tedi-popover-content', $content, 'tedi-popover-content');
+    }
+
+    // -- modal / modal-header @aware(['size']) ------------------------------
+
+    private const MODAL = '<tedi:modal%s><tedi:modal-header><h3>H</h3></tedi:modal-header></tedi:modal>';
+
+    public function test_modal_size_reaches_the_header_close_button(): void
+    {
+        $html = Blade::render(sprintf(self::MODAL, ' size="small"'));
+
+        // A small modal shrinks its close button without the consumer saying so.
+        $this->assertHasClass('tedi-closing-button--small', $html, 'tedi-closing-button');
+    }
+
+    public function test_modal_header_fallback_matches_parent_default_when_omitted(): void
+    {
+        $omitted = Blade::render(sprintf(self::MODAL, ''));
+        $explicit = Blade::render(sprintf(self::MODAL, ' size="default"'));
+
+        $this->assertMissingClass('tedi-closing-button--small', $omitted, 'tedi-closing-button');
+        $this->assertSame($explicit, $omitted,
+            'Omitting size must render identically to passing its default.');
+    }
+
+    public function test_modal_header_renders_standalone_without_a_parent(): void
+    {
+        $html = Blade::render('<tedi:modal-header><h3>H</h3></tedi:modal-header>');
+
+        $this->assertHasClass('tedi-modal-header', $html, 'tedi-modal-header');
+        $this->assertMissingClass('tedi-closing-button--small', $html, 'tedi-closing-button');
+    }
+
+    // -- dropdown @aware(['containerId']) + content/item @aware(['dropdownRole']) --
+
+    private const DROPDOWN = '<tedi:dropdown%s>'
+        .'<tedi:dropdown-trigger><button>b</button></tedi:dropdown-trigger>'
+        .'<tedi:dropdown-content%s>'
+        .'<tedi:dropdown-item value="a">A</tedi:dropdown-item>'
+        .'</tedi:dropdown-content>'
+        .'</tedi:dropdown>';
+
+    public function test_dropdown_container_id_reaches_trigger_and_content(): void
+    {
+        $html = Blade::render(sprintf(self::DROPDOWN, ' container-id="d1"', ''));
+
+        $this->assertStringContainsString("setAttribute('id', 'd1_trigger')", $html);
+        $this->assertStringContainsString('aria-labelledby="d1_trigger"', $html);
+        $this->assertStringContainsString('id="d1"', $html);
+    }
+
+    public function test_dropdown_children_fall_back_to_the_parent_default_when_omitted(): void
+    {
+        $html = Blade::render(sprintf(self::DROPDOWN, '', ''));
+
+        $this->assertStringNotContainsString('_trigger', $html);
+        $this->assertStringNotContainsString('aria-labelledby', $html);
+    }
+
+    /**
+     * dropdownRole crosses one level — content to item — and changes the ARIA
+     * role of both the list and every row inside it.
+     */
+    public function test_dropdown_role_reaches_the_item(): void
+    {
+        $listbox = Blade::render(sprintf(self::DROPDOWN, '', ' dropdown-role="listbox"'));
+
+        $this->assertStringContainsString('<ul role="listbox">', $listbox);
+        $this->assertStringContainsString('role="option"', $listbox);
+    }
+
+    public function test_dropdown_item_fallback_matches_content_default_when_omitted(): void
+    {
+        $omitted = Blade::render(sprintf(self::DROPDOWN, '', ''));
+        $explicit = Blade::render(sprintf(self::DROPDOWN, '', ' dropdown-role="menu"'));
+
+        $this->assertStringContainsString('<ul role="menu">', $omitted);
+        $this->assertStringContainsString('role="menuitem"', $omitted);
+        $this->assertSame($explicit, $omitted,
+            'Omitting dropdown-role must render identically to passing its default.');
+    }
+
+    public function test_dropdown_item_renders_standalone_without_a_parent(): void
+    {
+        $html = Blade::render('<tedi:dropdown-item value="a">A</tedi:dropdown-item>');
+
+        // Falls back to the content default, so it is a menuitem, not an option.
+        $this->assertStringContainsString('role="menuitem"', $html);
+        $this->assertStringNotContainsString('role="option"', $html);
+    }
 }
