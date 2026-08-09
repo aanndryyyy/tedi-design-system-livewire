@@ -1,0 +1,96 @@
+@use "sass:map";
+@use "@tedi-design-system/core/mixins";
+@use "@tedi-design-system/core/bootstrap-utility/breakpoints";
+
+$breakpoints: (
+  mobile: sm,
+  tablet: md,
+  desktop: lg,
+);
+
+.table-of-contents {
+  display: none;
+  max-height: 100vh;
+
+  &--position {
+    &-sticky {
+      position: sticky;
+      top: var(--tedi-dimensions-10);
+    }
+    &-fixed {
+      position: fixed;
+    }
+  }
+
+  &__content {
+    padding: 0;
+    padding-bottom: var(--tedi-dimensions-10);
+  }
+
+  &__header {
+    width: 100%;
+    padding: var(--tedi-dimensions-10);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__items {
+    gap: var(--tedi-dimensions-05);
+    display: flex;
+    flex-direction: column;
+  }
+
+  &--modal-active {
+    display: initial;
+  }
+
+  @each $breakpoint-name, $breakpoint-value in $breakpoints {
+    &--modal-breakpoint-#{$breakpoint-name} {
+      @include breakpoints.media-breakpoint-up($breakpoint-value) {
+        display: initial;
+      }
+    }
+  }
+
+  &__footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--z-index-fixed);
+    padding: 0;
+    --_card-padding-top: 0;
+    --_card-padding-left: 0;
+    --_card-padding-bottom: 0;
+    --_card-padding-right: 0;
+
+    &-trigger {
+      border: none;
+      width: 100%;
+      background-color: transparent;
+      padding: 0;
+      cursor: pointer;
+
+      .tedi-button {
+        padding: 0;
+      }
+
+      &:hover {
+        background-color: transparent;
+      }
+    }
+
+    .table-of-contents__header {
+      padding: var(--tedi-dimensions-10);
+    }
+
+    @each $breakpoint-name, $breakpoint-value in $breakpoints {
+      &--modal-breakpoint-#{$breakpoint-name} {
+        @include breakpoints.media-breakpoint-up($breakpoint-value) {
+          display: none;
+        }
+      }
+    }
+  }
+}

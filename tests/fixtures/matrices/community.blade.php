@@ -83,4 +83,25 @@
             />
         </div>
     </div>
+
+    <h3>Table of contents</h3>
+
+    <div class="gx-case">
+        <div class="gx-case__label">position × modal breakpoint</div>
+        <div class="gx-case__demo">
+            @foreach (['default', 'fixed', 'sticky'] as $position)
+                @foreach (['mobile', 'tablet', 'desktop', 'never'] as $breakpoint)
+                    <tedi:table-of-contents heading="Sisukord" :position="$position" :modal-breakpoint="$breakpoint">
+                        <tedi:table-of-contents-item id-to="ptk-1" :selected="true">Üldsätted</tedi:table-of-contents-item>
+                        <tedi:table-of-contents-item id-to="ptk-2">
+                            Rakendusala
+                            <x-slot:sub-items>
+                                <tedi:table-of-contents-item id-to="ptk-2-1">Erisused</tedi:table-of-contents-item>
+                            </x-slot:sub-items>
+                        </tedi:table-of-contents-item>
+                    </tedi:table-of-contents>
+                @endforeach
+            @endforeach
+        </div>
+    </div>
 </div>

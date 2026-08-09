@@ -1,0 +1,46 @@
+@use "@tedi-design-system/core/mixins";
+
+.table-of-contents__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tedi-dimensions-05);
+
+  &--active .table-of-contents__item-anchor {
+    border-color: var(--link-primary-default);
+    color: var(--link-primary-active);
+
+    &:hover {
+      border-color: var(--link-primary-active);
+    }
+  }
+
+  .table-of-contents__item .table-of-contents__item-anchor {
+    padding-left: var(--table-of-contents-padding-left-level-2);
+  }
+
+  &-anchor {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+
+    --_table-of-contents-inset: 1px;
+    // we're inset into the card border by 1 pixel
+    padding: 0
+      calc(
+        var(--table-of-contents-padding-level-1) - var(
+            --_table-of-contents-inset
+          )
+      );
+
+    border: 0;
+    // invisible border so once we're active we won't change layout
+    border-left: var(--table-of-contents-active-item-border-width) solid
+      transparent;
+    border-radius: 0;
+    margin-left: - var(--_table-of-contents-inset);
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

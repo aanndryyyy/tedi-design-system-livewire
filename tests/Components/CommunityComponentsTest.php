@@ -222,4 +222,76 @@ class CommunityComponentsTest extends TestCase
 
         $this->assertStringContainsString('Fail on liiga suur', $html);
     }
+
+    // -- table-of-contents ----------------------------------------------
+
+    public function test_table_of_contents_base_and_position_classes(): void
+    {
+        foreach (['default', 'fixed', 'sticky'] as $position)  {
+            $html = Blade::render('<tedi:table-of-contents heading="Sisukord" position="'.$position.'" />');
+
+            $this->assertHasClass('table-of-contents', $html, 'table-of-contents');
+            $this->assertHasClass('table-of-contents--position-'.$position, $html, 'table-of-contents');
+        }
+    }
+
+    public function test_table_of_contents_modal_breakpoint_classes(): void
+    {
+        foreach (['mobile', 'tablet', 'desktop'] as $breakpoint) {
+            $html = Blade::render('<tedi:table-of-contents heading="Sisukord" modal-breakpoint="'.$breakpoint.'" />');
+
+            $this->assertHasClass('table-of-contents--modal-breakpoint-'.$breakpoint, $html, 'table-of-contents');
+            $this->assertHasClass('table-of-contents__footer--modal-breakpoint-'.$breakpoint, $html, 'table-of-contents__footer');
+        }
+    }
+
+    public function test_table_of_contents_never_breakpoint_emits_no_nav_modifier(): void
+    {
+        $html = Blade::render('<tedi:table-of-contents heading="Sisukord" modal-breakpoint="never" />');
+
+        $tokens = $this->classesOf($html, 'table-of-contents');
+
+        foreach (['mobile', 'tablet', 'desktop', 'never'] as $breakpoint) {
+            $this->assertNotContains('table-of-contents--modal-breakpoint-'.$breakpoint, $tokens);
+        }
+    }
+
+    public function test_table_of_contents_heading_and_aria_label(): void
+    {
+        $html = Blade::render('<tedi:table-of-contents heading="Sisukord" />');
+        $this->assertStringContainsString('Sisukord', $html);
+        $this->assertStringContainsString('aria-label="Table of contents"', $html);
+
+        $custom = Blade::render('<tedi:table-of-contents heading="Sisukord" aria-label="Peatükid" />');
+        $this->assertStringContainsString('aria-label="Peatükid"', $custom);
+    }
+
+    public function test_table_of_contents_item_classes_and_target(): void
+    {
+        $html = Blade::render('<tedi:table-of-contents-item id-to="ptk-1">Üldsätted</tedi:table-of-contents-item>');
+
+        $this->assertHasClass('table-of-contents__item', $html, 'table-of-contents__item');
+        $this->assertMissingClass('table-of-contents__item--active', $html, 'table-of-contents__item');
+        $this->assertStringContainsString('data-toc-id="ptk-1"', $html);
+        $this->assertStringContainsString('href="#ptk-1"', $html);
+        $this->assertHasClass('table-of-contents__item-anchor', $html, 'table-of-contents__item-anchor');
+    }
+
+    public function test_table_of_contents_item_active_class(): void
+    {
+        $html = Blade::render('<tedi:table-of-contents-item id-to="ptk-1" :selected="true">x</tedi:table-of-contents-item>');
+
+        $this->assertHasClass('table-of-contents__item--active', $html, 'table-of-contents__item');
+    }
+
+    public function test_table_of_contents_item_anchor_carries_the_neutral_button_classes(): void
+    {
+        // Angular renders <a tedi-button variant="neutral">, so the anchor gets
+        // the full ButtonComponent class list.
+        $html = Blade::render('<tedi:table-of-contents-item id-to="ptk-1">x</tedi:table-of-contents-item>');
+
+        foreach (['tedi-button', 'tedi-button--neutral', 'tedi-button--default', 'tedi-button--pl', 'tedi-button--pr'] as $class) {
+            $this->assertHasClass($class, $html, 'table-of-contents__item-anchor');
+        }
+    }
 }
