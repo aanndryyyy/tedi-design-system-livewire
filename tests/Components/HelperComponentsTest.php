@@ -412,4 +412,137 @@ class HelperComponentsTest extends TestCase
         $this->assertStringContainsString('1990', $html);
         $this->assertStringContainsString('14. detsember', $html);
     }
+
+    // -- vertical-spacing ---------------------------------------------------
+
+    /** The VerticalSpacingSize union, verbatim from vertical-spacing.directive.ts. */
+    private const VERTICAL_SPACING_SIZES = [0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5];
+
+    public function test_vertical_spacing_base_class_and_default_size(): void
+    {
+        $html = Blade::render('<tedi:vertical-spacing><p>a</p></tedi:vertical-spacing>');
+
+        $this->assertHasClass('tedi-vertical-spacing', $html);
+        $this->assertMissingClass('tedi-vertical-spacing__item', $html);
+        // Angular's default input value is 0 and it always writes the property.
+        $this->assertStringContainsString('--vertical-spacing-internal: 0em', $html);
+        $this->assertStringContainsString('<p>a</p>', $html);
+    }
+
+    public function test_vertical_spacing_emits_every_size_of_the_union(): void
+    {
+        foreach (self::VERTICAL_SPACING_SIZES as $size) {
+            $html = Blade::render('<tedi:vertical-spacing :size="'.$size.'">x</tedi:vertical-spacing>');
+
+            $this->assertHasClass('tedi-vertical-spacing', $html);
+            $this->assertStringContainsString(
+                '--vertical-spacing-internal: '.$size.'em', $html,
+                "size {$size} did not render the expected custom property."
+            );
+        }
+    }
+
+    public function test_vertical_spacing_item_base_class_and_every_size(): void
+    {
+        $html = Blade::render('<tedi:vertical-spacing-item>a</tedi:vertical-spacing-item>');
+
+        $this->assertHasClass('tedi-vertical-spacing__item', $html);
+        $this->assertMissingClass('tedi-vertical-spacing', $html);
+        $this->assertStringContainsString('--vertical-spacing-internal: 0em', $html);
+
+        foreach (self::VERTICAL_SPACING_SIZES as $size) {
+            $html = Blade::render('<tedi:vertical-spacing-item :size="'.$size.'">x</tedi:vertical-spacing-item>');
+
+            $this->assertHasClass('tedi-vertical-spacing__item', $html);
+            $this->assertStringContainsString(
+                '--vertical-spacing-internal: '.$size.'em', $html,
+                "item size {$size} did not render the expected custom property."
+            );
+        }
+    }
+
+    /**
+     * Angular calls setAttribute('style', …), which clobbers. The port merges
+     * instead, per CONVENTIONS.md §6 — pinned here because it is a deliberate
+     * divergence documented in the component's header.
+     */
+    public function test_vertical_spacing_merges_consumer_class_and_style(): void
+    {
+        $html = Blade::render(
+            '<tedi:vertical-spacing :size="1.5" class="my-stack" style="padding:1rem">x</tedi:vertical-spacing>'
+        );
+
+        $this->assertHasClass('tedi-vertical-spacing', $html);
+        $this->assertHasClass('my-stack', $html);
+        $this->assertStringContainsString('padding:1rem', $html);
+        $this->assertStringContainsString('--vertical-spacing-internal: 1.5em', $html);
+    }
+
+    // -- hide-at / show-at --------------------------------------------------
+
+    /**
+     * These emit no classes at all — TEDI ships no display utilities, so per
+     * CONVENTIONS.md §4 none are invented. The server-side handle on the
+     * behaviour is the Alpine config, so that is what is asserted.
+     */
+    public function test_hide_at_emits_no_classes_and_binds_the_shared_factory(): void
+    {
+        $html = Blade::render('<tedi:hide-at breakpoint="md">x</tedi:hide-at>');
+
+        $this->assertSame([], $this->classesOf($html));
+        $this->assertStringContainsString(
+            "tediBreakpoint({ breakpoint: 'md', mode: 'hide' })", $html
+        );
+        $this->assertStringContainsString('x-show="visible"', $html);
+    }
+
+    public function test_show_at_binds_the_shared_factory_in_show_mode(): void
+    {
+        $html = Blade::render('<tedi:show-at breakpoint="md">x</tedi:show-at>');
+
+        $this->assertSame([], $this->classesOf($html));
+        $this->assertStringContainsString(
+            "tediBreakpoint({ breakpoint: 'md', mode: 'show' })", $html
+        );
+        $this->assertStringContainsString('x-show="visible"', $html);
+    }
+
+    public function test_hide_at_and_show_at_accept_every_breakpoint_name(): void
+    {
+        foreach (['xs', 'sm', 'md', 'lg', 'xl', 'xxl'] as $bp) {
+            $hide = Blade::render('<tedi:hide-at breakpoint="'.$bp.'">x</tedi:hide-at>');
+            $show = Blade::render('<tedi:show-at breakpoint="'.$bp.'">x</tedi:show-at>');
+
+            $this->assertStringContainsString("breakpoint: '".$bp."'", $hide);
+            $this->assertStringContainsString("breakpoint: '".$bp."'", $show);
+        }
+    }
+
+    /**
+     * §8: the content must be in the DOM statically, so a consumer without the
+     * JS bundle sees it. Only `display` is toggled — Angular's structural
+     * (*hideAt) removal is the documented divergence.
+     */
+    public function test_hide_at_keeps_its_content_in_the_static_markup(): void
+    {
+        $html = Blade::render('<tedi:hide-at breakpoint="sm"><p>Kitsas vaade</p></tedi:hide-at>');
+
+        $this->assertStringContainsString('<p>Kitsas vaade</p>', $html);
+        $this->assertStringNotContainsString('display:none', $html);
+        $this->assertStringNotContainsString('x-cloak', $html);
+    }
+
+    /**
+     * The rem values the Alpine module maps the names onto are core's
+     * $grid-breakpoints. Pinned here so a drift in either is caught.
+     */
+    public function test_breakpoint_module_mirrors_core_grid_breakpoints(): void
+    {
+        $js = file_get_contents(__DIR__.'/../../resources/js/src/breakpoint.js');
+
+        foreach (['xs: 0', 'sm: 36', 'md: 48', 'lg: 62', 'xl: 75', 'xxl: 87.5'] as $pair) {
+            $this->assertStringContainsString($pair, $js,
+                "breakpoint.js no longer mirrors core's \$grid-breakpoints: {$pair}");
+        }
+    }
 }

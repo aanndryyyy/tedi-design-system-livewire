@@ -76,6 +76,8 @@ class IntegrityTest extends TestCase
             'pagination' => ':page-count="3" :current-page="1"',
             'tabs.trigger' => 'id="a"',
             'horizontal-stepper-item' => 'label="Kutse"',
+            'hide-at' => 'breakpoint="md"',
+            'show-at' => 'breakpoint="md"',
             'table-of-contents' => 'heading="Sisukord"',
             'table-of-contents-item' => 'id-to="ptk-1"',
             'button-group-button' => 'label="Kuu"',

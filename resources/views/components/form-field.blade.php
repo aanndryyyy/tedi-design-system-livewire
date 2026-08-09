@@ -104,8 +104,10 @@
 
         @if ($clearable && ! $textarea)
             <div
-                class="tedi-form-field__buttons"
-                @class(['tedi-form-field__buttons--hidden' => ! $showClearButton])
+                @class([
+                    'tedi-form-field__buttons',
+                    'tedi-form-field__buttons--hidden' => ! $showClearButton,
+                ])
                 @if (! $showClearButton) aria-hidden="true" @endif
             >
                 <tedi:closing-button

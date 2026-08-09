@@ -202,6 +202,52 @@
 </div>
 
 <div class="gx-sec">
+    <h2>Vertical Spacing</h2>
+    <p>Port of <code>directives/vertical-spacing</code>. Angular's attribute directives port as wrapper elements (CONVENTIONS.md §12); the size union is written as an inline <code>--vertical-spacing-internal</code>.</p>
+
+    @php $verticalSpacingSizes = [0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5]; @endphp
+
+    <div class="gx-case">
+        <div class="gx-case__label">size: every value of the union</div>
+        <div class="gx-case__demo" style="display:flex;flex-direction:column;gap:1rem;width:100%">
+            @foreach ($verticalSpacingSizes as $size)
+                <tedi:vertical-spacing :size="$size">
+                    <p>size {{ $size }} — first</p>
+                    <p>second</p>
+                    <p>last (no margin)</p>
+                </tedi:vertical-spacing>
+            @endforeach
+        </div>
+    </div>
+
+    <div class="gx-case">
+        <div class="gx-case__label">item: every value of the union</div>
+        <div class="gx-case__demo" style="display:flex;flex-direction:column;width:100%">
+            @foreach ($verticalSpacingSizes as $size)
+                <tedi:vertical-spacing-item :size="$size">
+                    <p>item at size {{ $size }}</p>
+                </tedi:vertical-spacing-item>
+            @endforeach
+        </div>
+    </div>
+</div>
+
+<div class="gx-sec">
+    <h2>Hide At / Show At</h2>
+    <p>Port of <code>directives/hide-at</code> and <code>directives/show-at</code>. No classes are emitted — visibility is an Alpine <code>matchMedia</code> binding (CONVENTIONS.md §8), so these are here for render coverage only.</p>
+
+    <div class="gx-case">
+        <div class="gx-case__label">breakpoint: xs | sm | md | lg | xl | xxl</div>
+        <div class="gx-case__demo" style="display:flex;flex-direction:column;gap:.25rem;width:100%">
+            @foreach (['xs', 'sm', 'md', 'lg', 'xl', 'xxl'] as $bp)
+                <tedi:hide-at :breakpoint="$bp">hidden at and above {{ $bp }}</tedi:hide-at>
+                <tedi:show-at :breakpoint="$bp">shown at and above {{ $bp }}</tedi:show-at>
+            @endforeach
+        </div>
+    </div>
+</div>
+
+<div class="gx-sec">
     <h2>Timeline</h2>
     <p>Port of <code>helpers/timeline</code> + <code>timeline-item</code>. <code>index</code> / <code>last</code> replace Angular's contentChildren auto-registration (CONVENTIONS.md §5); <code>activeIndex</code> is inherited by items via <code>@@aware</code>.</p>
 

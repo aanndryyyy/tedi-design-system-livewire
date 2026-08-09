@@ -163,6 +163,13 @@ summary:
 | `button-group` | `enableMobileDropdown` + `mobileBreakpoint` become the explicit `dropdownMode` prop; the collapsed dropdown is built from `items` only, so a slot-only group cannot collapse |
 | `breadcrumbs`, `horizontal-stepper`, `button-group` | Angular's `contentChildren` registration becomes explicit props — an `items` array, or `step-number` on each stepper item |
 | `vertical-stepper-item` | Same `contentChildren` case: nested steps go in the `sub-items` slot and each carries `:sub-item="true"`, because Blade cannot set it on the slot's children. `route`/RouterLink becomes a plain `href`, and `routerLinkActive`'s auto-selection (plus the `opened` effect it drives) becomes explicit `:selected` / `:opened`. `tedi-vertical-stepper--compact` dropped — TEDI ships no rule for it |
+| `filter` | **No native form control.** `wire:model` binds through `x-modelable="model"` on the root rather than through a hidden `<input>`: the model is `string`, `string[]` or `boolean` depending on the mode, and only Alpine can carry all three. Nothing is submitted in a plain non-Livewire `<form>` POST |
+| `filter` | `tedi-filter-dropdown--custom` and `tedi-filter-dropdown__item--select-all` are dropped — Angular emits both, TEDI ships no rule for either |
+| `filter` | The `cleared` output is not re-emitted; the custom-content dropdown's clear button forwards `clear-attributes` (e.g. `wire:click`) instead |
+| `filter` | `group-allow-multiple` is a Blade-only prop with no Angular input. Angular reads its group's mode from `filterGroup.allowMultiple()` — a different object from the filter's own `allowMultiple()` — to decide `role="radio"` (managed single-select group) versus `aria-pressed` (everything else). `@aware` cannot carry it, because the filter declares `allowMultiple` itself and Laravel resolves the child's own data first (CONVENTIONS.md §3). **Inside a `<tedi:filter-group allow-multiple>`, mirror it as `group-allow-multiple` on each child filter**; omitted, the child assumes a single-select group, matching filter-group's default |
+| `filter-group` | The managed-group `ControlValueAccessor` is not ported. `managed` is an explicit prop gating `role="group"` / `role="radiogroup"` — and, on each child, `role="radio"` instead of `aria-pressed`. Selection comes from `wire:model` on each child `<tedi:filter>`, as with `checkbox-group` / `radio-group`. A multi-select group must also mirror `group-allow-multiple` onto each child — see the `filter` row |
+| `vertical-spacing`, `vertical-spacing-item` | Angular's attribute directives port as wrapper `<div>`s carrying the class and the inline `--vertical-spacing-internal`. The inline style is *merged* (`$attributes->style()`) where Angular's `setAttribute('style', …)` clobbers. For `vertical-spacing-item` the wrapper takes the margin, so the child's own bottom margin collapses through it and the effective gap is `max(child margin, size)` — apply the class directly where that matters |
+| `hide-at`, `show-at` | TEDI ships no display-utility classes, so visibility is an Alpine `matchMedia` binding (`tediBreakpoint`) rather than CSS. Angular's structural forms (`*hideAt` / `*showAt`) that remove the element from the DOM are not ported — only the attribute form's `display` toggle. Without the bundled JS the content is **visible** at every width; Angular hides until its breakpoint observer emits, so the no-JS fallback deliberately errs toward showing content rather than losing it |
 | `choicegroup` | Angular is an attribute directive applied to an existing group host; Blade renders a wrapper element instead. `spacing` only ever decides `--stacked` (upstream never writes a gap either) |
 | `table-of-contents` | The mobile panel is the same nav with `table-of-contents--modal-active` rather than a second copy inside a CDK dialog. `onToggle`/`open` collapse into `default-open` — Angular never reads them. `TableOfContentsNestedWrapperComponent` is an Angular-bug workaround and is not ported. Its classes are not `tedi-`-prefixed upstream, so the stylesheet guardrails skip them |
 | `file-dropzone` | Markup subset — Angular's `FileService`, `ControlValueAccessor` and async validators are the server's job here (see the table above) |
@@ -200,11 +207,12 @@ run on this package's own Alpine layer instead (`tediOverlay`, `tediDropdown`,
 `tediModal`, and per-component inline state), documented in CONVENTIONS.md §8
 and §11.
 
-Together that is **all 67** components in Angular's `tedi/` tree, which expand
-to **138 Blade components** once sub-components are counted. A fourth pass added
+Together that is **all 68** components in Angular's `tedi/` tree, which expand
+to **140 Blade components** once sub-components are counted. A fourth pass added
 the five components that exist only in Angular's `community/` entry point — see
 [From Angular's `community/` entry point](#from-angulars-community-entry-point)
-below — for **145** in total.
+below. A fifth added `filter` — which upstream shipped after the last release —
+and the three `tedi/directives/`, for **151** in total.
 
 | Angular component | Blade tag |
 |---|---|
@@ -224,6 +232,7 @@ below — for **145** in total.
 | `content/list` | `<tedi:list>` |
 | `content/table` | `<tedi:table>`, `<tedi:table-toolbar>`, `<tedi:table-header-button>`, `<tedi:table-columns-menu>` ⁵ |
 | `content/text-group` | `<tedi:text-group>`, `<tedi:text-group-label>`, `<tedi:text-group-value>` |
+| `filter/filter` | `<tedi:filter>`, `<tedi:filter-group>` |
 | `form/checkbox` | `<tedi:checkbox>` |
 | `form/checkbox-card` | `<tedi:checkbox-card>`, `<tedi:checkbox-card-group>` |
 | `form/checkbox-group` | `<tedi:checkbox-group>` |
@@ -270,6 +279,16 @@ below — for **145** in total.
 | `tags/status-badge` | `<tedi:status-badge>` |
 | `tags/status-indicator` | `<tedi:status-indicator>` |
 | `tags/tag` | `<tedi:tag>` |
+
+Angular's `tedi/directives/` tree sits beside `components/` rather than inside
+it. All three port, as wrapper elements — Blade has no directives, so this
+follows the `choicegroup` precedent (CONVENTIONS.md §12):
+
+| Angular directive | Blade tag |
+|---|---|
+| `directives/hide-at` | `<tedi:hide-at>` |
+| `directives/show-at` | `<tedi:show-at>` |
+| `directives/vertical-spacing` | `<tedi:vertical-spacing>`, `<tedi:vertical-spacing-item>` |
 
 ¹ Kept under `form/` rather than flattened, because `label` is the most generic
 name in the library and a future collision is likely.
@@ -393,14 +412,15 @@ its story directory contains any `.md` file:
 
 Both are ported verbatim from the Angular story file — its `parameters.docs.description.component` /
 `.story` if present, otherwise the doc comment above the `export default` / `export const`.
-All 66 components have a `README.md`; 127 stories have a per-story description,
+All 69 components have a `README.md`; 129 stories have a per-story description,
 which is every Angular story that carries one.
 
 Two known gaps. `Community/Form/FormField` has no description because the Angular
 story has none — its `README.md` is an HTML comment that renders nothing and
 exists only to switch the Docs page on. And the props table on a Docs page is
 Storybook's, built from the component's *first* story; because that ordering is
-alphabetical (above) rather than Angular's export order, 23 of the 66 pages land
+alphabetical (above) rather than Angular's export order, 23 of the 66 pages
+audited when the stories were first ported land
 on a story that declares no `argTypes` and show "No inputs found for this
 component" instead of the table. The per-story Controls panel is unaffected.
 
@@ -427,7 +447,7 @@ the community `radio` / `checkbox` stories, which belong to components the
 
 ### Angular stories with no Blade equivalent
 
-510 stories across 66 components are ported. Some Angular stories exist purely
+521 stories across 69 components are ported. Some Angular stories exist purely
 to demonstrate behaviour this package documents as not ported (see the
 divergences table above). Those are deliberately absent rather than faked:
 
@@ -443,7 +463,7 @@ divergences table above). Those are deliberately absent rather than faked:
 | `ProgressBar`: Animated · `InputGroup`: StartDynamic, EndDynamic, AllControls · `Attachment`: LabeledActions | Runtime state / `output()` events |
 | `Header`: LoggedInWithSidenav | Composes `header` and `sidenav`, which are ported separately; the combined story is not |
 | `Card`: WithDottedSeparator, PrescriptionExample | A style this port doesn't emit |
-| `DatePicker`, `TimePicker`, `TimeField`, `DateField`: WithReactiveForms | Angular reactive forms — use `wire:model` instead |
+| `DatePicker`, `TimePicker`, `TimeField`, `DateField`, `Filter`: WithReactiveForms | Angular reactive forms — use `wire:model` instead |
 | `DateField`, `TimeField`: NativePicker, MobileModal · `DateField`: CustomFormatAndParse, CustomLocale | Breakpoint props, the unported modal branch, JS format/parse callables, and `localeCode` |
 | `FileDropzone`: Replace | Exercises the `mode` input, part of the unported `FileService` file pipeline |
 

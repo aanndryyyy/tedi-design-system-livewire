@@ -231,7 +231,7 @@ const preview = {
     server: {
       url: process.env.STORYBOOK_SERVER_URL
     },
-    layout: 'centered',
+    layout: 'padded',
     status: {
       statuses: JSON.parse(process.env.STORYBOOK_STATUSES)
     },

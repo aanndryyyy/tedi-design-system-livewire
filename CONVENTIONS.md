@@ -363,7 +363,8 @@ JS, or the parity tests in §10 have nothing to assert against.
 **Where the behaviour lives.** Inline in the template by default. Move it into
 `resources/js/` as an `Alpine.data()` only when it is too large to read inline
 or is shared by several components — currently `tediCarousel`, `tediOverlay`
-and `tediDropdown` (§11), `tediModal` and `tediTableOfContents`.
+and `tediDropdown` (§11), `tediFilter`, `tediModal`, `tediTableOfContents` and
+`tediBreakpoint`.
 
 **The JS layout.** `resources/js/tedi.js` is the entry point and holds nothing
 but imports and the `Alpine.data()` registrations. Each behaviour is a module
@@ -371,9 +372,11 @@ under `resources/js/src/`, exporting a factory of the same name:
 
 | File | Exports | Notes |
 |---|---|---|
+| `src/breakpoint.js` | `breakpoint` | Shared by `hide-at` and `show-at`; one `matchMedia` query off core's `$grid-breakpoints`, with `mode` choosing which side is visible |
 | `src/position.js` | placement maths | Pure functions over rectangles — no Alpine, no DOM writes |
 | `src/overlay.js` | `overlay` | Open/close, dismissal, and the DOM writes that apply `position.js` |
 | `src/dropdown.js` | `dropdown` | Composes `overlay` and adds the ARIA menu keyboard layer (§11) |
+| `src/filter.js` | `filter` | Composes `overlay` and adds the filter's selection state plus its `aria-activedescendant` listbox layer — deliberately **not** `dropdown`, whose roving-tabindex menu is a different ARIA pattern |
 | `src/modal.js` | `modal` | |
 | `src/carousel.js` | `carousel` | |
 | `src/table-of-contents.js` | `tableOfContents` | |

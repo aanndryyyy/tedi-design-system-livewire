@@ -14,23 +14,29 @@
  * (non-module) `dist/tedi.js`. Consumers still load one plain <script>; the
  * split is a source-organisation change and nothing more. See CONVENTIONS.md §8.
  *
+ *   src/breakpoint.js         tediBreakpoint — matchMedia visibility (hide-at / show-at)
  *   src/position.js           placement maths, no Alpine and no DOM writes
  *   src/overlay.js            tediOverlay — open/close, dismissal, positioning
  *   src/dropdown.js           tediDropdown — tediOverlay + the ARIA menu keyboard layer
+ *   src/filter.js             tediFilter — tediOverlay + the filter's listbox layer
  *   src/modal.js              tediModal
  *   src/carousel.js           tediCarousel
  *   src/table-of-contents.js  tediTableOfContents
  */
+import { breakpoint } from './src/breakpoint.js';
 import { carousel } from './src/carousel.js';
 import { dropdown } from './src/dropdown.js';
+import { filter } from './src/filter.js';
 import { modal } from './src/modal.js';
 import { overlay } from './src/overlay.js';
 import { tableOfContents } from './src/table-of-contents.js';
 
 function register(Alpine) {
+    Alpine.data('tediBreakpoint', breakpoint);
     Alpine.data('tediCarousel', carousel);
     Alpine.data('tediOverlay', overlay);
     Alpine.data('tediDropdown', dropdown);
+    Alpine.data('tediFilter', filter);
     Alpine.data('tediModal', modal);
     Alpine.data('tediTableOfContents', tableOfContents);
 }

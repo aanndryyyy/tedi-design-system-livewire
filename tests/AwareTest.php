@@ -587,4 +587,75 @@ class AwareTest extends TestCase
 
         $this->assertHasClass('tedi-vertical-stepper-item--sub-item', $explicit, 'tedi-vertical-stepper-item--sub-item');
     }
+
+    // -- filter-group / filter @aware(['disabled', 'managed', 'allowMultiple']) --
+
+    public function test_filter_inherits_disabled_from_its_group(): void
+    {
+        $html = Blade::render(
+            '<tedi:filter-group :disabled="true"><tedi:filter text="Kõik" value="all" /></tedi:filter-group>'
+        );
+
+        $this->assertHasClass('tedi-filter--disabled', $html, 'tedi-filter');
+        $this->assertMatchesRegularExpression(self::DISABLED_ATTR, $html);
+    }
+
+    public function test_filter_inherits_managed_from_its_group(): void
+    {
+        // managed + single-select -> the child becomes a role="radio".
+        $radio = Blade::render(
+            '<tedi:filter-group :managed="true"><tedi:filter text="Kõik" value="all" /></tedi:filter-group>'
+        );
+        $this->assertStringContainsString('role="radio"', $radio);
+    }
+
+    /**
+     * The group's `allowMultiple` is deliberately NOT @aware: the child declares
+     * a prop of that name for its own dropdown mode, and Laravel resolves the
+     * child's own data first (CONVENTIONS.md §3). It is mirrored with the
+     * explicit `group-allow-multiple` prop instead.
+     */
+    public function test_group_allow_multiple_is_an_explicit_prop_not_inherited(): void
+    {
+        // The group alone does not reach the child — it still renders as a radio.
+        $inherited = Blade::render(
+            '<tedi:filter-group :managed="true" :allow-multiple="true">'
+            .'<tedi:filter text="Kõik" value="all" /></tedi:filter-group>'
+        );
+        $this->assertStringContainsString('role="radio"', $inherited);
+
+        // Mirrored on the child, the group ARIA switches to aria-pressed.
+        $mirrored = Blade::render(
+            '<tedi:filter-group :managed="true" :allow-multiple="true">'
+            .'<tedi:filter text="Kõik" value="all" :group-allow-multiple="true" /></tedi:filter-group>'
+        );
+        $this->assertStringContainsString('aria-pressed="false"', $mirrored);
+        $this->assertStringNotContainsString('role="radio"', $mirrored);
+    }
+
+    public function test_filter_child_fallbacks_match_the_group_defaults_when_omitted(): void
+    {
+        $explicit = Blade::render(
+            '<tedi:filter-group :managed="false" :disabled="false">'
+            .'<tedi:filter text="Kõik" /></tedi:filter-group>'
+        );
+        $omitted = Blade::render(
+            '<tedi:filter-group><tedi:filter text="Kõik" /></tedi:filter-group>'
+        );
+
+        // The generated ids differ per render; compare with them normalised.
+        $normalise = fn (string $html) => preg_replace('/tedi-filter-[0-9a-f]+/', 'ID', $html);
+
+        $this->assertSame($normalise($explicit), $normalise($omitted),
+            'Omitting managed/allowMultiple/disabled must render identically to passing their defaults.');
+    }
+
+    public function test_filter_renders_standalone_without_a_group(): void
+    {
+        $html = Blade::render('<tedi:filter text="Kõik" />');
+
+        $this->assertHasClass('tedi-filter', $html, 'tedi-filter');
+        $this->assertMissingClass('tedi-filter--disabled', $html, 'tedi-filter');
+        $this->assertStringContainsString('aria-pressed="false"', $html);
+    }
 }

@@ -173,11 +173,39 @@ class FormFieldComponentsTest extends TestCase
     public function test_form_field_clear_button_visibility(): void
     {
         $html = Blade::render('<tedi:form-field clearable value="abc"><input /></tedi:form-field>');
-        $this->assertMissingClass('tedi-form-field__buttons--hidden', $html, on: 'tedi-form-field__buttons--hidden');
+        $this->assertHasClass('tedi-form-field__buttons', $html, on: 'tedi-form-field__buttons');
+        $this->assertMissingClass('tedi-form-field__buttons--hidden', $html, on: 'tedi-form-field__buttons');
 
         $html = Blade::render('<tedi:form-field clearable><input /></tedi:form-field>');
-        $this->assertHasClass('tedi-form-field__buttons--hidden', $html, on: 'tedi-form-field__buttons--hidden');
+        $this->assertHasClass('tedi-form-field__buttons--hidden', $html, on: 'tedi-form-field__buttons');
         $this->assertStringContainsString('aria-hidden="true"', $html);
+    }
+
+    /**
+     * The two modifiers must live in ONE class attribute. They used to be a
+     * literal `class="tedi-form-field__buttons"` next to an `@class([...])`,
+     * which is two class attributes on one element: the HTML parser keeps the
+     * first, so `--hidden` was silently discarded and every clearable field
+     * showed its clear button regardless of value.
+     *
+     * The old assertions could not see it — `classesOf()` scans every class
+     * attribute in the document and returns the first list containing the token
+     * it was asked to match, so it happily found `--hidden` in the discarded
+     * second attribute. Anchoring both on `tedi-form-field__buttons` (above) is
+     * what makes them meaningful; this pins the shape directly.
+     */
+    public function test_form_field_buttons_emit_a_single_class_attribute(): void
+    {
+        $html = Blade::render('<tedi:form-field clearable><input /></tedi:form-field>');
+
+        $this->assertSame(1, preg_match_all(
+            '/<div\s+class="tedi-form-field__buttons[^"]*"/', $html
+        ), 'The buttons wrapper must open with exactly one class attribute.');
+
+        preg_match('/<div\s+class="tedi-form-field__buttons[^>]*>/s', $html, $match);
+
+        $this->assertSame(1, substr_count($match[0], 'class='),
+            'A second class attribute on the wrapper would be dropped by the parser.');
     }
 
     public function test_form_field_feedback_row_shown_for_feedback_slot_or_character_limit(): void

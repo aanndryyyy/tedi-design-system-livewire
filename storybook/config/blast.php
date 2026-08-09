@@ -36,6 +36,8 @@ return [
     'tailwind_config_path' => false,
     'storybook_viewports' => false,
 
+    'canvas_bg_color' => '#fff',
+
     /*
      * Mirrors the sidebar order of the Angular Storybook
      * (TEDI-Design-System/angular). Angular sets no `storySort`, so its sidebar
