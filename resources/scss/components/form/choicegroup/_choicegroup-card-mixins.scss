@@ -1,0 +1,95 @@
+@mixin padding-variables {
+  --_choicegroup-card-padding-top: var(--_choicegroup-card-padding-vertical);
+  --_choicegroup-card-padding-bottom: var(--_choicegroup-card-padding-vertical);
+  --_choicegroup-card-padding-left: var(--_choicegroup-card-padding-horizontal);
+  --_choicegroup-card-padding-right: var(
+    --_choicegroup-card-padding-horizontal
+  );
+  --_choicegroup-card-padding: var(--_choicegroup-card-padding-top)
+    var(--_choicegroup-card-padding-right)
+    var(--_choicegroup-card-padding-bottom)
+    var(--_choicegroup-card-padding-left);
+  --_choicegroup-card-radius: var(--form-checkbox-radio-card-radius);
+  --_choicegroup-card-padding-horizontal: var(
+    --form-checkbox-radio-card-checkbox-padding-x
+  );
+  --_choicegroup-card-padding-vertical: var(
+    --form-checkbox-radio-card-checkbox-padding-y
+  );
+}
+
+@mixin color-variables($variant) {
+  :is(.tedi-radio, .tedi-checkbox) {
+    --_choicegroup-card-bg: var(
+      --form-checkbox-radio-card-#{$variant}-default-background
+    );
+    --_radio-label-color: var(
+      --form-checkbox-radio-card-#{$variant}-default-text
+    );
+    --_checkbox-label-color: var(
+      --form-checkbox-radio-card-#{$variant}-default-text
+    );
+
+    &:has(input:checked) {
+      --_choicegroup-card-bg: var(
+        --form-checkbox-radio-card-#{$variant}-selected-background
+      );
+      --_radio-label-color: var(
+        --form-checkbox-radio-card-#{$variant}-selected-text
+      );
+      --_checkbox-label-color: var(
+        --form-checkbox-radio-card-#{$variant}-selected-text
+      );
+    }
+
+    &:has(input:hover) {
+      --_choicegroup-card-bg: var(
+        --form-checkbox-radio-card-#{$variant}-hover-background
+      );
+      --_radio-label-color: var(
+        --form-checkbox-radio-card-#{$variant}-hover-text
+      );
+      --_checkbox-label-color: var(
+        --form-checkbox-radio-card-#{$variant}-hover-text
+      );
+    }
+
+    &:has(input:disabled) {
+      --_choicegroup-card-bg: var(
+        --form-checkbox-radio-card-#{$variant}-disabled-background
+      );
+      --_radio-label-color: var(
+        --form-checkbox-radio-card-#{$variant}-disabled-text
+      );
+      --_checkbox-label-color: var(
+        --form-checkbox-radio-card-#{$variant}-disabled-text
+      );
+    }
+  }
+}
+
+@mixin border-colors($variant, $border-type) {
+  :is(.tedi-radio, .tedi-checkbox) {
+    --_choicegroup-card-border: var(
+      --form-checkbox-radio-card-#{$variant}-default-#{$border-type}
+    );
+
+    &:has(input:checked) {
+      --_choicegroup-card-border: var(
+        --form-checkbox-radio-card-#{$variant}-selected-#{$border-type}
+      );
+    }
+
+    &:has(input:hover) {
+      --_choicegroup-card-border: var(
+        --form-checkbox-radio-card-#{$variant}-hover-border
+      );
+    }
+
+    &:has(input:disabled) {
+      --_choicegroup-card-border: var(
+        --form-checkbox-radio-card-#{$variant}-disabled-#{$border-type}
+      );
+    }
+  }
+}

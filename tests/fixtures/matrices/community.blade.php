@@ -37,4 +37,22 @@
             <tedi:floating-button disabled>Tagasiside</tedi:floating-button>
         </div>
     </div>
+
+    <h3>Choicegroup</h3>
+
+    <div class="gx-case">
+        <div class="gx-case__label">variant × spacing × indicator</div>
+        <div class="gx-case__demo">
+            @foreach (['primary', 'secondary'] as $variant)
+                @foreach ([4, 0] as $spacing)
+                    @foreach ([true, false] as $hasIndicator)
+                        <tedi:choicegroup :variant="$variant" :spacing="$spacing" :has-indicator="$hasIndicator">
+                            <tedi:radio name="matrix-{{ $variant }}-{{ $spacing }}-{{ (int) $hasIndicator }}" value="jah" label="Jah" />
+                            <tedi:radio name="matrix-{{ $variant }}-{{ $spacing }}-{{ (int) $hasIndicator }}" value="ei" label="Ei" />
+                        </tedi:choicegroup>
+                    @endforeach
+                @endforeach
+            @endforeach
+        </div>
+    </div>
 </div>

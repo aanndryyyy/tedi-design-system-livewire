@@ -94,4 +94,35 @@ class CommunityComponentsTest extends TestCase
 
         $this->assertStringContainsString('disabled', $html);
     }
+
+    // -- choicegroup ----------------------------------------------------
+
+    public function test_choicegroup_variant_classes(): void
+    {
+        foreach (['primary', 'secondary'] as $variant) {
+            $html = Blade::render('<tedi:choicegroup variant="'.$variant.'">x</tedi:choicegroup>');
+
+            $this->assertHasClass('tedi-choicegroup', $html, 'tedi-choicegroup');
+            $this->assertHasClass('tedi-choicegroup--'.$variant, $html, 'tedi-choicegroup');
+        }
+    }
+
+    public function test_choicegroup_stacked_only_at_zero_spacing(): void
+    {
+        $stacked = Blade::render('<tedi:choicegroup :spacing="0">x</tedi:choicegroup>');
+        $this->assertHasClass('tedi-choicegroup--stacked', $stacked, 'tedi-choicegroup');
+
+        foreach (['<tedi:choicegroup>x</tedi:choicegroup>', '<tedi:choicegroup :spacing="8">x</tedi:choicegroup>'] as $template) {
+            $this->assertMissingClass('tedi-choicegroup--stacked', Blade::render($template), 'tedi-choicegroup');
+        }
+    }
+
+    public function test_choicegroup_plain_when_indicator_is_off(): void
+    {
+        $plain = Blade::render('<tedi:choicegroup :has-indicator="false">x</tedi:choicegroup>');
+        $this->assertHasClass('tedi-choicegroup--plain', $plain, 'tedi-choicegroup');
+
+        $default = Blade::render('<tedi:choicegroup>x</tedi:choicegroup>');
+        $this->assertMissingClass('tedi-choicegroup--plain', $default, 'tedi-choicegroup');
+    }
 }
