@@ -1,0 +1,287 @@
+// Vendored verbatim from
+// react/src/tedi/components/form/date-time-field/date-time-field.module.scss.
+//
+// One rule in here is DEAD in this package and is kept unedited on purpose
+// (CONVENTIONS.md §13.3): the `:global .tedi-btn--link .tedi-btn__icon--left`
+// block inside `__time-header` targets React's own button vocabulary
+// (`tedi-btn`), whereas this package — like Angular — emits `tedi-button`.
+// Sass compiles the selector fine; it simply never matches. Its two
+// declarations (`display: inline-flex; align-items: center`) are what
+// `.tedi-button` already does, so nothing is lost. Rewriting the class name
+// would invent a rule TEDI does not ship, and deleting it would make the next
+// re-sync diff lie.
+//
+// `@use '../field-icon-button'` still resolves: the shared partial is vendored
+// alongside, at components/form/_field-icon-button.scss.
+@use '@tedi-design-system/core/bootstrap-utility/breakpoints';
+@use '../field-icon-button' as field-icon-button;
+
+.tedi-date-time-field__container {
+  width: 100%;
+}
+
+.tedi-date-time-field__textfield {
+  @include field-icon-button.states;
+
+  input[type='datetime-local'] {
+    appearance: none;
+  }
+
+  input[type='datetime-local']::-webkit-calendar-picker-indicator,
+  input[type='datetime-local']::-webkit-inner-spin-button,
+  input[type='datetime-local']::-webkit-clear-button {
+    display: none !important;
+    appearance: none;
+  }
+
+  input[type='datetime-local'][value='']:not(:focus)::-webkit-datetime-edit {
+    /* stylelint-disable-next-line scale-unlimited/declaration-strict-value */
+    color: transparent;
+  }
+
+  input[type='datetime-local'][value='']:not(:focus)::before {
+    position: absolute;
+    color: var(--form-input-text-placeholder);
+    content: attr(placeholder);
+  }
+
+  input[type='datetime-local'][value='']:focus::-webkit-datetime-edit {
+    color: inherit;
+  }
+
+  input[type='datetime-local'][value='']:focus::before {
+    content: '';
+  }
+}
+
+.tedi-date-time-field__icon--disabled {
+  @include field-icon-button.disabled;
+}
+
+.tedi-date-time-field__popup {
+  z-index: var(--z-index-dropdown);
+}
+
+.tedi-date-time-field__calendar {
+  position: relative;
+  min-width: 20rem;
+  font-family: var(--family-default);
+  background: var(--card-background-primary);
+  border: 1px solid var(--card-border-primary);
+  border-radius: var(--card-radius-rounded);
+  box-shadow: 0 1px 5px 0 var(--tedi-alpha-20);
+}
+
+.tedi-date-time-field__split {
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  background: var(--card-background-primary);
+  border: 1px solid var(--card-border-primary);
+  border-radius: var(--card-radius-rounded);
+  box-shadow: 0 1px 5px 0 var(--tedi-alpha-20);
+
+  @include breakpoints.media-breakpoint-down(md) {
+    flex-direction: column;
+  }
+
+  .tedi-date-time-field__calendar--split {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .tedi-date-time-field__time-picker {
+    max-width: 12rem;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+
+    @include breakpoints.media-breakpoint-down(md) {
+      width: 100%;
+      max-width: 20rem;
+    }
+  }
+
+  .tedi-date-time-field__time-picker--wheel {
+    --tedi-time-wheel-height: 15.5rem;
+    --tedi-time-wheel-fade: 6.5rem;
+  }
+}
+
+.tedi-date-time-field__split-separator {
+  display: flex;
+  flex-shrink: 0;
+  align-items: stretch;
+  padding: var(--card-padding-md-default) var(--separator-spacing-x-01);
+}
+
+.tedi-date-time-field__split-separator-line {
+  flex: 1;
+  width: 1px;
+  background: var(--general-border-primary);
+
+  @include breakpoints.media-breakpoint-down(md) {
+    width: auto;
+    height: 1px;
+  }
+}
+
+.tedi-date-time-field__split-time {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+}
+
+.tedi-date-time-field__split-time-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--card-padding-md-default) var(--card-padding-md-default) 0;
+}
+
+.tedi-date-time-field__split-heading {
+  font-size: var(--body-regular-size);
+  font-weight: 500;
+  line-height: var(--body-regular-line-height);
+  color: var(--general-text-primary);
+  letter-spacing: 0.15px;
+}
+
+.tedi-date-time-field__split-time-body {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--card-padding-md-default);
+}
+
+.tedi-date-time-field__range {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--card-background-primary);
+  border: 1px solid var(--card-border-primary);
+  border-radius: var(--card-radius-rounded);
+  box-shadow: 0 1px 5px 0 var(--tedi-alpha-20);
+
+  .tedi-date-time-field__calendar--split {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .tedi-date-time-field__time-picker {
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+
+    @include breakpoints.media-breakpoint-down(md) {
+      width: 100%;
+      max-width: 20rem;
+    }
+  }
+
+  .tedi-date-time-field__time-picker--wheel {
+    --tedi-time-wheel-height: 7.25rem;
+    --tedi-time-wheel-fade: 2.25rem;
+  }
+}
+
+.tedi-date-time-field__range-separator {
+  display: flex;
+  flex-shrink: 0;
+  align-items: stretch;
+}
+
+.tedi-date-time-field__range-separator-line {
+  flex: 1;
+  height: 1px;
+  background: var(--general-border-primary);
+}
+
+.tedi-date-time-field__range-times {
+  display: flex;
+  align-items: stretch;
+
+  @include breakpoints.media-breakpoint-down(md) {
+    flex-direction: column;
+  }
+}
+
+.tedi-date-time-field__range-time {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+
+  & + & {
+    @include breakpoints.media-breakpoint-down(md) {
+      border-top: 1px solid var(--card-border-primary);
+      border-left: 0;
+    }
+  }
+}
+
+.tedi-date-time-field__select-time-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.tedi-date-time-field__time-step {
+  display: flex;
+  flex-direction: column;
+  min-width: 14rem;
+  overflow: hidden;
+  background: var(--card-background-primary);
+  border: 1px solid var(--card-border-primary);
+  border-radius: var(--card-radius-rounded);
+  box-shadow: 0 1px 5px 0 var(--tedi-alpha-20);
+
+  .tedi-date-time-field__time-picker {
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .tedi-date-time-field__time-picker--wheel {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tedi-date-time-field__time-header {
+  display: flex;
+  gap: var(--layout-grid-gutters-08);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--card-padding-md-default) var(--card-padding-md-default) 0;
+
+  :global .tedi-btn--link .tedi-btn__icon--left {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+.tedi-date-time-field__time-date {
+  font-size: var(--body-regular-size);
+  font-weight: 500;
+  line-height: var(--body-regular-line-height);
+  color: var(--general-text-primary);
+}
+
+.tedi-date-time-field__time-body {
+  padding: var(--card-padding-md-default);
+}
+
+.tedi-date-time-field__time-picker {
+  flex-shrink: 0;
+}

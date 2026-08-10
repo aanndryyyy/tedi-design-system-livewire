@@ -1,0 +1,107 @@
+@use '@tedi-design-system/core/bootstrap-utility/breakpoints';
+@use '@tedi-design-system/core/mixins';
+
+$container-height: 2.5rem;
+$container-height-small: 2rem;
+
+.tedi-file-upload {
+  display: flex;
+  align-items: center;
+
+  & input[type='file'] {
+    @include mixins.visually-hidden;
+  }
+
+  & input[type='file']:focus-visible ~ .tedi-file-upload__button {
+    outline: 2px solid var(--form-input-border-active);
+    outline-offset: 2px;
+  }
+}
+
+.tedi-file-upload__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--form-field-inner-spacing);
+  padding-top: var(--form-field-inner-spacing);
+  padding-bottom: var(--form-field-inner-spacing);
+  margin: 0;
+
+  & li {
+    word-break: break-word;
+    overflow-wrap: break-word;
+    list-style-type: none;
+  }
+}
+
+.tedi-file-upload__container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background-color: var(--form-input-background-default);
+  border: 1px solid var(--form-input-border-default);
+  border-radius: var(--form-field-radius);
+
+  &--default {
+    min-height: $container-height;
+    padding-right: var(--form-field-padding-x-md-default);
+    padding-left: var(--form-field-padding-x-md-default);
+
+    .tedi-file-upload__button {
+      height: $container-height;
+    }
+  }
+
+  &--small {
+    min-height: $container-height-small;
+    padding: var(--form-field-padding-y-xxs) var(--form-field-padding-x-md-default);
+
+    .tedi-file-upload__button {
+      height: $container-height-small;
+      padding-left: var(--form-field-padding-x-md-default);
+    }
+  }
+
+  .tedi-file-upload__button {
+    padding-right: 0;
+    padding-left: 0;
+
+    @include breakpoints.media-breakpoint-down(md) {
+      width: 100%;
+      margin: 0 auto;
+    }
+  }
+
+  &.tedi-file-upload--disabled {
+    color: var(--form-input-text-disabled);
+    pointer-events: none;
+    cursor: initial;
+    background-color: var(--form-input-background-disabled);
+    border-color: var(--form-input-border-disabled);
+  }
+
+  &.tedi-file-upload--error {
+    border-color: var(--form-general-feedback-error-border);
+  }
+
+  &.tedi-file-upload--valid {
+    border-color: var(--form-general-feedback-success-border);
+  }
+}
+
+.tedi-file-upload__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--form-field-inner-spacing);
+}
+
+.tedi-file-upload__items--truncate,
+.tedi-file-upload__tag--truncate {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tedi-file-upload__items--truncate {
+  display: block;
+}

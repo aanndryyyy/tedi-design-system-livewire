@@ -40,4 +40,41 @@ class Tedi
     {
         return $prefix.'-'.substr(md5(uniqid('', true)), 0, 8);
     }
+
+    /**
+     * Resolve a TEDI max-width value to a CSS length.
+     *
+     * Port of resolveMaxWidth() in react/src/tedi/components/layout/top-nav/top-nav.tsx,
+     * against BREAKPOINT_WIDTHS. A breakpoint name becomes that breakpoint's
+     * min-width, a bare number becomes px, anything else passes through, and
+     * 'none' / 0 / null mean "no constraint" and return null.
+     *
+     * It lives here rather than in a template because <tedi:top-nav> and
+     * <tedi:top-nav-submenu> both need the same answer for the same input.
+     */
+    public static function maxWidth(mixed $value): ?string
+    {
+        // BREAKPOINT_WIDTHS, react/src/tedi/helpers.
+        $breakpoints = [
+            'sm' => '36rem',
+            'md' => '48rem',
+            'lg' => '62rem',
+            'xl' => '75rem',
+            'xxl' => '87.5rem',
+        ];
+
+        if ($value === null || $value === 'none' || $value === 0 || $value === '0') {
+            return null;
+        }
+
+        if (is_string($value) && isset($breakpoints[$value])) {
+            return $breakpoints[$value];
+        }
+
+        if (is_numeric($value)) {
+            return $value.'px';
+        }
+
+        return (string) $value;
+    }
 }

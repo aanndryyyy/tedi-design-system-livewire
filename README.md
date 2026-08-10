@@ -25,10 +25,14 @@ Tailwind on top if you want; nothing here depends on it.
 | Tokens, base, typography, fonts, icons, utilities | `@tedi-design-system/core` | The canonical style foundation |
 | Per-component CSS | `@tedi-design-system/angular` | All its components use `ViewEncapsulation.None`, so the CSS is already global and BEM-classed |
 | Markup & prop APIs | `@tedi-design-system/angular` | Templates + `classes()` map cleanly onto Blade |
+| Both, for the components that exist only there | `@tedi-design-system/react` | Its CSS Modules hash class names in *React's* build, not in the source — the SCSS is plain BEM and vendors like Angular's |
 
-> The React package is deliberately **not** the port source: it uses CSS Modules,
-> so its class names are hashed at build time and can't be reproduced in Blade.
-> Note that `core` alone is not sufficient either — it contains no component
+> Angular remains the port source wherever a component exists in both, because
+> that is what the rest of the library was ported from and re-syncing against
+> two upstreams is how a port drifts. React is used **additively**, for
+> components Angular does not have — see
+> [From the React package](#from-the-react-package) below and CONVENTIONS.md §13.
+> Note that `core` alone is not sufficient as a source — it contains no component
 > styles, only the token/base layer.
 
 ## Installation
@@ -133,7 +137,8 @@ summary:
 |---|---|
 | `card`, `accordion`, `row`/`col`, `link`, `progress-bar`, `text-group`, `header.*`, `footer.*` | Breakpoint props accepted in Angular are absent; base props only |
 | `footer`, `footer.body`, `footer.side`, `footer.bottom` | `mobileLayout` not ported, so the `--mobile` variants never apply |
-| `header.profile`, `header.role` | Always render the modal branch; not yet wired to `<tedi:popover>` |
+| `header.profile` | Wired to `<tedi:popover>`, but the branch is chosen by `size` server-side, not by the viewport: `size="small"` renders the mobile button + modal, anything else the popover. `showPopover` stays inert |
+| `header.role` | Wired to `<tedi:popover>`; the mobile (`*hideAt('lg')`) accordion branch is not ported, so the desktop branch renders at every width. Search filters client-side with `x-show`, so hidden entries keep their DOM position and the item separators follow the written order |
 | `header.search` | Angular's breakpoint-driven mobile state becomes the explicit `mobile` prop |
 | `pagination` | Always renders the inline branch; `pagination-option-picker-modal` not ported |
 | `tabs`, `tabs.list` | Overflow "More" dropdown dropped; `dropdownLabel` accepted for API parity but inert |
@@ -317,6 +322,7 @@ back in through `:columns` / `:rows` (see the divergences table above).
 | `<tedi:date-field>`, `<tedi:time-field>` | Input, tags, trigger, and the panel inline under an `open` prop | Popover placement, and the mobile modal branch |
 | `<tedi:number-field>` | Full markup with correct disabled states | Button behaviour — wire it via `increment-attributes` / `decrement-attributes` |
 | `<tedi:file-dropzone>` | Full markup, a native `<input type="file">` that `wire:model` binds, drag-and-drop into that input, and the file list / states rendered from `:files`, `state`, `has-error`, `error` | Angular's client-side file pipeline: `FileService` (append/replace, duplicate renaming), the `ControlValueAccessor`, and the `validators` / `validateIndividually` async validation that wrote `uploadState` |
+| `<tedi:multiselect>` | The full combobox: trigger, selected-value tags, clear button, and an anchored listbox panel with select-all and selectable groups | Per-option custom content, and pointing the panel's width at an arbitrary element (`dropdownWidthRef`) — it is the trigger's width or `auto` |
 | `<tedi:table-of-contents>` | The list, scroll spy, seek-on-click and the mobile trigger | The CDK dialog — the panel opens in place via `--modal-active` instead of over a backdrop |
 
 ### From Angular's `community/` entry point
@@ -327,13 +333,14 @@ global BEM classes — so they port under the same rules; CONVENTIONS.md §12
 covers the three things that differ (group mapping, the `Community/…` Storybook
 prefix, and the one path-only SCSS edit `floating-button` needs).
 
-The five components that exist **only** there are ported:
+The six components that exist **only** there are ported:
 
 | Angular component | Blade tag |
 |---|---|
 | `community/buttons/floating-button` | `<tedi:floating-button>` |
 | `community/form/choicegroup` | `<tedi:choicegroup>` ⁶ |
 | `community/form/file-dropzone` | `<tedi:file-dropzone>` ⁷ |
+| `community/form/select/multiselect` | `<tedi:multiselect>` ⁷ ⁸ |
 | `community/navigation/table-of-contents` | `<tedi:table-of-contents>`, `<tedi:table-of-contents-item>` ⁷ |
 | `community/navigation/vertical-stepper` | `<tedi:vertical-stepper>`, `<tedi:vertical-stepper-item>` |
 
@@ -342,6 +349,12 @@ so it ports as a wrapper element carrying the same four host classes. It is the
 community predecessor of `tedi/`'s `<tedi:radio-card>` / `<tedi:checkbox-card>`,
 which is what TEDI-Ready ships — prefer those in new code.
 ⁷ Documented subsets — see the table above.
+⁸ The one community-only component that is *not* superseded by a `tedi/` one.
+`tedi/`'s `select` is a different component, and this package ports that as a
+native-`<select>` subset, so a tag-rendering multi-select combobox has no other
+home here. It was buildable only once §11's anchoring engine existed — the
+"needs CDK Overlay" rationale in CONVENTIONS.md §7 item 4 is stale for anything
+that just needs a positioned panel.
 
 Everything else in `community/` duplicates a `tedi/` component under an older
 name (`accordion`, `card`, `checkbox`, `radio`, `select`, `modal`, `dropdown`,
@@ -351,19 +364,74 @@ covered by the `tedi/` port. Two community-only components are still **not
 ported**: `input` (superseded by `<tedi:text-field>`) and `table-styles` (a
 styling wrapper superseded by `<tedi:table>`).
 
+### From the React package
+
+`@tedi-design-system/react` is a **third, additive source**. The rule that kept
+it out — CSS Modules hashing its class names — turns out to hold for the built
+dist and not for the source: `skeleton.module.scss` declares a literal
+`.tedi-skeleton`, and the TSX looks it up by that name. So a `*.module.scss`
+vendors into `resources/scss/` exactly like an Angular `*.component.scss`, and
+everything in CONVENTIONS.md §§2–11 applies unchanged. §13 covers the six things
+that differ, of which the important one is the new feasibility gate: because
+these styles were never part of the Angular build, **every `var(--…)` they use
+has to be checked against the installed `@tedi-design-system/core`** before the
+component can be ported at all.
+
+Thirteen components exist only in React, and all thirteen are ported:
+
+| React component | Blade tag |
+|---|---|
+| `loaders/skeleton` | `<tedi:skeleton>`, `<tedi:skeleton-block>` |
+| `content/heading-with-icon` | `<tedi:heading-with-icon>` |
+| `content/section` | `<tedi:section>` |
+| `content/truncate` | `<tedi:truncate>` |
+| `misc/stretch-content` | `<tedi:stretch-content>` |
+| `misc/affix` | `<tedi:affix>` ⁸ |
+| `misc/scroll-visibility` | `<tedi:scroll-visibility>` |
+| `misc/print` | `<tedi:print>` ⁹ |
+| `navigation/hash-trigger` | `<tedi:hash-trigger>` |
+| `layout/top-nav` | `<tedi:top-nav>`, `<tedi:top-nav-item>`, `<tedi:top-nav-submenu>`, `<tedi:top-nav-group>`, `<tedi:top-nav-subitem>`, `<tedi:top-nav-separator>` ⁸ |
+| `form/file-upload` | `<tedi:file-upload>` ⁸ |
+| `form/multi-value-field` | `<tedi:multi-value-field>` ⁸ ¹⁰ |
+| `form/date-time-field` | `<tedi:date-time-field>` ⁸ |
+
+⁸ Documented subsets — see the table below.
+⁹ Emits core's own print utilities (`no-print`, `break-before-*`), which are not
+`tedi-`-prefixed. That is upstream's naming, as with `table-of-contents`.
+¹⁰ React ships no stories for it, so it has no Storybook entry — Blast derives
+components from story directories, and writing stories upstream does not have
+would be inventing documentation.
+
+Three React-only components are deliberately **not** ported. `misc/option-content`
+and `buttons/button-content` are internal primitives with no standalone export —
+`<tedi:dropdown-item-value>` already fills the first one's role. `layout/mobile-nav`
+reuses `tedi-sidenav--mobile` and adds only `tedi-mobile-nav-toggle`, whose job
+`<tedi:sidenav/toggle>` already does. React's `community/` tree is skipped
+wholesale: it is the older generation Angular's `community/` also carries, and
+the map-component suite in it is a domain-specific application, not a design
+system.
+
+| Component | What you get | What's missing |
+|---|---|---|
+| `<tedi:affix>` | Both positions, the full offset scale, and `position: sticky` written inline | `react-sticky-box`'s container measurement, and the `relative` prop that adds the rendered header height to the offset |
+| `<tedi:top-nav>` | The whole desktop bar: items, separator, both submenu fits, the open/close and dismissal behaviour | The mobile drawer. Upstream rebuilds it by walking its children with `Children.map` and re-emitting them as sidenav data — pair `<tedi:sidenav>` with `<tedi:hide-at>` / `<tedi:show-at>` instead |
+| `<tedi:file-upload>` | The full markup, a native `<input type="file">` that `wire:model` binds, and the file list rendered from `:files` | `useFileUpload` — the client-side list, `maxSize`/`accept` validation, `validateIndividually`, and the announcements derived from them. Also the below-`md` clear-button swap |
+| `<tedi:multi-value-field>` | Tags, overflow counter, clear control, icon trigger, and the JSON hidden input | The ResizeObserver that measures how many tags fit — pass `:visible-count` |
+| `<tedi:date-time-field>` | All four panel layouts (range, side-by-side, and both multi-step steps), composed from the existing calendar and time picker | Popup placement and the `datetime-local` native branch — it inherits `<tedi:date-field>`'s subset exactly |
+
 ### Not ported
 
 Within `tedi/`, every component is ported; what remains are the documented
-subsets above plus five places where a now-available primitive has not been
+subsets above plus four places where a now-available primitive has not been
 wired up yet:
 
 | Component | Would gain |
 |---|---|
 | `calendar-header`, `date-picker-header` | Their real month/year pickers, from `<tedi:dropdown>` |
 | `date-field`, `time-field`, `pagination` | Their overlay / modal branches |
-| `header.profile`, `header.role` | The popover branch instead of the always-on modal branch |
 | `tabs.list` | The overflow "More" dropdown behind the inert `dropdownLabel` |
 | `slider` | Its thumb tooltip, once `<tedi:tooltip>` gains `trackPosition` |
+| `toast` | Its `tedi-toast-container`. Angular's `ToastService` spawns toasts into a CDK-positioned container; `<tedi:toast>` renders one toast's markup and leaves placement to the consumer |
 
 ## Storybook
 
@@ -473,6 +541,28 @@ Angular's Hover / Active / Focus matrix rows are reproduced in full.
 from there; a matrix story opts in with a `pseudoStates` arg. See
 `storybook/CONTRACT.md` §5.
 
+### React stories
+
+The React-sourced components' stories are taken from `*.stories.tsx` under the
+same rule, with one mechanical exception: **React's own titles are inconsistently
+cased** (`TEDI-Ready/…`, `Tedi-Ready/…`, `Tedi-ready/…`). Left alone they would be
+three sidebar roots, and on a case-insensitive filesystem the directories collide
+outright, so the case is normalised to `TEDI-Ready` and nothing else is changed.
+Two of them open groups beside `Components/` — `TEDI-Ready/Content/Section` and
+`TEDI-Ready/Layout/TopNav` — which is upstream's structure, kept.
+
+These React stories have no Blade equivalent:
+
+| Story | Why |
+|---|---|
+| `Skeleton`: Accessibility | A React playground that mounts and unmounts skeletons on a timer to demo the live-region announcements |
+| `HashTrigger`: TabsWithHashTrigger | Demonstrates the Tabs component selecting a tab from the URL hash, which this port's tabs do not do — `<tedi:hash-trigger>` emits a `tedi:hash-match` event to wire yourself |
+| `TopNav`: ControlledMobile | Forces the unported mobile drawer |
+| `FileUpload`: MultipleHandled, ControlledClearing | React state demos of `onChange` / `files` round-tripping |
+| `FileUpload`: SizeLimited, ExtensionAndSizeLimit | Exist to show the unported client-side validation rejecting a file |
+| `DateTimeField`: Native | The `datetime-local` branch, chosen at runtime by breakpoint |
+| `DateTimeField`: Size, States, FieldOptions, PerDayTimeSlots, RangePredefinedTimeSlots, Controlled, YearGrid | Runtime selection state — each drives the picker through props this port hands to the consumer instead |
+
 ## Development
 
 ```bash
@@ -483,7 +573,9 @@ composer test     # class-parity test suite
 
 The component SCSS under `resources/scss/components/**` is a **verbatim vendored
 copy** from the Angular repo so it can be re-synced on TEDI releases — don't edit
-it. Divergences belong in the Blade templates.
+it. Divergences belong in the Blade templates. Files ending `.module.scss` are the
+same thing vendored from the React repo, for the components that exist only there
+(CONVENTIONS.md §13); the suffix is kept as the provenance marker.
 
 Porting rules live in [CONVENTIONS.md](CONVENTIONS.md). Read it before adding a
 component.

@@ -86,6 +86,8 @@ class IntegrityTest extends TestCase
             'header.language' => ':languages="[\'et\' => \'Eesti\']"',
             'header.role' => ':representatives="[[\'id\' => 1, \'name\' => \'Firma\']]"'
                 .' :current-representative="[\'id\' => 1, \'name\' => \'Firma\']"',
+            // React-sourced components (CONVENTIONS.md §13).
+            'hash-trigger' => 'id="ptk-1"',
         ];
 
         $failures = [];
@@ -213,6 +215,12 @@ class IntegrityTest extends TestCase
 
         foreach ($this->componentFiles() as $file) {
             $source = file_get_contents($file);
+
+            // Tedi::id('tedi-foo') seeds an element id, not a class — and a
+            // component whose host class is not its own name (multiselect's is
+            // `tedi-select`) would otherwise be reported for a class it never
+            // emits. Drop those arguments before harvesting.
+            $source = preg_replace("/Tedi::id\(\s*'tedi-[a-z0-9_-]+'\s*\)/", '', $source);
 
             // Class-literal tokens written into the template.
             preg_match_all("/'(tedi-[a-z0-9_-]+)'/", $source, $matches);

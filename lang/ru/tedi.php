@@ -224,4 +224,14 @@ return [
     "time-picker.no-slots" => "Нет доступных вариантов",
     "vertical-stepper.completed" => "Завершено",
     "vertical-stepper.error" => "Oшибка",
+
+    // From @tedi-design-system/react
+    // providers/label-provider/labels-map.ts — keys for components that exist
+    // only in the React package (CONVENTIONS.md §13.6). Kept below the
+    // Angular-generated block so regenerating that stays a plain overwrite.
+    "file-upload.failed" => "Загрузка файла не удалась",
+    "multi-value-field.hidden-count" => "Ещё :count",
+    "dateTimeField.timeHeading" => "Время",
+    "dateTimeField.selectTime" => "Выбрать время",
+    "dateTimeField.back" => "Назад",
 ];

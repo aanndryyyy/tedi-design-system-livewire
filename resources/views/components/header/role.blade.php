@@ -2,39 +2,45 @@
     TEDI Header Role.
     Port of angular/tedi/components/layout/header/header-role/header-role.component.{ts,html}
 
-    Substantial, documented divergences (breakpoints not ported — CONVENTIONS.md
-    §7 — and overlay positioning out of scope — §7.3):
-    - Angular renders an entire `*hideAt('lg')` accordion branch (mobile head +
-      collapsible list) and a `*showAt('lg')` branch (label row + popover
-      trigger). Only the `showAt('lg')` (desktop) branch is ported; the mobile
-      accordion is dropped, same collapse-to-base-branch rule used for
-      header-login/-logout/-profile. `tedi-header-role__head--open` was
-      `hasRoleSelection() && mobileOpen()` — `mobileOpen` only exists in the
-      dropped mobile branch, so this modifier has no meaning here and is not
-      emitted.
-    - The desktop trigger normally opens a `<tedi-popover>`; here it toggles a
-      plain `.tedi-header-role__dropdown` div with local Alpine state instead
-      of floating-ui.
-    - `showSearch` renders a plain `<input type="search">`, not `<tedi-search>`
-      (not yet ported). No live filtering is wired up — `filteredRepresentatives()`
-      was reactive Angular state; this port always renders the full
-      `representatives` list. A consumer needing live filtering should drive it
-      with their own Livewire/Alpine state.
-    - `currentRepresentative` was a two-way `model()`; here it's a plain prop
-      used only for the `data-selected` comparison and the trigger label.
-      Representative buttons render inert — wire `wire:click` / `x-on:click`
-      per item yourself (e.g. by mapping `representatives` server-side and
-      building the attribute you need) since there is no generic per-item
-      attribute-forwarding hook here.
-    - `clearSearchOnSelect` is accepted for API parity (CONVENTIONS.md §9 DoD
-      item 2, same default `true`) but is inert, like alert's `closeDelay` —
-      it only cleared the search input on `handleSelectRepresentative()`, and
-      selection itself isn't wired up here (see above).
+    The desktop (`*showAt('lg')`) branch is ported in full, now including the
+    `<tedi-popover>` that holds the role list — `tedi:popover` exists and is
+    positioned by `tediOverlay` (CONVENTIONS.md §11), so the trigger opens a real
+    overlay rather than a hand-rolled toggled `<div>` as in an earlier revision.
+    The popover content carries `tedi-header-role__dropdown` exactly as Angular's
+    `<tedi-popover-content maxWidth="small" class="tedi-header-role__dropdown">`
+    does, and the search field / representative buttons are its direct children
+    so the `&__dropdown > *` separator rules apply unchanged.
+
+    Remaining divergences:
+
+    - The mobile (`*hideAt('lg')`) accordion branch is NOT ported. `tedi:show-at`
+      / `tedi:hide-at` render a WRAPPER `<div>`, and `.tedi-header-role > *`
+      (header-role.component.scss:83) plus `.tedi-header-actions > *` are child
+      selectors — wrapping the two branches would make the wrapper the styled
+      child and break the layout. Angular's `*showAt`/`*hideAt` are structural
+      and add no element, which Blade has no equivalent for. So this port always
+      renders the desktop branch, at every width. `mobileOpen`-derived state
+      (`tedi-header-role__head--open`, `collapseText`) only exists in the dropped
+      branch and is therefore not emitted.
+    - `filteredRepresentatives()` was reactive Angular state that REMOVES
+      non-matching entries from the DOM. Here every representative is rendered
+      server-side and filtered client-side with `x-show`, so a hidden entry still
+      occupies its DOM position — the `&__dropdown > *:not(:first-child)`
+      separator therefore keys off the written order, not the visible one, and a
+      hidden first entry leaves a separator above the first visible one. Filtering
+      is case-insensitive over name + description, matching upstream's `includes`.
+    - `currentRepresentative` was a two-way `model()`. Selection is wired here as
+      local Alpine state: clicking a representative updates `data-selected` and
+      the trigger label and closes the popover (Angular's
+      `handleSelectRepresentative`), but nothing is persisted server-side. Bind
+      `wire:click` per item yourself if the server needs to know — there is no
+      generic per-item attribute-forwarding hook.
+    - `clearSearchOnSelect` IS honoured: on select the query resets when true.
     - `HeaderRoleComponent` optionally injects a parent `HeaderProfileComponent`
       to coordinate which role's accordion is open across instances
-      (`activeRole`) and to close on the profile modal's close. That
-      coordination is pure runtime signal wiring with nothing static to port —
-      there is no `@aware` data to inherit here, so it is dropped entirely.
+      (`activeRole`) and to close on the profile modal's close. That coordination
+      is pure runtime signal wiring belonging to the dropped mobile branch, so it
+      is dropped with it.
 
     `[tedi-header-role-title]` / `[tedi-header-role-content]` /
     `[tedi-header-role-no-results]` become the named slots `title` / `content`
@@ -48,7 +54,7 @@
     'isOrganization' => false,
     'searchLabel' => null,
     'organizationSearchLabel' => null,
-    /** Accepted for API parity — inert; see doc comment above. */
+    /** Clears the search query when a representative is selected. */
     'clearSearchOnSelect' => true,
     /** Defaults to showing the switch when there is more than one representative. */
     'showRoleSwitch' => null,
@@ -64,6 +70,7 @@
     $resolvedSearchLabel = $isOrganization
         ? ($organizationSearchLabel ?? __('tedi::tedi.header.role-search.organization'))
         : ($searchLabel ?? __('tedi::tedi.header.role-search'));
+    $popoverId = \Tedi\Livewire\Tedi::id('tedi-header-role');
 
     $resolveIcon = function ($icon) {
         if (! $icon) {
@@ -72,9 +79,55 @@
 
         return is_array($icon) ? ['name' => $icon['name'], 'size' => $icon['size'] ?? 24] : ['name' => $icon, 'size' => 24];
     };
+
+    // Local selection + search state. `matches()` mirrors upstream's
+    // case-insensitive `includes` over the representative's visible text; the
+    // haystacks are precomputed server-side so `noResults` can ask whether any
+    // entry is still visible without walking the DOM.
+    $haystacks = array_values(array_map(
+        fn ($representative) => mb_strtolower(trim($representative['name'].' '.($representative['description'] ?? ''))),
+        $representatives,
+    ));
+
+    $roleState = <<<'JS'
+        {
+            query: '',
+            haystacks: {$haystacks_js},
+            selectedId: {$selectedId_js},
+            selectedName: {$selectedName_js},
+            clearSearchOnSelect: {$clearSearchOnSelect_js},
+            matches(haystack) {
+                return haystack.includes(this.query.trim().toLowerCase());
+            },
+            representativesVisible() {
+                return this.haystacks.some((haystack) => this.matches(haystack));
+            },
+            select(id, name) {
+                this.selectedId = id;
+                this.selectedName = name;
+
+                if (this.clearSearchOnSelect) {
+                    this.query = '';
+                }
+            },
+        }
+        JS;
 @endphp
 
-<div x-data="{ open: false }" {{ $attributes->class(['tedi-header-role']) }}>
+@php
+    // Interpolated after the heredoc so the JSON literals keep their quoting.
+    $roleState = strtr($roleState, [
+        '{$haystacks_js}' => json_encode($haystacks),
+        '{$selectedId_js}' => json_encode($currentRepresentative['id'] ?? null),
+        '{$selectedName_js}' => json_encode($currentRepresentative['name'] ?? ''),
+        '{$clearSearchOnSelect_js}' => $clearSearchOnSelect ? 'true' : 'false',
+    ]);
+@endphp
+
+<div
+    x-data="{{ $roleState }}"
+    {{ $attributes->class(['tedi-header-role']) }}
+>
     @if ($label || $description || $hasTitleSlot)
         <tedi:text
             as="div"
@@ -95,57 +148,67 @@
     @endif
 
     @if ($hasRoleSelection)
-        <button
-            type="button"
-            class="tedi-link tedi-header__link-button"
-            x-on:click="open = ! open"
-            x-bind:aria-expanded="open.toString()"
-        >
-            <span>{{ $currentRepresentative['name'] }}</span>
-            <tedi:icon name="expand_more" :size="16" class="tedi-header-role__chevron" />
-        </button>
+        <tedi:popover :with-border="true" position="bottom" :prevent-overflow="true" :container-id="$popoverId">
+            <x-slot:trigger>
+                <tedi:popover-trigger tag="button" class="tedi-link tedi-header__link-button">
+                    <span x-text="selectedName">{{ $currentRepresentative['name'] }}</span>
+                    <tedi:icon name="expand_more" :size="16" class="tedi-header-role__chevron" />
+                </tedi:popover-trigger>
+            </x-slot:trigger>
 
-        <div class="tedi-header-role__dropdown" x-show="open" style="display: none;">
-            @if ($showSearch)
-                <input
-                    type="search"
-                    id="{{ \Tedi\Livewire\Tedi::id('tedi-header-role') }}"
-                    aria-label="{{ $resolvedSearchLabel }}"
-                    placeholder="{{ $resolvedSearchLabel }}"
-                />
-            @endif
-
-            @if (isset($content) && $content->isNotEmpty())
-                {{ $content }}
-            @else
-                @if (empty($representatives))
-                    @if (isset($noResults) && $noResults->isNotEmpty())
-                        {{ $noResults }}
-                    @else
-                        <span class="tedi-header-role__no-results">{{ __('tedi::tedi.header.role-no-representatives') }}</span>
-                    @endif
+            <tedi:popover-content max-width="small" class="tedi-header-role__dropdown">
+                @if ($showSearch)
+                    <tedi:search
+                        :input-id="\Tedi\Livewire\Tedi::id('tedi-header-role')"
+                        :label="$resolvedSearchLabel"
+                        :clearable="$searchClearable"
+                        x-model="query"
+                        :clear-attributes="['x-on:click' => 'query = \'\'']"
+                    />
                 @endif
 
-                @foreach ($representatives as $representative)
-                    @php $icon = $resolveIcon($representative['icon'] ?? null); @endphp
-                    <button
-                        type="button"
-                        class="tedi-header-role__representative"
-                        data-selected="{{ ($representative['id'] ?? null) === ($currentRepresentative['id'] ?? null) ? 'true' : 'false' }}"
-                    >
-                        @if ($icon)
-                            <tedi:icon :name="$icon['name']" :size="$icon['size']" />
-                        @endif
-                        <div>
-                            <div>{{ $representative['name'] }}</div>
-                            @if (! empty($representative['description']))
-                                <tedi:text as="div" modifiers="small">{{ $representative['description'] }}</tedi:text>
-                            @endif
+                @if (isset($content) && $content->isNotEmpty())
+                    {{ $content }}
+                @else
+                    @if (isset($noResults) && $noResults->isNotEmpty())
+                        <div x-show="!representativesVisible()" @if (! empty($representatives)) style="display: none;" @endif>
+                            {{ $noResults }}
                         </div>
-                    </button>
-                @endforeach
-            @endif
-        </div>
+                    @else
+                        <span
+                            class="tedi-header-role__no-results"
+                            x-show="!representativesVisible()"
+                            @if (! empty($representatives)) style="display: none;" @endif
+                        >{{ __('tedi::tedi.header.role-no-representatives') }}</span>
+                    @endif
+
+                    @foreach ($representatives as $representative)
+                        @php
+                            $icon = $resolveIcon($representative['icon'] ?? null);
+                            $haystack = mb_strtolower(trim($representative['name'].' '.($representative['description'] ?? '')));
+                        @endphp
+                        <button
+                            type="button"
+                            class="tedi-header-role__representative"
+                            data-selected="{{ ($representative['id'] ?? null) === ($currentRepresentative['id'] ?? null) ? 'true' : 'false' }}"
+                            x-show="matches(@js($haystack))"
+                            x-bind:data-selected="(selectedId === @js($representative['id'] ?? null)).toString()"
+                            x-on:click="select(@js($representative['id'] ?? null), @js($representative['name'])); hide(true)"
+                        >
+                            @if ($icon)
+                                <tedi:icon :name="$icon['name']" :size="$icon['size']" />
+                            @endif
+                            <div>
+                                <div>{{ $representative['name'] }}</div>
+                                @if (! empty($representative['description']))
+                                    <tedi:text as="div" modifiers="small">{{ $representative['description'] }}</tedi:text>
+                                @endif
+                            </div>
+                        </button>
+                    @endforeach
+                @endif
+            </tedi:popover-content>
+        </tedi:popover>
     @else
         <div class="tedi-header-role__value">{{ $currentRepresentative['name'] }}</div>
     @endif

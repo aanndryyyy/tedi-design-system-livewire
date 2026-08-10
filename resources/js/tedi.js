@@ -19,16 +19,22 @@
  *   src/overlay.js            tediOverlay — open/close, dismissal, positioning
  *   src/dropdown.js           tediDropdown — tediOverlay + the ARIA menu keyboard layer
  *   src/filter.js             tediFilter — tediOverlay + the filter's listbox layer
+ *   src/multiselect.js        tediMultiselect — tediOverlay + the multiselect's listbox layer
  *   src/modal.js              tediModal
  *   src/carousel.js           tediCarousel
  *   src/table-of-contents.js  tediTableOfContents
+ *   src/scroll-visibility.js  tediScrollVisibility — hide/reveal past a scroll threshold
+ *   src/hash-trigger.js       tediHashTrigger — scroll to the element the URL hash names
  */
 import { breakpoint } from './src/breakpoint.js';
 import { carousel } from './src/carousel.js';
 import { dropdown } from './src/dropdown.js';
 import { filter } from './src/filter.js';
+import { hashTrigger } from './src/hash-trigger.js';
 import { modal } from './src/modal.js';
+import { multiselect } from './src/multiselect.js';
 import { overlay } from './src/overlay.js';
+import { scrollVisibility } from './src/scroll-visibility.js';
 import { tableOfContents } from './src/table-of-contents.js';
 
 function register(Alpine) {
@@ -37,8 +43,11 @@ function register(Alpine) {
     Alpine.data('tediOverlay', overlay);
     Alpine.data('tediDropdown', dropdown);
     Alpine.data('tediFilter', filter);
+    Alpine.data('tediMultiselect', multiselect);
     Alpine.data('tediModal', modal);
     Alpine.data('tediTableOfContents', tableOfContents);
+    Alpine.data('tediScrollVisibility', scrollVisibility);
+    Alpine.data('tediHashTrigger', hashTrigger);
 }
 
 if (window.Alpine) {

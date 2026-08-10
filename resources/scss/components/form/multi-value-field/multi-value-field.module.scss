@@ -1,0 +1,62 @@
+.tedi-multi-value-field__inner {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  min-height: var(--form-field-height);
+  padding: var(--form-field-padding-y-md-default) var(--form-field-padding-x-md-default);
+  font-family: inherit;
+  font-size: var(--body-regular-size);
+  color: var(--form-input-text-filled);
+  background-color: var(--form-input-background-default);
+  border: 1px solid var(--form-input-border-default);
+  border-radius: var(--form-field-radius);
+}
+
+.tedi-multi-value-field__inner--row {
+  align-items: center;
+}
+
+.tedi-multi-value-field__input {
+  flex: 1;
+  min-width: 80px;
+  outline: none;
+  background: transparent;
+  border: none;
+}
+
+.tedi-multi-value-field__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--layout-grid-gutters-04);
+}
+
+.tedi-multi-value-field__tags--row {
+  flex: 1;
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow: hidden;
+
+  > * {
+    flex-shrink: 0;
+  }
+}
+
+.tedi-multi-value-field__overflow-tag {
+  flex-shrink: 0;
+}
+
+.tedi-multi-value-field__right-area {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.tedi-multi-value-field__icon-wrapper {
+  background: transparent;
+  border: 0;
+
+  &:hover {
+    cursor: pointer;
+  }
+}

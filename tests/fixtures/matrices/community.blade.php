@@ -1,9 +1,9 @@
 <div class="gx-sec">
     <h2>Community components</h2>
-    <p>The five components that exist only in Angular's <code>community/</code> entry point
+    <p>The six components that exist only in Angular's <code>community/</code> entry point
         (CONVENTIONS.md §12): <code>floating-button</code>, <code>choicegroup</code>,
-        <code>file-dropzone</code>, <code>table-of-contents</code> and
-        <code>vertical-stepper</code>. This matrix exists to harvest every interpolated
+        <code>file-dropzone</code>, <code>table-of-contents</code>, <code>vertical-stepper</code>
+        and <code>multiselect</code>. This matrix exists to harvest every interpolated
         modifier class they emit — see <code>tests/IntegrityTest.php</code>.</p>
 
     <h3>Floating button</h3>
@@ -134,6 +134,59 @@
                     </x-slot:sub-items>
                 </tedi:vertical-stepper-item>
             </tedi:vertical-stepper>
+        </div>
+    </div>
+
+    <h3>Multiselect</h3>
+
+    @php
+        $msOptions = [
+            ['value' => 'tln', 'label' => 'Tallinn', 'group' => 'Harju'],
+            ['value' => 'kei', 'label' => 'Keila', 'group' => 'Harju', 'disabled' => true],
+            ['value' => 'trt', 'label' => 'Tartu', 'group' => 'Tartu'],
+        ];
+    @endphp
+
+    <div class="gx-case">
+        <div class="gx-case__label">state × size</div>
+        <div class="gx-case__demo">
+            @foreach (['default', 'valid', 'error'] as $state)
+                @foreach (['default', 'small'] as $size)
+                    <tedi:multiselect
+                        input-id="mx-{{ $state }}-{{ $size }}"
+                        label="Linnad"
+                        placeholder="Vali"
+                        :state="$state"
+                        :size="$size"
+                        :options="$msOptions"
+                        :value="['tln']"
+                    />
+                @endforeach
+            @endforeach
+
+            <tedi:multiselect input-id="mx-disabled" label="Linnad" disabled :options="$msOptions" />
+        </div>
+    </div>
+
+    <div class="gx-case">
+        <div class="gx-case__label">tag container, select-all and selectable groups</div>
+        <div class="gx-case__demo">
+            <tedi:multiselect input-id="mx-single-row" :options="$msOptions" :value="['tln', 'trt']" clearable-tags />
+            <tedi:multiselect input-id="mx-multi-row" :options="$msOptions" :value="['tln', 'trt']" multi-row clearable-tags />
+            <tedi:multiselect input-id="mx-select-all" :options="$msOptions" select-all />
+            <tedi:multiselect input-id="mx-groups" :options="$msOptions" selectable-groups :value="['tln']" />
+        </div>
+    </div>
+
+    <div class="gx-case">
+        <div class="gx-case__label">no options, and the feedback text</div>
+        <div class="gx-case__demo">
+            <tedi:multiselect input-id="mx-empty" :options="[]" />
+            <tedi:multiselect
+                input-id="mx-feedback"
+                :options="$msOptions"
+                :feedback-text="['text' => 'Vali vähemalt üks', 'type' => 'hint']"
+            />
         </div>
     </div>
 </div>

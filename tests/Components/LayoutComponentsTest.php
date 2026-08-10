@@ -292,31 +292,38 @@ class LayoutComponentsTest extends TestCase
 
     public function test_header_profile_default_and_small(): void
     {
+        // Default (non-small) is the popover branch, matching Angular's
+        // `*showAt(showPopover)` half — see profile.blade.php.
         $default = Blade::render('<tedi:header.profile />');
         $this->assertHasClass('tedi-header-profile__icon', $default, on: 'tedi-header-profile__icon');
-        $this->assertHasClass('tedi-header-profile__overlay', $default, on: 'tedi-header-profile__overlay');
-        $this->assertHasClass('tedi-header-profile__modal', $default, on: 'tedi-header-profile__modal');
+        $this->assertHasClass('tedi-header-profile__popover', $default, on: 'tedi-header-profile__popover');
+        $this->assertHasClass('tedi-popover', $default, on: 'tedi-popover');
+        $this->assertStringContainsString('tedi-popover-trigger', $default);
+        $this->assertMissingClass('tedi-header-profile__modal', $default, on: 'tedi-header-profile__popover');
 
         $withLabel = Blade::render('<tedi:header.profile :show-label="true" />');
         $this->assertHasClass('tedi-header-profile__label', $withLabel, on: 'tedi-header-profile__label');
         $this->assertHasClass('tedi-header-profile__icon--small', $withLabel, on: 'tedi-header-profile__icon--small');
 
+        // `size="small"` is the mobile branch: trigger button + overlay + modal.
         $small = Blade::render('<tedi:header.profile size="small" />');
         $this->assertHasClass('tedi-header-mobile-button', $small, on: 'tedi-header-mobile-button');
+        $this->assertHasClass('tedi-header-profile__overlay', $small, on: 'tedi-header-profile__overlay');
+        $this->assertHasClass('tedi-header-profile__modal', $small, on: 'tedi-header-profile__modal');
 
-        $noStyle = Blade::render('<tedi:header.profile :no-style="true" />');
+        $noStyle = Blade::render('<tedi:header.profile size="small" :no-style="true" />');
         $this->assertHasClass('tedi-header-profile__modal--no-style', $noStyle, on: 'tedi-header-profile__modal--no-style');
     }
 
     public function test_header_profile_show_popover_is_accepted_but_inert(): void
     {
-        // API parity only (CONVENTIONS.md §9 DoD item 2) — always renders the
-        // modal branch regardless of the value, see profile.blade.php.
+        // API parity only (CONVENTIONS.md §9 DoD item 2) — the branch is chosen
+        // by `size`, not by the viewport, so `show-popover` changes nothing.
         $default = Blade::render('<tedi:header.profile />');
         $explicit = Blade::render('<tedi:header.profile show-popover="md" />');
 
-        $this->assertHasClass('tedi-header-profile__modal', $default, on: 'tedi-header-profile__modal');
-        $this->assertHasClass('tedi-header-profile__modal', $explicit, on: 'tedi-header-profile__modal');
+        $this->assertHasClass('tedi-header-profile__popover', $default, on: 'tedi-header-profile__popover');
+        $this->assertHasClass('tedi-header-profile__popover', $explicit, on: 'tedi-header-profile__popover');
     }
 
     public function test_header_role_with_and_without_selection(): void

@@ -15,7 +15,7 @@ the component.
 | Repo | Styling | Usable as port source? |
 |---|---|---|
 | `angular` | `ViewEncapsulation.None` on **all 144** components → plain global BEM classes (`tedi-button`, `tedi-button--primary`) | **Yes — this is the source** |
-| `react` | CSS Modules (`*.module.scss`) → hashed class names at build time | No — class names aren't stable |
+| `react` | CSS Modules (`*.module.scss`) → hashed class names **in the built dist**; the SCSS *source* is plain BEM | **Additive source** — see §13 |
 | `core` | Design tokens, base/reset, typography, fonts, icons, utilities. **No component styles.** | Yes — as the token/base layer only |
 
 The port therefore reads markup + class logic from `angular/tedi/components/**`,
@@ -344,7 +344,12 @@ rendering `role=""`.
    `tedi-select--multiselect`). Dropped as a result: `searchable`, `groupBy`,
    virtual scroll, multiselect tag rendering, custom option/value templates,
    `tooltip`, `ellipsis`, and `clearable` (see `select.blade.php`'s header
-   comment for the full rationale per prop).
+   comment for the full rationale per prop). **The "CDK Overlay is out of
+   scope" half of this rationale is stale** — §11 supplies the anchoring, and
+   `community`'s `multiselect` is ported on top of it. What still keeps
+   `tedi/`'s own select native is the rest: virtual scroll, custom
+   option/value templates, and a ControlValueAccessor a native `<select>` +
+   `wire:model` gets for free.
 
 ---
 
@@ -363,8 +368,8 @@ JS, or the parity tests in §10 have nothing to assert against.
 **Where the behaviour lives.** Inline in the template by default. Move it into
 `resources/js/` as an `Alpine.data()` only when it is too large to read inline
 or is shared by several components — currently `tediCarousel`, `tediOverlay`
-and `tediDropdown` (§11), `tediFilter`, `tediModal`, `tediTableOfContents` and
-`tediBreakpoint`.
+and `tediDropdown` (§11), `tediFilter`, `tediMultiselect`, `tediModal`,
+`tediTableOfContents` and `tediBreakpoint`.
 
 **The JS layout.** `resources/js/tedi.js` is the entry point and holds nothing
 but imports and the `Alpine.data()` registrations. Each behaviour is a module
@@ -377,9 +382,12 @@ under `resources/js/src/`, exporting a factory of the same name:
 | `src/overlay.js` | `overlay` | Open/close, dismissal, and the DOM writes that apply `position.js` |
 | `src/dropdown.js` | `dropdown` | Composes `overlay` and adds the ARIA menu keyboard layer (§11) |
 | `src/filter.js` | `filter` | Composes `overlay` and adds the filter's selection state plus its `aria-activedescendant` listbox layer — deliberately **not** `dropdown`, whose roving-tabindex menu is a different ARIA pattern |
+| `src/multiselect.js` | `multiselect` | Composes `overlay` and adds the community multiselect's selection state plus its `aria-activedescendant` listbox layer — the same ARIA pattern as `filter`, not `dropdown`'s menu |
 | `src/modal.js` | `modal` | |
 | `src/carousel.js` | `carousel` | |
 | `src/table-of-contents.js` | `tableOfContents` | |
+| `src/scroll-visibility.js` | `scrollVisibility` | Scroll-threshold visibility for `scroll-visibility`; owns a `scroll` listener, so it is a module rather than inline |
+| `src/hash-trigger.js` | `hashTrigger` | `hashchange` + `scrollIntoView` for `hash-trigger` |
 
 A new behaviour is a new file in `src/` plus two lines in `tedi.js` (an import
 and an `Alpine.data()` call). Do not add a second `Alpine.data()` call site.
@@ -631,3 +639,119 @@ unprefixed component's classes are covered by its parity test alone.
 Upstream's own `CLAUDE.md` warns that `community/` is "not a reference for TEDI
 patterns" — that is a warning about *their* code style, not about the rendered
 markup. The port still mirrors the markup and class list exactly, per §4.
+
+---
+
+## 13. The `react/` namespace
+
+§1's table used to rule the React package out as a port source, because CSS
+Modules hash its class names. That reasoning holds for the **built dist** and
+only for it. In the source it does not:
+
+```scss
+/* react/src/tedi/components/loaders/skeleton/skeleton.module.scss */
+.tedi-skeleton { … }
+```
+
+```tsx
+const SkeletonBEM = cn(styles['tedi-skeleton'], className);
+```
+
+The selectors are written as ordinary BEM, and the TSX looks them up by their
+literal name. Hashing happens in the Vite build, downstream of both. A
+`*.module.scss` therefore vendors into `resources/scss/` exactly like an Angular
+`*.component.scss`, and everything in §§2–11 applies to a React port unchanged.
+
+React is a **third, additive source**, after `tedi/` and `community/`. Use it for
+components that exist *only* there — where a component exists in Angular too,
+Angular remains the source, because that is what the two other trees were ported
+from and re-syncing against two upstreams is how a port drifts.
+
+Six things differ, and only these six.
+
+### 13.1 The token check is the real feasibility gate
+
+Because these styles were never part of the Angular build this package compiles,
+nothing guarantees the installed `@tedi-design-system/core` defines the custom
+properties they reference. **Before porting, grep core for every `var(--…)` the
+stylesheet uses.** `skeleton.module.scss` wants `--loader-skeleton-radius` and
+`--loader-skeleton-color`; both are in core 6.5, so it ports. A component whose
+tokens are missing does not — and it fails silently, as an unstyled element
+rather than a build error.
+
+This replaces "are the class names stable" as the question to ask first.
+
+### 13.2 Vendored filenames keep their `.module` suffix
+
+`skeleton.module.scss` is vendored as `skeleton.module.scss`, not
+`skeleton.component.scss`. §2's "never edit the copied SCSS" exists so a re-sync
+is a plain file copy and a plain diff; renaming the file on the way in defeats
+that for no gain. The suffix also reads as the provenance marker it is — a
+`.module.scss` under `resources/scss/components/` came from React.
+
+`@use` statements in `resources/scss/index.scss` therefore name the file in full.
+
+### 13.3 `:global` blocks and React-only class names port verbatim, and are dead
+
+React stylesheets occasionally reach outside their module with CSS Modules'
+`:global`, and what they reach for is React's *own* class vocabulary — which is
+not always Angular's:
+
+```scss
+/* date-time-field.module.scss */
+:global .tedi-btn--link .tedi-btn__icon--left { … }
+```
+
+React's button is `tedi-btn`; Angular's — and therefore this package's — is
+`tedi-button`. Sass compiles the block happily, and the resulting selector
+matches nothing.
+
+**Vendor it anyway, unedited, and note it in a comment at the top of the vendored
+file.** Rewriting the class name would be inventing a rule TEDI does not ship,
+and dropping the block would make the next re-sync diff lie. Where the dead rule
+carried something the Blade component actually needs, that belongs in the
+component, documented — not in the stylesheet.
+
+### 13.4 Storybook titles: verbatim, except for case
+
+Take the React story's `title` as-is, the way §12.2 does for `community/`. One
+mechanical exception: React's own titles are inconsistently cased —
+`TEDI-Ready/…`, `Tedi-Ready/…` and `Tedi-ready/…` all occur. Left alone they
+would be three sidebar roots, and on a case-insensitive filesystem (macOS
+default) the directories collide outright. **Normalise the case to `TEDI-Ready`,
+change nothing else.**
+
+Do not "fix" the rest. `TEDI-Ready/Content/Section` has no `Components/` segment
+and `TEDI-Ready/Layout/TopNav` opens a new group beside it; both are upstream's
+structure, and mirroring it is a smaller divergence than inventing a tidier one.
+
+A React component with no `*.stories.tsx` (`multi-value-field`) gets no story
+directory, and so — because Blast derives everything from directories — does not
+appear in Storybook at all. That is the honest outcome; do not write stories
+upstream does not have.
+
+### 13.5 React's runtime introspection is wider than Angular's
+
+§5 already says to translate DOM introspection into explicit props. React needs
+it more often, because `Children.map` + `cloneElement` is idiomatic there and has
+no server-side equivalent at all:
+
+| React pattern | Blade |
+|---|---|
+| `cloneElement(child, { className })` — `print`, `scroll-visibility`, `hash-trigger` | a **wrapper element** carrying the classes, as `choicegroup` already does for an Angular directive |
+| `Children.map` over typed children — `top-nav` reading its items to build the mobile nav | an explicit prop or slot; where the derived structure cannot be reconstructed, a documented gap |
+| `ResizeObserver` / `useElementSize` measurement — `multi-value-field`'s `+N`, `affix`'s header offset | an explicit prop (`:visible-count`), documented as consumer-supplied |
+
+### 13.6 Labels that Angular has no key for
+
+`lang/*/tedi.php` is generated from Angular's `services/translation/translations.ts`.
+React's `providers/label-provider/labels-map.ts` is a superset: it carries keys
+for React-only components, in all three languages.
+
+Add the missing keys **under the marked React block at the foot of each language
+file**, copied from `labels-map.ts` — all three of `en`, `et` and `ru`, never a
+subset and never a translation of your own. A label-map entry that is a function
+of a count (`(count) => \`Veel ${count}\``) becomes a `:count` placeholder.
+
+Keep the Angular-generated block above untouched, so regenerating it stays a
+mechanical overwrite.

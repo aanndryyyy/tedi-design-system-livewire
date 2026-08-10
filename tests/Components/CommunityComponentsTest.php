@@ -451,4 +451,211 @@ class CommunityComponentsTest extends TestCase
         $this->assertStringContainsString('Tähtaeg', $html);
         $this->assertHasClass('tedi-vertical-stepper-item__description', $html, 'tedi-vertical-stepper-item__description');
     }
+
+    // -- multiselect ----------------------------------------------------
+
+    /** The options used by most of the multiselect cases below. */
+    private const MS_OPTIONS = "[
+        ['value' => 'tln', 'label' => 'Tallinn', 'group' => 'Harju'],
+        ['value' => 'kei', 'label' => 'Keila', 'group' => 'Harju', 'disabled' => true],
+        ['value' => 'trt', 'label' => 'Tartu', 'group' => 'Tartu'],
+    ]";
+
+    private function multiselect(string $attributes = '', string $options = self::MS_OPTIONS): string
+    {
+        return Blade::render(
+            '<tedi:multiselect input-id="ms" :options="'.$options.'" '.$attributes.' />'
+        );
+    }
+
+    public function test_multiselect_host_classes(): void
+    {
+        $html = $this->multiselect();
+
+        $this->assertHasClass('tedi-select', $html, 'tedi-select');
+        $this->assertHasClass('tedi-select--multiselect', $html, 'tedi-select');
+    }
+
+    public function test_multiselect_trigger_is_a_combobox_carrying_the_input_classes(): void
+    {
+        $html = $this->multiselect();
+
+        $this->assertStringContainsString('role="combobox"', $html);
+        $this->assertStringContainsString('aria-haspopup="listbox"', $html);
+        $this->assertStringContainsString('aria-controls="ms-listbox"', $html);
+        $this->assertHasClass('tedi-select__trigger', $html, 'tedi-select__trigger');
+        $this->assertHasClass('tedi-input', $html, 'tedi-select__trigger');
+    }
+
+    public function test_multiselect_state_and_size_modifiers(): void
+    {
+        $error = $this->multiselect('state="error"');
+        $this->assertHasClass('tedi-input--error', $error, 'tedi-select__trigger');
+
+        $valid = $this->multiselect('state="valid"');
+        $this->assertHasClass('tedi-input--valid', $valid, 'tedi-select__trigger');
+
+        $small = $this->multiselect('size="small"');
+        $this->assertHasClass('tedi-input--small', $small, 'tedi-select__trigger');
+
+        $disabled = $this->multiselect('disabled');
+        $this->assertHasClass('tedi-input--disabled', $disabled, 'tedi-select__trigger');
+
+        $default = $this->multiselect();
+        $this->assertMissingClass('tedi-input--error', $default, 'tedi-select__trigger');
+        $this->assertMissingClass('tedi-input--valid', $default, 'tedi-select__trigger');
+        $this->assertMissingClass('tedi-input--small', $default, 'tedi-select__trigger');
+        $this->assertMissingClass('tedi-input--disabled', $default, 'tedi-select__trigger');
+    }
+
+    public function test_multiselect_tag_container_is_single_row_unless_multi_row(): void
+    {
+        $default = $this->multiselect();
+        $this->assertHasClass(
+            'tedi-select__multiselect-container--single-row', $default, 'tedi-select__multiselect-container'
+        );
+
+        $multiRow = $this->multiselect('multi-row');
+        $this->assertMissingClass(
+            'tedi-select__multiselect-container--single-row', $multiRow, 'tedi-select__multiselect-container'
+        );
+    }
+
+    /**
+     * CONVENTIONS.md §8: every tag is in the static render with its real class
+     * list, hidden with an inline style rather than conjured by Alpine.
+     */
+    public function test_multiselect_renders_one_tag_per_option_and_hides_the_unselected_ones(): void
+    {
+        $html = $this->multiselect(':value="[\'tln\']"');
+
+        $this->assertSame(3, substr_count($html, 'tedi-tag__content'));
+        $this->assertStringContainsString('x-show="isOptionSelected(&quot;tln&quot;)"', $html);
+        // Two hidden tags plus the placeholder, which the selection hides.
+        $this->assertSame(3, substr_count($html, 'style="display: none;"'));
+    }
+
+    public function test_multiselect_tags_are_closable_only_when_asked(): void
+    {
+        $this->assertMissingClass('tedi-tag--closable', $this->multiselect(), 'tedi-tag');
+        $this->assertHasClass('tedi-tag--closable', $this->multiselect('clearable-tags'), 'tedi-tag');
+    }
+
+    public function test_multiselect_clear_button_carries_the_closing_button_classes(): void
+    {
+        $html = $this->multiselect();
+
+        $this->assertHasClass('tedi-select__clear', $html, 'tedi-select__clear');
+        $this->assertHasClass('tedi-closing-button', $html, 'tedi-select__clear');
+        $this->assertHasClass('tedi-closing-button--small', $html, 'tedi-select__clear');
+
+        $this->assertStringNotContainsString('tedi-select__clear', $this->multiselect(':clearable="false"'));
+    }
+
+    public function test_multiselect_clear_attributes_reach_the_clear_button(): void
+    {
+        $html = $this->multiselect(':clear-attributes="[\'wire:click\' => \'reset\']"');
+
+        $this->assertStringContainsString('wire:click="reset"', $html);
+    }
+
+    public function test_multiselect_panel_is_a_listbox_in_the_dom_while_closed(): void
+    {
+        $html = $this->multiselect();
+
+        $this->assertStringContainsString('id="ms-listbox"', $html);
+        $this->assertStringContainsString('role="listbox"', $html);
+        $this->assertStringContainsString('aria-multiselectable="true"', $html);
+        $this->assertHasClass('tedi-select__options', $html, 'tedi-select__options');
+        $this->assertHasClass('tedi-select__dropdown', $html, 'tedi-card');
+    }
+
+    public function test_multiselect_options_are_dropdown_item_rows_with_a_checkbox(): void
+    {
+        $html = $this->multiselect();
+
+        $this->assertSame(3, substr_count($html, 'class="tedi-dropdown-item-value__checkbox"'));
+        $this->assertStringContainsString('<li', $html);
+        $this->assertStringContainsString('tedi-dropdown-item', $html);
+        $this->assertHasClass('tedi-dropdown-item-value--checkbox', $html, 'tedi-dropdown-item-value');
+    }
+
+    public function test_multiselect_disabled_option_is_marked_on_the_row(): void
+    {
+        $html = $this->multiselect();
+
+        $this->assertStringContainsString('aria-disabled="true"', $html);
+    }
+
+    /** Row ids are what aria-activedescendant points at, so they must be stable. */
+    public function test_multiselect_row_ids_number_the_listbox_rows_only(): void
+    {
+        // Unselectable group headings are role="presentation" and get no id,
+        // exactly as upstream leaves them out of cdkListbox.
+        $plain = $this->multiselect();
+        $this->assertStringContainsString('id="ms-row-0"', $plain);
+        $this->assertStringContainsString('role="presentation"', $plain);
+
+        // With selectable groups every heading becomes a row and shifts the rest.
+        $selectable = $this->multiselect('selectable-groups');
+        $this->assertStringContainsString('id="ms-row-3"', $selectable);
+    }
+
+    public function test_multiselect_select_all_row_only_with_the_prop(): void
+    {
+        $this->assertStringNotContainsString('Select all', $this->multiselect());
+        $this->assertStringContainsString('Select all', $this->multiselect('select-all'));
+
+        // No options, no select-all row — upstream guards on options().length.
+        $this->assertStringNotContainsString('Select all', $this->multiselect('select-all', '[]'));
+    }
+
+    public function test_multiselect_group_headings_become_selectable_rows(): void
+    {
+        $plain = $this->multiselect();
+        $this->assertHasClass('tedi-select__group-name', $plain, 'tedi-select__group-name');
+        $this->assertMissingClass('tedi-select__group-name--selectable', $plain, 'tedi-select__group-name');
+
+        $selectable = $this->multiselect('selectable-groups');
+        $this->assertHasClass('tedi-select__group-name--selectable', $selectable, 'tedi-select__group-name');
+    }
+
+    /** isGroupSelected() ignores disabled members — Keila is disabled. */
+    public function test_multiselect_group_counts_as_selected_from_its_enabled_options_only(): void
+    {
+        $html = $this->multiselect('selectable-groups :value="[\'tln\']"');
+
+        $this->assertMatchesRegularExpression(
+            '/tedi-select__group-name--selectable"\s+role="option"\s+aria-selected="true"/', $html
+        );
+    }
+
+    public function test_multiselect_empty_options_render_the_no_options_row(): void
+    {
+        $html = $this->multiselect('', '[]');
+
+        $this->assertHasClass('tedi-select__no-options', $html, 'tedi-select__no-options');
+        $this->assertStringContainsString('No options', $html);
+    }
+
+    public function test_multiselect_binds_through_x_modelable(): void
+    {
+        $html = $this->multiselect();
+
+        $this->assertStringContainsString('x-modelable="model"', $html);
+        $this->assertStringContainsString('tediMultiselect(', $html);
+    }
+
+    /**
+     * Dropped classes, per CONVENTIONS.md §4 — see multiselect.blade.php's
+     * header for each one's rationale.
+     */
+    public function test_multiselect_drops_the_unstyled_upstream_classes(): void
+    {
+        $html = $this->multiselect('select-all selectable-groups');
+
+        $this->assertStringNotContainsString('tedi-select__multiselect-checkbox', $html);
+        $this->assertStringNotContainsString('tedi-select__group-checkbox', $html);
+        $this->assertStringNotContainsString('tedi-card--spacing-none', $html);
+    }
 }

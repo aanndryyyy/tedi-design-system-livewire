@@ -224,4 +224,14 @@ return [
     "time-picker.no-slots" => "No times available",
     "vertical-stepper.completed" => "Completed",
     "vertical-stepper.error" => "Error",
+
+    // From @tedi-design-system/react
+    // providers/label-provider/labels-map.ts — keys for components that exist
+    // only in the React package (CONVENTIONS.md §13.6). Kept below the
+    // Angular-generated block so regenerating that stays a plain overwrite.
+    "file-upload.failed" => "File upload failed",
+    "multi-value-field.hidden-count" => ":count more",
+    "dateTimeField.timeHeading" => "Time",
+    "dateTimeField.selectTime" => "Select time",
+    "dateTimeField.back" => "Back",
 ];

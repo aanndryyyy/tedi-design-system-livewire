@@ -224,4 +224,14 @@ return [
     "time-picker.no-slots" => "Aegu ei ole määratud",
     "vertical-stepper.completed" => "Lõpetatud",
     "vertical-stepper.error" => "Puudulik",
+
+    // From @tedi-design-system/react
+    // providers/label-provider/labels-map.ts — keys for components that exist
+    // only in the React package (CONVENTIONS.md §13.6). Kept below the
+    // Angular-generated block so regenerating that stays a plain overwrite.
+    "file-upload.failed" => "Faili üleslaadimine ebaõnnestus",
+    "multi-value-field.hidden-count" => "Veel :count",
+    "dateTimeField.timeHeading" => "Kellaaeg",
+    "dateTimeField.selectTime" => "Vali kellaaeg",
+    "dateTimeField.back" => "Tagasi",
 ];

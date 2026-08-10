@@ -658,4 +658,76 @@ class AwareTest extends TestCase
         $this->assertMissingClass('tedi-filter--disabled', $html, 'tedi-filter');
         $this->assertStringContainsString('aria-pressed="false"', $html);
     }
+
+    // -- top-nav -> top-nav-item @aware(['submenuFit', 'panelId']) ----------
+    //    top-nav -> top-nav-submenu @aware(['panelId', 'maxWidth'])
+    //    (CONVENTIONS.md §13 — the React-sourced components.)
+
+    public function test_top_nav_submenu_fit_and_panel_id_reach_the_item(): void
+    {
+        $html = Blade::render(
+            '<tedi:top-nav submenu-fit="content" panel-id="peamenüü">'
+            .'<tedi:top-nav-item key="a">A<x-slot:submenu>p</x-slot:submenu> </tedi:top-nav-item>'
+            .'</tedi:top-nav>'
+        );
+
+        // submenuFit=content is what makes the item render its own panel…
+        $this->assertHasClass('tedi-top-nav__item--has-inline-submenu', $html, 'tedi-top-nav__item');
+        // …and panelId is what names it.
+        $this->assertStringContainsString('id="peamenüü-a"', $html);
+        $this->assertStringContainsString('aria-controls="peamenüü-a"', $html);
+    }
+
+    public function test_top_nav_item_fallbacks_match_the_nav_defaults_when_omitted(): void
+    {
+        $item = '<tedi:top-nav-item key="a">A<x-slot:submenu>p</x-slot:submenu> </tedi:top-nav-item>';
+
+        $omitted = Blade::render('<tedi:top-nav>'.$item.'</tedi:top-nav>');
+        $explicit = Blade::render(
+            '<tedi:top-nav submenu-fit="full" panel-id="top-nav-submenu">'.$item.'</tedi:top-nav>'
+        );
+
+        $this->assertSame($explicit, $omitted,
+            'Omitting submenu-fit/panel-id must render identically to passing their defaults.');
+        $this->assertMissingClass('tedi-top-nav__item--has-inline-submenu', $omitted, 'tedi-top-nav__item');
+    }
+
+    public function test_top_nav_panel_id_and_max_width_reach_the_submenu(): void
+    {
+        $html = Blade::render(
+            '<tedi:top-nav panel-id="peamenüü" max-width="lg">'
+            .'<x-slot:submenu><tedi:top-nav-submenu for="a">p</tedi:top-nav-submenu></x-slot:submenu> '
+            .'</tedi:top-nav>'
+        );
+
+        $this->assertStringContainsString('id="peamenüü-a"', $html);
+        // 62rem is the lg breakpoint's min-width, and it must reach the panel's
+        // inner as well as the item list.
+        $this->assertSame(2, substr_count($html, 'max-width: 62rem'));
+    }
+
+    public function test_top_nav_submenu_fallbacks_match_the_nav_defaults_when_omitted(): void
+    {
+        $panel = '<x-slot:submenu><tedi:top-nav-submenu for="a">p</tedi:top-nav-submenu></x-slot:submenu> ';
+
+        $omitted = Blade::render('<tedi:top-nav>'.$panel.'</tedi:top-nav>');
+        $explicit = Blade::render(
+            '<tedi:top-nav panel-id="top-nav-submenu" max-width="xxl">'.$panel.'</tedi:top-nav>'
+        );
+
+        $this->assertSame($explicit, $omitted,
+            'Omitting panel-id/max-width must render identically to passing their defaults.');
+    }
+
+    public function test_top_nav_children_render_standalone_without_a_nav(): void
+    {
+        $item = Blade::render('<tedi:top-nav-item key="a">A</tedi:top-nav-item>');
+        $this->assertHasClass('tedi-top-nav__item', $item, 'tedi-top-nav__item');
+        $this->assertStringContainsString('aria-controls="top-nav-submenu-a"', $item);
+
+        $panel = Blade::render('<tedi:top-nav-submenu for="a">p</tedi:top-nav-submenu>');
+        $this->assertHasClass('tedi-top-nav__submenu', $panel, 'tedi-top-nav__submenu');
+        $this->assertStringContainsString('id="top-nav-submenu-a"', $panel);
+        $this->assertStringContainsString('max-width: 87.5rem', $panel);
+    }
 }

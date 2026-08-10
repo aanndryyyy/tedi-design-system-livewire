@@ -6,6 +6,11 @@
 //          @tedi-design-system/angular, whose components all declare
 //          ViewEncapsulation.None — so the emitted CSS is already global,
 //          BEM-classed and framework-agnostic.
+// Layer 3: `*.module.scss` sheets vendored from @tedi-design-system/react, for
+//          the components that exist only there. CSS Modules hashes class names
+//          in React's own Vite build, not in the source — these selectors are
+//          plain BEM, so they compile here exactly like layer 2. The `.module`
+//          suffix is kept as the provenance marker. See CONVENTIONS.md §13.
 
 @use '@tedi-design-system/core/index';
 @use 'vertical-spacing';
@@ -41,7 +46,9 @@
 @use 'components/content/carousel/carousel-navigation/carousel-navigation.component';
 @use 'components/content/carousel/carousel-slide/carousel-slide.component';
 @use 'components/content/carousel/carousel.component';
+@use 'components/content/heading-with-icon/heading-with-icon.module';
 @use 'components/content/list/list.component';
+@use 'components/content/section/section.module';
 @use 'components/content/table/table-columns-menu/table-columns-menu.component';
 @use 'components/content/table/table-header-button/table-header-button.component';
 @use 'components/content/table/table-toolbar/table-toolbar.component';
@@ -57,15 +64,18 @@
 @use 'components/form/date-field/date-field.component';
 @use 'components/form/date-field/date-input/date-input.component';
 @use 'components/form/date-picker/date-picker.component';
+@use 'components/form/date-time-field/date-time-field.module';
 @use 'components/form/feedback-text/feedback-text.component';
 // Both sheets, in the order the Angular component lists them in `styleUrls`.
 // They share a Sass module namespace, so one is aliased.
 @use 'components/form/file-dropzone/file-dropzone.react' as file-dropzone-react;
 @use 'components/form/file-dropzone/file-dropzone.component';
+@use 'components/form/file-upload/file-upload.module';
 @use 'components/form/form-field/form-field.component';
 @use 'components/form/input-group/input-group.component';
 @use 'components/form/label-row/label-row.component';
 @use 'components/form/label/label.component';
+@use 'components/form/multi-value-field/multi-value-field.module';
 @use 'components/form/number-field/number-field.component';
 @use 'components/form/radio-card-group/radio-card-group.component';
 @use 'components/form/radio-card/radio-card.component';
@@ -80,6 +90,7 @@
 @use 'components/form/time-field/time-picker-modal.component';
 @use 'components/form/time-picker/time-picker.component';
 @use 'components/form/toggle/toggle.component';
+@use 'components/helpers/affix/affix.module';
 @use 'components/helpers/attachment/attachment-actions.component';
 @use 'components/helpers/attachment/attachment.component';
 @use 'components/helpers/ellipsis/ellipsis.component';
@@ -87,7 +98,9 @@
 @use 'components/helpers/grid/col/col.component';
 @use 'components/helpers/grid/row/row.component';
 @use 'components/helpers/scroll-fade/scroll-fade.component';
+@use 'components/helpers/scroll-visibility/scroll-visibility.module';
 @use 'components/helpers/separator/separator.component';
+@use 'components/helpers/stretch-content/stretch-content.module';
 @use 'components/helpers/timeline/timeline-description/timeline-description.component';
 @use 'components/helpers/timeline/timeline-item/timeline-item.component';
 @use 'components/helpers/timeline/timeline-title/timeline-title.component';
@@ -118,7 +131,10 @@
 @use 'components/layout/sidenav/sidenav-overlay/sidenav-overlay.component';
 @use 'components/layout/sidenav/sidenav-toggle/sidenav-toggle.component';
 @use 'components/layout/sidenav/sidenav.component';
+@use 'components/layout/top-nav/top-nav.module';
 @use 'components/loader/progress-bar/progress-bar.component';
+@use 'components/loader/skeleton/skeleton-block/skeleton-block.module';
+@use 'components/loader/skeleton/skeleton.module';
 @use 'components/loader/spinner/spinner.component';
 @use 'components/navigation/breadcrumbs/breadcrumbs.component';
 @use 'components/navigation/horizontal-stepper/horizontal-stepper-item/horizontal-stepper-item.component';

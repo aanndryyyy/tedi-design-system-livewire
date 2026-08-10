@@ -1,0 +1,93 @@
+// Shared icon-button states for picker-style form fields
+// (`DateField`, `TimeField`, `DateTimeField`).
+//
+// All three render a TextField with a trailing icon button that opens a
+// popover (calendar / time wheel / both). The icon button uses identical
+// hover, open (`aria-expanded='true'`) and disabled treatments — this
+// partial centralises the rules so cross-cutting tweaks (token swaps,
+// accessibility fixes, design-review touch-ups) only need to land once.
+//
+// **The textfield's own `:active` pseudo (mousedown press) is handled by
+// `textfield.module.scss` and inherits through to all three fields — it
+// does not belong here.**
+//
+// Usage (inside each field's `*__textfield` block):
+//
+// ```scss
+// @use '../field-icon-button' as field-icon-button;
+//
+// .tedi-foo-field__textfield {
+//   @include field-icon-button.states;
+//
+//   &--disabled {
+//     @include field-icon-button.disabled;
+//   }
+//
+//   &.tedi-foo-field__icon--disabled {
+//     @include field-icon-button.icon-only-disabled;
+//   }
+// }
+// ```
+//
+// The selector `button:not([data-name='closing-button']):last-child`
+// targets the picker-trigger button while explicitly skipping the clear
+// ("closing") button — that one has its own hover treatment from
+// `<ClosingButton>` and shouldn't pick up the picker icon's hover bg.
+
+@mixin states {
+  button:not([data-name='closing-button']):last-child {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--button-xs-icon-size);
+    min-height: var(--form-field-button-height-sm);
+    max-height: var(--form-field-button-height-sm);
+    border-radius: var(--button-radius-sm);
+
+    > span {
+      color: var(--button-main-neutral-text-default);
+    }
+
+    &:hover {
+      background-color: var(--form-datepicker-date-hover);
+    }
+  }
+
+  // Open-popover state: the textfield root carries `aria-expanded='true'`
+  // while the picker is mounted. Icon button takes the active background
+  // tint and active text colour to mirror the open-dropdown affordance.
+  &[aria-expanded='true'] button:not([data-name='closing-button']):last-child {
+    background-color: var(--form-datepicker-date-hover);
+
+    > span {
+      color: var(--button-main-neutral-text-active);
+    }
+  }
+}
+
+// Fully-disabled field — desaturates the icon and suppresses the hover bg.
+// Applied alongside the field's own `*--disabled` modifier rule.
+@mixin disabled {
+  button:not([data-name='closing-button']):last-child {
+    > span {
+      color: var(--button-main-disabled-general-text);
+    }
+
+    &:hover {
+      background: none;
+    }
+  }
+}
+
+// Icon-only disabled — the input itself stays editable but the picker is
+// unavailable (e.g. `readOnly` or `showPicker={false}`). Suppresses the
+// hover/focus background so the icon doesn't pretend to be a trigger.
+@mixin icon-only-disabled {
+  button:not([data-name='closing-button']):last-child {
+    &:hover,
+    &:focus {
+      cursor: auto;
+      background: none;
+    }
+  }
+}

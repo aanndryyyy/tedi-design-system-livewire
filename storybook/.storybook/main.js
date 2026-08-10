@@ -55,6 +55,10 @@ process.env.STORYBOOK_STORY_ORDER = JSON.stringify(
 
 const config = {
   stories: ['../vendor/area17/blast/stories/**/*.stories.json'],
+  // No `staticDirs` here on purpose: Blast launches Storybook with
+  // `-s $STORYBOOK_STATIC_PATH` (= this app's `public/`), and the CLI flag wins
+  // over config, so story fixtures such as the header logos are already served
+  // from `storybook/public/`. Setting it here would be silently ignored.
   addons: ['../vendor/area17/blast/node_modules/@storybook/addon-links/dist',
 '../vendor/area17/blast/node_modules/@storybook/addon-essentials/dist/actions',
 '../vendor/area17/blast/node_modules/@storybook/addon-essentials/dist/backgrounds',

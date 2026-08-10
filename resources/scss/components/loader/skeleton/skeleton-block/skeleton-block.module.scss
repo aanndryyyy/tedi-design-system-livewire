@@ -1,0 +1,35 @@
+$headings: (h1, h2, h3, h4, h5, h6);
+
+.tedi-skeleton-block {
+  display: block;
+  width: 100%;
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--loader-skeleton-color) 70%, var(--tedi-neutral-100)) 8%,
+    color-mix(in srgb, var(--loader-skeleton-color) 100%, var(--tedi-neutral-100)) 18%,
+    color-mix(in srgb, var(--loader-skeleton-color) 70%, var(--tedi-neutral-100)) 33%
+  );
+  background-size: 1000px 100px;
+  border-radius: var(--loader-skeleton-radius);
+  animation: wave-lines 2s infinite ease-in-out;
+
+  @each $heading in $headings {
+    &.tedi-skeleton-block--#{$heading} {
+      height: var(--heading-#{$heading}-line-height);
+    }
+  }
+
+  &.tedi-skeleton-block--p {
+    height: var(--body-regular-line-height);
+  }
+}
+
+@keyframes wave-lines {
+  0% {
+    background-position: -400px 0;
+  }
+
+  100% {
+    background-position: 600px 0;
+  }
+}

@@ -31,15 +31,27 @@ import theme from './theme';
 // Nothing in the addon is configurable here, so re-split the sheet instead:
 // replace the single <link> with a run of <style> chunks, each under the cap,
 // inserted at the link's position so the cascade is unchanged. Every chunk is
-// then a sheet the addon processes end to end. Round-tripping through
-// `cssText` is lossless for anything the browser parsed in the first place,
-// and tedi.css has no @import/@charset to reposition.
+// then a sheet the addon processes end to end.
 //
-// One thing does not survive the move: a relative url() resolves against the
-// stylesheet's own URL in a <link> and against the *document* URL in a
-// <style>, and Chrome keeps those relative when it serialises cssText. So
-// tedi.css's `url("./fonts/material-symbols-outlined.woff2")` would start
-// resolving to /fonts/… and every icon would render as its ligature name.
+// The chunks are cut out of the sheet's own SOURCE TEXT, not out of the CSSOM.
+// An earlier version joined `rule.cssText`, on the assumption that the
+// round-trip is lossless for anything the browser parsed. It is not: a
+// shorthand whose value contains `var()` is stored as a pending-substitution
+// value, and Chrome serialises it as EMPTY LONGHANDS. `.tedi-skeleton-block`'s
+//
+//   background: linear-gradient(to right, color-mix(in srgb, var(--loader-skeleton-color) …) …);
+//
+// came back out as `background-image: ; background-position-x: ; …`, so the
+// skeleton lost its shimmer in Storybook while being perfectly correct in
+// dist/tedi.css. The failure is silent — the rule is still there, still has
+// its other declarations, and only the shorthand is gone. Slicing the raw text
+// on top-level brace boundaries cannot lose anything, because nothing is
+// reparsed on the way through.
+//
+// One thing still does not survive the move: a relative url() resolves against
+// the stylesheet's own URL in a <link> and against the *document* URL in a
+// <style>. So tedi.css's `url("./fonts/material-symbols-outlined.woff2")` would
+// start resolving to /fonts/… and every icon would render as its ligature name.
 // Absolutise them against the link's href on the way through.
 const MAX_RULES_PER_SHEET = 800;
 
@@ -54,26 +66,84 @@ const absolutiseUrls = (cssText, base) =>
     (match, quote, url) => `url(${quote}${new URL(url, base).href}${quote})`
   );
 
-const splitLargeStyleSheet = (link) => {
-  let rules;
+// Cut `source` into chunks of at most `max` TOP-LEVEL rules, tracking brace
+// depth so a nested block (@media, @supports, @keyframes) stays whole, and
+// skipping over strings and comments so a brace inside one cannot throw the
+// depth off. (An unquoted url() cannot contain a brace, so it needs no case of
+// its own.) Returns the chunks as substrings of the original text.
+const splitCssText = (source, max) => {
+  const chunks = [];
+  let depth = 0;
+  let rules = 0;
+  let start = 0;
 
+  for (let i = 0; i < source.length; i++) {
+    const c = source[i];
+
+    if (c === '"' || c === "'") {
+      // Skip the string. CSS strings cannot contain a raw newline, and a
+      // backslash escapes the next character.
+      for (i++; i < source.length && source[i] !== c; i++) {
+        if (source[i] === '\\') i++;
+      }
+      continue;
+    }
+
+    if (c === '/' && source[i + 1] === '*') {
+      const end = source.indexOf('*/', i + 2);
+      i = end === -1 ? source.length : end + 1;
+      continue;
+    }
+
+    if (c === '{') {
+      depth++;
+    } else if (c === '}') {
+      depth--;
+
+      if (depth === 0 && ++rules >= max) {
+        chunks.push(source.slice(start, i + 1));
+        start = i + 1;
+        rules = 0;
+      }
+    }
+  }
+
+  if (start < source.length) chunks.push(source.slice(start));
+
+  return chunks;
+};
+
+const splitLargeStyleSheet = async (link) => {
   try {
     if (!link.sheet || link.sheet.cssRules.length <= MAX_RULES_PER_SHEET) return;
-    rules = Array.from(link.sheet.cssRules, (rule) =>
-      absolutiseUrls(rule.cssText, link.href)
-    );
   } catch (e) {
     // Cross-origin sheet — the addon can't read it either. Leave it alone.
     return;
   }
 
+  // Re-fetch rather than read the CSSOM: this is the whole point of the
+  // rewrite (see the comment above). It is a cache hit — the browser has just
+  // downloaded this exact URL to build link.sheet.
+  let source;
+
+  try {
+    source = await fetch(link.href).then((r) => (r.ok ? r.text() : null));
+  } catch (e) {
+    source = null;
+  }
+
+  if (source === null) return;
+
   const chunks = document.createDocumentFragment();
 
-  for (let i = 0; i < rules.length; i += MAX_RULES_PER_SHEET) {
+  for (const chunk of splitCssText(source, MAX_RULES_PER_SHEET)) {
     const style = document.createElement('style');
-    style.textContent = rules.slice(i, i + MAX_RULES_PER_SHEET).join('\n');
+    style.textContent = absolutiseUrls(chunk, link.href);
     chunks.appendChild(style);
   }
+
+  // The link may have been removed while the fetch was in flight.
+  if (!link.parentNode) return;
 
   link.parentNode.insertBefore(chunks, link);
   link.remove();
@@ -82,8 +152,10 @@ const splitLargeStyleSheet = (link) => {
 if (typeof document !== 'undefined') {
   const channel = addons.getChannel();
 
-  const rewriteAgain = (link) => {
-    splitLargeStyleSheet(link);
+  const rewriteAgain = async (link) => {
+    // The split is async now (it re-fetches the sheet), so the addon's second
+    // pass has to wait for the <style> chunks to exist.
+    await splitLargeStyleSheet(link);
     channel.emit(STORY_RENDERED);
   };
 

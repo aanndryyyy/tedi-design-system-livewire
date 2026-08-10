@@ -958,6 +958,46 @@
     }));
   }
 
+  // resources/js/src/hash-trigger.js
+  function hashTrigger(config = {}) {
+    const { id = null, scrollOnMatch = true } = config;
+    return {
+      isInitial: true,
+      onHashChange: null,
+      init() {
+        if (!id) return;
+        this.onHashChange = () => this.handle();
+        this.handle();
+        this.isInitial = false;
+        window.addEventListener("hashchange", this.onHashChange);
+      },
+      destroy() {
+        if (this.onHashChange) {
+          window.removeEventListener("hashchange", this.onHashChange);
+        }
+      },
+      hashes() {
+        return window.location.hash.split("/").filter((part) => part.indexOf("?") !== 0 && part.length !== 1 && part.length !== 0).map((part) => part.charAt(0) === "#" ? part.substring(1) : part);
+      },
+      isInViewport(element) {
+        const rect = element.getBoundingClientRect();
+        return rect.top >= 0 && rect.left >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && rect.right <= (window.innerWidth || document.documentElement.clientWidth);
+      },
+      handle() {
+        if (this.hashes().indexOf(id) === -1) return;
+        this.$el.dispatchEvent(
+          new CustomEvent("tedi:hash-match", { detail: { id }, bubbles: true })
+        );
+        const element = document.getElementById(id);
+        if (scrollOnMatch && element && !this.isInViewport(element)) {
+          element.scrollIntoView(
+            this.isInitial ? { behavior: "instant" } : { behavior: "smooth", block: "center" }
+          );
+        }
+      }
+    };
+  }
+
   // resources/js/src/modal.js
   function modal(config) {
     var cfg = config || {};
@@ -1008,6 +1048,282 @@
         if (this._previouslyFocused && this._previouslyFocused.focus) {
           this._previouslyFocused.focus({ preventScroll: true });
         }
+      }
+    };
+  }
+
+  // resources/js/src/multiselect.js
+  function multiselect(config) {
+    var cfg = config || {};
+    var base = overlay(cfg);
+    var baseOnOpen = base._onOpen;
+    return Object.defineProperties(base, Object.getOwnPropertyDescriptors({
+      rows: cfg.rows || [],
+      value: Array.isArray(cfg.value) ? cfg.value.slice() : [],
+      disabled: !!cfg.disabled,
+      activeRowIndex: -1,
+      // -- derived state (upstream's computed()s) --------------------
+      /** Upstream's options(), minus the group headings. */
+      get optionRows() {
+        return this.rows.filter(function(row) {
+          return row.kind === "option";
+        });
+      },
+      /** Upstream's allOptions(): every ENABLED option's value. */
+      get allOptionValues() {
+        return this.optionRows.filter(function(row) {
+          return !row.disabled;
+        }).map(function(row) {
+          return row.value;
+        });
+      },
+      get allOptionsSelected() {
+        var vals = this.value;
+        var all = this.allOptionValues;
+        return all.length > 0 && all.every(function(v) {
+          return vals.indexOf(v) !== -1;
+        });
+      },
+      get hasSelection() {
+        return this.value.length > 0;
+      },
+      get activeDescendantId() {
+        if (this.activeRowIndex === -1) return null;
+        return this.rowId(this.activeRowIndex);
+      },
+      /** Upstream's writeValue(), exposed to x-modelable / wire:model. */
+      get model() {
+        return this.value;
+      },
+      set model(incoming) {
+        this.value = Array.isArray(incoming) ? incoming.slice() : [];
+      },
+      // -- per-row helpers used by the template ----------------------
+      rowId: function(index) {
+        return cfg.baseId + "-row-" + index;
+      },
+      isOptionSelected: function(value) {
+        return this.value.indexOf(value) !== -1;
+      },
+      /** Upstream's getLabel(). */
+      getLabel: function(value) {
+        var row = this.optionRows.find(function(r) {
+          return r.value === value;
+        });
+        return row ? row.label : void 0;
+      },
+      /** Upstream's isGroupSelected(): every ENABLED option in the group. */
+      isGroupSelected: function(group) {
+        var vals = this.value;
+        var members = this._groupValues(group);
+        return members.length > 0 && members.every(function(v) {
+          return vals.indexOf(v) !== -1;
+        });
+      },
+      _groupValues: function(group) {
+        return this.optionRows.filter(function(row) {
+          return row.group === group && !row.disabled;
+        }).map(function(row) {
+          return row.value;
+        });
+      },
+      // -- selection ------------------------------------------------
+      /**
+       * The one entry point for activating a row, by mouse or by keyboard.
+       * Upstream's handleValueChange() dispatches on sentinel values in the
+       * emitted array; this dispatches on the row's `kind` (see the header).
+       */
+      activate: function(index) {
+        var row = this.rows[index];
+        if (!row || row.disabled || this.disabled) return;
+        if (row.kind === "select-all") {
+          this.toggleSelectAll();
+        } else if (row.kind === "group") {
+          this.toggleGroupSelection(row.group);
+        } else {
+          this.toggleOption(row.value);
+        }
+      },
+      toggleOption: function(value) {
+        var current = this.value;
+        this.value = current.indexOf(value) !== -1 ? current.filter(function(v) {
+          return v !== value;
+        }) : current.concat([value]);
+      },
+      /** Upstream's toggleSelectAll(). */
+      toggleSelectAll: function() {
+        this.value = this.allOptionsSelected ? [] : this.allOptionValues;
+      },
+      /** Upstream's toggleGroupSelection(). */
+      toggleGroupSelection: function(group) {
+        var members = this._groupValues(group);
+        if (!members.length) return;
+        if (this.isGroupSelected(group)) {
+          this.value = this.value.filter(function(v) {
+            return members.indexOf(v) === -1;
+          });
+          return;
+        }
+        var next = this.value.slice();
+        members.forEach(function(v) {
+          if (next.indexOf(v) === -1) next.push(v);
+        });
+        this.value = next;
+      },
+      /** Upstream's deselect() — the tag's own close button. */
+      deselect: function(event, value) {
+        event.stopPropagation();
+        event.preventDefault();
+        if (this.disabled) return;
+        this.value = this.value.filter(function(v) {
+          return v !== value;
+        });
+      },
+      /** Upstream's clear() — the trigger's clear button. */
+      clear: function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.value = [];
+      },
+      // -- open/close ------------------------------------------------
+      /**
+       * Upstream guards toggleIsOpen() on disabled(); overlay() has no such
+       * notion, so the guard lives here and covers every open path.
+       */
+      toggleOpen: function() {
+        if (this.disabled) return;
+        this.toggle();
+      },
+      _onOpen: function() {
+        var self = this;
+        baseOnOpen.call(this);
+        this.$nextTick(function() {
+          self.syncPanelWidth();
+          var list = self.$refs.optionsList;
+          if (list) list.focus();
+        });
+      },
+      /**
+       * Upstream's setDropdownWidth() + its `window:resize` HostListener.
+       * `dropdownWidthRef` was an ElementRef, which cannot cross into Blade
+       * (CONVENTIONS.md §5), so the prop is 'trigger' (upstream's default —
+       * the host's own width) or 'auto' (upstream's explicit `null`).
+       */
+      syncPanelWidth: function() {
+        var panel = this.$refs.panel;
+        if (!panel) return;
+        if (cfg.dropdownWidth === "auto") {
+          panel.style.width = "auto";
+          return;
+        }
+        var anchor = this.$refs.trigger;
+        var width = anchor ? anchor.getBoundingClientRect().width : 0;
+        panel.style.width = width ? width + "px" : "auto";
+      },
+      // -- the listbox's roving aria-activedescendant -----------------
+      onListFocus: function() {
+        if (this.activeRowIndex === -1) {
+          this.activeRowIndex = this._nextEnabledIndex(-1, 1);
+        }
+      },
+      onListBlur: function() {
+        this.activeRowIndex = -1;
+      },
+      onListKeydown: function(event) {
+        var index;
+        switch (event.key) {
+          case "ArrowDown":
+            event.preventDefault();
+            index = this._nextEnabledIndex(this.activeRowIndex, 1);
+            if (index !== -1) this._setActiveRow(index);
+            break;
+          case "ArrowUp":
+            event.preventDefault();
+            index = this._nextEnabledIndex(this.activeRowIndex, -1);
+            if (index !== -1) this._setActiveRow(index);
+            break;
+          case "Home":
+            event.preventDefault();
+            this._setActiveRow(this._nextEnabledIndex(-1, 1));
+            break;
+          case "End":
+            event.preventDefault();
+            this._setActiveRow(this._nextEnabledIndex(this.rows.length, -1));
+            break;
+          case "Enter":
+          case " ":
+            event.preventDefault();
+            this.activate(this.activeRowIndex);
+            break;
+        }
+      },
+      /**
+       * Arrow keys do NOT wrap at the ends — upstream's behaviour, and the
+       * same ruling dropdown.js took (CONVENTIONS.md §11).
+       */
+      _nextEnabledIndex: function(from, direction) {
+        var index = from + direction;
+        while (index >= 0 && index < this.rows.length) {
+          if (!this.rows[index].disabled) return index;
+          index += direction;
+        }
+        return -1;
+      },
+      _setActiveRow: function(index) {
+        this.activeRowIndex = index;
+        var container = this.$refs.optionsList;
+        if (!container || index === -1) return;
+        var items = container.querySelectorAll("li[tedi-dropdown-item]");
+        if (items[index]) items[index].scrollIntoView({ block: "nearest" });
+      }
+    }));
+  }
+
+  // resources/js/src/scroll-visibility.js
+  function scrollVisibility(config = {}) {
+    const {
+      enabled = true,
+      visibility = "hide",
+      toggleVisibility = false,
+      scrollDistance = 100,
+      scrollDirection = "down",
+      scrollContainer = null
+    } = config;
+    return {
+      hidden: false,
+      lastDistance: 0,
+      container: null,
+      target: null,
+      onScroll: null,
+      init() {
+        if (!enabled) return;
+        this.container = scrollContainer ? document.querySelector(scrollContainer) : document.documentElement;
+        if (!this.container) return;
+        this.target = scrollContainer ? this.container : window;
+        this.onScroll = () => this.update();
+        this.target.addEventListener("scroll", this.onScroll, { passive: true });
+        this.update();
+      },
+      destroy() {
+        if (this.target && this.onScroll) {
+          this.target.removeEventListener("scroll", this.onScroll);
+        }
+      },
+      distance() {
+        const { scrollTop, scrollHeight, clientHeight } = this.container;
+        return scrollDirection === "down" ? scrollTop : scrollHeight - clientHeight - scrollTop;
+      },
+      update() {
+        const shouldShow = visibility === "show";
+        const distance = this.distance();
+        if (toggleVisibility && distance < this.lastDistance) {
+          this.hidden = shouldShow;
+        } else if (distance > scrollDistance) {
+          this.hidden = !shouldShow;
+        } else {
+          this.hidden = shouldShow;
+        }
+        this.lastDistance = distance;
       }
     };
   }
@@ -1093,8 +1409,11 @@
     Alpine.data("tediOverlay", overlay);
     Alpine.data("tediDropdown", dropdown);
     Alpine.data("tediFilter", filter);
+    Alpine.data("tediMultiselect", multiselect);
     Alpine.data("tediModal", modal);
     Alpine.data("tediTableOfContents", tableOfContents);
+    Alpine.data("tediScrollVisibility", scrollVisibility);
+    Alpine.data("tediHashTrigger", hashTrigger);
   }
   if (window.Alpine) {
     register(window.Alpine);
