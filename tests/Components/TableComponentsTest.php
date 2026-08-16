@@ -539,6 +539,21 @@ class TableComponentsTest extends TestCase
         $html = $this->fixture();
 
         $this->assertStringNotContainsString('sticky-left', $html);
+        $this->assertMissingClass('tedi-table--sticky-last-column', $html);
+    }
+
+    public function test_table_sticky_last_column_host_class(): void
+    {
+        $html = Blade::render(<<<'BLADE'
+        <tedi:table
+            :sticky-last-column="true"
+            :columns="[['key' => 'a', 'header' => 'A'], ['key' => 'b', 'header' => 'B']]"
+            :rows="[['id' => 'r1', 'cells' => ['a' => '1', 'b' => '2']]]"
+        />
+        BLADE);
+
+        $this->assertHasClass('tedi-table--sticky-last-column', $html, on: 'tedi-table');
+        $this->assertMissingClass('tedi-table--sticky-first-column', $html, on: 'tedi-table');
     }
 
     // -- table: sorting ------------------------------------------------------

@@ -90,20 +90,32 @@ class TooltipComponentsTest extends TestCase
         $this->assertStringContainsString('open: true', $html);
     }
 
-    public function test_tooltip_renders_sr_only_description_only_when_given(): void
+    public function test_tooltip_content_is_the_accessible_description_target(): void
     {
+        // Angular #585: the visible content carries role=tooltip + the shared
+        // id; there is no duplicated .sr-only mirror.
         $this->assertStringNotContainsString('sr-only', $this->tooltip());
 
-        $html = $this->tooltip('description="Selgitus" description-id="tip-1"');
+        $html = $this->tooltip('description-id="tip-1"', 'described-by="tip-1"', 'description-id="tip-1"');
 
-        $this->assertStringContainsString('<span id="tip-1" class="sr-only">Selgitus</span>', $html);
+        $this->assertMatchesRegularExpression(
+            '/<tedi-tooltip-content[^>]*\bid="tip-1"[^>]*\brole="tooltip"/s',
+            $html
+        );
+        $this->assertDoesNotMatchRegularExpression(
+            '/<tedi-tooltip-content[^>]*aria-hidden/s',
+            $html
+        );
     }
 
-    public function test_tooltip_generates_a_description_id_when_omitted(): void
+    public function test_tooltip_content_generates_a_description_id_when_omitted(): void
     {
-        $html = $this->tooltip('description="Selgitus"');
+        $html = $this->tooltip();
 
-        $this->assertMatchesRegularExpression('/<span id="tedi-tooltip-[0-9a-f]{8}" class="sr-only">/', $html);
+        $this->assertMatchesRegularExpression(
+            '/<tedi-tooltip-content[^>]*\bid="tedi-tooltip-[0-9a-f]{8}"[^>]*\brole="tooltip"/s',
+            $html
+        );
     }
 
     // -- tooltip-trigger -------------------------------------------------
@@ -162,11 +174,18 @@ class TooltipComponentsTest extends TestCase
     /**
      * CONVENTIONS.md §3: the child's `@aware` fallback must equal the parent's
      * `@props` default, so omitting the prop and passing the default render
-     * identically.
+     * identically on the trigger (content generates a fresh id each render).
      */
     public function test_trigger_aware_default_agrees_with_tooltip_props_default(): void
     {
-        $this->assertSame($this->tooltip(), $this->tooltip('open-with="both"'));
+        $omitted = $this->tooltip();
+        $explicit = $this->tooltip('open-with="both"');
+
+        preg_match('/<tedi-tooltip-trigger\b[^>]*>.*?<\/tedi-tooltip-trigger>/s', $omitted, $a);
+        preg_match('/<tedi-tooltip-trigger\b[^>]*>.*?<\/tedi-tooltip-trigger>/s', $explicit, $b);
+
+        $this->assertSame($a[0] ?? '', $b[0] ?? '');
+        $this->assertMissingClass('tedi-tooltip-trigger--clickable', $omitted);
     }
 
     public function test_text_trigger_synthesises_the_underlined_span(): void
@@ -178,12 +197,29 @@ class TooltipComponentsTest extends TestCase
         $this->assertStringContainsString('tabindex="0"', $html);
     }
 
+    public function test_text_trigger_binds_enter_and_space_when_click_opens(): void
+    {
+        foreach (['click', 'both'] as $openWith) {
+            $html = $this->tooltip('open-with="'.$openWith.'"', ':text="true"');
+
+            $this->assertStringContainsString('x-on:keydown.enter.prevent="toggle()"', $html);
+            $this->assertStringContainsString('x-on:keydown.space.prevent="toggle()"', $html);
+        }
+
+        foreach (['hover', 'none'] as $openWith) {
+            $html = $this->tooltip('open-with="'.$openWith.'"', ':text="true"');
+
+            $this->assertStringNotContainsString('keydown.enter', $html);
+        }
+    }
+
     public function test_element_trigger_synthesises_nothing(): void
     {
         $html = $this->tooltip();
 
         $this->assertMissingClass('tedi-tooltip-trigger__text', $html, 'tedi-tooltip-trigger__text');
         $this->assertStringNotContainsString('tabindex="0"', $html);
+        $this->assertStringNotContainsString('keydown.enter', $html);
     }
 
     public function test_non_interactive_text_trigger_synthesises_nothing(): void
@@ -287,7 +323,7 @@ class TooltipComponentsTest extends TestCase
         $html = $this->tooltip();
 
         $this->assertStringContainsString(
-            '><span class="tedi-tooltip__arrow" x-ref="arrow"></span><tedi-tooltip-content', $html
+            '><span class="tedi-tooltip__arrow" aria-hidden="true" x-ref="arrow"></span><tedi-tooltip-content', $html
         );
     }
 
@@ -302,11 +338,21 @@ class TooltipComponentsTest extends TestCase
         );
     }
 
-    public function test_panel_and_content_are_aria_hidden(): void
+    public function test_only_the_arrow_is_aria_hidden(): void
     {
+        // Angular #585: the container and content are visible to AT; only the
+        // decorative arrow is aria-hidden.
         $html = $this->tooltip();
 
-        $this->assertSame(2, substr_count($html, 'aria-hidden="true"'));
+        $this->assertSame(1, substr_count($html, 'aria-hidden="true"'));
+        $this->assertMatchesRegularExpression(
+            '/<span class="tedi-tooltip__arrow" aria-hidden="true"/',
+            $html
+        );
+        $this->assertDoesNotMatchRegularExpression(
+            '/tedi-tooltip__container[^>]*aria-hidden/',
+            $html
+        );
     }
 
     // -- consumer attribute merging --------------------------------------
@@ -393,17 +439,14 @@ class TooltipComponentsTest extends TestCase
 
     public function test_info_tooltip_wires_description_to_the_button(): void
     {
-        $this->assertStringNotContainsString(
-            'aria-describedby',
-            Blade::render('<tedi:info-tooltip>Info</tedi:info-tooltip>')
-        );
+        $html = Blade::render('<tedi:info-tooltip>Selgitus</tedi:info-tooltip>');
 
-        $html = Blade::render('<tedi:info-tooltip description="Selgitus">Info</tedi:info-tooltip>');
+        preg_match('/<tedi-tooltip-content[^>]*\bid="(tedi-tooltip-[0-9a-f]{8})"[^>]*\brole="tooltip"/s', $html, $m);
 
-        preg_match('/<span id="(tedi-tooltip-[0-9a-f]{8})" class="sr-only">Selgitus<\/span>/', $html, $m);
-
-        $this->assertNotEmpty($m, 'Expected an sr-only description span.');
+        $this->assertNotEmpty($m, 'Expected content to carry role=tooltip and a shared id.');
         $this->assertStringContainsString('aria-describedby="'.$m[1].'"', $html);
+        $this->assertStringNotContainsString('class="sr-only"', $html);
+        $this->assertStringContainsString('Selgitus', $html);
     }
 
     public function test_info_tooltip_forwards_defaults_of_the_tooltip(): void

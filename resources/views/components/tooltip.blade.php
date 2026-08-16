@@ -18,6 +18,14 @@
     `transform`ed ancestor is positioned relative to that ancestor.
     `tedi-tooltip { display: contents }` keeps the extra element out of layout.
 
+    Accessibility (Angular #585 / 7.2.0-rc.2): the visible
+    `<tedi:tooltip-content>` carries `role="tooltip"` and the shared
+    `description-id`. The trigger's `aria-describedby` points at that id —
+    there is no duplicated `.sr-only` mirror. Pass `description-id` on this
+    root so children can `@aware` it (same pattern as popover/dropdown
+    `container-id`); omit it and content generates its own id, but the
+    trigger will not be wired unless you also pass `described-by`.
+
     Not ported:
       - `trackPosition` — rAF repositioning against an origin that moves while
         open (a dragging slider thumb). It exists only to drive CDK's
@@ -25,12 +33,6 @@
         on `tediOverlay`, and per CONVENTIONS.md §7 an inert prop is worse than
         an omitted one. A consumer who needs it can call `position()` on the
         Alpine component themselves.
-      - The sr-only description mirroring. Angular reads the projected
-        content's `textContent` in `ngAfterContentChecked`; Blade cannot
-        introspect its own slot, so it is an explicit `description` prop
-        (CONVENTIONS.md §5). Angular then sets `aria-describedby` on whatever
-        focusable element the trigger projected — also unreachable from here.
-        See tooltip-trigger.blade.php's `described-by` prop.
       - Touch handling (`touchstart`/`touchend` toggling, with the 300ms guard
         that suppresses the synthetic click). Modern browsers fire
         `mouseenter` + `click` on tap, which `openWith="both"` already handles.
@@ -54,15 +56,18 @@
     /** Extra px between tooltip and trigger, on top of the 8px base gap. */
     'offset' => 4,
     /**
-     * sr-only text describing the trigger. Angular derives this from the
-     * projected content's textContent; Blade needs it spelled out (§5).
+     * Shared id for the content's role=tooltip element and the trigger's
+     * aria-describedby. Pass it so children can @aware it; omit and content
+     * generates its own (trigger stays unwired unless described-by is set).
      */
-    'description' => null,
-    /** id of the sr-only description, for the trigger's `described-by`. */
     'descriptionId' => null,
 ])
 
 @php
+    // Keep a generated fallback in the props bag when the consumer omitted the
+    // attribute, so an explicit :description-id="$x" from a composer like
+    // info-tooltip still wins, while a bare <tedi:tooltip> still has a stable
+    // value for anything that reads the prop directly.
     $descriptionId = $descriptionId ?: \Tedi\Livewire\Tedi::id('tedi-tooltip');
 @endphp
 
@@ -78,8 +83,4 @@
     })"
 >
     {{ $slot }}
-
-    @if ($description)
-        <span id="{{ $descriptionId }}" class="sr-only">{{ $description }}</span>
-    @endif
 </tedi-tooltip>

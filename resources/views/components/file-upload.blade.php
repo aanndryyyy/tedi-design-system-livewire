@@ -20,7 +20,7 @@
     |---|---|
     | `defaultFiles` + internal state | the `files` prop, rendered server-side |
     | `onChange` / `onDelete` | bind `wire:model` / your own handler (CONVENTIONS.md §7 item 2) |
-    | `maxSize`, `validateIndividually`, `uploadErrorHelper` | the `helper` prop; validate server-side |
+    | `maxSize`, `validateIndividually`, `uploadErrorHelper` | `max-size` + `show-restrictions` build a hint helper when `helper` is omitted; validate server-side |
     | `announcement` | the live region is still rendered — put your own message in `announcement` |
 
     THE BREAKPOINT SWAP IS NOT PORTED. Upstream renders the clear control as a
@@ -58,6 +58,13 @@
     'label' => null,
     /** Comma-separated accepted types, e.g. ".pdf,.docx" or "image/*". */
     'accept' => null,
+    /** Maximum file size in MB — used only for the restrictions hint text. */
+    'maxSize' => null,
+    /**
+     * Show the auto-generated accept/max-size hint when `helper` is omitted.
+     * Turn off when the same info is shown elsewhere. Default true (React).
+     */
+    'showRestrictions' => true,
     /** Allow picking several files. */
     'multiple' => false,
     /** Chosen files: [['name' => …, 'is_loading' => false, 'is_valid' => true], …]. */
@@ -81,6 +88,18 @@
 @php
     $id = $id ?? \Tedi\Livewire\Tedi::id('tedi-file-upload');
     $files = array_values($files);
+
+    if ($helper === null && $showRestrictions && ($accept || $maxSize !== null && $maxSize !== '')) {
+        $parts = [];
+        if ($accept) {
+            $parts[] = __('tedi::tedi.file-upload.accept').' '.str_replace(',', ', ', (string) $accept);
+        }
+        if ($maxSize !== null && $maxSize !== '') {
+            $parts[] = __('tedi::tedi.file-upload.max-size').' '.$maxSize.'MB';
+        }
+        $helper = ['text' => implode(' ', $parts), 'type' => 'hint'];
+    }
+
     $helperType = $helper['type'] ?? null;
     $helperId = $helper ? $id.'-helper' : null;
     $failedLabel = __('tedi::tedi.file-upload.failed');

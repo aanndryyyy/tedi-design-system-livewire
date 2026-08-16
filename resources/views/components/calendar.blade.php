@@ -75,6 +75,12 @@
     'showNavigation' => true,
     /** Render the outer border and rounded corners. */
     'bordered' => true,
+    /**
+     * Stretch the calendar to the available width (React `fullWidth`).
+     * Day cells grow with the grid instead of staying fixed
+     * `--form-calendar-date-width` squares.
+     */
+    'fullWidth' => false,
     /** dropdown|grid|static — how the header exposes month/year picking. */
     'monthYearSelectType' => 'dropdown',
     /** When mode='multiple', prevents clearing the last date. Behavioural only. */
@@ -139,6 +145,7 @@
     'tedi-calendar--disabled' => (bool) $inputDisabled,
     'tedi-calendar--with-week-numbers' => (bool) $showWeekNumbers,
     'tedi-calendar--bordered' => (bool) $bordered,
+    'tedi-calendar--full-width' => (bool) $fullWidth,
 ])->style([
     '--_tedi-calendar-month-count: '.$numberOfMonths,
 ]) }}>

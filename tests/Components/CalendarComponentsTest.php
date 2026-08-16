@@ -27,11 +27,19 @@ class CalendarComponentsTest extends TestCase
 
     public function test_calendar_host_modifier_classes(): void
     {
-        $html = Blade::render('<tedi:calendar :bordered="false" :input-disabled="true" :show-week-numbers="true" />');
+        $html = Blade::render('<tedi:calendar :bordered="false" :input-disabled="true" :show-week-numbers="true" :full-width="true" />');
 
         $this->assertHasClass('tedi-calendar--disabled', $html);
         $this->assertHasClass('tedi-calendar--with-week-numbers', $html);
+        $this->assertHasClass('tedi-calendar--full-width', $html);
         $this->assertMissingClass('tedi-calendar--bordered', $html);
+    }
+
+    public function test_calendar_full_width_defaults_off(): void
+    {
+        $html = Blade::render('<tedi:calendar />');
+
+        $this->assertMissingClass('tedi-calendar--full-width', $html);
     }
 
     /** CALENDAR-SPEC §0.3 — dist/tedi.css has no rule for it, so it is dropped. */

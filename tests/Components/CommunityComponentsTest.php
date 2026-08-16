@@ -261,9 +261,12 @@ class CommunityComponentsTest extends TestCase
         $html = Blade::render('<tedi:table-of-contents heading="Sisukord" />');
         $this->assertStringContainsString('Sisukord', $html);
         $this->assertStringContainsString('aria-label="Table of contents"', $html);
+        $this->assertSame(2, substr_count($html, '<h1 '));
 
-        $custom = Blade::render('<tedi:table-of-contents heading="Sisukord" aria-label="Peatükid" />');
+        $custom = Blade::render('<tedi:table-of-contents heading="Sisukord" aria-label="Peatükid" heading-level="h3" />');
         $this->assertStringContainsString('aria-label="Peatükid"', $custom);
+        $this->assertSame(2, substr_count($custom, '<h3 '));
+        $this->assertStringNotContainsString('<h1 ', $custom);
     }
 
     public function test_table_of_contents_item_classes_and_target(): void

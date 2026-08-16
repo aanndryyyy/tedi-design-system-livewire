@@ -611,6 +611,35 @@ class ReactComponentsTest extends TestCase
         $this->assertStringNotContainsString('tedi-file-upload__container--small', $html);
     }
 
+    public function test_file_upload_show_restrictions_builds_a_hint_helper(): void
+    {
+        $html = Blade::render('<tedi:file-upload name="f" accept=".pdf,.docx" :max-size="5" />');
+
+        $this->assertStringContainsString('Allowed file extensions:', $html);
+        $this->assertStringContainsString('.pdf, .docx', $html);
+        $this->assertStringContainsString('Maximum size:', $html);
+        $this->assertStringContainsString('5MB', $html);
+        $this->assertStringContainsString('tedi-feedback-text', $html);
+    }
+
+    public function test_file_upload_show_restrictions_can_be_suppressed(): void
+    {
+        $html = Blade::render('<tedi:file-upload name="f" accept=".pdf" :max-size="5" :show-restrictions="false" />');
+
+        $this->assertStringNotContainsString('Allowed file extensions:', $html);
+        $this->assertStringNotContainsString('Maximum size:', $html);
+    }
+
+    public function test_file_upload_explicit_helper_wins_over_restrictions(): void
+    {
+        $html = Blade::render(
+            '<tedi:file-upload name="f" accept=".pdf" :max-size="5" :helper="[\'text\' => \'Custom\', \'type\' => \'hint\']" />'
+        );
+
+        $this->assertStringContainsString('Custom', $html);
+        $this->assertStringNotContainsString('Allowed file extensions:', $html);
+    }
+
     // =====================================================================
     // Form / MultiValueField
     // =====================================================================

@@ -65,12 +65,19 @@ tedi-tooltip-trigger {
   }
 
   .tedi-tooltip-trigger__text {
+    // Safari below 26 only honours the `text-decoration` shorthand with a style
+    // and color through the `-webkit-` prefix; without it the dashed underline
+    // that signals a text trigger is dropped in older Safari.
+    // stylelint-disable-next-line property-no-vendor-prefix
+    -webkit-text-decoration: underline dashed var(--general-border-secondary);
     text-decoration: underline dashed var(--general-border-secondary);
     text-underline-offset: 0.5em;
     cursor: default;
 
     &:hover {
       color: var(--link-primary-default);
+      // stylelint-disable-next-line property-no-vendor-prefix
+      -webkit-text-decoration-color: var(--general-border-brand);
       text-decoration-color: var(--general-border-brand);
     }
   }

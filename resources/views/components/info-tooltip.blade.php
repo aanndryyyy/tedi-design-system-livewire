@@ -9,13 +9,11 @@
     (CONVENTIONS.md §4's element-selector rule), carrying the
     `.tedi-info-tooltip` host class.
 
-    `description` is the one addition to Angular's five inputs, and it is the
-    §5 translation of behaviour Angular *does* have here: `tedi-tooltip` reads
-    its projected content's `textContent` at runtime to build the sr-only
-    description that the info button's `aria-describedby` points at. Blade
-    cannot read its own slot, so the text is spelled out. Unlike the standalone
-    `<tedi:tooltip-trigger>`, the wiring closes here — this component renders
-    the button, so it can set `aria-describedby` on it exactly as Angular does.
+    Accessibility (Angular #585): the visible content carries `role="tooltip"`
+    and a shared `description-id`; the info button's `aria-describedby` points
+    at that id. There is no separate `.sr-only` mirror — the slot text is the
+    description. This component always generates the shared id and wires both
+    sides, because it owns the button and the content.
 
     The tooltip's `preventOverflow`, `timeoutDelay` and `offset` keep their
     defaults, matching Angular's template, which forwards only `position` and
@@ -32,22 +30,19 @@
     'color' => 'primary',
     /** Accessible name for the info button; falls back to the translated label. */
     'ariaLabel' => null,
-    /** sr-only description text for the info button (CONVENTIONS.md §5). */
-    'description' => null,
 ])
 
 @php
-    $descriptionId = $description ? \Tedi\Livewire\Tedi::id('tedi-tooltip') : null;
+    $descriptionId = \Tedi\Livewire\Tedi::id('tedi-tooltip');
 @endphp
 
 <tedi-info-tooltip {{ $attributes->class(['tedi-info-tooltip']) }}>
     <tedi:tooltip
         :position="$position"
         :open-with="$openWith"
-        :description="$description"
         :description-id="$descriptionId"
     >
-        <tedi:tooltip-trigger>
+        <tedi:tooltip-trigger :described-by="$descriptionId">
             <tedi:info-button
                 :color="$color"
                 :aria-label="$ariaLabel"
@@ -55,6 +50,6 @@
             />
         </tedi:tooltip-trigger>
 
-        <tedi:tooltip-content :max-width="$maxWidth">{{ $slot }}</tedi:tooltip-content>
+        <tedi:tooltip-content :max-width="$maxWidth" :description-id="$descriptionId">{{ $slot }}</tedi:tooltip-content>
     </tedi:tooltip>
 </tedi-info-tooltip>

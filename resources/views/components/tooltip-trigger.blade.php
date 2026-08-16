@@ -11,7 +11,9 @@
 
     `openWith` lives on `<tedi:tooltip>` and is read here through `@aware`
     (Angular: `inject(TooltipComponent)`), with the same `both` fallback as the
-    parent's `@props` default — CONVENTIONS.md §3.
+    parent's `@props` default — CONVENTIONS.md §3. `descriptionId` is aware'd
+    the same way so `aria-describedby` can point at the content's role=tooltip
+    id without the consumer repeating it on every trigger.
 
     DOM introspection → explicit props (CONVENTIONS.md §5). Angular inspects its
     own first projected child in `ngAfterContentChecked`:
@@ -23,6 +25,7 @@
       | child is not natively focusable → add          | consumer's own markup |
       |   `--focus` + `tabindex=0` to it               |                       |
       | set `aria-describedby` on the focusable child  | `described-by="…"`    |
+      |                                                | or aware descriptionId|
 
     Only the first branch is reachable from Blade: the other two mutate an
     element the consumer wrote, which a server-rendered template cannot reach
@@ -37,10 +40,10 @@
     nothing — Angular deliberately skips `--focus` there so the component's own
     `:focus-visible` ring is not overridden.
 
-    `described-by` mirrors the `aria-describedby` Angular puts on the resolved
-    focusable child. Here it lands on the synthesized text span when
-    `:text="true"`, and on this element otherwise; pass it the `<tedi:tooltip>`'s
-    `description-id`.
+    Keyboard activation (Angular #585): Enter/Space toggle on the synthesised
+    text span when `openWith` is `click` or `both`. Native buttons/anchors
+    already synthesise a click from those keys, so the handler is only on the
+    text span — putting it on the host would double-toggle a button child.
 
     Touch handling (`touchstart`/`touchend`) is not ported — see
     tooltip.blade.php's header.
@@ -48,6 +51,7 @@
 @aware([
     /** Must equal the tooltip's own @props default — CONVENTIONS.md §3. */
     'openWith' => 'both',
+    'descriptionId' => null,
 ])
 @props([
     /**
@@ -61,7 +65,10 @@
      * synthesizes when its first projected child is a text node.
      */
     'text' => false,
-    /** id of the tooltip's sr-only description. */
+    /**
+     * id of the content's role=tooltip element. Defaults to the parent's
+     * aware'd descriptionId when omitted.
+     */
     'describedBy' => null,
 ])
 
@@ -69,6 +76,7 @@
     $opensOnHover = $openWith === 'both' || $openWith === 'hover';
     $opensOnClick = $openWith === 'both' || $openWith === 'click';
     $wrapsText = $text && $interactive;
+    $describedBy = $describedBy ?: $descriptionId;
 @endphp
 
 <tedi-tooltip-trigger
@@ -93,6 +101,10 @@
             class="tedi-tooltip-trigger__text tedi-tooltip-trigger--focus"
             tabindex="0"
             @if ($describedBy) aria-describedby="{{ $describedBy }}" @endif
+            @if ($opensOnClick)
+                x-on:keydown.enter.prevent="toggle()"
+                x-on:keydown.space.prevent="toggle()"
+            @endif
         >{{ $slot }}</span>
     @else
         {{ $slot }}

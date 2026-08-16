@@ -66,4 +66,45 @@
     pointer-events: none;
     opacity: 0.6;
   }
+
+  // Additive from @tedi-design-system/react (`fullWidth`). Day-grid class
+  // names here are the Angular `tedi-calendar-day-grid__*` ones, not React's
+  // flatter `tedi-calendar__day` / `__weekday`.
+  &--full-width {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+
+    .tedi-calendar__month {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    .tedi-calendar-day-grid {
+      width: 100%;
+    }
+
+    .tedi-calendar-day-grid__header,
+    .tedi-calendar-day-grid__row {
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+    }
+
+    &.tedi-calendar--with-week-numbers {
+      .tedi-calendar-day-grid__header,
+      .tedi-calendar-day-grid__row {
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+      }
+    }
+
+    .tedi-calendar-day-grid__weekday,
+    .tedi-calendar-day-grid__week-number-header,
+    .tedi-calendar-day-grid__week-number,
+    .tedi-calendar-day-grid__day {
+      width: auto;
+      height: auto;
+      min-width: var(--form-calendar-date-width);
+      min-height: var(--form-calendar-date-width);
+      aspect-ratio: 1 / 1;
+    }
+  }
 }
