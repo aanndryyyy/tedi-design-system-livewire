@@ -1,3 +1,5 @@
+// Token renames for @tedi-design-system/core ≥6.5.1 (see core CHANGELOG). Re-sync
+// from Angular may overwrite — reapply if the upstream SCSS still uses old names.
 .tedi-filter-group {
   display: inline-flex;
 
@@ -28,7 +30,7 @@
 
   .tedi-filter--secondary.tedi-filter--selected+.tedi-filter--secondary,
   .tedi-filter--secondary+.tedi-filter--secondary.tedi-filter--selected {
-    margin-left: calc(-1 * var(--general-selected-border-width));
+    margin-left: calc(-1 * var(--general-border-width-selected));
   }
 
   .tedi-filter:first-child {

@@ -1,3 +1,5 @@
+// Token renames for @tedi-design-system/core ≥6.7.0 (see core CHANGELOG). Re-sync
+// from React may overwrite — reapply if the upstream SCSS still uses old names.
 @use "@tedi-design-system/core/mixins";
 
 .table-of-contents__item {
@@ -27,7 +29,7 @@
     // we're inset into the card border by 1 pixel
     padding: 0
       calc(
-        var(--table-of-contents-padding-level-1) - var(
+        var(--table-of-contents-padding-left-level-1) - var(
             --_table-of-contents-inset
           )
       );
