@@ -217,7 +217,7 @@
     // Built here rather than inline: a `new \Foo(…)` echo inside a component
     // tag's attribute list is not parsed by Blade's component-tag compiler,
     // which leaves the whole <x-tedi::…> tag in the output verbatim.
-    $clearBag = \Tedi\Livewire\Tedi::consumerAttributes($clearAttributes);
+    $clearBag = new \Illuminate\View\ComponentAttributeBag($clearAttributes);
 
     $groupSelected = function (string $group) use ($groups, $selected): bool {
         $members = array_values(array_map(

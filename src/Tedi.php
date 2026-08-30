@@ -3,7 +3,6 @@
 namespace Tedi\Livewire;
 
 use Illuminate\Support\HtmlString;
-use Illuminate\View\ComponentAttributeBag;
 
 class Tedi
 {
@@ -77,18 +76,5 @@ class Tedi
         }
 
         return (string) $value;
-    }
-
-    /**
-     * Build an attribute bag for consumer-supplied listener hooks.
-     *
-     * Angular `output()` events are not re-emitted in Blade (CONVENTIONS.md §7.2);
-     * components instead expose explicit props such as `clearAttributes` and
-     * `buttonAttributes` that forward wire:click / x-on:click bindings to the
-     * inner control. This helper is the shared implementation of that channel.
-     */
-    public static function consumerAttributes(array $attributes): ComponentAttributeBag
-    {
-        return new ComponentAttributeBag($attributes);
     }
 }

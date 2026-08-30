@@ -1,3 +1,5 @@
+// Token renames for @tedi-design-system/core ≥6.5.1 (see core CHANGELOG). Re-sync
+// from Angular may overwrite — reapply if the upstream SCSS still uses old names.
 .tedi-filter {
   --_filter-bg: transparent;
   --_filter-text: inherit;
@@ -136,7 +138,7 @@
       --_filter-bg: var(--filter-secondary-selected-background);
       --_filter-text: var(--filter-secondary-selected-text);
       --_filter-border: var(--filter-secondary-selected-border);
-      --_filter-border-width: var(--general-selected-border-width);
+      --_filter-border-width: var(--general-border-width-selected);
     }
 
     &.tedi-filter--disabled {

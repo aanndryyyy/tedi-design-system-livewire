@@ -119,7 +119,7 @@
                     :show-title="false"
                     tabindex="{{ $showClearButton ? 0 : -1 }}"
                     :disabled="$disabled || ! $showClearButton"
-                    {{ \Tedi\Livewire\Tedi::consumerAttributes($clearAttributes) }}
+                    {{ $attributes->only([])->merge($clearAttributes) }}
                 />
 
                 @if ($icon)
