@@ -388,7 +388,7 @@
                                     @if (! $hasCustomContent)
                                         x-on:click="{{ $isSingleSelect ? 'clearSingleSelection()' : 'clearSelection()' }}"
                                     @endif
-                                    {{ $attributes->only([])->merge($clearAttributes) }}
+                                    {{ \Tedi\Livewire\Tedi::consumerAttributes($clearAttributes) }}
                                 >
                                     <tedi:icon name="refresh" :size="18" color="brand" />
                                     <span>{{ $resolvedClearLabel }}</span>
