@@ -12,6 +12,16 @@
     which is the element Angular's `host: { '[class]': 'classes()' }` targets
     and which the SCSS styles as `.tedi-tooltip-content`.
 
+    Accessibility (Angular #585): this host carries `role="tooltip"` and the
+    shared `description-id` that the trigger's `aria-describedby` points at.
+    The visible content IS the accessible description — there is no duplicated
+    `.sr-only` node, and the content is NOT aria-hidden. Only the decorative
+    arrow is `aria-hidden`.
+
+    `description-id` arrives through `@aware` from `<tedi:tooltip>` when the
+    consumer (or a composer like info-tooltip) passed it on the root; otherwise
+    a local id is generated so the role=tooltip element always has one.
+
     Per CONVENTIONS.md §8/§11 the panel is `x-show`n, not `x-if`ed: it exists in
     the DOM with its real class list while closed. `data-placement` is bound
     (the arrow's rotation keys off it) and therefore written after the real
@@ -41,23 +51,32 @@
     here it goes through `tediOverlay`'s `contentLeave()`, which honours the
     tooltip's `timeoutDelay` the same way leaving the trigger does.
 --}}
+@aware([
+    'descriptionId' => null,
+])
 @props([
     /** none|small|medium|large */
     'maxWidth' => 'medium',
+    /** Id shared with the trigger's aria-describedby. Falls back to @aware, then generated. */
+    'descriptionId' => null,
 ])
+
+@php
+    $descriptionId = $descriptionId ?: \Tedi\Livewire\Tedi::id('tedi-tooltip');
+@endphp
 
 <span
     class="tedi-tooltip__container"
-    aria-hidden="true"
     x-ref="panel"
     x-show="open"
     x-cloak
     x-bind:data-placement="side"
     x-on:mouseenter="contentEnter()"
     x-on:mouseleave="contentLeave()"
-><span class="tedi-tooltip__arrow" x-ref="arrow"></span><tedi-tooltip-content {{ $attributes->class([
+><span class="tedi-tooltip__arrow" aria-hidden="true" x-ref="arrow"></span><tedi-tooltip-content {{ $attributes->class([
         'tedi-tooltip-content',
         'tedi-tooltip-content--'.$maxWidth,
     ])->merge([
-        'aria-hidden' => 'true',
+        'id' => $descriptionId,
+        'role' => 'tooltip',
     ]) }}>{{ $slot }}</tedi-tooltip-content></span>

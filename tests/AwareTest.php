@@ -394,8 +394,11 @@ class AwareTest extends TestCase
         $omitted = Blade::render(sprintf(self::TOOLTIP, ''));
         $explicit = Blade::render(sprintf(self::TOOLTIP, ' open-with="both"'));
 
+        // Content generates a fresh description-id each render (Angular #585),
+        // so only the trigger — which is what @aware(['openWith']) affects —
+        // is compared for identity.
         $this->assertMissingClass('tedi-tooltip-trigger--clickable', $this->triggerTag($omitted));
-        $this->assertSame($explicit, $omitted,
+        $this->assertSame($this->triggerTag($explicit), $this->triggerTag($omitted),
             'Omitting open-with must render identically to passing its default.');
     }
 

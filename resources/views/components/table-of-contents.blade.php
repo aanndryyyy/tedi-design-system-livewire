@@ -44,6 +44,12 @@
 @props([
     /** Heading shown above the items, and inside the footer trigger. Required. */
     'heading',
+    /**
+     * Semantic heading level for the visible title (`h1`–`h6`). Visual style
+     * stays the H4 text modifier regardless — matching React's headingLevel.
+     * @default h1 (Angular community hard-codes h1; React defaults to h3)
+     */
+    'headingLevel' => 'h1',
     /** default|fixed|sticky */
     'position' => 'default',
     /** Accessible label for the navigation landmark. */
@@ -61,6 +67,10 @@
 ])
 
 @php
+    $headingTag = in_array($headingLevel, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], true)
+        ? $headingLevel
+        : 'h1';
+
     $config = json_encode([
         'activeId' => (string) $activeId,
         'scrollAware' => (bool) $scrollAware,
@@ -84,7 +94,7 @@
     >
         <tedi:card>
             <tedi:card-content class="table-of-contents__content">
-                <tedi:text as="h1" modifiers="h4" class="table-of-contents__header">{{ $heading }}</tedi:text>
+                <tedi:text as="{{ $headingTag }}" modifiers="h4" class="table-of-contents__header">{{ $heading }}</tedi:text>
 
                 <div class="table-of-contents__items">
                     {{ $slot }}
@@ -99,7 +109,7 @@
     >
         <tedi:card-content>
             <button type="button" class="table-of-contents__footer-trigger" x-on:click="open = true">
-                <tedi:text as="h1" modifiers="normal" class="table-of-contents__header">
+                <tedi:text as="{{ $headingTag }}" modifiers="normal" class="table-of-contents__header">
                     {{ $heading }}
 
                     {{--

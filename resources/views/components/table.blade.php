@@ -107,6 +107,12 @@
     'borderless' => false,
     /** Freeze the leading control columns + first content column during horizontal scroll. */
     'stickyFirstColumn' => false,
+    /**
+     * Freeze the last content column during horizontal scroll.
+     * Additive from @tedi-design-system/react (stickyLastColumn) — Angular has
+     * sticky-first only; the host class and :last-child rules mirror React.
+     */
+    'stickyLastColumn' => false,
     /** Pin <thead> during vertical scroll. Requires maxHeight. */
     'stickyHeader' => false,
     /** table-layout: fixed — makes width/minWidth/maxWidth authoritative. */
@@ -316,6 +322,7 @@
         'tedi-table--vertical-borders' => (bool) $verticalBorders,
         'tedi-table--borderless' => (bool) $borderless,
         'tedi-table--sticky-first-column' => (bool) $stickyFirstColumn,
+        'tedi-table--sticky-last-column' => (bool) $stickyLastColumn,
         'tedi-table--sticky-header' => (bool) $stickyHeader,
         'tedi-table--fixed-layout' => (bool) $fixedLayout,
         'tedi-table--row-hover' => (bool) $hoverEnabled,
