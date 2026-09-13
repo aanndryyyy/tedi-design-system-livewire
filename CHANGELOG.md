@@ -17,8 +17,12 @@ the old identifiers are aliased in `resources/scss/_core-compat.scss`.
 The form-field wrapper is optional. A bordered `tedi-form-field__box` (and
 `tedi-field-surface`) is rendered only when `icon` or `clearable` is set;
 otherwise `text-field`, `textarea`, `date-field` and `time-field` paint
-`tedi-field-surface` themselves. Nested controls read `ownsSurface` through
-`@aware`.
+`tedi-field-surface` themselves. Nested controls detect that box from the
+wrapper's `icon` / `clearable` attributes (`Tedi::fieldOwnsSurface`).
+
+Host modifiers `tedi-form-field--valid` / `--invalid` / `--disabled` are gone
+(Angular 8); those states live on `tedi-field-surface`. Slider `hideLabel="keep-space"`
+now uses `tedi-label--reserve-space`.
 
 ### Other API ports
 
