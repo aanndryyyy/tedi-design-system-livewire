@@ -2,15 +2,20 @@
     TEDI Form field.
     Port of angular/tedi/components/form/form-field/{form-field.component.ts,form-field.component.html}
 
+    From Angular 8 the wrapper is optional. `hasBox()` / `ownsSurface()` is
+    `icon || clearable`: only then is the bordered `tedi-form-field__box`
+    rendered and the nested control told (via `@aware ownsSurface`) not to
+    paint `tedi-field-surface` itself. Without additions the control paints
+    its own surface.
+
     Angular's FormFieldComponent leans heavily on runtime DOM introspection
-    (contentChild queries for the projected control/feedback, AfterContentInit
-    tag-name sniffing, a live NgControl subscription for validation state, and
-    manual aria-describedby wiring). None of that is available on the server,
-    so per CONVENTIONS.md §5 every such case becomes an explicit prop:
+    (contentChild queries for the projected control/feedback, a live NgControl
+    subscription for validation state, and manual aria-describedby wiring).
+    None of that is available on the server, so per CONVENTIONS.md §5 every
+    such case becomes an explicit prop:
 
       Angular runtime detection                  Blade prop
       -----------------------------------------  ------------------------
-      isTextarea() from the projected tag name    textarea
       ngControl invalid && (touched || dirty)     invalid
       feedback?.type() === 'valid'                valid
       control()?.value() (for the clear button    value
@@ -27,12 +32,14 @@
     merges the group's state in without the consumer repeating it, while a
     value set directly on <tedi:form-field> still wins.
 
-    NOTE: Angular's hostClasses() also emits `tedi-form-field--with-icon`, but
-    that class has no rule in the vendored form-field.component.scss (styling
-    a control with an icon relies entirely on `__input`'s flex/gap layout, not
-    a host modifier). Per the library-wide class/stylesheet guardrail
-    (tests/IntegrityTest.php), this port only emits classes the vendored SCSS
-    actually defines, so `--with-icon` is deliberately dropped.
+    `ownsSurface` is published for nested controls (`text-field`, `textarea`,
+    `date-field`, `time-field`) via @aware — Angular's `TEDI_FIELD_CONTEXT`.
+
+    `inputClass` is deprecated upstream (style the control; it owns its surface).
+    It is still applied to the box when a box is rendered.
+
+    `textarea` is kept for API compatibility with the 7.x port; Angular 8 no
+    longer sniffs the projected tag, so it does not suppress icon/clear.
 --}}
 @props([
     /** default|small|large */
@@ -41,7 +48,7 @@
     'icon' => null,
     /** Shows a clear button when `value` is non-empty. */
     'clearable' => false,
-    /** Extra class added to the input box alongside tedi-form-field__input. */
+    /** Extra class added to the field box. Deprecated upstream. */
     'inputClass' => null,
     /** Maximum character count; shows a live counter and forces invalid past it. */
     'characterLimit' => null,
@@ -49,13 +56,18 @@
     'characterCount' => 0,
     /** The wrapped control's current value — only used to decide clear-button visibility. */
     'value' => null,
-    /** Explicit stand-in for Angular's runtime `<textarea>` tag detection. */
+    /** Kept for API compatibility with the 7.x port; no longer changes markup. */
     'textarea' => false,
     'disabled' => false,
     'invalid' => false,
     'valid' => false,
     /** Extra attributes forwarded to the clear button (e.g. wire:click). */
     'clearAttributes' => [],
+    /**
+     * When true, nested controls must not paint `tedi-field-surface`.
+     * Computed from icon/clearable; listed in @props so @aware can publish it.
+     */
+    'ownsSurface' => false,
 ])
 
 @aware([
@@ -67,9 +79,10 @@
     $characterCountExceeded = $characterLimit !== null && $characterCount > $characterLimit;
     $isInvalid = $invalid || $characterCountExceeded;
     $isValid = $valid && ! $isInvalid;
-    $showClearButton = $clearable && ! $textarea && (bool) $value;
+    $ownsSurface = (bool) $icon || (bool) $clearable;
+    $showClearButton = $clearable && (bool) $value;
 
-    $resolvedIcon = ($icon && ! $textarea) ? (is_array($icon) ? $icon : ['name' => $icon]) : null;
+    $resolvedIcon = $icon ? (is_array($icon) ? $icon : ['name' => $icon]) : null;
     if ($resolvedIcon) {
         $resolvedIcon += [
             'size' => $size === 'small' ? 16 : ($size === 'large' ? 24 : 18),
@@ -96,52 +109,60 @@
     'tedi-form-field--small' => $size === 'small',
     'tedi-form-field--large' => $size === 'large',
 ]) }}>
-    <div @class([
-        'tedi-form-field__input',
-        $inputClass => $inputClass,
-    ])>
+    @if ($ownsSurface)
+        <div @class([
+            'tedi-form-field__box',
+            'tedi-field-surface',
+            'tedi-field-surface--invalid' => $isInvalid,
+            'tedi-field-surface--valid' => $isValid,
+            'tedi-field-surface--disabled' => $disabled,
+            $inputClass => $inputClass,
+        ])>
+            {{ $slot }}
+
+            @if ($clearable)
+                <div
+                    @class([
+                        'tedi-form-field__buttons',
+                        'tedi-form-field__buttons--hidden' => ! $showClearButton,
+                    ])
+                    @if (! $showClearButton) aria-hidden="true" @endif
+                >
+                    <tedi:closing-button
+                        class="tedi-form-field__clear"
+                        size="small"
+                        :icon-size="18"
+                        icon="close"
+                        :aria-label="__('tedi::tedi.clear')"
+                        :show-title="false"
+                        tabindex="{{ $showClearButton ? 0 : -1 }}"
+                        :disabled="$disabled || ! $showClearButton"
+                        {{ $attributes->only([])->merge($clearAttributes) }}
+                    />
+
+                    @if ($icon)
+                        {{-- Mirrors <tedi-separator axis="vertical" size="1rem" /> (not yet ported as its own component). --}}
+                        <span class="tedi-separator tedi-separator--primary tedi-separator--vertical tedi-separator--thickness-1" style="width: 0px; height: 1rem"></span>
+                    @endif
+                </div>
+            @endif
+
+            @if ($resolvedIcon)
+                <div class="tedi-form-field__icon">
+                    <tedi:icon
+                        :name="$resolvedIcon['name']"
+                        :size="$resolvedIcon['size']"
+                        :color="$resolvedIcon['color']"
+                        :type="$resolvedIcon['type']"
+                        :variant="$resolvedIcon['variant']"
+                        aria-hidden="true"
+                    />
+                </div>
+            @endif
+        </div>
+    @else
         {{ $slot }}
-
-        @if ($clearable && ! $textarea)
-            <div
-                @class([
-                    'tedi-form-field__buttons',
-                    'tedi-form-field__buttons--hidden' => ! $showClearButton,
-                ])
-                @if (! $showClearButton) aria-hidden="true" @endif
-            >
-                <tedi:closing-button
-                    class="tedi-form-field__clear"
-                    size="small"
-                    :icon-size="18"
-                    icon="close"
-                    :aria-label="__('tedi::tedi.clear')"
-                    :show-title="false"
-                    tabindex="{{ $showClearButton ? 0 : -1 }}"
-                    :disabled="$disabled || ! $showClearButton"
-                    {{ $attributes->only([])->merge($clearAttributes) }}
-                />
-
-                @if ($icon)
-                    {{-- Mirrors <tedi-separator axis="vertical" size="1rem" /> (not yet ported as its own component). --}}
-                    <span class="tedi-separator tedi-separator--primary tedi-separator--vertical tedi-separator--thickness-1" style="width: 0px; height: 1rem"></span>
-                @endif
-            </div>
-        @endif
-
-        @if ($resolvedIcon)
-            <div class="tedi-form-field__icon">
-                <tedi:icon
-                    :name="$resolvedIcon['name']"
-                    :size="$resolvedIcon['size']"
-                    :color="$resolvedIcon['color']"
-                    :type="$resolvedIcon['type']"
-                    :variant="$resolvedIcon['variant']"
-                    aria-hidden="true"
-                />
-            </div>
-        @endif
-    </div>
+    @endif
 
     @if ($showFeedbackRow)
         <div class="tedi-form-field__feedback">

@@ -1,9 +1,18 @@
 @use "@tedi-design-system/core/bootstrap-utility/breakpoints";
+@use "../field-surface-mixins" as field-surface;
 
 .tedi-time-field {
   display: flex;
   flex: 1;
   min-width: 0;
+
+  &--small &__field {
+    @include field-surface.size(small);
+  }
+
+  &--large &__field {
+    @include field-surface.size(large);
+  }
 
   &__popover {
     display: flex;
@@ -12,6 +21,8 @@
   }
 
   &__field {
+    @include field-surface.tokens;
+
     display: flex;
     flex: 1;
     gap: var(--form-field-inner-spacing);
@@ -21,6 +32,16 @@
     &:focus,
     &:focus-visible {
       outline: none;
+    }
+
+    // `:where` keeps the paint at one class, so a neighbour reshaping the
+    // field's edges — an input group's addon — reaches it with two.
+    &:where(.tedi-field-surface) {
+      @include field-surface.surface;
+    }
+
+    &.tedi-field-surface {
+      @include field-surface.surface-states(":focus-within", true);
     }
 
     // Button-trigger: the wrapper anchors the popover but only the icon opens it.

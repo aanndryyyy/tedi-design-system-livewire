@@ -55,9 +55,10 @@
       `unavailableDays`, `minYear` and `maxYear` are matcher machinery with no
       server-side analogue — they collapse into the flat `disabledDays` array of
       'Y-m-d' strings that <tedi:calendar> already takes.
-    * `size` is declared for API parity but emits NO class: `tedi-date-field--small`
-      has no rule in dist/tedi.css (grep 0), and Angular only forwards `size` to
-      the wrapping `tedi-form-field`. Set `size` on <tedi:form-field> instead.
+    * `size` emits `tedi-date-field--small` / `--large` (Angular 8 field-surface
+      sizing) and still forwards to a wrapping form-field.
+    * `ownsSurface` comes from a wrapping form-field via @aware. When the
+      wrapper has no box, this host paints `tedi-field-surface`.
     * `selectionLevel` is forwarded to <tedi:calendar>, which seeds its opening
       grid from it when `view` is omitted (Angular's constructor effect:
       `this.view.set(this.selectionLevel())`). This component has no `view` prop
@@ -127,8 +128,18 @@
     'firstDayOfWeek' => 1,
     /** Days that cannot be selected, as 'Y-m-d' strings. */
     'disabledDays' => [],
-    /** default|small — forwarded-only, emits no class. Set it on the wrapping form-field too. */
+    /** default|small|large */
     'size' => 'default',
+    'ownsSurface' => false,
+    'valid' => false,
+    'invalid' => false,
+])
+
+@aware([
+    'ownsSurface' => false,
+    'valid' => false,
+    'size' => 'default',
+    'invalid' => false,
 ])
 
 @php
@@ -146,7 +157,15 @@
     $canClear = $hasValue && ! $inputDisabled && ! $readOnly;
 @endphp
 
-<div {{ $attributes->class(['tedi-date-field']) }}>
+<div {{ $attributes->class([
+    'tedi-date-field',
+    'tedi-date-field--small' => $size === 'small',
+    'tedi-date-field--large' => $size === 'large',
+    'tedi-field-surface' => ! $ownsSurface,
+    'tedi-field-surface--invalid' => ! $ownsSurface && $invalid,
+    'tedi-field-surface--valid' => ! $ownsSurface && $valid,
+    'tedi-field-surface--disabled' => ! $ownsSurface && $inputDisabled,
+]) }}>
     <tedi:date-input
         :input-id="$inputId"
         :value="$display"

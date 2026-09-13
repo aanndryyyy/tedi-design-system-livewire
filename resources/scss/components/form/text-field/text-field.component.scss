@@ -1,14 +1,8 @@
-.tedi-text-field {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
+@use "../field-surface-mixins" as field-surface;
 
-  // Chrome straddles the caret across the insertion point, so with no left
-  // padding most of it falls outside the input's clip box at offset 0. Give it a
-  // pixel of room and pull the box back by the same amount so the value's
-  // position is unchanged — the field's own padding still sets the inset.
-  padding-inline-start: 1px;
-  margin-inline-start: -1px;
+.tedi-text-field {
+  @include field-surface.tokens;
+
   font-size: var(--body-regular-size);
   font-weight: var(--body-regular-weight);
   line-height: var(--body-regular-line-height);
@@ -18,6 +12,24 @@
   border: 0;
   border-radius: var(--form-field-radius);
 
+  // Inside a field box only: in form-field's column, `flex-basis: 0` would
+  // override the height the surface sets.
+  &:not(.tedi-field-surface) {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+
+    // Chrome straddles the caret across the insertion point, so with no left
+    // padding of its own most of it falls outside the input's clip box at
+    // offset 0. Give it a pixel of room and pull the input back by the same
+    // amount so the value's position is unchanged — the box's padding still
+    // sets the inset. Painting its own surface the input has real padding, so
+    // the compensation is neither needed nor wanted there: it would shift the
+    // whole bordered box off its container.
+    padding-inline-start: 1px;
+    margin-inline-start: -1px;
+  }
+
   &::placeholder {
     color: var(--form-input-text-placeholder);
   }
@@ -25,7 +37,6 @@
   &:disabled {
     color: var(--form-input-text-disabled);
     cursor: not-allowed;
-    background: transparent;
   }
 
   /* Chrome, Safari, Edge, Opera */
@@ -37,5 +48,25 @@
   /* Firefox */
   &--arrows-hidden[type="number"] {
     appearance: textfield;
+  }
+
+  // `:where` keeps the paint at one class, so a neighbour reshaping the field's
+  // edges — an input group's addon, a search button — reaches it with two.
+  &:where(.tedi-field-surface) {
+    @include field-surface.surface;
+
+    width: 100%;
+  }
+
+  &.tedi-field-surface {
+    @include field-surface.surface-states;
+  }
+
+  &--small {
+    @include field-surface.size(small);
+  }
+
+  &--large {
+    @include field-surface.size(large);
   }
 }

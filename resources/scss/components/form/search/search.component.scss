@@ -26,36 +26,9 @@
     padding-left: 0;
   }
 
-  & &__input--has-button {
+  &--has-button .tedi-field-surface {
     border-right-width: 0;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
-  }
-
-  & .tedi-form-field:not(
-      .tedi-form-field--disabled,
-      .tedi-form-field--valid,
-      .tedi-form-field--invalid
-    )
-    &__input--has-button:not(:has(input:disabled)) {
-    &:active,
-    &:has(input:active) {
-      box-shadow: inset 0 0 0 1px var(--form-input-border-active);
-    }
-
-    &:focus-within,
-    &:has(input:focus-visible) {
-      box-shadow: inset 0 0 0 1px var(--form-input-border-focus);
-    }
-  }
-
-  & .tedi-form-field--valid &__input--has-button:focus-within,
-  & .tedi-form-field--valid &__input--has-button:has(input:focus-visible) {
-    box-shadow: inset 0 0 0 1px var(--form-general-feedback-success-border);
-  }
-
-  & .tedi-form-field--invalid &__input--has-button:focus-within,
-  & .tedi-form-field--invalid &__input--has-button:has(input:focus-visible) {
-    box-shadow: inset 0 0 0 1px var(--form-general-feedback-error-border);
   }
 }

@@ -23,12 +23,16 @@
     'required' => false,
     /** primary|secondary */
     'color' => 'secondary',
+    /** false|true|reserve-space — hide visually; reserve-space keeps the line. */
+    'visuallyHidden' => false,
 ])
 
 <{{ $as }} {{ $attributes->class([
     'tedi-label',
     'tedi-label--'.$color,
     'tedi-label--small' => $size === 'small',
+    'tedi-label--reserve-space' => $visuallyHidden === 'reserve-space',
+    'sr-only' => $visuallyHidden === true,
 ]) }}>
     {{ $slot }}
     @if ($required)

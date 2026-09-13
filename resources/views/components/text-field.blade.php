@@ -29,6 +29,9 @@
     * `invalid` is an Angular signal driven by the parent form-field's
       NgControl subscription (`setInvalidState`). Server-side there is no live
       control, so it is an explicit prop (CONVENTIONS.md §5).
+    * `ownsSurface` / `valid` / `size` come from a wrapping `<tedi:form-field>`
+      via @aware (`TEDI_FIELD_CONTEXT`). When the wrapper has no box, this
+      control paints `tedi-field-surface` itself (Angular 8).
 --}}
 @props([
     /** Current value. Emitted as the `value` attribute only when non-empty. */
@@ -38,6 +41,18 @@
     /** Renders `aria-invalid="true"`; the visual error state lives on the wrapping form-field. */
     'invalid' => false,
     'disabled' => false,
+    'valid' => false,
+    /** default|small|large — falls back to a wrapping form-field's size. */
+    'size' => 'default',
+    'ownsSurface' => false,
+])
+
+@aware([
+    'ownsSurface' => false,
+    'valid' => false,
+    'size' => 'default',
+    'invalid' => false,
+    'disabled' => false,
 ])
 
 <input
@@ -45,7 +60,11 @@
     @disabled($disabled)
     {{ $attributes->class([
         'tedi-text-field',
+        'tedi-text-field--small' => $size === 'small',
+        'tedi-text-field--large' => $size === 'large',
         'tedi-text-field--arrows-hidden' => (bool) $arrowsHidden,
+        'tedi-field-surface' => ! $ownsSurface,
+        'tedi-field-surface--valid' => ! $ownsSurface && $valid,
     ])->merge(array_filter([
         'value' => (string) $value !== '' ? $value : null,
         'aria-invalid' => $invalid ? 'true' : null,

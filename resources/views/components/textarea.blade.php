@@ -10,7 +10,7 @@
 
     The three computed host styles are ported verbatim from `heightStyle()`,
     `minHeightStyle()` and `maxHeightStyle()`, including the
-    `calc(N * 1lh + 2 * var(--_tedi-textarea-padding-y))` row→height formula
+    `calc(N * 1lh + 2 * var(--_field-padding-y))` row→height formula
     and the `min(a, b)` combination when both `maxRows` and `maxHeight` apply.
     They are emitted through `$attributes->style([...])` so a consumer-supplied
     `style` merges instead of being dropped.
@@ -35,6 +35,9 @@
     * `invalid` is an Angular signal driven by the parent form-field's NgControl
       subscription (`setInvalidState`); server-side it is an explicit prop
       (CONVENTIONS.md §5).
+    * `ownsSurface` / `valid` / `size` come from a wrapping `<tedi:form-field>`
+      via @aware. When the wrapper has no box, this control paints
+      `tedi-field-surface` itself (Angular 8).
 --}}
 @props([
     /** Initial content. Falls back to the slot when empty. */
@@ -54,13 +57,25 @@
     /** Renders `aria-invalid="true"`; the visual error state lives on the wrapping form-field. */
     'invalid' => false,
     'disabled' => false,
+    'valid' => false,
+    /** default|small|large — falls back to a wrapping form-field's size. */
+    'size' => 'default',
+    'ownsSurface' => false,
+])
+
+@aware([
+    'ownsSurface' => false,
+    'valid' => false,
+    'size' => 'default',
+    'invalid' => false,
+    'disabled' => false,
 ])
 
 @php
     // Angular: toCssSize() — a bare number means pixels.
     $toCssSize = fn ($v) => is_numeric($v) ? $v.'px' : (string) $v;
     // Angular: rowsToHeight().
-    $rowsToHeight = fn ($rows) => 'calc('.$rows.' * 1lh + 2 * var(--_tedi-textarea-padding-y))';
+    $rowsToHeight = fn ($rows) => 'calc('.$rows.' * 1lh + 2 * var(--_field-padding-y))';
 
     $hasHeight = $height !== null && $height !== '';
     $hasMaxHeight = $maxHeight !== null && $maxHeight !== '';
@@ -91,6 +106,9 @@
         'tedi-textarea',
         'tedi-textarea--not-resizable' => ! $resizable,
         'tedi-textarea--auto-grow' => (bool) $autoGrow,
+        'tedi-textarea--small' => $size === 'small',
+        'tedi-field-surface' => ! $ownsSurface,
+        'tedi-field-surface--valid' => ! $ownsSurface && $valid,
     ])->merge(array_filter([
         'aria-invalid' => $invalid ? 'true' : null,
     ], fn ($v) => $v !== null));

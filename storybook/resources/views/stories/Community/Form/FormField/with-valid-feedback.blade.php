@@ -40,7 +40,7 @@
     `class="tedi-input"`: that class does exist in this package's vendored SCSS
     (select.component.scss defines it for the select trigger) and it paints its
     own 1px border plus form-field-height padding, which double-boxes the
-    control inside .tedi-form-field__input.
+    control inside .tedi-form-field__box.
 --}}
 <tedi:form-field
     :invalid="(bool) $errorText"

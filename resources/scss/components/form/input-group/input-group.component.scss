@@ -24,7 +24,9 @@
 
   &__prefix--text,
   &__suffix--text {
-    padding: calc(var(--form-field-padding-y-md-default) - var(--tedi-borders-01))
+    padding: calc(
+        var(--form-field-padding-y-md-default) - var(--tedi-borders-01)
+      )
       var(--form-field-padding-x-md-default);
   }
 
@@ -47,7 +49,9 @@
     .tedi-input-group__prefix:not(.tedi-input-group__prefix--text) > *,
     .tedi-input-group__suffix:not(.tedi-input-group__suffix--text) > * {
       min-width: 1.5rem;
-      padding: calc(var(--form-field-padding-y-md-default) - var(--tedi-borders-01))
+      padding: calc(
+          var(--form-field-padding-y-md-default) - var(--tedi-borders-01)
+        )
         var(--form-field-padding-x-md-default);
       color: var(--general-text-secondary);
     }
@@ -123,7 +127,7 @@
   }
 
   &--has-prefix {
-    .tedi-form-field__input,
+    .tedi-field-surface,
     .tedi-input {
       border-top-left-radius: 0;
       border-bottom-left-radius: 0;
@@ -131,7 +135,7 @@
   }
 
   &--has-suffix {
-    .tedi-form-field__input,
+    .tedi-field-surface,
     .tedi-input {
       border-top-right-radius: 0;
       border-bottom-right-radius: 0;

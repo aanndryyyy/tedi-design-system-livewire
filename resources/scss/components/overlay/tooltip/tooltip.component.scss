@@ -21,7 +21,7 @@ tedi-tooltip {
     position: absolute;
     width: 8px;
     height: 8px;
-    background: var(--tooltip-background);
+    background: var(--tooltip-primary-background);
     clip-path: inset(0 -5px -5px 0);
   }
 
@@ -65,12 +65,19 @@ tedi-tooltip-trigger {
   }
 
   .tedi-tooltip-trigger__text {
+    // Safari below 26 only honours the `text-decoration` shorthand with a style
+    // and color through the `-webkit-` prefix; without it the dashed underline
+    // that signals a text trigger is dropped in older Safari.
+    // stylelint-disable-next-line property-no-vendor-prefix
+    -webkit-text-decoration: underline dashed var(--general-border-secondary);
     text-decoration: underline dashed var(--general-border-secondary);
     text-underline-offset: 0.5em;
     cursor: default;
 
     &:hover {
       color: var(--link-primary-default);
+      // stylelint-disable-next-line property-no-vendor-prefix
+      -webkit-text-decoration-color: var(--general-border-brand);
       text-decoration-color: var(--general-border-brand);
     }
   }
@@ -85,9 +92,9 @@ tedi-tooltip-trigger {
   display: block;
   max-width: var(--tooltip-max-width);
   padding: var(--tooltip-padding-y) var(--tooltip-padding-x);
-  color: var(--tooltip-text);
+  color: var(--tooltip-primary-text);
   overflow-wrap: break-word;
-  background: var(--tooltip-background);
+  background: var(--tooltip-primary-background);
   border-radius: var(--tooltip-radius);
   box-shadow: 0 1px 5px 0 var(--tedi-alpha-20);
 

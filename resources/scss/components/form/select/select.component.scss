@@ -1,30 +1,21 @@
+@use "../field-surface-mixins" as field-surface;
 @import "../../overlay/dropdown/dropdown-item/dropdown-item.component";
 
 .tedi-input {
-  --_border-color: var(--form-input-border-default);
-  --_color: var(--form-input-text-filled);
-  --_background-color: var(--form-input-background-default);
+  @include field-surface.tokens;
+  @include field-surface.surface(content);
+
   --_placeholder-color: var(--form-input-text-placeholder);
-  --_border-radius: var(--form-field-radius);
-  --_font-size: var(--body-regular-size);
-  --_line-height: var(--body-regular-line-height);
-  --_padding-y: var(--form-field-padding-y-md-default);
-  --_padding-x: var(--form-field-padding-x-md-default);
   --_search-input-reserve: 5rem;
 
-  min-height: var(--form-field-height);
-  padding: calc(var(--_padding-y) - var(--tedi-borders-01)) var(--_padding-x);
   margin-bottom: 0;
   font-family: var(--family-default);
-  font-size: var(--_font-size);
-  line-height: var(--_line-height);
-  color: var(--_color);
-  background-color: var(--_background-color);
-  border: var(--tedi-borders-01) solid var(--_border-color);
-  border-radius: var(--_border-radius);
+  font-size: var(--body-regular-size);
+  line-height: var(--body-regular-line-height);
+  color: var(--form-input-text-filled);
 
   &:hover {
-    --_border-color: var(--form-input-border-hover);
+    --_field-border-color: var(--form-input-border-hover);
   }
 
   &:focus,
@@ -35,15 +26,15 @@
   }
 
   &--disabled {
-    --_color: var(--form-input-text-disabled);
-    --_border-color: var(--form-input-border-disabled);
-    --_background-color: var(--form-input-background-disabled);
+    --_field-border-color: var(--form-input-border-disabled);
+    --_field-background: var(--form-input-background-disabled);
 
+    color: var(--form-input-text-disabled);
     pointer-events: none;
   }
 
   &--error:not(.tedi-input--disabled) {
-    --_border-color: var(--form-general-feedback-error-border);
+    --_field-border-color: var(--form-general-feedback-error-border);
 
     &:focus,
     &:active,
@@ -54,7 +45,7 @@
   }
 
   &--valid:not(.tedi-input--disabled) {
-    --_border-color: var(--form-general-feedback-success-border);
+    --_field-border-color: var(--form-general-feedback-success-border);
 
     &:focus,
     &:active,
@@ -65,9 +56,7 @@
   }
 
   &--small {
-    --_padding-y: var(--form-field-padding-y-sm);
-
-    min-height: var(--form-field-height-sm);
+    @include field-surface.size(small);
   }
 }
 
@@ -145,7 +134,7 @@
     flex-wrap: wrap;
     gap: var(--form-field-inner-spacing);
     align-items: center;
-    min-height: var(--_line-height);
+    min-height: var(--body-regular-line-height);
     overflow: hidden;
   }
 

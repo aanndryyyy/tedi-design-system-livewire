@@ -6,6 +6,15 @@
     font-size: var(--body-small-regular-size);
   }
 
+  // `display` because `min-height` has no effect on an inline `<label>`; `1lh`
+  // so the reserved line tracks the label's size.
+  &--reserve-space {
+    display: block;
+    min-height: 1lh;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
   &--required {
     margin-left: var(--content-label-inner-spacing-x);
     color: var(--form-general-feedback-error-border);

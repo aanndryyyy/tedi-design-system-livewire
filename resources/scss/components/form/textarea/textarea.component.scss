@@ -1,11 +1,10 @@
-.tedi-textarea {
-  --_tedi-textarea-padding-y: var(--form-field-padding-y-md-default);
+@use "../field-surface-mixins" as field-surface;
 
-  flex: 1;
+.tedi-textarea {
+  @include field-surface.tokens(var(--form-textarea-min-height));
+
   width: 100%;
-  min-height: var(--form-textarea-min-height);
-  padding: var(--_tedi-textarea-padding-y)
-    var(--form-field-padding-x-md-default);
+  padding: var(--_field-padding-y) var(--form-field-padding-x-md-default);
   font-size: var(--body-regular-size);
   font-weight: var(--body-regular-weight);
   line-height: var(--body-regular-line-height);
@@ -23,7 +22,13 @@
   &:disabled {
     color: var(--form-input-text-disabled);
     cursor: not-allowed;
-    background: transparent;
+  }
+
+  // Inside a field box only: in form-field's column, `flex-basis: 0` would
+  // override the height the surface sets.
+  &:not(.tedi-field-surface) {
+    flex: 1;
+    min-width: 0;
   }
 
   &--not-resizable {
@@ -36,10 +41,65 @@
     field-sizing: content;
     resize: none;
   }
+
+  // `:where` keeps the paint at one class, so a neighbour reshaping the field's
+  // edges — an input group's addon — reaches it with two.
+  &:where(.tedi-field-surface) {
+    @include field-surface.surface(content);
+  }
+
+  &.tedi-field-surface {
+    @include field-surface.surface-states;
+  }
+
+  &--small {
+    @include field-surface.size(small);
+  }
 }
 
-.tedi-form-field {
-  &--small .tedi-textarea {
-    --_tedi-textarea-padding-y: var(--form-field-padding-y-sm);
+// A textarea is taller than a single field row, so a form-field box holding one
+// has to grow with it instead of clipping it. This lives here rather than in
+// form-field so the box keeps no knowledge of its controls: the rules only ship
+// when a textarea is on the page, which is exactly when they can match.
+.tedi-form-field__box:has(> .tedi-textarea) {
+  align-items: flex-start;
+  height: auto;
+  min-height: var(--_field-height);
+
+  // The textarea's own padding is the field's inset on three sides, which also
+  // keeps its whole scroll area clickable rather than just the text. The box
+  // keeps the trailing one, where its additions sit.
+  padding-block: 0;
+  padding-inline: 0 var(--form-field-padding-x-md-default);
+
+  // Centre the additions on the first row, where they sit in a single-line
+  // field, instead of halfway down a tall one.
+  .tedi-form-field__buttons,
+  .tedi-form-field__icon {
+    display: flex;
+    align-items: center;
+    height: var(--_field-height);
   }
+}
+
+// The textarea reaches under the additions all the way to the border, so its
+// own resize grip lands on the field's visual corner rather than adrift of it
+// wherever an addon column happened to end. The matching padding holds the text
+// clear of what it is reaching under, and the additions paint over it — they
+// come later in the box.
+.tedi-form-field__box > .tedi-textarea {
+  // The lane plus the box's trailing padding is exactly the room the additions
+  // take out of the row, so giving it back as a negative margin lands the
+  // trailing edge — and with it the grip — on the border. The same figure as
+  // padding holds the text one inner gap clear of the additions.
+  padding-inline-end: calc(
+    var(--form-field-padding-x-md-default) + var(--tedi-form-field-addon-lane)
+  );
+  margin-inline-end: calc(
+    -1 *
+      (
+        var(--form-field-padding-x-md-default) +
+          var(--tedi-form-field-addon-lane)
+      )
+  );
 }

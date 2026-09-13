@@ -1,0 +1,18 @@
+// Not vendored from Angular/React — aliases for CSS custom properties that
+// `@tedi-design-system/core` renamed or removed between 6.5.0 and 6.9.0 while
+// Angular 8.0.1-rc (and the community TOC/header sheets) still reference the
+// previous names. CONVENTIONS.md §2 forbids editing those vendored sheets.
+//
+// Drop an alias when the matching upstream stylesheet catches up.
+
+:root {
+  --general-selected-border-width: var(--general-border-width-selected);
+  --table-of-contents-padding-level-1: var(
+    --table-of-contents-padding-left-level-1
+  );
+  --table-of-contents-padding-level-2: var(
+    --table-of-contents-padding-left-level-2
+  );
+  // Removed in core 6.5.1 with no replacement token. 84px was the 6.5.0 value.
+  --layout-header-height: 84px;
+}

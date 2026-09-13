@@ -124,10 +124,10 @@ class FormTextComponentsTest extends TestCase
 
         $this->assertStringNotContainsString('height: 7.5rem', $html);
         $this->assertStringContainsString(
-            'min-height: calc(3 * 1lh + 2 * var(--_tedi-textarea-padding-y));', $html
+            'min-height: calc(3 * 1lh + 2 * var(--_field-padding-y));', $html
         );
         $this->assertStringContainsString(
-            'max-height: calc(12 * 1lh + 2 * var(--_tedi-textarea-padding-y));', $html
+            'max-height: calc(12 * 1lh + 2 * var(--_field-padding-y));', $html
         );
     }
 
@@ -136,10 +136,10 @@ class FormTextComponentsTest extends TestCase
         $html = Blade::render('<tedi:textarea :auto-grow="true" :min-rows="5" :max-rows="8" />');
 
         $this->assertStringContainsString(
-            'min-height: calc(5 * 1lh + 2 * var(--_tedi-textarea-padding-y));', $html
+            'min-height: calc(5 * 1lh + 2 * var(--_field-padding-y));', $html
         );
         $this->assertStringContainsString(
-            'max-height: calc(8 * 1lh + 2 * var(--_tedi-textarea-padding-y));', $html
+            'max-height: calc(8 * 1lh + 2 * var(--_field-padding-y));', $html
         );
     }
 
@@ -156,7 +156,7 @@ class FormTextComponentsTest extends TestCase
         $html = Blade::render('<tedi:textarea :auto-grow="true" max-height="200px" />');
 
         $this->assertStringContainsString(
-            'max-height: min(calc(12 * 1lh + 2 * var(--_tedi-textarea-padding-y)), 200px);', $html
+            'max-height: min(calc(12 * 1lh + 2 * var(--_field-padding-y)), 200px);', $html
         );
     }
 
@@ -266,13 +266,13 @@ class FormTextComponentsTest extends TestCase
         $this->assertMissingClass('tedi-form-field__icon', $withButton, on: 'tedi-form-field__icon');
     }
 
-    public function test_search_input_box_gets_the_has_button_class(): void
+    public function test_search_host_gets_the_has_button_class(): void
     {
         $plain = Blade::render('<tedi:search />');
-        $this->assertMissingClass('tedi-search__input--has-button', $plain, on: 'tedi-form-field__input');
+        $this->assertMissingClass('tedi-search--has-button', $plain, on: 'tedi-search');
 
         $withButton = Blade::render('<tedi:search :button="[\'text\' => \'Otsi\']" />');
-        $this->assertHasClass('tedi-search__input--has-button', $withButton, on: 'tedi-form-field__input');
+        $this->assertHasClass('tedi-search--has-button', $withButton, on: 'tedi-search');
     }
 
     public function test_search_button_classes_and_variant(): void
