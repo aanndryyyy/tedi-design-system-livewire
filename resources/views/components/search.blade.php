@@ -125,6 +125,7 @@
     style="--tedi-search-field-height: {{ $fieldHeight }}"
     @class([
         'tedi-search',
+        'tedi-search--has-button' => $hasButton,
         'tedi-search--button-icon-only' => $hasButton && ! $buttonText,
     ])
 >
@@ -133,7 +134,6 @@
             :size="$size"
             :icon="$fieldIcon"
             :clearable="$clearable && ! $disabled"
-            :input-class="$hasButton ? 'tedi-search__input--has-button' : null"
             :value="$value"
             :disabled="$disabled"
             :invalid="$feedbackType === 'error'"

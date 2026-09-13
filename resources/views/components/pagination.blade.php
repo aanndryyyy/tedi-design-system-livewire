@@ -61,6 +61,8 @@
     'background' => 'white',
     /** top|bottom|none */
     'dividerPosition' => 'top',
+    /** between|left|right — left/right group the slots; between is the default spread. */
+    'align' => 'between',
     /** Hide the "X results" label even when totalItems/results slot is set. */
     'hideResults' => false,
     /** Hide the page-size select even when pageSizeOptions is non-empty. */
@@ -190,6 +192,8 @@
         'tedi-pagination',
         'tedi-pagination--bg-'.$background,
         'tedi-pagination--divider-'.$dividerPosition => $dividerPosition !== 'none',
+        'tedi-pagination--align-left' => $align === 'left',
+        'tedi-pagination--align-right' => $align === 'right',
         'tedi-pagination--no-pager' => ! $showPager,
         'tedi-pagination--no-results' => ! $showResults,
         'tedi-pagination--no-page-size' => ! $showPageSizeSelect,

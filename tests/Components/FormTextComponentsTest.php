@@ -124,10 +124,10 @@ class FormTextComponentsTest extends TestCase
 
         $this->assertStringNotContainsString('height: 7.5rem', $html);
         $this->assertStringContainsString(
-            'min-height: calc(3 * 1lh + 2 * var(--_tedi-textarea-padding-y));', $html
+            'min-height: calc(3 * 1lh + 2 * var(--_field-padding-y));', $html
         );
         $this->assertStringContainsString(
-            'max-height: calc(12 * 1lh + 2 * var(--_tedi-textarea-padding-y));', $html
+            'max-height: calc(12 * 1lh + 2 * var(--_field-padding-y));', $html
         );
     }
 
@@ -136,10 +136,10 @@ class FormTextComponentsTest extends TestCase
         $html = Blade::render('<tedi:textarea :auto-grow="true" :min-rows="5" :max-rows="8" />');
 
         $this->assertStringContainsString(
-            'min-height: calc(5 * 1lh + 2 * var(--_tedi-textarea-padding-y));', $html
+            'min-height: calc(5 * 1lh + 2 * var(--_field-padding-y));', $html
         );
         $this->assertStringContainsString(
-            'max-height: calc(8 * 1lh + 2 * var(--_tedi-textarea-padding-y));', $html
+            'max-height: calc(8 * 1lh + 2 * var(--_field-padding-y));', $html
         );
     }
 
@@ -156,7 +156,7 @@ class FormTextComponentsTest extends TestCase
         $html = Blade::render('<tedi:textarea :auto-grow="true" max-height="200px" />');
 
         $this->assertStringContainsString(
-            'max-height: min(calc(12 * 1lh + 2 * var(--_tedi-textarea-padding-y)), 200px);', $html
+            'max-height: min(calc(12 * 1lh + 2 * var(--_field-padding-y)), 200px);', $html
         );
     }
 
@@ -266,13 +266,13 @@ class FormTextComponentsTest extends TestCase
         $this->assertMissingClass('tedi-form-field__icon', $withButton, on: 'tedi-form-field__icon');
     }
 
-    public function test_search_input_box_gets_the_has_button_class(): void
+    public function test_search_host_gets_the_has_button_class(): void
     {
         $plain = Blade::render('<tedi:search />');
-        $this->assertMissingClass('tedi-search__input--has-button', $plain, on: 'tedi-form-field__input');
+        $this->assertMissingClass('tedi-search--has-button', $plain, on: 'tedi-search');
 
         $withButton = Blade::render('<tedi:search :button="[\'text\' => \'Otsi\']" />');
-        $this->assertHasClass('tedi-search__input--has-button', $withButton, on: 'tedi-form-field__input');
+        $this->assertHasClass('tedi-search--has-button', $withButton, on: 'tedi-search');
     }
 
     public function test_search_button_classes_and_variant(): void
@@ -364,14 +364,14 @@ class FormTextComponentsTest extends TestCase
     public function test_search_feedback_type_drives_the_form_field_state(): void
     {
         $error = Blade::render('<tedi:search :feedback-text="[\'text\' => \'Viga\', \'type\' => \'error\']" />');
-        $this->assertHasClass('tedi-form-field--invalid', $error, on: 'tedi-form-field');
+        $this->assertHasClass('tedi-field-surface--invalid', $error, on: 'tedi-form-field__box');
 
         $valid = Blade::render('<tedi:search :feedback-text="[\'text\' => \'Sobib\', \'type\' => \'valid\']" />');
-        $this->assertHasClass('tedi-form-field--valid', $valid, on: 'tedi-form-field');
+        $this->assertHasClass('tedi-field-surface--valid', $valid, on: 'tedi-form-field__box');
 
         $hint = Blade::render('<tedi:search :feedback-text="[\'text\' => \'Vihje\']" />');
-        $this->assertMissingClass('tedi-form-field--invalid', $hint, on: 'tedi-form-field');
-        $this->assertMissingClass('tedi-form-field--valid', $hint, on: 'tedi-form-field');
+        $this->assertMissingClass('tedi-field-surface--invalid', $hint, on: 'tedi-form-field__box');
+        $this->assertMissingClass('tedi-field-surface--valid', $hint, on: 'tedi-form-field__box');
     }
 
     public function test_search_size_reaches_the_form_field(): void
@@ -386,7 +386,7 @@ class FormTextComponentsTest extends TestCase
     {
         $html = Blade::render('<tedi:search :disabled="true" />');
 
-        $this->assertHasClass('tedi-form-field--disabled', $html, on: 'tedi-form-field');
+        $this->assertHasClass('tedi-field-surface--disabled', $html, on: 'tedi-form-field__box');
         $this->assertMatchesRegularExpression('/<input\s+tedi-text-field\s+disabled/', $html);
     }
 

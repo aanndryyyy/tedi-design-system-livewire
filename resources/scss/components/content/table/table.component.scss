@@ -92,16 +92,22 @@
   background: var(--table-default);
 }
 
+.tedi-table__cell--control {
+  padding-right: var(--table-data-padding-x-sm);
+  padding-left: var(--table-data-padding-x-sm);
+}
+
+.tedi-table__cell--control-fit {
+  width: 1%;
+  white-space: nowrap;
+}
+
 .tedi-table__cell--align-left {
   text-align: left;
 }
 
 .tedi-table__cell--align-center {
   text-align: center;
-
-  .tedi-table__expand-toggle {
-    justify-content: center;
-  }
 }
 
 .tedi-table__cell--align-right {
@@ -195,10 +201,11 @@
   padding: 0;
 }
 
+// Not transitioned — tree sub-rows are real `<tr>`s that can't animate, so
+// expansion stays instant in both modes.
 .tedi-table__sub-component-wrapper {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 300ms ease;
 
   .tedi-table__row--sub-component-open & {
     grid-template-rows: 1fr;
@@ -282,6 +289,7 @@
 }
 
 .tedi-table__pagination {
+  overflow: hidden;
   border: var(--tedi-borders-01) solid var(--table-border);
 }
 
@@ -322,6 +330,27 @@
 
   .tedi-table__cell--sticky-left-edge {
     box-shadow: inset -1px 0 0 var(--table-border);
+  }
+
+  // A drop-shadow on a `border-collapse: collapse` cell is swallowed by the
+  // neighbouring cells, so the frozen block's elevation is drawn with a gradient
+  // pseudo-element that sits just outside the edge, above the scrolled body.
+  // Hidden until the body is scrolled off the leading edge (see hasStartShadow).
+  // Toggled via `background` (not `opacity`) so the sticky cell is never
+  // promoted to a compositing layer — an opacity animation on a sticky cell
+  // makes the browser re-rasterise its text ~1px off (the layout box stays put).
+  .tedi-table__cell--sticky-left-edge::after {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 100%;
+    width: var(--tedi-dimensions-03);
+    pointer-events: none;
+    content: "";
+  }
+
+  .tedi-table__scroll--shadow-start .tedi-table__cell--sticky-left-edge::after {
+    background: linear-gradient(to right, var(--tedi-alpha-10), transparent);
   }
 
   // Sticky cells must match their row's background so the scrolled body never
@@ -378,6 +407,99 @@
   }
 }
 
+.tedi-table--sticky-last-column {
+  // Mirror of sticky-first-column on the trailing edge. The frozen block = the
+  // last content column + any trailing control columns. Per-cell `right`
+  // offsets come from the component; the divider is drawn only on the block's
+  // left edge (the boundary facing the scrolling body).
+  .tedi-table__header-cell.tedi-table__cell--sticky-right {
+    position: sticky;
+    z-index: 2;
+    background: var(--table-default);
+  }
+
+  .tedi-table__cell--sticky-right {
+    position: sticky;
+    z-index: 1;
+    background: var(--table-default);
+  }
+
+  .tedi-table__cell--sticky-right-edge {
+    box-shadow: inset 1px 0 0 var(--table-border);
+  }
+
+  // See sticky-left-edge — gradient pseudo casts the elevation left over the
+  // scrolled body (a collapsed-cell drop-shadow would be clipped). Hidden until
+  // the body is scrolled off the trailing edge (see hasEndShadow).
+  // See sticky-left-edge — toggled via `background` to avoid the sticky-cell
+  // compositing text-snap.
+  .tedi-table__cell--sticky-right-edge::after {
+    position: absolute;
+    top: 0;
+    right: 100%;
+    bottom: 0;
+    width: var(--tedi-dimensions-03);
+    pointer-events: none;
+    content: "";
+  }
+
+  .tedi-table__scroll--shadow-end .tedi-table__cell--sticky-right-edge::after {
+    background: linear-gradient(to left, var(--tedi-alpha-10), transparent);
+  }
+
+  // Sticky cells must match their row's background so the scrolled body never
+  // shows through.
+  .tedi-table__body .tedi-table__row--sub-row>.tedi-table__cell--sticky-right {
+    background: var(--table-striped);
+  }
+
+  &.tedi-table--striped .tedi-table__body .tedi-table__row:nth-of-type(even)>.tedi-table__cell--sticky-right {
+    background: var(--table-striped);
+  }
+
+  .tedi-table__body .tedi-table__row--picked-up>.tedi-table__cell--sticky-right {
+    background: var(--table-hover);
+  }
+
+  &.tedi-table--striped .tedi-table__body .tedi-table__row--picked-up:nth-of-type(even)>.tedi-table__cell--sticky-right {
+    background: var(--table-hover);
+  }
+
+  .tedi-table__head .tedi-table__header-cell--picked-up.tedi-table__cell--sticky-right {
+    background: var(--table-hover);
+  }
+
+  // Re-draw the focus ring on the frozen block: top/bottom on every sticky
+  // cell, the right edge on the start cell, the divider on the edge cell.
+  .tedi-table__row--clickable:focus-visible>.tedi-table__cell--sticky-right {
+    box-shadow:
+      inset 0 var(--tedi-borders-02) 0 var(--tedi-primary-500),
+      inset 0 calc(var(--tedi-borders-02) * -1) 0 var(--tedi-primary-500);
+  }
+
+  .tedi-table__row--clickable:focus-visible>.tedi-table__cell--sticky-right-start {
+    box-shadow:
+      inset calc(var(--tedi-borders-02) * -1) 0 0 var(--tedi-primary-500),
+      inset 0 var(--tedi-borders-02) 0 var(--tedi-primary-500),
+      inset 0 calc(var(--tedi-borders-02) * -1) 0 var(--tedi-primary-500);
+  }
+
+  .tedi-table__row--clickable:focus-visible>.tedi-table__cell--sticky-right-edge {
+    box-shadow:
+      inset 1px 0 0 var(--table-border),
+      inset 0 var(--tedi-borders-02) 0 var(--tedi-primary-500),
+      inset 0 calc(var(--tedi-borders-02) * -1) 0 var(--tedi-primary-500);
+  }
+
+  .tedi-table__row--clickable:focus-visible>.tedi-table__cell--sticky-right-start.tedi-table__cell--sticky-right-edge {
+    box-shadow:
+      inset 1px 0 0 var(--table-border),
+      inset calc(var(--tedi-borders-02) * -1) 0 0 var(--tedi-primary-500),
+      inset 0 var(--tedi-borders-02) 0 var(--tedi-primary-500),
+      inset 0 calc(var(--tedi-borders-02) * -1) 0 var(--tedi-primary-500);
+  }
+}
+
 .tedi-table--sticky-header {
   .tedi-table__head {
     border-bottom: 0;
@@ -403,6 +525,11 @@
     top: 0;
     z-index: 2;
     background: var(--table-default);
+
+    // The bottom divider is drawn as an inset shadow (it sticks with the pinned
+    // header, whereas a collapsed border can scroll away). Drop the base
+    // border-bottom so the two don't stack into a double-thick line.
+    border-bottom: 0;
     box-shadow: inset 0 -1px 0 var(--table-border-th);
   }
 
@@ -414,6 +541,36 @@
     box-shadow:
       inset -1px 0 0 var(--table-border),
       inset 0 -1px 0 var(--table-border-th);
+  }
+
+  &.tedi-table--sticky-last-column .tedi-table__head .tedi-table__header-cell.tedi-table__cell--sticky-right {
+    z-index: 3;
+  }
+
+  &.tedi-table--sticky-last-column .tedi-table__head .tedi-table__header-cell.tedi-table__cell--sticky-right-edge {
+    box-shadow:
+      inset 1px 0 0 var(--table-border),
+      inset 0 -1px 0 var(--table-border-th);
+  }
+
+  // The pinned header casts a full-width downward elevation shadow over the
+  // scrolled body once scrolled down. Drawn with a gradient pseudo (a
+  // drop-shadow on a border-collapse cell would be clipped) on the row rather
+  // than on each cell: a per-cell pseudo is redrawn by every header cell that
+  // scrolls underneath a frozen column, and the two gradients composite there
+  // into a visibly darker band. The row spans the table's full scroll width, so
+  // one strip covers the viewport at any horizontal offset. The column
+  // side-shadow (::after, defined with the sticky columns) already spans full
+  // height, header included.
+  .tedi-table__scroll--shadow-header .tedi-table__head .tedi-table__row::after {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    height: var(--tedi-dimensions-03);
+    pointer-events: none;
+    content: "";
+    background: linear-gradient(to bottom, var(--tedi-alpha-10), transparent);
   }
 }
 

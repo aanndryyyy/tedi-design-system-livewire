@@ -77,4 +77,24 @@ class Tedi
 
         return (string) $value;
     }
+
+    /**
+     * Whether a nested field should skip painting `tedi-field-surface`.
+     *
+     * Angular's TEDI_FIELD_CONTEXT. Blade `@aware` cannot see values assigned
+     * later in the parent view — the nested control renders while the parent's
+     * slot is captured, so only the parent's *tag* attributes are visible.
+     * Form-field's box is `icon || clearable`, both of which are those tags.
+     */
+    public static function fieldOwnsSurface(bool $explicit = false): bool
+    {
+        if ($explicit) {
+            return true;
+        }
+
+        $view = app('view');
+
+        return (bool) $view->getConsumableComponentData('icon', null)
+            || (bool) $view->getConsumableComponentData('clearable', false);
+    }
 }

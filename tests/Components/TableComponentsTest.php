@@ -68,6 +68,7 @@ class TableComponentsTest extends TestCase
             'vertical-borders' => 'tedi-table--vertical-borders',
             'borderless' => 'tedi-table--borderless',
             'sticky-first-column' => 'tedi-table--sticky-first-column',
+            'sticky-last-column' => 'tedi-table--sticky-last-column',
             'sticky-header' => 'tedi-table--sticky-header',
             'fixed-layout' => 'tedi-table--fixed-layout',
         ];

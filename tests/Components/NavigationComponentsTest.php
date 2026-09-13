@@ -264,6 +264,19 @@ class NavigationComponentsTest extends TestCase
         $this->assertHasClass('tedi-pagination--no-page-size', $html, 'tedi-pagination');
     }
 
+    public function test_pagination_align_classes(): void
+    {
+        $between = Blade::render('<tedi:pagination :page-count="3" />');
+        $this->assertMissingClass('tedi-pagination--align-left', $between, 'tedi-pagination');
+        $this->assertMissingClass('tedi-pagination--align-right', $between, 'tedi-pagination');
+
+        $left = Blade::render('<tedi:pagination :page-count="3" align="left" />');
+        $this->assertHasClass('tedi-pagination--align-left', $left, 'tedi-pagination');
+
+        $right = Blade::render('<tedi:pagination :page-count="3" align="right" />');
+        $this->assertHasClass('tedi-pagination--align-right', $right, 'tedi-pagination');
+    }
+
     public function test_pagination_results_label_when_total_items_set(): void
     {
         $html = Blade::render('<tedi:pagination :page-count="3" :total-items="42" />');

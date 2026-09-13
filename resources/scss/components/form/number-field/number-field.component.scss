@@ -92,8 +92,7 @@
   align-items: stretch;
   width: var(--form-number-input-min-width);
   height: var(--form-field-height);
-  padding-right: var(--form-field-padding-y-3-default);
-  padding-left: var(--form-field-padding-y-3-default);
+  padding-inline: var(--form-field-padding-x-sm);
   background-color: var(--form-input-background-default);
   border: var(--tedi-borders-01) solid var(--form-input-border-default);
 

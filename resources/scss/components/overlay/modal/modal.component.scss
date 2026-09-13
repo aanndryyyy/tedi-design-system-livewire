@@ -199,10 +199,6 @@ $modal-widths: (
 // CDK Dialog-based modal
 // =============================================================================
 
-.cdk-overlay-container {
-  z-index: var(--z-index-modal);
-}
-
 .tedi-modal-backdrop {
   background: var(--general-surface-overlay);
 }

@@ -67,9 +67,22 @@
     'minuteStep' => 1,
     /** Whether the picker panel is shown. Stands in for Angular's popover open state. */
     'open' => false,
+    /** default|small|large */
+    'size' => 'default',
+    'ownsSurface' => false,
+    'valid' => false,
+])
+
+@aware([
+    'ownsSurface' => false,
+    'valid' => false,
+    'size' => 'default',
+    'invalid' => false,
+    'disabled' => false,
 ])
 
 @php
+    $ownsSurface = \Tedi\Livewire\Tedi::fieldOwnsSurface((bool) $ownsSurface);
     // Unconditional: the id is referenced on every render path (CONVENTIONS.md §5,
     // precedent select.blade.php).
     $inputId = $inputId ?? \Tedi\Livewire\Tedi::id('tedi-time-field');
@@ -96,7 +109,11 @@
     $iconLabel = __('tedi::tedi.time-field.select-time');
 @endphp
 
-<div class="tedi-time-field">
+<div @class([
+    'tedi-time-field',
+    'tedi-time-field--small' => $size === 'small',
+    'tedi-time-field--large' => $size === 'large',
+])>
     {{-- The popover wrapper only exists in the popover branch; Angular renders a
          bare field div otherwise, and `.tedi-time-field__popover` is a flex box
          that would change the layout if emitted unconditionally. --}}
@@ -104,7 +121,12 @@
     <div class="tedi-time-field__popover">
     @endif
 
-        <div @class($fieldClasses)>
+        <div @class(array_merge($fieldClasses, [
+            'tedi-field-surface' => ! $ownsSurface,
+            'tedi-field-surface--invalid' => ! $ownsSurface && $invalid,
+            'tedi-field-surface--valid' => ! $ownsSurface && $valid,
+            'tedi-field-surface--disabled' => ! $ownsSurface && $disabled,
+        ]))>
             <input
                 inputmode="numeric"
                 type="text"

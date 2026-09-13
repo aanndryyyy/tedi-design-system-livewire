@@ -1,0 +1,101 @@
+/// Separate from the paint so it can sit on the bare block selector, where a
+/// one-class `size()` modifier can still beat it. `--_field-padding-y` is read
+/// from `date-input.component.scss`, so the name is part of the contract.
+@mixin tokens($height: var(--form-field-height)) {
+  --_field-padding-y: var(--form-field-padding-y-md-default);
+  --_field-padding-x: var(--form-field-padding-x-md-default);
+  --_field-height: #{$height};
+  --_field-border-color: var(--form-input-border-default);
+  --_field-background: var(--form-input-background-default);
+  --_field-ring-color: transparent;
+}
+
+/// `content` sizing subtracts the border from the padding, so a content-sized
+/// field rests at the same height as a fixed one.
+///
+/// Include this at ONE class of specificity — `&:where(.tedi-field-surface)`,
+/// not `&.tedi-field-surface`. A neighbour that reshapes the field's edges
+/// (`.tedi-input-group--has-prefix .tedi-field-surface`, `.tedi-search--has-button
+/// .tedi-field-surface`) can only reach it with two, and a compound here ties
+/// with them — leaving the winner to stylesheet insertion order. `surface-states`
+/// has no such conflict and stays on the compound.
+@mixin surface($sizing: fixed) {
+  background: var(--_field-background);
+  border: var(--tedi-borders-01) solid var(--_field-border-color);
+  border-radius: var(--form-field-radius);
+  box-shadow: inset 0 0 0 var(--tedi-borders-01) var(--_field-ring-color);
+
+  @if $sizing == content {
+    min-height: var(--_field-height);
+    padding: calc(var(--_field-padding-y) - var(--tedi-borders-01))
+      var(--_field-padding-x);
+  } @else {
+    height: var(--_field-height);
+    padding: var(--_field-padding-y) var(--_field-padding-x);
+  }
+}
+
+@mixin size($size) {
+  @if $size == small {
+    --_field-padding-y: var(--form-field-padding-y-sm);
+    --_field-height: var(--form-field-height-sm);
+  } @else if $size == large {
+    --_field-padding-y: var(--form-field-padding-y-lg);
+    --_field-padding-x: var(--form-field-padding-x-lg);
+    --_field-height: var(--form-field-height-lg);
+  }
+}
+
+/// Each state is matched twice: a native control carries it as `:disabled` /
+/// `aria-invalid`, a wrapper as `.tedi-field-surface--disabled` / `--invalid`.
+@mixin surface-states($focus: ":focus-visible", $from-descendant: false) {
+  $disabled: ":disabled, .tedi-field-surface--disabled";
+  $invalid: '[aria-invalid="true"], .tedi-field-surface--invalid';
+  $settled: '[aria-invalid="true"], .tedi-field-surface--invalid, .tedi-field-surface--valid';
+  $hovered: "&:hover";
+  $activated: "&:active";
+  $focused: "&#{$focus}";
+
+  @if $from-descendant {
+    $hovered: "#{$hovered}, &:has(input:hover, textarea:hover)";
+    $activated: "#{$activated}, &:has(input:active, textarea:active)";
+    $focused: "#{$focused}, &:has(input:focus-visible, textarea:focus-visible)";
+  }
+
+  &:not(#{$disabled}) {
+    &:is(#{$invalid}) {
+      --_field-border-color: var(--form-general-feedback-error-border);
+    }
+
+    &.tedi-field-surface--valid {
+      --_field-border-color: var(--form-general-feedback-success-border);
+    }
+
+    #{$activated},
+    #{$focused} {
+      --_field-ring-color: var(--_field-border-color);
+    }
+  }
+
+  &:not(#{$disabled}, #{$settled}) {
+    #{$hovered} {
+      --_field-border-color: var(--form-input-border-hover);
+    }
+
+    #{$activated} {
+      --_field-border-color: var(--form-input-border-active);
+    }
+
+    #{$focused} {
+      --_field-border-color: var(--form-input-border-focus);
+    }
+  }
+
+  &:is(#{$disabled}) {
+    --_field-border-color: var(--form-input-border-disabled);
+    --_field-background: var(--form-input-background-disabled);
+    --_field-ring-color: transparent;
+
+    cursor: not-allowed;
+  }
+}

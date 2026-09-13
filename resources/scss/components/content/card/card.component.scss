@@ -4,9 +4,11 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   border: 1px solid var(--card-border-primary);
   border-radius: var(--card-radius-rounded);
+
+  @include card-mixins.card-inner-radius(calc(var(--card-radius-rounded) - 1px));
+  @include card-mixins.card-corners("vertical");
 
   @each $name, $color-var in card-mixins.$card-colors {
     &--border--#{$name} {
@@ -21,6 +23,9 @@
     border-right-color: var(--card-border-primary);
     border-bottom-color: var(--card-border-primary);
     border-left: 4px solid var(--card-border-color);
+
+    --tedi-card-inner-radius-tl: 0;
+    --tedi-card-inner-radius-bl: 0;
   }
 
   &--border-top {
@@ -28,26 +33,39 @@
     border-right-color: var(--card-border-primary);
     border-bottom-color: var(--card-border-primary);
     border-left-color: var(--card-border-primary);
+
+    --tedi-card-inner-radius-tl: 0;
+    --tedi-card-inner-radius-tr: 0;
   }
 
   &--borderless {
     border: none;
+
+    @include card-mixins.card-inner-radius(var(--card-radius-rounded));
   }
 
   &--no-radius-tl {
     border-top-left-radius: 0;
+
+    --tedi-card-inner-radius-tl: 0;
   }
 
   &--no-radius-tr {
     border-top-right-radius: 0;
+
+    --tedi-card-inner-radius-tr: 0;
   }
 
   &--no-radius-br {
     border-bottom-right-radius: 0;
+
+    --tedi-card-inner-radius-br: 0;
   }
 
   &--no-radius-bl {
     border-bottom-left-radius: 0;
+
+    --tedi-card-inner-radius-bl: 0;
   }
 
   &--border-left,

@@ -136,29 +136,22 @@
   }
 }
 
-// The shared form-field input box is fixed-height; in multiple mode (tags) let
-// it grow to fit the wrapped rows and top-align its contents, mirroring the
-// React MultiValueField (min-height + flex-wrap). Specificity (0,3,0) beats the
-// form-field size height rules regardless of stylesheet order.
-.tedi-form-field .tedi-form-field__input:has(.tedi-date-input--tags-wrap) {
+// Whichever element paints the fixed-height row — the date field itself, or a
+// form-field box around it — multiple mode (tags) has to let it grow to fit the
+// wrapped rows and top-align its contents, mirroring the React MultiValueField
+// (min-height + flex-wrap). Both selectors out-specify their surface paint, so
+// stylesheet order does not decide it.
+.tedi-date-field.tedi-field-surface:has(.tedi-date-input--tags-wrap),
+.tedi-form-field__box:has(.tedi-date-input--tags-wrap) {
   align-items: flex-start;
   height: auto;
-  min-height: var(--form-field-height);
+  min-height: var(--_field-height);
 }
 
-// Now that the box is content-sized its padding decides the height, and every
+// Now that the field is content-sized its padding decides the height, and every
 // size leaves a content box one border short of a 24px tag row. Trimming
 // padding-block by that border lands a single row exactly on the field height.
-.tedi-form-field .tedi-form-field__input:has(.tedi-date-input--with-tags) {
+.tedi-date-field.tedi-field-surface:has(.tedi-date-input--with-tags),
+.tedi-form-field__box:has(.tedi-date-input--with-tags) {
   padding-block: calc(var(--_field-padding-y) - var(--tedi-borders-01));
-}
-
-.tedi-form-field--small
-  .tedi-form-field__input:has(.tedi-date-input--tags-wrap) {
-  min-height: var(--form-field-height-sm);
-}
-
-.tedi-form-field--large
-  .tedi-form-field__input:has(.tedi-date-input--tags-wrap) {
-  min-height: var(--form-field-height-lg);
 }

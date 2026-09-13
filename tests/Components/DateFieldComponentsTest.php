@@ -336,16 +336,17 @@ class DateFieldComponentsTest extends TestCase
     }
 
     /**
-     * `size` is forwarded-only: `.tedi-date-field--small` has no rule in
-     * dist/tedi.css, and Angular only hands the value to the wrapping form-field.
+     * Angular 8 paints size modifiers on the date-field host so standalone
+     * fields get the field-surface height tokens.
      */
-    public function test_date_field_size_emits_no_class(): void
+    public function test_date_field_size_classes(): void
     {
-        foreach (['default', 'small'] as $size) {
-            $html = Blade::render('<tedi:date-field size="'.$size.'" />');
-            $this->assertRendersNoClass('tedi-date-field--small', $html);
-            $this->assertRendersNoClass('tedi-date-field--'.$size, $html);
-        }
+        $default = Blade::render('<tedi:date-field />');
+        $this->assertRendersNoClass('tedi-date-field--small', $default);
+        $this->assertRendersNoClass('tedi-date-field--large', $default);
+
+        $small = Blade::render('<tedi:date-field size="small" />');
+        $this->assertHasClass('tedi-date-field--small', $small, on: 'tedi-date-field');
     }
 
     public function test_date_field_input_trigger_makes_the_input_read_only(): void

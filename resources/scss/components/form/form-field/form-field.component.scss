@@ -1,103 +1,81 @@
+@use "../field-surface-mixins" as field-surface;
+
 .tedi-form-field {
+  // What `FormFieldComponent.iconSize()` renders at. Stated here because the
+  // addon lane below has to be a length, and an icon's is only otherwise known
+  // to the component. Keep the two in step.
+  --_icon-size: 1.125rem;
+
   display: flex;
   flex-direction: column;
 
-  &__input {
-    --_field-padding-y: var(--form-field-padding-y-md-default);
-    --_field-padding-x: var(--form-field-padding-x-md-default);
+  &--small {
+    --_icon-size: 1rem;
+  }
+
+  &--large {
+    --_icon-size: 1.5rem;
+  }
+
+  &__box {
+    @include field-surface.tokens;
+    @include field-surface.surface;
+    @include field-surface.surface-states(":focus-within", true);
+
+    // How much of the box's trailing edge its own additions occupy, the gap in
+    // front of them included. Published for a control that fills the box from
+    // border to border and so has to hold its content clear of them — the box
+    // states what it renders and assumes nothing about who reads it.
+    --tedi-form-field-addon-lane: 0rem;
 
     position: relative;
     display: flex;
     gap: var(--form-field-inner-spacing);
     align-items: center;
     width: 100%;
-    height: var(--form-field-height);
-    padding: var(--_field-padding-y) var(--_field-padding-x);
-    background: var(--form-input-background-default);
-    border: 1px solid var(--form-input-border-default);
-    border-radius: var(--form-field-radius);
 
-    &:has(.tedi-textarea) {
-      align-items: stretch;
-      height: auto;
-      min-height: var(--form-textarea-min-height);
-      padding: 0;
+    &:has(.tedi-form-field__icon) {
+      --tedi-form-field-addon-lane: calc(
+        var(--form-field-inner-spacing) + var(--_icon-size)
+      );
+    }
+
+    // The clear button and, when an icon follows it, the separator between them.
+    &:has(.tedi-form-field__buttons) {
+      --tedi-form-field-addon-lane: calc(
+        var(--form-field-inner-spacing) + var(--form-field-button-height-sm)
+      );
+    }
+
+    &:has(.tedi-form-field__buttons):has(.tedi-form-field__icon) {
+      --tedi-form-field-addon-lane: calc(
+        var(--form-field-inner-spacing) + var(--form-field-button-height-sm) +
+          var(--layout-grid-gutters-04) + var(--tedi-borders-01) +
+          var(--form-field-inner-spacing) + var(--_icon-size)
+      );
     }
   }
 
-  &--small {
-    .tedi-label {
-      font-size: var(--body-small-regular-size);
-    }
-
-    .tedi-form-field__input:not(:has(.tedi-textarea)) {
-      --_field-padding-y: var(--form-field-padding-y-sm);
-
-      height: var(--form-field-height-sm);
-    }
+  &--small &__box {
+    @include field-surface.size(small);
   }
 
-  &--large .tedi-form-field__input:not(:has(.tedi-textarea)) {
-    --_field-padding-y: var(--form-field-padding-y-lg);
-    --_field-padding-x: var(--form-field-padding-x-lg);
-
-    height: var(--form-field-height-lg);
+  &--large &__box {
+    @include field-surface.size(large);
   }
 
-  &--valid .tedi-form-field__input {
-    border-color: var(--form-general-feedback-success-border);
+  &__buttons {
+    display: flex;
+    gap: var(--layout-grid-gutters-04);
+    align-items: center;
 
-    &:focus-within {
-      box-shadow: inset 0 0 0 1px var(--form-general-feedback-success-border);
+    &--hidden {
+      visibility: hidden;
     }
   }
 
-  &--invalid .tedi-form-field__input {
-    border-color: var(--form-general-feedback-error-border);
-
-    &:focus-within {
-      box-shadow: inset 0 0 0 1px var(--form-general-feedback-error-border);
-    }
-  }
-
-  &--disabled .tedi-form-field__input,
-  &__input:has(input:disabled),
-  &__input:has(.tedi-textarea:disabled) {
+  &__clear:disabled {
     cursor: not-allowed;
-    resize: none;
-    background: var(--form-input-background-disabled);
-    border-color: var(--form-input-border-disabled);
-    box-shadow: none;
-  }
-
-  &:not(
-      .tedi-form-field--disabled,
-      .tedi-form-field--valid,
-      .tedi-form-field--invalid
-    )
-    .tedi-form-field__input:not(:has(input:disabled, .tedi-textarea:disabled)) {
-    &:hover,
-    &:has(input:hover, .tedi-textarea:hover) {
-      border-color: var(--form-input-border-hover);
-    }
-
-    &:active,
-    &:has(input:active, .tedi-textarea:active) {
-      border-color: var(--form-input-border-active);
-      box-shadow: inset 0 0 0 1px var(--form-input-border-active);
-    }
-
-    &:focus-within,
-    &:has(input:focus-visible, .tedi-textarea:focus-visible) {
-      border-color: var(--form-input-border-focus);
-      box-shadow: inset 0 0 0 1px var(--form-input-border-focus);
-    }
-  }
-
-  &__clear {
-    &:disabled {
-      cursor: not-allowed;
-    }
   }
 
   &__feedback {
@@ -123,16 +101,6 @@
 
     &:empty {
       display: none;
-    }
-  }
-
-  &__buttons {
-    display: flex;
-    gap: var(--layout-grid-gutters-04);
-    align-items: center;
-
-    &--hidden {
-      visibility: hidden;
     }
   }
 }

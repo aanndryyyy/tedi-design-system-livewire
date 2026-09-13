@@ -20,7 +20,7 @@
     |---|---|
     | `defaultFiles` + internal state | the `files` prop, rendered server-side |
     | `onChange` / `onDelete` | bind `wire:model` / your own handler (CONVENTIONS.md §7 item 2) |
-    | `maxSize`, `validateIndividually`, `uploadErrorHelper` | the `helper` prop; validate server-side |
+    | `maxSize`, `validateIndividually`, `uploadErrorHelper` | `maxSize` + `showRestrictions` build the hint; validate server-side |
     | `announcement` | the live region is still rendered — put your own message in `announcement` |
 
     THE BREAKPOINT SWAP IS NOT PORTED. Upstream renders the clear control as a
@@ -72,6 +72,10 @@
     'size' => 'default',
     /** ['text' => …, 'type' => 'hint'|'error'|'valid'] rendered under the field. */
     'helper' => null,
+    /** Max size in MB, used with `showRestrictions` to build the default hint. */
+    'maxSize' => null,
+    /** Show the auto-generated accept/max-size hint when `helper` is omitted. */
+    'showRestrictions' => true,
     /** Text for the polite live region. */
     'announcement' => null,
     /** Marks the label required. */
@@ -81,6 +85,15 @@
 @php
     $id = $id ?? \Tedi\Livewire\Tedi::id('tedi-file-upload');
     $files = array_values($files);
+
+    if ($helper === null && $showRestrictions && ($accept || $maxSize)) {
+        $parts = array_values(array_filter([
+            $accept ? __('tedi::tedi.file-upload.accept').' '.str_replace(',', ', ', $accept) : null,
+            $maxSize ? __('tedi::tedi.file-upload.max-size').' '.$maxSize.'MB' : null,
+        ]));
+        $helper = $parts ? ['text' => implode('. ', $parts), 'type' => 'hint'] : null;
+    }
+
     $helperType = $helper['type'] ?? null;
     $helperId = $helper ? $id.'-helper' : null;
     $failedLabel = __('tedi::tedi.file-upload.failed');
@@ -117,6 +130,7 @@
     @else
         <div @class([
             'tedi-file-upload__container',
+            'tedi-file-upload__container--'.$size,
             'tedi-file-upload--disabled' => (bool) $disabled,
             'tedi-file-upload--error' => $helperType === 'error',
             'tedi-file-upload--valid' => $helperType === 'valid',

@@ -600,15 +600,26 @@ class ReactComponentsTest extends TestCase
     }
 
     /**
-     * CONVENTIONS.md §4 — upstream emits these, the stylesheet defines none of
-     * them, so they are dropped. Pinned so a re-sync has to decide again.
+     * CONVENTIONS.md §4 — upstream emits `tedi-file-upload__label` /
+     * `__label-wrapper` with no stylesheet rules, so they stay dropped.
+     * `__container--{size}` now has rules in React 19 and is emitted.
      */
-    public function test_file_upload_drops_the_unstyled_upstream_classes(): void
+    public function test_file_upload_emits_container_size_modifiers(): void
     {
-        $html = Blade::render('<tedi:file-upload name="f" label="Manused" size="small" />');
+        $html = Blade::render('<tedi:file-upload name="f" label="Manuses" size="small" />');
 
         $this->assertStringNotContainsString('tedi-file-upload__label', $html);
-        $this->assertStringNotContainsString('tedi-file-upload__container--small', $html);
+        $this->assertHasClass('tedi-file-upload__container--small', $html, on: 'tedi-file-upload__container');
+    }
+
+    public function test_file_upload_show_restrictions_builds_the_default_hint(): void
+    {
+        $html = Blade::render('<tedi:file-upload name="f" accept=".pdf,.jpg" :max-size="5" />');
+        $this->assertStringContainsString('Allowed file extensions: .pdf, .jpg', $html);
+        $this->assertStringContainsString('Maximum size: 5MB', $html);
+
+        $off = Blade::render('<tedi:file-upload name="f" accept=".pdf" :show-restrictions="false" />');
+        $this->assertStringNotContainsString('Allowed file extensions:', $off);
     }
 
     // =====================================================================
