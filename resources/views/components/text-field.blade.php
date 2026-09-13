@@ -29,9 +29,10 @@
     * `invalid` is an Angular signal driven by the parent form-field's
       NgControl subscription (`setInvalidState`). Server-side there is no live
       control, so it is an explicit prop (CONVENTIONS.md §5).
-    * `ownsSurface` / `valid` / `size` come from a wrapping `<tedi:form-field>`
-      via @aware (`TEDI_FIELD_CONTEXT`). When the wrapper has no box, this
-      control paints `tedi-field-surface` itself (Angular 8).
+    * `ownsSurface` / `valid` / `size` come from a wrapping `tedi:form-field`
+      (`Tedi::fieldOwnsSurface`, standing in for `TEDI_FIELD_CONTEXT`). When the
+      wrapper has no box, this control paints `tedi-field-surface` itself
+      (Angular 8).
 --}}
 @props([
     /** Current value. Emitted as the `value` attribute only when non-empty. */
@@ -54,6 +55,10 @@
     'invalid' => false,
     'disabled' => false,
 ])
+
+@php
+    $ownsSurface = \Tedi\Livewire\Tedi::fieldOwnsSurface((bool) $ownsSurface);
+@endphp
 
 <input
     tedi-text-field

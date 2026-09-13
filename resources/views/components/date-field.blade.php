@@ -143,6 +143,7 @@
 ])
 
 @php
+    $ownsSurface = \Tedi\Livewire\Tedi::fieldOwnsSurface((bool) $ownsSurface);
     // Unconditional: the id is referenced on every render path (CONVENTIONS.md §5,
     // precedent select.blade.php).
     $inputId = $inputId ?? \Tedi\Livewire\Tedi::id('tedi-date-field');

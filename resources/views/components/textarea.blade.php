@@ -72,6 +72,7 @@
 ])
 
 @php
+    $ownsSurface = \Tedi\Livewire\Tedi::fieldOwnsSurface((bool) $ownsSurface);
     // Angular: toCssSize() — a bare number means pixels.
     $toCssSize = fn ($v) => is_numeric($v) ? $v.'px' : (string) $v;
     // Angular: rowsToHeight().

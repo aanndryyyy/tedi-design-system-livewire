@@ -475,6 +475,7 @@
                         </th>
                     @endforeach
                 </tr>
+                @if ($enableColumnFilters)
                     <tr class="tedi-table__row tedi-table__row--filter">
                         @foreach ($leadingControlColumns as $controlKey => $control)
                             <th class="tedi-table__header-cell" scope="col"></th>
@@ -504,6 +505,7 @@
                             <th class="tedi-table__header-cell" scope="col"></th>
                         @endforeach
                     </tr>
+                @endif
 
             <tbody class="tedi-table__body" x-data="{ tediTableExpanded: {{ \Illuminate\Support\Js::from($expandState) }} }">
                 @if (count($rows) === 0)

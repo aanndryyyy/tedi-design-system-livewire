@@ -132,10 +132,11 @@
     // feedbackId()
     $feedbackId = $feedbackText ? $inputId.'-feedback' : null;
 
-    // [class.sr-only] / [class.tedi-slider__label--reserve-space] on the label.
-    $labelClass = $hideLabel === true
-        ? 'sr-only'
-        : ($hideLabel === 'keep-space' ? 'tedi-slider__label--reserve-space' : '');
+    // Angular maps hideLabel onto <tedi-label visuallyHidden>. `keep-space`
+    // becomes the label's `reserve-space` treatment (tedi-label--reserve-space).
+    $labelVisuallyHidden = $hideLabel === true
+        ? true
+        : ($hideLabel === 'keep-space' ? 'reserve-space' : false);
 @endphp
 
 <div @class([
@@ -143,7 +144,7 @@
     'tedi-slider--disabled' => (bool) $disabled,
 ])>
     @if ($label)
-        <tedi:form.label :for="$inputId" :required="$required" :class="$labelClass">{{ $label }}</tedi:form.label>
+        <tedi:form.label :for="$inputId" :required="$required" :visually-hidden="$labelVisuallyHidden">{{ $label }}</tedi:form.label>
     @endif
 
     <div class="tedi-slider__container">

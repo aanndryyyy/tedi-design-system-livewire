@@ -143,24 +143,25 @@ class FormFieldComponentsTest extends TestCase
 
     public function test_form_field_validation_precedence(): void
     {
-        // invalid wins over valid
-        $html = Blade::render('<tedi:form-field :invalid="true" :valid="true"><input /></tedi:form-field>');
-        $this->assertHasClass('tedi-form-field--invalid', $html, on: 'tedi-form-field--invalid');
-        $this->assertMissingClass('tedi-form-field--valid', $html, on: 'tedi-form-field--valid');
+        // Angular 8 paints validation on `tedi-field-surface` (the box), not
+        // host modifiers. A box exists only when icon/clearable is set.
+        $html = Blade::render('<tedi:form-field icon="search" :invalid="true" :valid="true"><input /></tedi:form-field>');
+        $this->assertHasClass('tedi-field-surface--invalid', $html, on: 'tedi-form-field__box');
+        $this->assertMissingClass('tedi-field-surface--valid', $html, on: 'tedi-form-field__box');
 
         // character count exceeding the limit forces invalid regardless of `invalid`
-        $html = Blade::render('<tedi:form-field :character-limit="5" :character-count="10"><input /></tedi:form-field>');
-        $this->assertHasClass('tedi-form-field--invalid', $html, on: 'tedi-form-field--invalid');
+        $html = Blade::render('<tedi:form-field icon="search" :character-limit="5" :character-count="10"><input /></tedi:form-field>');
+        $this->assertHasClass('tedi-field-surface--invalid', $html, on: 'tedi-form-field__box');
         $this->assertHasClass('tedi-form-field__character-count--error', $html, on: 'tedi-form-field__character-count--error');
 
-        $html = Blade::render('<tedi:form-field :valid="true"><input /></tedi:form-field>');
-        $this->assertHasClass('tedi-form-field--valid', $html, on: 'tedi-form-field--valid');
+        $html = Blade::render('<tedi:form-field icon="search" :valid="true"><input /></tedi:form-field>');
+        $this->assertHasClass('tedi-field-surface--valid', $html, on: 'tedi-form-field__box');
     }
 
     public function test_form_field_disabled_class(): void
     {
-        $html = Blade::render('<tedi:form-field :disabled="true"><input /></tedi:form-field>');
-        $this->assertHasClass('tedi-form-field--disabled', $html, on: 'tedi-form-field--disabled');
+        $html = Blade::render('<tedi:form-field icon="search" :disabled="true"><input /></tedi:form-field>');
+        $this->assertHasClass('tedi-field-surface--disabled', $html, on: 'tedi-form-field__box');
     }
 
     public function test_form_field_icon_and_clearable_render_a_surface_box(): void
@@ -255,19 +256,19 @@ BLADE);
     {
         $html = Blade::render(<<<'BLADE'
 <tedi:input-group :disabled="true" :invalid="true">
-    <tedi:form-field><input /></tedi:form-field>
+    <tedi:form-field><tedi:text-field /></tedi:form-field>
 </tedi:input-group>
 BLADE);
-        $this->assertHasClass('tedi-form-field--disabled', $html, on: 'tedi-form-field--disabled');
-        $this->assertHasClass('tedi-form-field--invalid', $html, on: 'tedi-form-field--invalid');
+        $this->assertMatchesRegularExpression('/<input\s+tedi-text-field\s+disabled/', $html);
+        $this->assertStringContainsString('aria-invalid="true"', $html);
 
         // an explicit value on form-field itself still wins
         $html = Blade::render(<<<'BLADE'
 <tedi:input-group :disabled="true">
-    <tedi:form-field :disabled="false"><input /></tedi:form-field>
+    <tedi:form-field :disabled="false"><tedi:text-field /></tedi:form-field>
 </tedi:input-group>
 BLADE);
-        $this->assertMissingClass('tedi-form-field--disabled', $html, on: 'tedi-form-field--disabled');
+        $this->assertDoesNotMatchRegularExpression('/<input\s+tedi-text-field\s+disabled/', $html);
     }
 
     // ---- input-group -------------------------------------------------------

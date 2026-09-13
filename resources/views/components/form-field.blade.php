@@ -32,8 +32,10 @@
     merges the group's state in without the consumer repeating it, while a
     value set directly on <tedi:form-field> still wins.
 
-    `ownsSurface` is published for nested controls (`text-field`, `textarea`,
-    `date-field`, `time-field`) via @aware — Angular's `TEDI_FIELD_CONTEXT`.
+    `ownsSurface` for nested controls is derived from this component's `icon`
+    / `clearable` tag attributes (see `Tedi::fieldOwnsSurface`) — Angular's
+    `TEDI_FIELD_CONTEXT`. Host `--valid` / `--invalid` / `--disabled`
+    modifiers were dropped in Angular 8; those states live on `tedi-field-surface`.
 
     `inputClass` is deprecated upstream (style the control; it owns its surface).
     It is still applied to the box when a box is rendered.
@@ -63,11 +65,6 @@
     'valid' => false,
     /** Extra attributes forwarded to the clear button (e.g. wire:click). */
     'clearAttributes' => [],
-    /**
-     * When true, nested controls must not paint `tedi-field-surface`.
-     * Computed from icon/clearable; listed in @props so @aware can publish it.
-     */
-    'ownsSurface' => false,
 ])
 
 @aware([
@@ -103,9 +100,6 @@
 
 <div {{ $attributes->class([
     'tedi-form-field',
-    'tedi-form-field--valid' => $isValid,
-    'tedi-form-field--invalid' => $isInvalid,
-    'tedi-form-field--disabled' => $disabled,
     'tedi-form-field--small' => $size === 'small',
     'tedi-form-field--large' => $size === 'large',
 ]) }}>

@@ -364,14 +364,14 @@ class FormTextComponentsTest extends TestCase
     public function test_search_feedback_type_drives_the_form_field_state(): void
     {
         $error = Blade::render('<tedi:search :feedback-text="[\'text\' => \'Viga\', \'type\' => \'error\']" />');
-        $this->assertHasClass('tedi-form-field--invalid', $error, on: 'tedi-form-field');
+        $this->assertHasClass('tedi-field-surface--invalid', $error, on: 'tedi-form-field__box');
 
         $valid = Blade::render('<tedi:search :feedback-text="[\'text\' => \'Sobib\', \'type\' => \'valid\']" />');
-        $this->assertHasClass('tedi-form-field--valid', $valid, on: 'tedi-form-field');
+        $this->assertHasClass('tedi-field-surface--valid', $valid, on: 'tedi-form-field__box');
 
         $hint = Blade::render('<tedi:search :feedback-text="[\'text\' => \'Vihje\']" />');
-        $this->assertMissingClass('tedi-form-field--invalid', $hint, on: 'tedi-form-field');
-        $this->assertMissingClass('tedi-form-field--valid', $hint, on: 'tedi-form-field');
+        $this->assertMissingClass('tedi-field-surface--invalid', $hint, on: 'tedi-form-field__box');
+        $this->assertMissingClass('tedi-field-surface--valid', $hint, on: 'tedi-form-field__box');
     }
 
     public function test_search_size_reaches_the_form_field(): void
@@ -386,7 +386,7 @@ class FormTextComponentsTest extends TestCase
     {
         $html = Blade::render('<tedi:search :disabled="true" />');
 
-        $this->assertHasClass('tedi-form-field--disabled', $html, on: 'tedi-form-field');
+        $this->assertHasClass('tedi-field-surface--disabled', $html, on: 'tedi-form-field__box');
         $this->assertMatchesRegularExpression('/<input\s+tedi-text-field\s+disabled/', $html);
     }
 

@@ -302,14 +302,14 @@ class FormToggleSliderComponentsTest extends TestCase
         $html = Blade::render('<tedi:slider label="Väärtus" />');
         $this->assertHasClass('tedi-label', $html, 'tedi-label');
         $this->assertMissingClass('sr-only', $html, 'tedi-label');
-        $this->assertMissingClass('tedi-slider__label--reserve-space', $html, 'tedi-label');
+        $this->assertMissingClass('tedi-label--reserve-space', $html, 'tedi-label');
 
         $html = Blade::render('<tedi:slider label="Väärtus" :hide-label="true" />');
         $this->assertHasClass('sr-only', $html, 'tedi-label');
-        $this->assertMissingClass('tedi-slider__label--reserve-space', $html, 'tedi-label');
+        $this->assertMissingClass('tedi-label--reserve-space', $html, 'tedi-label');
 
         $html = Blade::render('<tedi:slider label="Väärtus" hide-label="keep-space" />');
-        $this->assertHasClass('tedi-slider__label--reserve-space', $html, 'tedi-label');
+        $this->assertHasClass('tedi-label--reserve-space', $html, 'tedi-label');
         $this->assertMissingClass('sr-only', $html, 'tedi-label');
     }
 
