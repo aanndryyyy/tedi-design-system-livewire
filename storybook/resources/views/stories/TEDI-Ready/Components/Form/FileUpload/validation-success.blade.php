@@ -18,6 +18,7 @@
     name="file-validation-success"
     :label="$label"
     accept=".pdf,.txt"
+    :max-size="1024"
     multiple
     :files="[['name' => 'taotlus_scan_lk_1.pdf']]"
     :helper="['type' => 'valid', 'text' => $helperText]"

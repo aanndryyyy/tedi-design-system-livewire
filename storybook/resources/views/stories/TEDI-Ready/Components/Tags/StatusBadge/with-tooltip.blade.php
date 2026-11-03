@@ -21,11 +21,11 @@
 ])
 
 <tedi:tooltip
-    description="Icon-only badges should always have a tooltip to provide context and ensure accessibility."
     description-id="status-badge-tooltip"
 >
     <tedi:tooltip-trigger described-by="status-badge-tooltip">
         <tedi:status-badge
+            aria-label="Warning"
             icon="warning"
             color="warning"
             class="tedi-tooltip-trigger--focus"

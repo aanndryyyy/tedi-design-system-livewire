@@ -10,8 +10,9 @@ Angular CDK Dialog to spawn a component into an overlay and handles focus trappi
 blocking, backdrop and keyboard events. There is no CDK here and no imperative
 component-spawning equivalent, so the whole service branch is omitted — including
 `ModalService`, `ModalRef`, `MODAL_DATA`, and the `ModalConfig` keys that only exist for it
-(`scrollBehavior`, `fullscreen`, `maxWidth`, `closeOnEscape`, `ariaLabel`, `ariaLabelledBy`,
-`data`), plus the `tedi-modal--service` / `tedi-modal-dialog*` class families.
+(`scrollBehavior`, `fullscreen`, `maxWidth`, `closeOnEscape`, `data`), plus the
+`tedi-modal--service` / `tedi-modal-dialog*` class families. The service-only visual-regression
+stories (`Open…ForVisualTest`, hidden from the sidebar upstream) are not ported either.
 
 ## Template-based modal
 
@@ -33,6 +34,12 @@ click, Escape, body scroll lock and focus restore come from the `tediModal` Alpi
     </tedi:modal-footer>
 </tedi:modal>
 ```
+
+The dialog is named from the first `h1`–`h6` in `tedi:modal-header` when it is opened, as
+upstream; pass `aria-label` or `aria-labelledby` on `tedi:modal` to name it yourself.
+Upstream's `ModalRef.canClose` guard is service-only; here every close dispatches a cancelable
+`tedi-modal-close` event (`detail.reason`: `backdrop`, `escape`, `close-button` or
+`programmatic`) and `preventDefault()` keeps the modal open — see "Confirm before closing".
 
 Two further divergences: Angular re-parents the modal host to `<body>` in `ngAfterViewInit`
 and Blade cannot, so a modal written inside a `transform`ed ancestor is positioned relative to

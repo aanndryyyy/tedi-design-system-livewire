@@ -9,8 +9,10 @@
         'dismissible' => true,
         'hideOnScroll' => false,
         'withBorder' => false,
+        'withArrow' => true,
         'lockScroll' => false,
         'timeoutDelay' => 100,
+        'offset' => 8,
         'maxWidth' => 'small',
         'title' => 'Pealkiri',
         'showClose' => true,
@@ -35,7 +37,7 @@
         ],
         'preventOverflow' => [
             'control' => 'boolean',
-            'description' => 'Should position flip to opposite direction when overflowing screen?',
+            'description' => 'Flip to the opposite side when the popover would overflow the screen.',
             'table' => [
                 'category' => 'popover inputs',
                 'type' => ['summary' => 'boolean'],
@@ -44,7 +46,7 @@
         ],
         'dismissible' => [
             'control' => 'boolean',
-            'description' => 'Is dismissible by clicking outside of content?',
+            'description' => 'Close the popover when clicking outside its content.',
             'table' => [
                 'category' => 'popover inputs',
                 'type' => ['summary' => 'boolean'],
@@ -53,7 +55,7 @@
         ],
         'hideOnScroll' => [
             'control' => 'boolean',
-            'description' => 'Does popover content hide on scroll?',
+            'description' => 'Close the popover when the page scrolls.',
             'table' => [
                 'category' => 'popover inputs',
                 'type' => ['summary' => 'boolean'],
@@ -62,16 +64,25 @@
         ],
         'withBorder' => [
             'control' => 'boolean',
-            'description' => 'Does popover have illustrative border on the arrow side?',
+            'description' => 'Show an illustrative border on the arrow side.',
             'table' => [
                 'category' => 'popover inputs',
                 'type' => ['summary' => 'boolean'],
                 'defaultValue' => ['summary' => 'false'],
             ],
         ],
+        'withArrow' => [
+            'control' => 'boolean',
+            'description' => 'Show the arrow pointing to the trigger.',
+            'table' => [
+                'category' => 'popover inputs',
+                'type' => ['summary' => 'boolean'],
+                'defaultValue' => ['summary' => 'true'],
+            ],
+        ],
         'lockScroll' => [
             'control' => 'boolean',
-            'description' => 'Lock scrolling on rest of the page?',
+            'description' => 'Lock scrolling on the rest of the page while the popover is open.',
             'table' => [
                 'category' => 'popover inputs',
                 'type' => ['summary' => 'boolean'],
@@ -80,17 +91,25 @@
         ],
         'timeoutDelay' => [
             'control' => 'number',
-            'description' => 'Delay time (in ms) for closing popover when not hovering trigger or content.',
+            'description' => 'Delay in ms before the popover closes when neither the trigger nor the content is hovered.',
             'table' => [
                 'category' => 'popover inputs',
                 'type' => ['summary' => 'number'],
                 'defaultValue' => ['summary' => '100'],
             ],
         ],
+        'offset' => [
+            'control' => 'number',
+            'description' => 'Gap in px between the trigger and the popover. The arrow\'s gap is added on top when `withArrow` is `true`.',
+            'table' => [
+                'category' => 'popover inputs',
+                'type' => ['summary' => 'number'],
+                'defaultValue' => ['summary' => '8'],
+            ],
+        ],
         'maxWidth' => [
-            'control' => 'select',
-            'options' => ['none', 'small', 'medium', 'large'],
-            'description' => 'The width of the popover.',
+            'control' => 'text',
+            'description' => 'The width of the popover: a preset, or any CSS length for a panel the presets don\'t cover.',
             'table' => [
                 'category' => 'popover-content inputs',
                 'type' => ['summary' => 'PopoverWidth'],
@@ -99,7 +118,7 @@
         ],
         'title' => [
             'control' => 'text',
-            'description' => 'Heading title of the content',
+            'description' => 'Title shown at the top of the content.',
             'table' => [
                 'category' => 'popover-content inputs',
                 'type' => ['summary' => 'string'],
@@ -107,7 +126,7 @@
         ],
         'showClose' => [
             'control' => 'boolean',
-            'description' => 'Should content show close button?',
+            'description' => 'Show a close button in the content.',
             'table' => [
                 'category' => 'popover-content inputs',
                 'type' => ['summary' => 'boolean'],
@@ -115,7 +134,7 @@
             ],
         ],
         'underline' => [
-            'description' => 'Should add underline class to trigger element?',
+            'description' => 'Underline the trigger element.',
             'table' => [
                 'category' => 'popover-trigger inputs',
                 'type' => ['summary' => 'boolean'],
@@ -141,8 +160,10 @@
         :dismissible="(bool) $dismissible"
         :hide-on-scroll="(bool) $hideOnScroll"
         :with-border="(bool) $withBorder"
+        :with-arrow="(bool) $withArrow"
         :lock-scroll="(bool) $lockScroll"
         :timeout-delay="(int) $timeoutDelay"
+        :offset="(int) $offset"
         :labelled-by="$title ? 'popover-default_title' : null"
     >
         <x-slot:trigger>

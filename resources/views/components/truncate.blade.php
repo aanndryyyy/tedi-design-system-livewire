@@ -1,91 +1,104 @@
 {{--
     TEDI Truncate.
-    Port of react/src/tedi/components/content/truncate/truncate.tsx (CONVENTIONS.md §13).
+    Port of angular/src/tedi/components/content/truncate/truncate.component.{ts,html}
+
+    Previously ported from React (CONVENTIONS.md §13); Angular now ships it in
+    `tedi/`, which is the source from here on (§1).
 
     Cuts a long string at a character count and offers a show-more / show-less
     toggle. Distinct from `tedi:ellipsis`, which clamps by *line* in CSS and
     never reveals — this one counts characters and expands in place.
 
-    It has no stylesheet of its own upstream, and needs none: the whole
-    component is a secondary-coloured `<span>` plus a link-styled button.
+    Markup is upstream's: the literal `tedi-truncate` element (§4) with
+    `tedi-truncate--expanded` while expanded, a secondary `tedi:text` span
+    (id'd for `aria-controls`) and, when the text is
+    longer than `max-length` and `expandable` is on, a `tedi:link` button
+    (`tedi-truncate__toggle`) carrying `aria-expanded`.
 
-    Three substitutions, all forced and all documented:
+    Counting is by grapheme cluster, as upstream's `Intl.Segmenter` does —
+    PCRE's `\X` here, so `ext-intl` is not needed. A string is truncated only
+    when it is strictly longer than `max-length`; the cut is
+    `slice(0, maxLength).trimEnd() + ellipsis`. `max-length` is floored and
+    clamped at 0, and a non-numeric value falls back to 200, as upstream's
+    `normalizeMaxLength`.
 
-    * Upstream wraps the text in `<Text element="span" color="secondary">`.
-      Both of those are fixed — neither the element nor the colour is
-      configurable — so this renders the one class that composition would have
-      produced (`tedi-text--secondary`) directly on the root, rather than
-      nesting a `tedi:text` whose every prop is hardcoded.
-    * Upstream's toggle is `<Button visualType="link">`, whose class is
-      `tedi-btn--link`. React's button vocabulary is `tedi-btn`; this package's
-      — like Angular's — is `tedi-button`, and it has no `link` variant at all
-      (CONVENTIONS.md §13.3). The control that *is* a link-looking button here
-      is `tedi:link`, so that is what the toggle uses.
-    * The text swap is Alpine (CONVENTIONS.md §8). The server renders the
-      truncated string, exactly as upstream's first paint does, and `x-text`
-      swaps it. Strip the JS and you keep correct, readable, truncated markup
-      with an inert toggle — never an empty element.
+    `text` is a prop rather than the slot because the component has to count
+    and slice it, and a slot is opaque to the server (CONVENTIONS.md §5).
 
-    `content` is a prop rather than the slot because the component has to
-    measure and slice it, and a slot is opaque to the server (CONVENTIONS.md
-    §5). The slot is left free for anything that should follow the text.
+    The expand/collapse swap is Alpine (CONVENTIONS.md §8). The server renders
+    the state `expanded` asks for, so without JS the markup is correct and the
+    toggle is inert. `[(expanded)]` two-way binding is not re-emitted (§7 item
+    2): `expanded` sets the initial state only.
 
-    Truncation matches upstream's `slice(0, maxLength).trimEnd() + ellipsis + ' '`
-    — and its comparison is `length >= maxLength`, so a string of exactly
-    `maxLength` characters counts as truncatable even though slicing it changes
-    nothing. That is upstream's edge case, kept. Slicing is multibyte-aware
-    here (`mb_substr`), which JavaScript's UTF-16 `slice` is not.
+    DROPPED CLASS: `tedi-truncate__text`. Angular puts it on the text span,
+    but the vendored SCSS has no rule for it, so dropping it is behaviourally
+    identical (CONVENTIONS.md §4).
 
-    Breakpoint props (React's `BreakpointSupport`) are not ported —
-    CONVENTIONS.md §7 item 1, and the `button` prop-override object goes with
-    them: pass attributes to `tedi:truncate` and they land on the root, or wrap
-    your own toggle in the slot.
+    DIVERGENCE: `maxLength` accepts only a number. Upstream's breakpoint-object
+    form (`{ xs: 100, md: 200 }`) is resolved at runtime by `BreakpointService`
+    and is not ported (CONVENTIONS.md §7 item 1).
 --}}
 @props([
-    /** The full text. This is what gets truncated. */
-    'content' => '',
-    /** Maximum number of characters shown while collapsed. */
+    /** Text to display and truncate when it exceeds `max-length`. Required. */
+    'text' => '',
+    /** Maximum characters shown while collapsed, excluding the ellipsis. */
     'maxLength' => 200,
-    /** Appended to the cut text. */
+    /** Text appended when content is truncated. */
     'ellipsis' => '...',
-    /** False renders the truncated text with no toggle. */
+    /** Shows an expand/collapse button when the text exceeds `max-length`. */
     'expandable' => true,
-    /** Label of the toggle while collapsed. */
-    'moreLabel' => null,
-    /** Label of the toggle while expanded. */
-    'lessLabel' => null,
+    /** Whether the full text is shown initially. */
+    'expanded' => false,
 ])
 
 @php
-    $content = (string) $content;
-    $maxLength = (int) $maxLength;
+    $text = (string) $text;
+    $maxLength = is_numeric($maxLength) ? max(0, (int) floor((float) $maxLength)) : 200;
 
-    $moreLabel = $moreLabel ?? __('tedi::tedi.truncate.see-more');
-    $lessLabel = $lessLabel ?? __('tedi::tedi.truncate.see-less');
+    preg_match_all('/\X/u', $text, $matches);
+    $characters = $matches[0];
 
-    // Upstream: `children.length >= maxLength` — not `>`.
-    $isTruncatable = mb_strlen($content) >= $maxLength;
-    $truncatedText = $isTruncatable
-        ? rtrim(mb_substr($content, 0, $maxLength)).$ellipsis.' '
-        : $content;
+    $exceedsMaxLength = count($characters) > $maxLength;
+    $truncatedText = $exceedsMaxLength
+        ? rtrim(implode('', array_slice($characters, 0, $maxLength))).$ellipsis
+        : $text;
+    $showToggle = $exceedsMaxLength && $expandable;
+    $expanded = (bool) $expanded;
 
-    $showToggle = $isTruncatable && $expandable;
+    $textId = \Tedi\Livewire\Tedi::id('tedi-truncate-text');
 
     $scope = \Illuminate\Support\Js::from([
-        'isTruncated' => true,
+        'expanded' => $expanded,
         'truncated' => $truncatedText,
-        'full' => $content,
-        'moreLabel' => $moreLabel,
-        'lessLabel' => $lessLabel,
+        'full' => $text,
+        'moreLabel' => __('tedi::tedi.truncate.see-more'),
+        'lessLabel' => __('tedi::tedi.truncate.see-less'),
     ]);
 @endphp
 
-<span
-    {{ $attributes->class(['tedi-text--secondary']) }}
-    @if ($showToggle) x-data="{{ $scope }}" @endif
->@if ($showToggle)<span x-text="isTruncated ? truncated : full">{{ $truncatedText }}</span><tedi:link
-        aria-expanded="false"
-        x-on:click="isTruncated = ! isTruncated"
-        x-bind:aria-expanded="(! isTruncated).toString()"
-        x-bind:style="isTruncated ? null : 'display: block'"
-    ><span x-text="isTruncated ? moreLabel : lessLabel">{{ $moreLabel }}</span></tedi:link>@else{{ $truncatedText }}@endif{{ $slot }}</span>
+<tedi-truncate
+    {{ $attributes->class([
+        'tedi-truncate',
+        'tedi-truncate--expanded' => $expanded,
+    ]) }}
+    @if ($exceedsMaxLength)
+        x-data="{{ $scope }}"
+        x-bind:class="{ 'tedi-truncate--expanded': expanded }"
+    @endif
+>
+    <tedi:text
+        color="secondary"
+        :id="$textId"
+        :x-text="$exceedsMaxLength ? 'expanded ? full : truncated' : null"
+    >{{ $expanded ? $text : $truncatedText }}</tedi:text>
+    @if ($showToggle)
+        <tedi:link
+            class="tedi-truncate__toggle"
+            :aria-expanded="$expanded ? 'true' : 'false'"
+            :aria-controls="$textId"
+            x-on:click="expanded = ! expanded"
+            x-bind:aria-expanded="expanded.toString()"
+            x-text="expanded ? lessLabel : moreLabel"
+        >{{ $expanded ? __('tedi::tedi.truncate.see-less') : __('tedi::tedi.truncate.see-more') }}</tedi:link>
+    @endif
+</tedi-truncate>

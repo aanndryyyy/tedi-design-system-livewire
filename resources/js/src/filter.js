@@ -1,4 +1,5 @@
 import { overlay } from './overlay.js';
+import { dropdownTrigger } from './dropdown.js';
 
 // =========================================================================
 // Filter — selection state + the listbox keyboard layer
@@ -67,7 +68,10 @@ var TAB_STOP_SELECTOR = 'input:not([disabled]):not([tabindex="-1"]), button:not(
  */
 export function filter(config) {
     var cfg = config || {};
-    var base = overlay(cfg);
+    // The trigger is the shared `tedi:dropdown-trigger` template, which calls
+    // into dropdownTrigger (initTrigger, triggerKeyup, …) — mixed in first so
+    // this component's own triggerKeydown below still wins.
+    var base = Object.assign(overlay(cfg), dropdownTrigger);
     var baseOnOpen = base._onOpen;
 
     // defineProperties over the descriptors, not Object.assign: assign *reads*
@@ -314,7 +318,7 @@ export function filter(config) {
         },
 
         /**
-         * `tedi:dropdown-item-value` renders its checkbox/radio itself and puts
+         * `tedi:option-content` renders its checkbox/radio itself and puts
          * the attribute bag on its own root, so the indicator cannot be bound
          * from the template. These two keep it in step with the live selection,
          * bound with x-effect from the row. Server-side both are already correct
@@ -324,13 +328,13 @@ export function filter(config) {
             var option = this.options[index];
             if (!option) return;
 
-            var input = row.querySelector('.tedi-dropdown-item-value__checkbox, .tedi-dropdown-item-value__radio');
+            var input = row.querySelector('.tedi-option-content__checkbox, .tedi-option-content__radio');
 
             if (input) input.checked = this.isOptionSelected(option.value);
         },
 
         syncSelectAllIndicator: function (row) {
-            var input = row.querySelector('.tedi-dropdown-item-value__checkbox');
+            var input = row.querySelector('.tedi-option-content__checkbox');
             if (!input) return;
 
             input.checked = this.allFilteredSelected;
@@ -373,6 +377,8 @@ export function filter(config) {
          * (CONVENTIONS.md §11).
          */
         triggerKeydown: function (event) {
+            // #669: Enter / Space are the shared trigger directive's.
+            if (this.triggerActivationKeydown(event)) return;
             if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
 
             event.preventDefault();

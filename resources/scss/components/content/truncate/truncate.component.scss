@@ -1,0 +1,11 @@
+.tedi-truncate {
+  &:not(.tedi-truncate--expanded) .tedi-truncate__toggle {
+    margin-inline-start: var(--tedi-dimensions-03);
+  }
+
+  &--expanded {
+    .tedi-truncate__toggle {
+      display: flex;
+    }
+  }
+}

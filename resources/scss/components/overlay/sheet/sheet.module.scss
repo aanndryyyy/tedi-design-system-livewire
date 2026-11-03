@@ -1,0 +1,247 @@
+$sheet-enter-duration: 0.35s;
+$sheet-enter-easing: cubic-bezier(0.32, 0.72, 0, 1);
+$sheet-fade-duration: 200ms;
+
+.tedi-sheet__overlay {
+  z-index: var(--z-index-modal);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  &::before {
+    position: absolute;
+    inset: 0;
+    content: '';
+    background: var(--general-surface-overlay);
+    opacity: 0;
+    transition: opacity $sheet-fade-duration ease-out;
+  }
+
+  &[data-status='open']::before {
+    opacity: 1;
+  }
+}
+
+.tedi-sheet__overlay--hidden {
+  // A `keepMounted` sheet stays in the DOM while closed.
+  display: none;
+}
+
+.tedi-sheet__overlay--no-overlay {
+  pointer-events: none;
+
+  &::before {
+    content: none;
+  }
+
+  & .tedi-sheet__panel {
+    pointer-events: auto;
+  }
+}
+
+.tedi-sheet__panel {
+  // Padding scale (default). Core 6.9.0 doesn't publish the semantic `--sheet-*-padding-md/-sm`
+  // tokens yet - they resolve to empty, which collapses the padding - so these use the primitive
+  // dimension tokens (1rem / 0.5rem) for now. Swap to the semantic sheet tokens once core is updated.
+  --tedi-sheet-radius: var(--tedi-dimensions-13);
+  --tedi-sheet-padding-x: var(--tedi-dimensions-10);
+  --tedi-sheet-padding-y: var(--tedi-dimensions-05);
+  --tedi-sheet-header-min-height: 3.75rem;
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 90dvh;
+  overflow: hidden;
+  background: var(--sheet-body-default);
+  border-top-left-radius: var(--tedi-sheet-radius);
+  border-top-right-radius: var(--tedi-sheet-radius);
+  transform: translateY(100%);
+  transition: transform $sheet-enter-duration $sheet-enter-easing, height $sheet-enter-duration $sheet-enter-easing;
+
+  &[data-status='open'] {
+    transform: translateY(0);
+  }
+}
+
+.tedi-sheet__panel--padding-small {
+  // Tighter padding scale (small) - header, body and footer all read these panel-level custom
+  // properties, so the whole sheet shrinks together.
+  // TODO: uses the primitive dimension token (0.5rem) because core 6.9.0 has no `--sheet-*-padding-sm`
+  // token yet - replace with `var(--sheet-footer-padding-sm)` (and header/body) once core is updated.
+  --tedi-sheet-padding-x: var(--tedi-dimensions-05);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tedi-sheet__overlay::before,
+  .tedi-sheet__panel {
+    transition: none;
+  }
+}
+
+.tedi-sheet__handle-zone {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 6rem;
+  height: var(--tedi-dimensions-13);
+  padding-top: var(--tedi-dimensions-04);
+  touch-action: none;
+  cursor: grab;
+  transform: translateX(-50%);
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.tedi-sheet__handle {
+  width: 2.5rem;
+  height: var(--tedi-borders-04);
+  background: var(--drag-indicator-light);
+  border-radius: var(--tedi-dimensions-13);
+}
+
+.tedi-sheet__header {
+  display: flex;
+  gap: var(--layout-grid-gutters-08);
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--tedi-sheet-header-min-height);
+  padding: var(--tedi-sheet-padding-y) var(--tedi-sheet-padding-x);
+  border-top-left-radius: var(--tedi-sheet-radius);
+  border-top-right-radius: var(--tedi-sheet-radius);
+}
+
+.tedi-sheet__header--brand {
+  color: var(--general-text-white);
+  background: var(--sheet-header-background-brand);
+}
+
+.tedi-sheet__header--default {
+  color: var(--general-text-primary);
+  background: var(--sheet-header-background-default);
+  border-bottom: var(--tedi-borders-01) solid var(--sheet-border);
+}
+
+.tedi-sheet__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  color: inherit;
+}
+
+.tedi-sheet__header--center {
+  position: relative;
+
+  .tedi-sheet__title {
+    text-align: center;
+  }
+
+  .tedi-sheet__header-start,
+  .tedi-sheet__header-actions {
+    position: absolute;
+    inset-block-start: 50%;
+    transform: translateY(-50%);
+  }
+
+  .tedi-sheet__header-start {
+    inset-inline-start: var(--tedi-sheet-padding-x);
+  }
+
+  .tedi-sheet__header-actions {
+    inset-inline-end: var(--tedi-sheet-padding-x);
+  }
+}
+
+.tedi-sheet__header-start {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--layout-grid-gutters-08);
+  align-items: center;
+}
+
+.tedi-sheet__header-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--layout-grid-gutters-08);
+  align-items: center;
+}
+
+.tedi-sheet__panel--draggable .tedi-sheet__header {
+  touch-action: none;
+  user-select: none;
+}
+
+.tedi-sheet__collapse-toggle > * {
+  scale: 1 -1;
+}
+
+.tedi-sheet__body {
+  flex: 1 1 auto;
+  padding: var(--tedi-sheet-padding-x);
+  overflow-y: auto;
+  background: var(--sheet-body-default);
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.tedi-sheet__body--no-padding {
+  padding: 0;
+}
+
+.tedi-sheet__footer {
+  display: flex;
+  gap: var(--layout-grid-gutters-08);
+  align-items: center;
+  padding: var(--tedi-sheet-padding-x);
+  background: var(--sheet-footer-background);
+  border-top: var(--tedi-borders-01) solid var(--sheet-border);
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.tedi-sheet__footer--split {
+  justify-content: space-between;
+}
+
+.tedi-sheet__footer--left {
+  justify-content: flex-start;
+}
+
+.tedi-sheet__footer--center {
+  justify-content: center;
+}
+
+.tedi-sheet__footer--right {
+  justify-content: flex-end;
+}
+
+.tedi-sheet__footer--full-width {
+  .tedi-sheet__footer-side:not(.tedi-sheet__footer-side--end) {
+    flex: 1 1 auto;
+
+    > * {
+      flex: 1 1 0;
+    }
+  }
+}
+
+.tedi-sheet__footer-side {
+  display: flex;
+  gap: var(--layout-grid-gutters-08);
+  align-items: center;
+}
+
+.tedi-sheet__footer-side--end {
+  justify-content: flex-end;
+}

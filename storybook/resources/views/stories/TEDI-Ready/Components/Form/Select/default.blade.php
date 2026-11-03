@@ -5,6 +5,7 @@
     'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.38.59?node-id=4449-69807&m=dev',
     'args' => [
         'inputId' => 'select-1',
+        'name' => '',
         'label' => 'Label',
         'required' => false,
         'placeholder' => 'Vali...',
@@ -24,6 +25,10 @@
         'inputId' => [
             'control' => 'text',
             'description' => 'Unique identifier for the select input element. Used for label association and accessibility.',
+        ],
+        'name' => [
+            'control' => 'text',
+            'description' => 'Name the selection is submitted under in a native form, one entry per selected value. With object options, set `bindValue` to pick what is sent.',
         ],
         'label' => [
             'control' => 'text',
@@ -65,10 +70,13 @@
     selectableGroups, isTagRemovable, multiRow, tagEllipsis, ellipsis,
     clearSearchOnSelect, dropdownType, maxDropdownHeight, virtualScroll,
     hideOnScroll, tooltip, output()s) that this native-<select> port drops
-    entirely — dropped, not declared as args here.
+    entirely — dropped, not declared as args here. `clearable` and
+    `showClearOnInteraction` are declared on the component for API parity but
+    inert (a native select has no clear button), so they are not args either.
 --}}
 <tedi:select
     :input-id="$inputId"
+    :name="$name ?: null"
     :label="$label"
     :required="(bool) $required"
     :placeholder="$placeholder"

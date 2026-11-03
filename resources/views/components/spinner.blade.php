@@ -1,6 +1,6 @@
 {{--
     TEDI Spinner.
-    Port of angular/tedi/components/loader/spinner/spinner.component.{ts,html}
+    Port of angular/src/tedi/components/loader/spinner/spinner.component.{ts,html}
 --}}
 @props([
     /** 10|16|48 */

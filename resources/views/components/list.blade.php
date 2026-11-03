@@ -1,6 +1,6 @@
 {{--
     TEDI List.
-    Port of angular/tedi/components/content/list/list.component.{ts,html}
+    Port of angular/src/tedi/components/content/list/list.component.{ts,html}
 
     Angular's selector is `ul[tedi-list], ol[tedi-list]` — the `as` prop picks
     the element, mirroring text.blade.php's polymorphic `as`.

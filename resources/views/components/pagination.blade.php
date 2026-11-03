@@ -1,6 +1,6 @@
 {{--
     TEDI Pagination.
-    Port of angular/tedi/components/navigation/pagination/{pagination.component.ts,html,pagination.utils.ts}
+    Port of angular/src/tedi/components/navigation/pagination/{pagination.component.ts,html,pagination.utils.ts}
 
     Divergences (documented per CONVENTIONS.md §7):
     - `useCompactPicker` (`isBelowBreakpoint('md')`) swaps the pager for a
@@ -20,6 +20,16 @@
     - `tedi-select` (the custom dropdown form control) is a form component
       outside this port's scope; the page-size control is a plain native
       `<select>` sharing the same wrapper classes.
+    - The per-breakpoint layout overrides (`xs`…`xxl`, each a
+      `PaginationBreakpointInputs` of `align` / `showArrowLabels` /
+      `arrowVariant` / `dividerPosition` / `background`) are resolved by
+      `BreakpointService` at runtime and are not ported (CONVENTIONS.md §7.1):
+      the base inputs are the only ones read.
+    - `align="between"` (the default) is not emitted as
+      `tedi-pagination--align-between`: Angular's `hostClasses()` always
+      emits `--align-${align}`, but the vendored SCSS only styles `--align-left`
+      and `--align-right` — `between` is the unmodified flex layout, so
+      dropping the class is behaviourally identical (§4).
     - `pageChange` / `pageSizeChange` are not re-emitted (CONVENTIONS.md §3).
       Per this repo's hard rule for pagination, page links render as real
       `<a href>`s via the `page-url` closure prop so paging works without JS;
@@ -61,6 +71,8 @@
     'background' => 'white',
     /** top|bottom|none */
     'dividerPosition' => 'top',
+    /** between|left|right — `left` / `right` group the slots at the start / end instead of spreading them across the full width. */
+    'align' => 'between',
     /** Hide the "X results" label even when totalItems/results slot is set. */
     'hideResults' => false,
     /** Hide the page-size select even when pageSizeOptions is non-empty. */
@@ -189,9 +201,11 @@
         'tedi-pagination',
         'tedi-pagination--bg-'.$background,
         'tedi-pagination--divider-'.$dividerPosition => $dividerPosition !== 'none',
+        'tedi-pagination--align-'.$align => $align !== 'between',
         'tedi-pagination--no-pager' => ! $showPager,
         'tedi-pagination--no-results' => ! $showResults,
         'tedi-pagination--no-page-size' => ! $showPageSizeSelect,
+        'tedi-pagination--arrow-labels' => (bool) $showArrowLabels,
     ]) }}
 >
     <span class="tedi-pagination__status" role="status" aria-live="polite" aria-atomic="true">

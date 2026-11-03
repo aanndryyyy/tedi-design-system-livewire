@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'Accessibility: no visible label',
-    'order' => 13,
+    'order' => 17,
     'status' => 'stable',
     'args' => [],
 ])

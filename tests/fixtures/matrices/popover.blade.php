@@ -36,9 +36,9 @@
     </div>
 
     <div class="gx-case">
-        <div class="gx-case__label">max-width: none | small | medium | large</div>
+        <div class="gx-case__label">max-width: none | small | medium | large | 20rem (CSS length, inline)</div>
         <div class="gx-case__demo" style="display:flex;gap:.75rem;flex-wrap:wrap">
-            @foreach (['none', 'small', 'medium', 'large'] as $maxWidth)
+            @foreach (['none', 'small', 'medium', 'large', '20rem'] as $maxWidth)
                 <tedi:popover :container-id="'mx-pop-w-'.$maxWidth">
                     <x-slot:trigger>
                         <tedi:popover-trigger :underline="true">{{ ucfirst($maxWidth) }}</tedi:popover-trigger>

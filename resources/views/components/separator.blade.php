@@ -1,6 +1,6 @@
 {{--
     TEDI Separator.
-    Port of angular/tedi/components/helpers/separator/separator.component.ts
+    Port of angular/src/tedi/components/helpers/separator/separator.component.ts
 
     Angular's template is empty ("") — the component is host-classes + host
     styles only. Blade needs a real (empty) root element to carry them; a

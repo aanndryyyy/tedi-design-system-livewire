@@ -70,10 +70,10 @@
     </div>
 
     <div class="gx-case">
-        <div class="gx-case__label">description — sr-only text + aria-describedby (CONVENTIONS.md §5)</div>
+        <div class="gx-case__label">description-id — role="tooltip" content + aria-describedby</div>
         <div class="gx-case__demo">
-            <tedi:tooltip description="Sisestage linn, kus te praegu elate." description-id="matrix-tooltip-city">
-                <tedi:tooltip-trigger :text="true" described-by="matrix-tooltip-city">Linn</tedi:tooltip-trigger>
+            <tedi:tooltip description-id="matrix-tooltip-city">
+                <tedi:tooltip-trigger :text="true">Linn</tedi:tooltip-trigger>
                 <tedi:tooltip-content>Sisestage linn, kus te praegu elate.</tedi:tooltip-content>
             </tedi:tooltip>
         </div>
@@ -105,11 +105,11 @@
     </div>
 
     <div class="gx-case">
-        <div class="gx-case__label">inside a label row, with an sr-only description</div>
+        <div class="gx-case__label">inside a label row, described by its content</div>
         <div class="gx-case__demo">
             <tedi:label-row>
                 <tedi:form.label for="city" :required="true">Linn</tedi:form.label>
-                <tedi:info-tooltip description="Sisestage linn, kus te praegu elate.">
+                <tedi:info-tooltip>
                     Sisestage linn, kus te praegu elate.
                 </tedi:info-tooltip>
             </tedi:label-row>

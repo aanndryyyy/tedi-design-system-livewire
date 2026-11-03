@@ -299,18 +299,22 @@ class FormToggleSliderComponentsTest extends TestCase
 
     public function test_slider_hide_label_union(): void
     {
+        // Upstream 9.0 moved reserve-space onto the label: 'keep-space' maps to
+        // the label's 'reserve-space', i.e. tedi-label--reserve-space. The old
+        // tedi-slider__label--reserve-space class is gone with its CSS rule.
         $html = Blade::render('<tedi:slider label="Väärtus" />');
         $this->assertHasClass('tedi-label', $html, 'tedi-label');
         $this->assertMissingClass('sr-only', $html, 'tedi-label');
-        $this->assertMissingClass('tedi-slider__label--reserve-space', $html, 'tedi-label');
+        $this->assertMissingClass('tedi-label--reserve-space', $html, 'tedi-label');
 
         $html = Blade::render('<tedi:slider label="Väärtus" :hide-label="true" />');
         $this->assertHasClass('sr-only', $html, 'tedi-label');
-        $this->assertMissingClass('tedi-slider__label--reserve-space', $html, 'tedi-label');
+        $this->assertMissingClass('tedi-label--reserve-space', $html, 'tedi-label');
 
         $html = Blade::render('<tedi:slider label="Väärtus" hide-label="keep-space" />');
-        $this->assertHasClass('tedi-slider__label--reserve-space', $html, 'tedi-label');
+        $this->assertHasClass('tedi-label--reserve-space', $html, 'tedi-label');
         $this->assertMissingClass('sr-only', $html, 'tedi-label');
+        $this->assertMissingClass('tedi-slider__label--reserve-space', $html, 'tedi-label');
     }
 
     public function test_slider_label_is_omitted_when_no_label_is_given(): void

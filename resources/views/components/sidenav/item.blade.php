@@ -1,6 +1,6 @@
 {{--
     TEDI SideNav Item.
-    Port of angular/tedi/components/layout/sidenav/sidenav-item/sidenav-item.component.{ts,html}
+    Port of angular/src/tedi/components/layout/sidenav/sidenav-item/sidenav-item.component.{ts,html}
 
     Angular's host is the custom element `<tedi-sidenav-item role="presentation"
     style="display: contents">` and the class list lives on an inner `<li>`.

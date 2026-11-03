@@ -62,7 +62,7 @@
     <tedi:accordion-item :disabled="true">
         <tedi:accordion-item-header open-text="Ava" close-text="Sulge">
             <x-slot:before-title>
-                <span style="display: inline-flex; align-items: center; justify-content: center; width: var(--button-sm-height); height: var(--button-sm-height); border: 1px solid var(--stepper-step-disabled-border); border-radius: 100px; background: var(--stepper-step-disabled-bg);">
+                <span style="display: inline-flex; align-items: center; justify-content: center; width: var(--button-sm-height); height: var(--button-sm-height); border: 1px solid var(--stepper-step-disabled-border); border-radius: 100px; background: var(--stepper-step-disabled-background);">
                     <tedi:text :modifiers="['small', 'bold']" color="disabled">2</tedi:text>
                 </span>
             </x-slot:before-title>
@@ -74,7 +74,7 @@
     <tedi:accordion-item :disabled="true">
         <tedi:accordion-item-header open-text="Ava" close-text="Sulge">
             <x-slot:before-title>
-                <span style="display: inline-flex; align-items: center; justify-content: center; width: var(--button-sm-height); height: var(--button-sm-height); border: 1px solid var(--stepper-step-disabled-border); border-radius: 100px; background: var(--stepper-step-disabled-bg);">
+                <span style="display: inline-flex; align-items: center; justify-content: center; width: var(--button-sm-height); height: var(--button-sm-height); border: 1px solid var(--stepper-step-disabled-border); border-radius: 100px; background: var(--stepper-step-disabled-background);">
                     <tedi:text :modifiers="['small', 'bold']" color="disabled">3</tedi:text>
                 </span>
             </x-slot:before-title>

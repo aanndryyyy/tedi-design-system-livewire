@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'Horizontal Label Length',
-    'order' => 4,
+    'order' => 5,
     'status' => 'stable',
     'args' => [],
     'argTypes' => [],

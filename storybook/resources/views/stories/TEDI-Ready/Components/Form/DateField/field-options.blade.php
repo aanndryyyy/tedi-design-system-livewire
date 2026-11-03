@@ -4,19 +4,21 @@
     'status' => 'subset',
 ])
 
-<tedi:row :cols="1" :gap-y="3" style="max-width: 22rem;">
+<tedi:row :cols="1" :gap="3">
     <tedi:col>
+        <tedi:text as="p">Default date field</tedi:text>
         <tedi:form-field>
             <x-slot:label>
-                <tedi:form.label for="date-opt-default">Vaikimisi kuupäevaväli</tedi:form.label>
+                <tedi:form.label for="date-opt-default">Kuupäev</tedi:form.label>
             </x-slot:label>
             <tedi:date-field input-id="date-opt-default" />
         </tedi:form-field>
     </tedi:col>
     <tedi:col>
+        <tedi:text as="p">Date field with helper text</tedi:text>
         <tedi:form-field>
             <x-slot:label>
-                <tedi:form.label for="date-opt-hint">Kuupäevaväli vihjega</tedi:form.label>
+                <tedi:form.label for="date-opt-hint">Kuupäev</tedi:form.label>
             </x-slot:label>
             <tedi:date-field input-id="date-opt-hint" placeholder="pp.kk.aaaa" />
             <x-slot:feedback>
@@ -25,9 +27,10 @@
         </tedi:form-field>
     </tedi:col>
     <tedi:col>
+        <tedi:text as="p">Date field with quick-select shortcuts</tedi:text>
         <tedi:form-field>
             <x-slot:label>
-                <tedi:form.label for="date-opt-shortcuts">Kuupäevaväli otseteedega</tedi:form.label>
+                <tedi:form.label for="date-opt-shortcuts">Kuupäev</tedi:form.label>
             </x-slot:label>
             <tedi:date-field input-id="date-opt-shortcuts" />
             <tedi:row :cols="2" :gap-x="2" style="max-width: 12rem;">

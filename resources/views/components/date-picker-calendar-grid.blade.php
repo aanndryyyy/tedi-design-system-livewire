@@ -1,6 +1,6 @@
 {{--
     TEDI Date picker calendar grid.
-    Port of angular/tedi/components/form/date-picker/date-picker-calendar-grid/{date-picker-calendar-grid.component.ts,date-picker-calendar-grid.component.html}
+    Port of angular/src/tedi/components/form/date-picker/date-picker-calendar-grid/{date-picker-calendar-grid.component.ts,date-picker-calendar-grid.component.html}
 
     Root element. The Angular template has TWO sibling roots (the weekday header row
     and the grid). Blade allows exactly one (CONVENTIONS.md §6), so they are wrapped

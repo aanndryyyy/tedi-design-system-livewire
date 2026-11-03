@@ -1,6 +1,6 @@
 {{--
     TEDI Header Role.
-    Port of angular/tedi/components/layout/header/header-role/header-role.component.{ts,html}
+    Port of angular/src/tedi/components/layout/header/header-role/header-role.component.{ts,html}
 
     The desktop (`*showAt('lg')`) branch is ported in full, now including the
     `<tedi-popover>` that holds the role list — `tedi:popover` exists and is

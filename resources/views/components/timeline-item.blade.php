@@ -1,6 +1,6 @@
 {{--
     TEDI Timeline Item.
-    Port of angular/tedi/components/helpers/timeline/timeline-item/timeline-item.component.{ts,html}
+    Port of angular/src/tedi/components/helpers/timeline/timeline-item/timeline-item.component.{ts,html}
 
     The vendored SCSS targets the literal `tedi-timeline-item` element (a
     type selector, e.g. `tedi-timeline-item { display: contents; }`), mirroring

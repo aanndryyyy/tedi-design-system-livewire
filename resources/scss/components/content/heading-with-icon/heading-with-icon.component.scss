@@ -1,0 +1,15 @@
+.tedi-heading-with-icon {
+  display: flex;
+  gap: var(--content-heading-inner-spacing-x);
+  align-items: flex-start;
+
+  &__icon {
+    height: var(--_tedi-heading-with-icon-line-height);
+  }
+
+  &__heading {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: break-word;
+  }
+}

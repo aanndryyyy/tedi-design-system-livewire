@@ -1,6 +1,6 @@
 {{--
     TEDI Card.
-    Port of angular/tedi/components/content/card/{card.component.ts,card.utils.ts}
+    Port of angular/src/tedi/components/content/card/{card.component.ts,card.utils.ts}
 
     `background` and `padding` are not classes on the card itself — they're
     defaults inherited by child `tedi-card-content`/`tedi-card-header`/

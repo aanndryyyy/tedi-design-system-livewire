@@ -120,6 +120,26 @@
     </div>
 
     <div class="gx-case">
+        <div class="gx-case__label">size: small | inherited small | inherited large</div>
+        <div class="gx-case__demo gx-case__demo--stack">
+            <tedi:time-field input-id="mx-time-small" value="12:00" size="small" />
+            <tedi:form-field size="small"><tedi:time-field input-id="mx-time-ff-small" value="12:00" /></tedi:form-field>
+            <tedi:form-field size="large"><tedi:time-field input-id="mx-time-ff-large" value="12:00" /></tedi:form-field>
+        </div>
+    </div>
+
+    <div class="gx-case">
+        <div class="gx-case__label">field surface from the form-field: valid | invalid | disabled | icon (box owns the surface) | clearable false</div>
+        <div class="gx-case__demo gx-case__demo--stack">
+            <tedi:form-field :valid="true"><tedi:time-field input-id="mx-time-ff-valid" value="12:00" /></tedi:form-field>
+            <tedi:form-field :invalid="true"><tedi:time-field input-id="mx-time-ff-invalid" value="12:00" /></tedi:form-field>
+            <tedi:form-field :disabled="true"><tedi:time-field input-id="mx-time-ff-disabled" value="12:00" /></tedi:form-field>
+            <tedi:form-field icon="info"><tedi:time-field input-id="mx-time-ff-icon" value="12:00" /></tedi:form-field>
+            <tedi:form-field :clearable="false"><tedi:time-field input-id="mx-time-ff-noclear" value="12:00" /></tedi:form-field>
+        </div>
+    </div>
+
+    <div class="gx-case">
         <div class="gx-case__label">picker-variant: none — static icon, no popover</div>
         <div class="gx-case__demo">
             <tedi:time-field input-id="mx-time-none" placeholder="tt:mm" picker-variant="none" />

@@ -13,14 +13,21 @@
 
     `size` mirrors Angular's `inject(MODAL_SIZE)`: the close button shrinks with
     the surrounding modal. In Blade that is `@aware`, whose fallback must equal
-    <tedi:modal>'s `@props` default (CONVENTIONS §3) — both are 'default'.
+    `tedi:modal`'s `@props` default (CONVENTIONS §3) — both are 'default'.
     `closeButtonSize` overrides it, as upstream.
 
-    The close button calls `hide()` on the enclosing `tediModal` Alpine scope.
-    Used outside a <tedi:modal> it is an inert no-op, matching Angular's
+    The heading in the default slot is what names the dialog (upstream #680):
+    `tediModal` gives the first `h1`–`h6` here an id on open and points the
+    dialog's `aria-labelledby` at it, unless `tedi:modal` was given its own
+    `aria-label` / `aria-labelledby`.
+
+    The close button calls `requestClose('close-button')` on the enclosing
+    `tediModal` Alpine scope — upstream's `modalRef.requestClose("close-button")`,
+    so a `tedi-modal-close` listener can keep the modal open.
+    Used outside a `tedi:modal` it is an inert no-op, matching Angular's
     `inject(ModalComponent, { optional: true })`.
 --}}
-{{-- @aware fallback must equal <tedi:modal>'s @props default — CONVENTIONS §3. --}}
+{{-- @aware fallback must equal tedi:modal's @props default — CONVENTIONS §3. --}}
 @aware([
     'size' => 'default',
 ])
@@ -46,7 +53,7 @@
             <tedi:closing-button
                 class="tedi-modal-header__close"
                 :size="$effectiveCloseButtonSize"
-                x-on:click="hide()"
+                x-on:click="requestClose('close-button')"
             />
         @endif
     </div>

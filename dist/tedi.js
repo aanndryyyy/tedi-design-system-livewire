@@ -38,21 +38,257 @@
   }
 
   // resources/js/src/carousel.js
+  var EPSILON = 1e-3;
+  var FLICK_VELOCITY = 15e-4;
+  var FLICK_WINDOW = 100;
+  var MIN_SWIPE_DISTANCE = 10;
+  var MIN_MOUSE_SWIPE_DISTANCE = 4;
   function carousel(slideCount = 0) {
     return {
+      /** Track position, in slides. Fractional while dragging, and at a bounded track's final stop. */
       index: 0,
       count: slideCount,
-      go(i) {
-        if (this.count > 0) this.index = (i + this.count) % this.count;
+      loop: true,
+      slidesPerView: 1,
+      gap: 16,
+      swipeThreshold: 0.3,
+      transitionMs: 400,
+      /** False while a pointer drags the track, so it follows without easing. */
+      animate: true,
+      dragging: false,
+      locked: false,
+      viewport: null,
+      startX: 0,
+      startIndex: 0,
+      lastX: 0,
+      lastTime: 0,
+      samples: [],
+      minSwipeDistance: MIN_SWIPE_DISTANCE,
+      configure(options = {}) {
+        Object.assign(this, options);
+        this.swipeThreshold = Math.min(Math.max(Number(this.swipeThreshold) || 0, 0), 1);
+        this.clampIntoRange();
       },
-      next() {
-        this.go(this.index + 1);
+      /** Furthest track position in bounded mode; may be fractional to show the last slide fully. */
+      get maxIndex() {
+        return Math.max(0, this.count - this.slidesPerView);
       },
-      prev() {
-        this.go(this.index - 1);
+      /** Number of indicator positions: one per slide when looping, or one per reachable stop when bounded. */
+      get positionCount() {
+        if (this.loop || !this.count) return this.count;
+        return Math.ceil(this.maxIndex - EPSILON) + 1;
+      },
+      /** Index of the leftmost visible slide, skipping a partially visible one in bounded mode. */
+      get slideIndex() {
+        if (!this.count) return 0;
+        if (!this.loop) {
+          return Math.min(Math.max(Math.ceil(this.index - EPSILON), 0), this.count - 1);
+        }
+        const i = Math.floor(this.index);
+        return (i % this.count + this.count) % this.count;
+      },
+      /** Index of the active indicator; a fractional final stop gets its own index. */
+      get activePosition() {
+        if (this.loop) return this.slideIndex;
+        const nearest = this.snap(this.index);
+        return nearest >= this.maxIndex - EPSILON ? this.positionCount - 1 : Math.round(nearest);
+      },
+      get canPrev() {
+        return this.loop || this.index > EPSILON;
+      },
+      get canNext() {
+        return this.loop || this.index < this.maxIndex - EPSILON;
       },
       isActive(i) {
-        return this.index === i;
+        return this.activePosition === i;
+      },
+      trackStyle() {
+        const transition = this.animate ? `transform ${this.transitionMs}ms ease` : "none";
+        return `gap: ${this.gap}px; transform: translate3d(calc(-1 * ${this.index} * (100% + ${this.gap}px) / ${this.slidesPerView}), 0, 0); transition: ${transition};`;
+      },
+      next() {
+        if (!this.count || this.locked || !this.canNext) return;
+        this.moveTo(this.clampIndex(Math.floor(this.index + EPSILON) + 1));
+      },
+      prev() {
+        if (!this.count || this.locked || !this.canPrev) return;
+        this.moveTo(this.clampIndex(Math.ceil(this.index - EPSILON) - 1));
+      },
+      go(i) {
+        if (!this.count) return;
+        this.moveTo(this.loop ? i : this.clampIndex(i));
+      },
+      /** Settles the track on `target`, wrapping it into range when looping (no clone buffer here). */
+      moveTo(target) {
+        this.animate = true;
+        this.index = this.loop ? (target % this.count + this.count) % this.count : target;
+        this.locked = true;
+        setTimeout(() => this.locked = false, this.transitionMs);
+      },
+      keydown(event) {
+        switch (event.key) {
+          case "ArrowRight":
+          case "PageDown":
+            event.preventDefault();
+            this.next();
+            break;
+          case "ArrowLeft":
+          case "PageUp":
+            event.preventDefault();
+            this.prev();
+            break;
+          case "Home":
+            event.preventDefault();
+            this.go(0);
+            break;
+          case "End":
+            event.preventDefault();
+            this.go(this.count - 1);
+            break;
+          default:
+            break;
+        }
+      },
+      cellWidth() {
+        const width = this.viewport ? this.viewport.getBoundingClientRect().width : 0;
+        return (width - this.gap * (this.slidesPerView - 1)) / this.slidesPerView + this.gap;
+      },
+      pointerDown(ev) {
+        if (!this.count) return;
+        if (this.viewport && this.viewport.setPointerCapture) {
+          this.viewport.setPointerCapture(ev.pointerId);
+        }
+        this.dragging = true;
+        this.animate = false;
+        this.startX = ev.clientX;
+        this.startIndex = this.index;
+        this.lastX = ev.clientX;
+        this.lastTime = ev.timeStamp;
+        this.samples = [{ x: ev.clientX, t: ev.timeStamp }];
+        this.minSwipeDistance = ev.pointerType === "mouse" ? MIN_MOUSE_SWIPE_DISTANCE : MIN_SWIPE_DISTANCE;
+      },
+      pointerMove(ev) {
+        if (!this.dragging) return;
+        const dx = ev.clientX - this.startX;
+        this.lastX = ev.clientX;
+        this.lastTime = ev.timeStamp;
+        this.samples.push({ x: ev.clientX, t: ev.timeStamp });
+        while (this.samples[0].t < ev.timeStamp - FLICK_WINDOW) {
+          this.samples.shift();
+        }
+        const cellWidth = this.cellWidth();
+        if (!cellWidth) return;
+        const { min, max } = this.dragBounds();
+        this.index = Math.min(Math.max(this.startIndex - dx / cellWidth, min), max);
+      },
+      /**
+       * The browser ended the drag, e.g. to scroll the page, or capture was lost
+       * mid-drag: not a swipe, so return to where it started. After a normal
+       * release this is a no-op, as `lostpointercapture` follows `pointerup`.
+       */
+      pointerCancel() {
+        if (!this.dragging) return;
+        this.dragging = false;
+        this.animate = true;
+        this.index = this.snap(this.startIndex);
+      },
+      pointerUp(ev) {
+        if (!this.dragging) return;
+        if (ev && typeof ev.clientX === "number") {
+          this.pointerMove(ev);
+        }
+        this.dragging = false;
+        const target = this.swipeTarget(ev && ev.timeStamp !== void 0 ? ev.timeStamp : this.lastTime);
+        if (Math.abs(target - this.index) < EPSILON && Math.abs(target - this.startIndex) < EPSILON) {
+          this.animate = true;
+          this.index = target;
+          return;
+        }
+        this.moveTo(target);
+      },
+      /**
+       * Where a released drag settles. Walks stop position to stop position in the
+       * drag direction: each gap fully dragged moves on, and a partly dragged gap
+       * moves on once it reaches `swipeThreshold` of that gap (a bounded track's
+       * final gap can be short). A flick that did not move on otherwise moves one
+       * position.
+       */
+      swipeTarget(releasedAt) {
+        const dx = this.lastX - this.startX;
+        if (Math.abs(dx) < this.minSwipeDistance) {
+          return this.snap(this.startIndex);
+        }
+        const forward = dx < 0;
+        let remaining = Math.abs(this.index - this.startIndex);
+        let position = this.startIndex;
+        let moved = false;
+        for (; ; ) {
+          const next = this.adjacentStop(position, forward);
+          const gap = Math.abs(next - position);
+          if (gap < EPSILON) break;
+          if (remaining >= gap - EPSILON) {
+            position = next;
+            remaining -= gap;
+            moved = true;
+            continue;
+          }
+          if (remaining > EPSILON && remaining >= gap * this.swipeThreshold - EPSILON) {
+            position = next;
+            moved = true;
+          }
+          break;
+        }
+        if (!moved && this.isFlick(releasedAt)) {
+          return this.adjacentStop(this.startIndex, forward);
+        }
+        return moved ? position : this.snap(this.startIndex);
+      },
+      /** The next stop position after `position` in the given direction (itself at a bound). */
+      adjacentStop(position, forward) {
+        return forward ? this.clampIndex(Math.floor(position + EPSILON) + 1) : this.clampIndex(Math.ceil(position - EPSILON) - 1);
+      },
+      /**
+       * Whether the drag ended in a flick: at least `minSwipeDistance` of movement in
+       * the drag direction within the last `FLICK_WINDOW` ms before release, fast enough.
+       */
+      isFlick(releasedAt) {
+        if (!this.viewport || !this.viewport.getBoundingClientRect().width) return false;
+        const recent = this.samples.find((sample) => sample.t >= releasedAt - FLICK_WINDOW);
+        if (!recent) return false;
+        const distance = this.lastX - recent.x;
+        const elapsed = releasedAt - recent.t;
+        const sameDirection = Math.sign(distance) === Math.sign(this.lastX - this.startX);
+        if (elapsed <= 0 || !sameDirection || Math.abs(distance) < this.minSwipeDistance) {
+          return false;
+        }
+        return Math.abs(distance) / this.cellWidth() / elapsed > FLICK_VELOCITY;
+      },
+      clampIndex(value) {
+        return this.loop ? value : Math.min(Math.max(value, 0), this.maxIndex);
+      },
+      /** Re-clamp without animation when bounded mode starts or its limit changes. */
+      clampIntoRange() {
+        if (this.loop) return;
+        const clamped = Math.min(Math.max(this.index, 0), this.maxIndex);
+        if (clamped !== this.index) {
+          this.animate = false;
+          this.index = clamped;
+        }
+      },
+      /** Snap to the nearest reachable position, including a fractional end. */
+      snap(value) {
+        if (this.loop) return Math.round(value);
+        const below = this.clampIndex(Math.floor(value));
+        const above = this.clampIndex(Math.ceil(value));
+        return value - below <= above - value ? below : above;
+      },
+      /**
+       * Range the track may be dragged within. Upstream lets a looping track run
+       * into its rendered clone buffer; with no buffer here, both modes stop at
+       * the slides that exist.
+       */
+      dragBounds() {
+        return { min: 0, max: this.loop ? Math.max(0, this.count - 1) : this.maxIndex };
       }
     };
   }
@@ -161,11 +397,11 @@
       },
       hide: function(focusTrigger) {
         clearTimeout(this._hideTimer);
-        this.open = false;
         if (focusTrigger && this.$refs.trigger) {
           var focusable = this._focusableTrigger();
           if (focusable) focusable.focus({ preventScroll: true });
         }
+        this.open = false;
       },
       toggle: function() {
         if (this.open) {
@@ -361,6 +597,10 @@
     "[contenteditable]:not([contenteditable='false'])",
     "[tabindex]:not([tabindex='-1'])"
   ].join(",");
+  var NATIVE_INTERACTIVE_SELECTOR = 'button, a[href], input:not([type="hidden"]), select, textarea';
+  var TRIGGER_FOCUSABLE_SELECTOR = NATIVE_INTERACTIVE_SELECTOR + ", [tabindex]";
+  var SPACE_ACTIVATED_SELECTOR = 'input[type="checkbox"], input[type="radio"]';
+  var INTERACTIVE_CONTENT_SELECTOR = "a[href], button";
   function getFocusableElements(container) {
     return Array.prototype.filter.call(
       container.querySelectorAll(FOCUSABLE_SELECTOR),
@@ -379,12 +619,114 @@
       }
     );
   }
+  var dropdownTrigger = {
+    /** Only a Space press that starts on the trigger may activate it on keyup. */
+    _spacePressed: false,
+    /**
+     * The trigger directive's ngAfterViewInit + effect(). `el` is the
+     * `tedi-dropdown-trigger` wrapper; the decorated element is the
+     * resolved control inside it.
+     *
+     * config.ariaHaspopup  explicit value, or null to follow the role
+     * config.containerId   pairs id / aria-controls, or null
+     */
+    initTrigger: function(el, config) {
+      var cfg = config || {};
+      var focusable = this._focusableTrigger();
+      if (!focusable.matches(NATIVE_INTERACTIVE_SELECTOR)) {
+        if (!focusable.hasAttribute("role")) focusable.setAttribute("role", "button");
+        if (!focusable.hasAttribute("tabindex")) focusable.setAttribute("tabindex", "0");
+      }
+      if (cfg.containerId) {
+        focusable.setAttribute("id", cfg.containerId + "_trigger");
+      }
+      var hasPopup = cfg.ariaHaspopup;
+      if (!hasPopup) {
+        var list = el.parentElement && el.parentElement.querySelector(".tedi-dropdown__panel ul[role]");
+        var role = list ? list.getAttribute("role") : "menu";
+        hasPopup = role === "menu" || role === "listbox" ? role : "false";
+      }
+      if (hasPopup === "false") {
+        focusable.removeAttribute("aria-haspopup");
+      } else {
+        focusable.setAttribute("aria-haspopup", hasPopup);
+      }
+      var sync = function(open) {
+        focusable.setAttribute("aria-expanded", open ? "true" : "false");
+        if (cfg.containerId && open) {
+          focusable.setAttribute("aria-controls", cfg.containerId);
+        } else {
+          focusable.removeAttribute("aria-controls");
+        }
+      };
+      sync(this.open);
+      this.$watch("open", sync);
+    },
+    /**
+     * The trigger directive's element resolution: a natively interactive
+     * control is the trigger itself, otherwise the first control or
+     * `[tabindex]` inside the wrapper. Wider than tediOverlay's, which
+     * tooltip and popover share.
+     */
+    _focusableTrigger: function() {
+      var el = this.$refs.trigger;
+      if (!el) return null;
+      if (el.matches(NATIVE_INTERACTIVE_SELECTOR)) return el;
+      return el.querySelector(TRIGGER_FOCUSABLE_SELECTOR) || el;
+    },
+    /** 'menu' | 'listbox' | 'list', read from the list the content component renders. */
+    _role: function() {
+      var list = this.$refs.panel && this.$refs.panel.querySelector("ul[role]");
+      return list ? list.getAttribute("role") : "menu";
+    },
+    /**
+     * Whether the trigger must activate itself on `key`, because the
+     * element does not turn that key into a native click: both keys for
+     * a generic trigger, Enter for a checkbox or radio. Other native
+     * controls handle both. Keys from other controls inside the wrapper
+     * are theirs.
+     */
+    _triggerHandlesKey: function(event, key) {
+      var el = this._focusableTrigger();
+      if (event.target !== el) return false;
+      if (!el.matches(NATIVE_INTERACTIVE_SELECTOR)) return true;
+      return key === "Enter" && el.matches(SPACE_ACTIVATED_SELECTOR);
+    },
+    /**
+     * Enter / Space on the trigger (#669). Returns whether the key was
+     * dealt with, so the host's own keydown handler can stop there.
+     */
+    triggerActivationKeydown: function(event) {
+      if (event.key === "Enter") {
+        if (!this._triggerHandlesKey(event, "Enter")) return false;
+        event.preventDefault();
+        this.toggle();
+        return true;
+      }
+      if (event.key === " ") {
+        if (!this._triggerHandlesKey(event, " ")) return false;
+        event.preventDefault();
+        this._spacePressed = true;
+        return true;
+      }
+      return false;
+    },
+    triggerKeyup: function(event) {
+      if (event.key !== " " || !this._spacePressed) return;
+      this._spacePressed = false;
+      if (event.target !== this._focusableTrigger()) return;
+      this.toggle();
+    },
+    triggerFocusout: function(event) {
+      if (event.target === this._focusableTrigger()) this._spacePressed = false;
+    }
+  };
   function dropdown(config) {
     var base = overlay(config);
     var baseInit = base.init;
     var baseHide = base.hide;
     var baseOnOpen = base._onOpen;
-    return Object.assign(base, {
+    return Object.assign(base, dropdownTrigger, {
       /** Index into items() of the element holding tabindex="0". */
       activeIndex: null,
       /**
@@ -397,8 +739,12 @@
        */
       _initialFocus: "selected",
       init: function() {
+        var self = this;
         baseInit.call(this);
         this.updateTabindexes();
+        this.$nextTick(function() {
+          self.updateTabindexes();
+        });
       },
       hide: function(focusTrigger) {
         this.activeIndex = null;
@@ -410,6 +756,14 @@
         var initialFocus = this._initialFocus;
         this._initialFocus = "selected";
         baseOnOpen.call(this);
+        if (!this._isWidget()) {
+          this.$nextTick(function() {
+            if (!self.open || !self.$refs.panel) return;
+            var first = getFocusableElements(self.$refs.panel)[0];
+            if (first) first.focus();
+          });
+          return;
+        }
         this.$nextTick(function() {
           self.setActiveToSelectedOrFirst();
           if (initialFocus === "first") {
@@ -428,26 +782,41 @@
           this.$refs.panel.querySelectorAll("li[tedi-dropdown-item]")
         );
       },
-      /** 'menu' | 'listbox', read from the list the content component renders. */
-      _role: function() {
-        var list = this.$refs.panel && this.$refs.panel.querySelector("ul[role]");
-        return list ? list.getAttribute("role") : "menu";
+      /** Whether the content is a composite widget (menu, listbox) rather than a plain list. */
+      _isWidget: function() {
+        return this._role() !== "list";
+      },
+      /**
+       * The element that carries the item's role, ARIA state, roving
+       * tabindex and focus — upstream's focusTarget(): the projected control
+       * for an interactive-content item, the `li` otherwise.
+       */
+      _target: function(item) {
+        if (item.getAttribute("role") === "none") {
+          return item.querySelector(INTERACTIVE_CONTENT_SELECTOR) || item;
+        }
+        return item;
+      },
+      _controlOwnsSemantics: function(item) {
+        return this._target(item) !== item;
       },
       _isDisabled: function(item) {
-        return item.getAttribute("aria-disabled") === "true";
+        return this._target(item).getAttribute("aria-disabled") === "true";
       },
       // -- roving tabindex ------------------------------------------
       updateTabindexes: function() {
+        if (!this._isWidget()) return;
         var self = this;
         var role = this._role();
         var active = this.activeIndex;
         this.items().forEach(function(item, i) {
+          var target = self._target(item);
           if (i === active && !self._isDisabled(item)) {
-            item.setAttribute("tabindex", "0");
+            target.setAttribute("tabindex", "0");
           } else if (role === "listbox" && self._isDisabled(item)) {
-            item.removeAttribute("tabindex");
+            target.removeAttribute("tabindex");
           } else {
-            item.setAttribute("tabindex", "-1");
+            target.setAttribute("tabindex", "-1");
           }
         });
       },
@@ -455,7 +824,7 @@
         var self = this;
         var items = this.items();
         var selected = items.findIndex(function(item) {
-          return item.getAttribute("aria-selected") === "true";
+          return self._target(item).getAttribute("aria-selected") === "true";
         });
         if (selected !== -1 && !this._isDisabled(items[selected])) {
           this.activeIndex = selected;
@@ -475,8 +844,9 @@
         if (this.activeIndex == null) return;
         var item = this.items()[this.activeIndex];
         if (!item) return;
-        item.focus();
-        item.scrollIntoView({ block: "nearest", inline: "nearest" });
+        var target = this._target(item);
+        target.focus();
+        target.scrollIntoView({ block: "nearest", inline: "nearest" });
       },
       focusFirstItem: function() {
         var self = this;
@@ -524,12 +894,14 @@
       },
       // -- keyboard entry points -------------------------------------
       /**
-       * The trigger's ArrowDown/ArrowUp. Escape is deliberately absent —
-       * tediOverlay already closes on it at the document level, and
-       * handling it here too would fire `hide` twice.
+       * The trigger's Enter / Space / ArrowDown / ArrowUp. Escape is
+       * deliberately absent — tediOverlay already closes on it at the
+       * document level, and handling it here too would fire `hide` twice.
        */
       triggerKeydown: function(event) {
+        if (this.triggerActivationKeydown(event)) return;
         if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+        if (!this._isWidget()) return;
         event.preventDefault();
         var last = event.key === "ArrowUp";
         if (this.open) {
@@ -541,6 +913,7 @@
       },
       /** Delegated from the panel; `event.target` is inside an item. */
       menuKeydown: function(event) {
+        if (!this._isWidget()) return;
         var item = event.target.closest("li[tedi-dropdown-item]");
         if (!item || !this.$refs.panel.contains(item)) return;
         if (this._isDisabled(item)) {
@@ -565,9 +938,13 @@
             this.focusLastItem();
             break;
           case "Enter":
-          case " ":
+            if (this._controlOwnsSemantics(item)) break;
             event.preventDefault();
             item.click();
+            break;
+          case " ":
+            event.preventDefault();
+            this._target(item).click();
             break;
           case "Tab":
             event.preventDefault();
@@ -589,12 +966,8 @@
         });
         var index = focusable.indexOf(trigger);
         var next = shiftKey ? focusable[index - 1] : focusable[index + 1];
+        (next || trigger).focus();
         this.hide(false);
-        if (next) {
-          this.$nextTick(function() {
-            next.focus();
-          });
-        }
       }
     });
   }
@@ -603,7 +976,7 @@
   var TAB_STOP_SELECTOR = 'input:not([disabled]):not([tabindex="-1"]), button:not([disabled]), [role="option"][tabindex="0"], [role="listbox"][tabindex="0"], [role="checkbox"][tabindex="0"]';
   function filter(config) {
     var cfg = config || {};
-    var base = overlay(cfg);
+    var base = Object.assign(overlay(cfg), dropdownTrigger);
     var baseOnOpen = base._onOpen;
     return Object.defineProperties(base, Object.getOwnPropertyDescriptors({
       options: cfg.options || [],
@@ -800,7 +1173,7 @@
         }
       },
       /**
-       * `tedi:dropdown-item-value` renders its checkbox/radio itself and puts
+       * `tedi:option-content` renders its checkbox/radio itself and puts
        * the attribute bag on its own root, so the indicator cannot be bound
        * from the template. These two keep it in step with the live selection,
        * bound with x-effect from the row. Server-side both are already correct
@@ -809,11 +1182,11 @@
       syncOptionIndicator: function(row, index) {
         var option = this.options[index];
         if (!option) return;
-        var input = row.querySelector(".tedi-dropdown-item-value__checkbox, .tedi-dropdown-item-value__radio");
+        var input = row.querySelector(".tedi-option-content__checkbox, .tedi-option-content__radio");
         if (input) input.checked = this.isOptionSelected(option.value);
       },
       syncSelectAllIndicator: function(row) {
-        var input = row.querySelector(".tedi-dropdown-item-value__checkbox");
+        var input = row.querySelector(".tedi-option-content__checkbox");
         if (!input) return;
         input.checked = this.allFilteredSelected;
         input.indeterminate = this.someFilteredSelected;
@@ -846,6 +1219,7 @@
        * (CONVENTIONS.md §11).
        */
       triggerKeydown: function(event) {
+        if (this.triggerActivationKeydown(event)) return;
         if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
         event.preventDefault();
         var mode = event.key === "ArrowUp" ? "last" : "first";
@@ -958,6 +1332,46 @@
     }));
   }
 
+  // resources/js/src/form-field.js
+  function formField({ clearOnInteraction = false } = {}) {
+    return {
+      clearOnInteraction,
+      filled: false,
+      blocked: false,
+      init() {
+        this._control = this.$el.querySelector(
+          '.tedi-form-field__box input:not([type="hidden"]), .tedi-form-field__box textarea'
+        );
+        if (!this._control) {
+          return;
+        }
+        this.sync();
+        this._control.addEventListener("input", () => this.sync());
+        this._control.addEventListener("change", () => this.sync());
+      },
+      sync() {
+        const control = this._control;
+        this.filled = control.value !== "";
+        this.blocked = control.disabled || control.readOnly;
+      },
+      /** showClearButton(): filled, enabled and editable. */
+      get showClear() {
+        return this.filled && !this.blocked;
+      },
+      clear() {
+        const control = this._control;
+        if (!control || this.blocked) {
+          return;
+        }
+        control.value = "";
+        control.dispatchEvent(new Event("input", { bubbles: true }));
+        control.dispatchEvent(new Event("change", { bubbles: true }));
+        control.focus();
+        this.sync();
+      }
+    };
+  }
+
   // resources/js/src/hash-trigger.js
   function hashTrigger(config = {}) {
     const { id = null, scrollOnMatch = true } = config;
@@ -999,6 +1413,8 @@
   }
 
   // resources/js/src/modal.js
+  var openStack = [];
+  var titleCounter = 0;
   function modal(config) {
     var cfg = config || {};
     return {
@@ -1022,20 +1438,57 @@
       show: function() {
         this.open = true;
       },
+      /** Guarded close, as upstream's `ModalRef.close()` (`programmatic`). */
       hide: function() {
+        this.requestClose("programmatic");
+      },
+      /** Unguarded close — upstream's `closeAll()` path. */
+      close: function() {
         this.open = false;
       },
       toggle: function() {
-        this.open = !this.open;
+        if (this.open) {
+          this.hide();
+        } else {
+          this.show();
+        }
+      },
+      requestClose: function(reason) {
+        if (!this.open) return;
+        var event = new CustomEvent("tedi-modal-close", {
+          bubbles: true,
+          cancelable: true,
+          detail: { reason: reason || "programmatic" }
+        });
+        if (this.$root.dispatchEvent(event)) this.open = false;
       },
       onBackdropClick: function() {
-        if (cfg.closeOnBackdropClick !== false) this.hide();
+        if (cfg.closeOnBackdropClick !== false) this.requestClose("backdrop");
       },
       onKeydown: function(event) {
-        if (event.key === "Escape") this.hide();
+        if (event.key !== "Escape" || !this.open) return;
+        if (openStack[openStack.length - 1] !== this.$root) return;
+        this.requestClose("escape");
+      },
+      _resolveHeadingLabel: function() {
+        var dialog = this.$refs.dialog;
+        if (!dialog || cfg.labelled) return;
+        var heading = dialog.querySelector(
+          ["h1", "h2", "h3", "h4", "h5", "h6"].map(function(tag) {
+            return "tedi-modal-header " + tag;
+          }).join(", ")
+        );
+        if (!heading) {
+          dialog.removeAttribute("aria-labelledby");
+          return;
+        }
+        if (!heading.id) heading.id = "tedi-modal-title-" + titleCounter++;
+        dialog.setAttribute("aria-labelledby", heading.id);
       },
       _onOpen: function() {
         var self = this;
+        openStack.push(this.$root);
+        this._resolveHeadingLabel();
         this._previouslyFocused = document.activeElement;
         this._previousOverflow = document.body.style.overflow;
         document.body.style.overflow = "hidden";
@@ -1044,6 +1497,8 @@
         });
       },
       _onClose: function() {
+        var index = openStack.indexOf(this.$root);
+        if (index !== -1) openStack.splice(index, 1);
         document.body.style.overflow = this._previousOverflow;
         if (this._previouslyFocused && this._previouslyFocused.focus) {
           this._previouslyFocused.focus({ preventScroll: true });
@@ -1279,6 +1734,60 @@
     }));
   }
 
+  // resources/js/src/progress-bar.js
+  function progressBar({ interval = 1e3 } = {}) {
+    const resolvedInterval = Number.isFinite(interval) ? Math.max(0, interval) : 1e3;
+    return {
+      announcedValue: "",
+      previousText: void 0,
+      lastAnnouncedAt: void 0,
+      timeout: void 0,
+      observer: null,
+      init() {
+        const bar = this.$refs.bar;
+        if (!bar) {
+          return;
+        }
+        this.previousText = this.formattedValue();
+        this.observer = new MutationObserver(() => this.onChange());
+        this.observer.observe(bar, { attributes: true, attributeFilter: ["value", "aria-valuetext"] });
+      },
+      destroy() {
+        var _a;
+        (_a = this.observer) == null ? void 0 : _a.disconnect();
+        clearTimeout(this.timeout);
+      },
+      formattedValue() {
+        const bar = this.$refs.bar;
+        const label = bar.getAttribute("aria-valuetext");
+        return label !== null ? label : `${bar.value}%`;
+      },
+      onChange() {
+        const text = this.formattedValue();
+        const changed = text !== this.previousText;
+        this.previousText = text;
+        if (changed || this.timeout !== void 0) {
+          this.queue(text);
+        }
+      },
+      queue(text) {
+        const remaining = this.lastAnnouncedAt === void 0 ? 0 : resolvedInterval - (Date.now() - this.lastAnnouncedAt);
+        if (remaining <= 0) {
+          this.announceNow(text);
+          return;
+        }
+        clearTimeout(this.timeout);
+        this.timeout = setTimeout(() => this.announceNow(this.formattedValue()), remaining);
+      },
+      announceNow(text) {
+        clearTimeout(this.timeout);
+        this.timeout = void 0;
+        this.lastAnnouncedAt = Date.now();
+        this.announcedValue = text;
+      }
+    };
+  }
+
   // resources/js/src/scroll-visibility.js
   function scrollVisibility(config = {}) {
     const {
@@ -1328,78 +1837,898 @@
     };
   }
 
-  // resources/js/src/table-of-contents.js
-  function tableOfContents(config) {
-    var settings = config || {};
+  // resources/js/src/sheet.js
+  var DRAG_DISMISS_THRESHOLD = 120;
+  var DRAG_EXPAND_THRESHOLD = 40;
+  var DRAG_START_THRESHOLD_TOUCH = 10;
+  var DRAG_START_THRESHOLD_MOUSE = 2;
+  var DRAG_ZONE_SELECTOR = ".tedi-sheet__handle-zone, .tedi-sheet__header";
+  var NO_DRAG_SELECTOR = [
+    "a[href]",
+    "button",
+    "input",
+    "select",
+    "textarea",
+    "label",
+    '[contenteditable]:not([contenteditable="false"])',
+    '[role="button"]',
+    '[role="link"]',
+    '[tabindex]:not([tabindex="-1"])'
+  ].join(", ");
+  var TABBABLE_SELECTOR = [
+    "a[href]",
+    "area[href]",
+    "button:not([disabled])",
+    'input:not([disabled]):not([type="hidden"])',
+    "select:not([disabled])",
+    "textarea:not([disabled])",
+    "iframe",
+    '[contenteditable]:not([contenteditable="false"])',
+    '[tabindex]:not([tabindex="-1"])'
+  ].join(", ");
+  var CLOSE_DURATION = 300;
+  function closestInside(target, selector, panel) {
+    var match = target.closest(selector);
+    return match !== null && match !== panel && panel.contains(match);
+  }
+  function tabbables(container) {
+    return Array.prototype.filter.call(container.querySelectorAll(TABBABLE_SELECTOR), function(el) {
+      if (el.tabIndex < 0) return false;
+      if (el.closest("[hidden], [inert]")) return false;
+      var style = window.getComputedStyle(el);
+      return style.display !== "none" && style.visibility !== "hidden";
+    });
+  }
+  function sheet(config) {
+    var cfg = config || {};
+    var initiallyCollapsed = !!cfg.collapsed;
     return {
-      open: false,
-      activeId: settings.activeId || "",
-      scrollAware: settings.scrollAware !== false,
-      scrollOnClick: settings.scrollOnClick !== false,
-      isSeeking: false,
-      _seekingTimeout: void 0,
-      _observer: void 0,
+      open: !!cfg.open,
+      collapsed: initiallyCollapsed,
+      // useTransitionStatus: 'unmounted' | 'initial' | 'open' | 'close'.
+      status: cfg.open ? "open" : "unmounted",
+      active: !!cfg.open,
+      content: {},
+      snapIndex: null,
+      dragOffset: 0,
+      dragging: false,
+      _drag: null,
+      _previouslyFocused: null,
+      _previousOverflow: "",
+      _scrollLocked: false,
+      _timer: null,
+      /** The collapse toggle's open state — the inverse of `collapsed`. */
+      get expanded() {
+        return !this.collapsed;
+      },
+      set expanded(value) {
+        this.collapsed = !value;
+      },
       init: function() {
         var self = this;
-        if (typeof IntersectionObserver === "undefined") return;
-        this._observer = new IntersectionObserver(function() {
-          self._onIntersect();
-        }, { rootMargin: "0px 0px 0px 0px" });
-        this._targets().forEach(function(target) {
-          self._observer.observe(target);
+        this.$watch("open", function(value) {
+          if (value) {
+            self._onOpen();
+          } else {
+            self._onClose();
+          }
+        });
+        this.$watch("collapsed", function() {
+          self.resetDrag();
+        });
+        this._onPointerDownOutside = function(event) {
+          self._outsidePress(event);
+        };
+        this._onKeydown = function(event) {
+          if (event.key === "Escape" && self.open && cfg.closeOnEscape !== false) self.hide();
+        };
+        this._onBlur = function() {
+          self.resetDrag();
+        };
+        document.addEventListener("pointerdown", this._onPointerDownOutside, true);
+        document.addEventListener("keydown", this._onKeydown);
+        window.addEventListener("blur", this._onBlur);
+        this.$nextTick(function() {
+          self._syncTrigger();
+          if (self.open) self._activate(true);
         });
       },
       destroy: function() {
-        if (this._observer) this._observer.disconnect();
-        clearTimeout(this._seekingTimeout);
+        document.removeEventListener("pointerdown", this._onPointerDownOutside, true);
+        document.removeEventListener("keydown", this._onKeydown);
+        window.removeEventListener("blur", this._onBlur);
+        this._unlockScroll();
       },
-      /** Ids in document order, read off the rendered items. */
-      _ids: function() {
-        return Array.prototype.map.call(
-          this.$el.querySelectorAll("[data-toc-id]"),
-          function(el) {
-            return el.getAttribute("data-toc-id");
-          }
-        ).filter(Boolean);
-      },
-      _targets: function() {
-        return this._ids().map(function(id) {
-          return document.getElementById(id);
-        }).filter(Boolean);
-      },
-      _onIntersect: function() {
-        if (!this.scrollAware || this.isSeeking) return;
-        var targets = this._targets().sort(function(a, b) {
-          return a.getBoundingClientRect().top - b.getBoundingClientRect().top;
-        });
-        for (var i = 0; i < targets.length; i++) {
-          var rect = targets[i].getBoundingClientRect();
-          if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
-            this.activeId = targets[i].id;
-            break;
-          }
+      /** Called by `tedi:sheet-content` with its own options. */
+      register: function(contentConfig) {
+        this.content = contentConfig || {};
+        if (this.content.defaultSnapPoint !== null && this.content.defaultSnapPoint !== void 0) {
+          this.snapIndex = this.content.defaultSnapPoint;
         }
       },
-      select: function(id) {
-        this.activeId = id;
+      show: function() {
+        this.open = true;
+      },
+      hide: function() {
         this.open = false;
-        this.seekTo(id);
       },
-      seekTo: function(id) {
-        var self = this;
-        if (!this.scrollOnClick || !id) return;
-        this.isSeeking = true;
-        clearTimeout(this._seekingTimeout);
-        this._seekingTimeout = setTimeout(function() {
-          self.isSeeking = false;
-        }, 500);
-        var target = document.getElementById(id);
-        if (target) target.scrollIntoView({ behavior: "smooth" });
-        if (window.history && window.history.replaceState) {
-          window.history.replaceState(null, "", "#" + id);
+      toggle: function() {
+        this.open = !this.open;
+      },
+      // -- trigger ----------------------------------------------------------
+      _triggerElement: function() {
+        var ref = this.$refs.trigger;
+        if (!ref) return null;
+        return ref.hasAttribute("data-tedi-sheet-trigger") ? ref.firstElementChild || ref : ref;
+      },
+      _syncTrigger: function() {
+        var trigger = this._triggerElement();
+        var panel = this.$refs.panel;
+        if (!trigger) return;
+        trigger.setAttribute("aria-haspopup", "dialog");
+        trigger.setAttribute("aria-expanded", this.open ? "true" : "false");
+        if (this.open && panel && panel.id) {
+          trigger.setAttribute("aria-controls", panel.id);
+        } else {
+          trigger.removeAttribute("aria-controls");
         }
+      },
+      // -- open / close -----------------------------------------------------
+      _onOpen: function() {
+        this.collapsed = initiallyCollapsed;
+        this._activate(false);
+      },
+      _activate: function(onMount) {
+        var self = this;
+        clearTimeout(this._timer);
+        this._previouslyFocused = document.activeElement;
+        this.active = true;
+        if (!onMount) this.status = "initial";
+        this._syncTrigger();
+        if (this.content.lockScroll !== false) this._lockScroll();
+        this.$nextTick(function() {
+          var panel = self.$refs.panel;
+          if (!panel) return;
+          void panel.offsetHeight;
+          if (self.open) self.status = "open";
+          var first = tabbables(panel)[0];
+          (first || panel).focus({ preventScroll: true });
+        });
+      },
+      _onClose: function() {
+        var self = this;
+        this.resetDrag();
+        this.status = "close";
+        this._syncTrigger();
+        this._unlockScroll();
+        this._timer = setTimeout(function() {
+          if (!self.open) {
+            self.active = false;
+            self.status = "unmounted";
+          }
+        }, CLOSE_DURATION);
+        if (this.content.returnFocus !== false && this._previouslyFocused && this._previouslyFocused.focus) {
+          this._previouslyFocused.focus({ preventScroll: true });
+        }
+      },
+      _lockScroll: function() {
+        if (this._scrollLocked) return;
+        this._scrollLocked = true;
+        this._previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+      },
+      _unlockScroll: function() {
+        if (!this._scrollLocked) return;
+        this._scrollLocked = false;
+        document.body.style.overflow = this._previousOverflow;
+      },
+      _outsidePress: function(event) {
+        if (!this.open || cfg.closeOnBackdropClick === false) return;
+        var panel = this.$refs.panel;
+        var trigger = this.$refs.trigger;
+        var target = event.target;
+        if (panel && panel.contains(target)) return;
+        if (trigger && trigger.contains(target)) return;
+        if (target.closest && target.closest("[data-tedi-sheet-dismiss]")) return;
+        this.hide();
+      },
+      /** Tab cycling inside the panel — FloatingFocusManager's `modal`. */
+      onPanelKeydown: function(event) {
+        if (event.key !== "Tab" || !this.open || this.content.trapFocus === false) return;
+        var panel = this.$refs.panel;
+        var items = tabbables(panel);
+        if (items.length === 0) {
+          event.preventDefault();
+          panel.focus({ preventScroll: true });
+          return;
+        }
+        var first = items[0];
+        var last = items[items.length - 1];
+        if (event.shiftKey && (document.activeElement === first || document.activeElement === panel)) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      },
+      // -- snap points and drag (sheet-content.tsx) -------------------------
+      _snaps: function() {
+        var points = this.content.snapPoints;
+        return points ? points.slice().sort(function(a, b) {
+          return a - b;
+        }) : [];
+      },
+      _hasSnaps: function() {
+        return this._snaps().length > 0 && !this.collapsed;
+      },
+      _currentSnap: function() {
+        var snaps = this._snaps();
+        var maxSnap = snaps.length ? snaps[snaps.length - 1] : 1;
+        var index = this.snapIndex === null ? snaps.length - 1 : this.snapIndex;
+        var snap = snaps[Math.max(0, Math.min(index, snaps.length - 1))];
+        return snap === void 0 ? maxSnap : snap;
+      },
+      _snapHeightPx: function(snap) {
+        return snap * window.innerHeight;
+      },
+      /** The panel's dynamic inline style. Every key is always present so a
+       *  value that no longer applies is cleared rather than left behind. */
+      get panelStyle() {
+        var c = this.content;
+        var style = { "height": "", "max-height": "", "min-height": "", "transform": "", "transition": "" };
+        var snaps = this._snaps();
+        var hasSnaps = this._hasSnaps();
+        if (c.minHeight && !this.collapsed) style["min-height"] = c.minHeight;
+        if (c.maxHeight && !hasSnaps) style["max-height"] = c.maxHeight;
+        if (hasSnaps) {
+          var maxSnap = snaps[snaps.length - 1];
+          var currentSnap = this._currentSnap();
+          style["max-height"] = maxSnap * 100 + "dvh";
+          if (this.dragging) {
+            var height = Math.min(
+              maxSnap * window.innerHeight,
+              Math.max(0, this._snapHeightPx(currentSnap) - this.dragOffset)
+            );
+            style["height"] = height + "px";
+            style["transition"] = "none";
+          } else {
+            style["height"] = currentSnap * 100 + "dvh";
+          }
+        } else if (this.dragOffset > 0) {
+          style["transform"] = "translateY(" + this.dragOffset + "px)";
+          style["transition"] = "none";
+        }
+        return style;
+      },
+      resetDrag: function() {
+        var drag = this._drag;
+        if (!drag) return;
+        this._drag = null;
+        this.dragging = false;
+        this.dragOffset = 0;
+        if (drag.target.hasPointerCapture && drag.target.hasPointerCapture(drag.pointerId)) {
+          drag.target.releasePointerCapture(drag.pointerId);
+        }
+      },
+      dragStart: function(event) {
+        if (!this.open || this.content.showHandle === false || event.button !== 0 || event.ctrlKey || this._drag !== null) return;
+        var target = event.target;
+        var currentTarget = event.currentTarget;
+        if (!(target instanceof Element) || !closestInside(target, DRAG_ZONE_SELECTOR, currentTarget)) return;
+        if (closestInside(target, NO_DRAG_SELECTOR, currentTarget)) return;
+        this._drag = {
+          pointerId: event.pointerId,
+          startX: event.clientX,
+          startY: event.clientY,
+          target: currentTarget,
+          started: false
+        };
+      },
+      dragMove: function(event) {
+        var drag = this._drag;
+        if (!drag || drag.pointerId !== event.pointerId) return;
+        if (event.pointerType === "mouse" && (event.buttons & 1) === 0) {
+          this.resetDrag();
+          return;
+        }
+        var delta = event.clientY - drag.startY;
+        if (!drag.started) {
+          var deltaX = event.clientX - drag.startX;
+          var threshold = event.pointerType === "touch" ? DRAG_START_THRESHOLD_TOUCH : DRAG_START_THRESHOLD_MOUSE;
+          if (Math.max(Math.abs(delta), Math.abs(deltaX)) < threshold) return;
+          if (Math.abs(deltaX) > Math.abs(delta)) {
+            this.resetDrag();
+            return;
+          }
+          drag.started = true;
+          this.dragging = true;
+          try {
+            drag.target.setPointerCapture(drag.pointerId);
+          } catch (e) {
+          }
+        }
+        this.dragOffset = this._hasSnaps() ? delta : Math.max(0, delta);
+      },
+      dragEnd: function(event) {
+        var self = this;
+        var drag = this._drag;
+        if (!drag || drag.pointerId !== event.pointerId) return;
+        var delta = event.clientY - drag.startY;
+        this.resetDrag();
+        if (!drag.started) return;
+        if (this._hasSnaps()) {
+          var snaps = this._snaps();
+          var height = this._snapHeightPx(this._currentSnap()) - delta;
+          if (height < this._snapHeightPx(snaps[0]) - DRAG_DISMISS_THRESHOLD) {
+            this.hide();
+          } else {
+            var nearest = 0;
+            var best = Infinity;
+            snaps.forEach(function(snap, index) {
+              var distance = Math.abs(self._snapHeightPx(snap) - height);
+              if (distance < best) {
+                best = distance;
+                nearest = index;
+              }
+            });
+            this.snapIndex = nearest;
+          }
+        } else if (this.collapsed && delta < -DRAG_EXPAND_THRESHOLD) {
+          this.collapsed = false;
+        } else if (delta > DRAG_DISMISS_THRESHOLD) {
+          this.hide();
+        }
+      },
+      dragCancel: function(event) {
+        if (this._drag && this._drag.pointerId === event.pointerId) this.resetDrag();
       }
     };
+  }
+
+  // resources/js/src/search.js
+  var FIELD_OVERLAY_GAP = 4;
+  var FOCUSABLE_SELECTOR2 = [
+    "a[href]",
+    "area[href]",
+    "input:not([disabled]):not([type='hidden'])",
+    "select:not([disabled])",
+    "textarea:not([disabled])",
+    "button:not([disabled])",
+    "summary",
+    "iframe",
+    "audio[controls]",
+    "video[controls]",
+    "[contenteditable]:not([contenteditable='false'])",
+    "[tabindex]:not([tabindex='-1'])"
+  ].join(",");
+  function getFocusableElements2(container) {
+    return Array.prototype.filter.call(
+      container.querySelectorAll(FOCUSABLE_SELECTOR2),
+      function(el) {
+        var style = window.getComputedStyle(el);
+        if (style.display === "none" || style.visibility === "hidden") return false;
+        if (el.hasAttribute("hidden")) return false;
+        if (el.closest("[inert]")) return false;
+        var fieldset = el.closest("fieldset[disabled]");
+        if (fieldset) {
+          var legend = fieldset.querySelector("legend");
+          if (!legend || !legend.contains(el)) return false;
+        }
+        if (el.tagName !== "SUMMARY" && el.closest("details:not([open])")) return false;
+        return true;
+      }
+    );
+  }
+  function search(config) {
+    var cfg = config || {};
+    var base = overlay({
+      placement: "bottom-start",
+      offset: FIELD_OVERLAY_GAP - BASE_GAP,
+      hideOnScroll: !!cfg.hideOnScroll,
+      dismissible: false,
+      closeOnEscape: false,
+      open: !!cfg.open
+    });
+    var baseInit = base.init;
+    var baseDestroy = base.destroy;
+    var baseOnOpen = base._onOpen;
+    var baseOnClose = base._onClose;
+    return Object.defineProperties(base, Object.getOwnPropertyDescriptors({
+      minQueryLength: Number(cfg.minQueryLength) || 0,
+      listboxId: cfg.listboxId || null,
+      /** Raw field value; upstream's `value()`. */
+      value: "",
+      activeIndex: -1,
+      _rev: 0,
+      /** Upstream's `justSelected`: suppresses the focus-driven reopen. */
+      _justSelected: false,
+      _writing: false,
+      _observer: null,
+      init: function() {
+        var self = this;
+        var input = this.$refs.trigger;
+        this.value = input ? input.value : "";
+        baseInit.call(this);
+        this.$watch("activeIndex", function() {
+          self._applyActive();
+        });
+        this.$watch("panelVisible", function(visible) {
+          if (visible) self._schedule();
+        });
+        if (window.MutationObserver && this.$refs.panel) {
+          this._observer = new MutationObserver(function() {
+            self._rev++;
+            self.activeIndex = -1;
+            self._applyActive();
+            if (self.open) self._schedule();
+          });
+          this._observer.observe(this.$refs.panel, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+            attributes: true,
+            attributeFilter: ["data-tedi-search-state", "data-tedi-search-announcement", "data-tedi-search-label", "data-tedi-search-item"]
+          });
+        }
+      },
+      destroy: function() {
+        if (this._observer) {
+          this._observer.disconnect();
+          this._observer = null;
+        }
+        baseDestroy.call(this);
+      },
+      // -- derived state (upstream's computed()s) --------------------
+      get options() {
+        this._rev;
+        var panel = this.$refs.panel;
+        return panel ? Array.prototype.slice.call(panel.querySelectorAll("li[tedi-search-suggestion]")) : [];
+      },
+      /** The hidden child carrying the panel's server-rendered state. */
+      _stateNode: function() {
+        var panel = this.$refs.panel;
+        return panel ? panel.querySelector("[data-tedi-search-state]") : null;
+      },
+      get panelState() {
+        this._rev;
+        var node = this._stateNode();
+        return node ? node.getAttribute("data-tedi-search-state") : "empty";
+      },
+      get loading() {
+        return this.panelState === "loading";
+      },
+      get hasSuggestions() {
+        return this.panelState === "results";
+      },
+      get query() {
+        return String(this.value || "").trim();
+      },
+      get meetsMinQueryLength() {
+        return this.query.length >= this.minQueryLength;
+      },
+      get panelVisible() {
+        if (!this.open || !this.meetsMinQueryLength) return false;
+        return this.loading || this.hasSuggestions || this.query.length > 0;
+      },
+      get ariaControls() {
+        return this.panelVisible && this.hasSuggestions ? this.listboxId : null;
+      },
+      get activeOptionId() {
+        if (this.activeIndex < 0) return null;
+        var row = this.options[this.activeIndex];
+        return row ? row.id : null;
+      },
+      get announcement() {
+        if (!this.panelVisible) return "";
+        this._rev;
+        var node = this._stateNode();
+        return node ? node.getAttribute("data-tedi-search-announcement") || "" : "";
+      },
+      // -- open / close ----------------------------------------------
+      openPanel: function() {
+        this.show();
+      },
+      closePanel: function() {
+        this.hide(false);
+      },
+      closeAndRestoreFocus: function() {
+        this.closePanel();
+        this._justSelected = true;
+        this._focusInput();
+      },
+      _onOpen: function() {
+        var self = this;
+        baseOnOpen.call(this);
+        this._listen(document, "mousedown", function(event) {
+          var surface = self._surface();
+          var panel = self.$refs.panel;
+          var target = event.target;
+          if (surface && surface.contains(target) || panel && panel.contains(target)) return;
+          self.closePanel();
+        });
+      },
+      _onClose: function() {
+        baseOnClose.call(this);
+        this.activeIndex = -1;
+      },
+      // -- event handlers (bound on the root, filtered by target) ----
+      onInput: function(event) {
+        if (this._writing || event.target !== this.$refs.trigger) return;
+        this._justSelected = false;
+        this.value = event.target.value;
+        this.openPanel();
+      },
+      onFocusIn: function(event) {
+        if (event.target !== this.$refs.trigger) return;
+        if (this._justSelected) {
+          this._justSelected = false;
+          return;
+        }
+        this.openPanel();
+      },
+      /**
+       * Upstream binds this on the host: the panel is portalled out of it
+       * there, so both roots are consulted. Here the panel is inside the
+       * root, so the root alone answers it.
+       */
+      onFocusOut: function(event) {
+        var next = event.relatedTarget;
+        if (!next || !this.$root.contains(next)) this.closePanel();
+      },
+      onKeydown: function(event) {
+        var footer = this.$refs.footer;
+        if (footer && footer.contains(event.target)) {
+          this._onFooterKeydown(event);
+          return;
+        }
+        if (event.target !== this.$refs.trigger) return;
+        switch (event.key) {
+          case "Escape":
+            this.closePanel();
+            return;
+          case "ArrowDown":
+          case "ArrowUp":
+            event.preventDefault();
+            this._onArrowKey(event);
+            return;
+          case "Tab":
+            this._onTabFromInput(event);
+            return;
+          case "Enter":
+            this._onEnter(event);
+            return;
+        }
+      },
+      /** Keep focus in the input while a row is pressed. */
+      onPanelMousedown: function(event) {
+        if (event.target.closest("li[tedi-search-suggestion]")) event.preventDefault();
+      },
+      onPanelClick: function(event) {
+        var row = event.target.closest("li[tedi-search-suggestion]");
+        if (!row) return;
+        this.select(this.options.indexOf(row));
+      },
+      /** The trailing search button (upstream's `(click)="emitSearch()"`). */
+      emitSearch: function() {
+        var input = this.$refs.trigger;
+        if (!input) return;
+        input.dispatchEvent(new CustomEvent("tedi-search:search", {
+          bubbles: true,
+          detail: { value: input.value }
+        }));
+      },
+      // -- selection --------------------------------------------------
+      /** Upstream's selectSuggestion(). */
+      select: function(index) {
+        var row = this.options[index];
+        var input = this.$refs.trigger;
+        if (!row || !input || row.getAttribute("aria-disabled") === "true") return;
+        var label = row.getAttribute("data-tedi-search-label") || "";
+        this._justSelected = true;
+        this.value = label;
+        this._writing = true;
+        input.value = label;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+        this._writing = false;
+        input.dispatchEvent(new CustomEvent("tedi-search:select", {
+          bubbles: true,
+          detail: { index, label, id: row.id, item: this._itemOf(row) }
+        }));
+        this.closePanel();
+      },
+      _itemOf: function(row) {
+        var json = row.getAttribute("data-tedi-search-item");
+        if (json === null) return null;
+        try {
+          return JSON.parse(json);
+        } catch (e) {
+          return null;
+        }
+      },
+      // -- keyboard ---------------------------------------------------
+      _onArrowKey: function(event) {
+        if (!this.panelVisible) {
+          this.openPanel();
+          return;
+        }
+        if (!this.hasSuggestions) return;
+        if (event.key === "ArrowDown") {
+          this._setNextActive();
+        } else {
+          this._setPreviousActive();
+        }
+      },
+      _onEnter: function(event) {
+        if (this.panelVisible && this.activeIndex >= 0 && this.options[this.activeIndex]) {
+          event.preventDefault();
+          this.select(this.activeIndex);
+          return;
+        }
+        this.emitSearch();
+      },
+      /**
+       * Upstream's onTabFromInput(). Its panel is portalled to the end of
+       * the document, so Tab would never reach the footer by itself. This
+       * panel is inside the root, but it is positioned out of flow, so the
+       * explicit hop is kept for the same order upstream gives.
+       */
+      _onTabFromInput: function(event) {
+        if (event.shiftKey || !this.panelVisible) return;
+        var first = this._footerFocusables()[0];
+        if (!first) return;
+        event.preventDefault();
+        first.focus();
+      },
+      /** Upstream's onFooterKeydown(). */
+      _onFooterKeydown: function(event) {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          this.closeAndRestoreFocus();
+          return;
+        }
+        if (event.key !== "Tab") return;
+        var focusables = this._footerFocusables();
+        var index = focusables.indexOf(event.target);
+        if (event.shiftKey && index === 0) {
+          event.preventDefault();
+          this._justSelected = true;
+          this._focusInput();
+          return;
+        }
+        if (!event.shiftKey && index === focusables.length - 1) {
+          event.preventDefault();
+          this.closePanel();
+          this._focusAfterField();
+        }
+      },
+      _footerFocusables: function() {
+        var footer = this.$refs.footer;
+        return footer ? getFocusableElements2(footer) : [];
+      },
+      /** Upstream's focusAfterField(). */
+      _focusAfterField: function() {
+        var input = this.$refs.trigger;
+        var panel = this.$refs.panel;
+        var focusables = getFocusableElements2(document.body).filter(function(el) {
+          return !(panel && panel.contains(el));
+        });
+        var next = focusables[focusables.indexOf(input) + 1];
+        if (next) next.focus();
+      },
+      _focusInput: function() {
+        if (this.$refs.trigger) this.$refs.trigger.focus();
+      },
+      /**
+       * ActiveDescendantKeyManager.withWrap(): setNextItemActive /
+       * setPreviousItemActive, skipping disabled rows. Unlike the dropdown's
+       * menu (CONVENTIONS.md §11), these DO wrap — upstream opts in here.
+       * From nothing active, ArrowUp goes to the last enabled row (CDK's
+       * `setPreviousItemActive` special case).
+       */
+      _setNextActive: function() {
+        this._step(this.activeIndex, 1);
+      },
+      _setPreviousActive: function() {
+        if (this.activeIndex < 0) {
+          this._step(this.options.length, -1);
+          return;
+        }
+        this._step(this.activeIndex, -1);
+      },
+      _step: function(from, delta) {
+        var rows = this.options;
+        var count = rows.length;
+        for (var i = 1; i <= count; i++) {
+          var index = ((from + delta * i) % count + count) % count;
+          if (rows[index].getAttribute("aria-disabled") !== "true") {
+            this.activeIndex = index;
+            return;
+          }
+        }
+      },
+      /**
+       * Highlightable.setActiveStyles / setInactiveStyles, plus the key
+       * manager's scrollIntoView. Written to the DOM because the rows are
+       * server-rendered and may be replaced by a morph at any time.
+       */
+      _applyActive: function() {
+        var active = this.activeIndex;
+        this.options.forEach(function(row, index) {
+          var isActive = index === active;
+          row.classList.toggle("tedi-search-suggestion--active", isActive);
+          row.setAttribute("aria-selected", isActive ? "true" : "false");
+          if (isActive) row.scrollIntoView({ block: "nearest", inline: "nearest" });
+        });
+      },
+      // -- positioning (overrides overlay's) ---------------------------
+      /** The bordered box wrapping input and icons, or the input itself. */
+      _surface: function() {
+        var input = this.$refs.trigger;
+        if (!input) return null;
+        return input.closest(".tedi-form-field__box, .tedi-form-field__input") || input;
+      },
+      position: function() {
+        var anchor = this._surface();
+        var panel = this.$refs.panel;
+        if (!anchor || !panel) return;
+        panel.style.position = "fixed";
+        panel.style.left = "0px";
+        panel.style.top = "0px";
+        panel.style.width = this.$root.offsetWidth + "px";
+        var anchorRect = anchor.getBoundingClientRect();
+        var panelRect = panel.getBoundingClientRect();
+        var view = viewport();
+        var size = { width: panelRect.width, height: panelRect.height };
+        var side = "bottom";
+        if (!fits("bottom", anchorRect, size, FIELD_OVERLAY_GAP, view) && fits("top", anchorRect, size, FIELD_OVERLAY_GAP, view)) {
+          side = "top";
+        }
+        var coords = coordsFor(side, "start", anchorRect, size, FIELD_OVERLAY_GAP);
+        var maxX = view.width - size.width - VIEWPORT_PADDING;
+        if (coords.x > maxX) coords.x = maxX;
+        if (coords.x < VIEWPORT_PADDING) coords.x = VIEWPORT_PADDING;
+        panel.style.left = Math.round(coords.x) + "px";
+        panel.style.top = Math.round(coords.y) + "px";
+        this.side = side;
+      }
+    }));
+  }
+
+  // resources/js/src/table-of-contents.js
+  function revealActiveItem(host) {
+    var activeItem = host.querySelector('[aria-current="location"]');
+    if (!activeItem) return;
+    var target = activeItem.querySelector(":scope > .tedi-table-of-contents__row") || activeItem;
+    var scroller = findScrollParent(host, target);
+    if (!scroller) return;
+    var scrollerRect = scroller.getBoundingClientRect();
+    var targetRect = target.getBoundingClientRect();
+    var margin = 8;
+    var behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    if (targetRect.top < scrollerRect.top + margin) {
+      scroller.scrollBy({ top: targetRect.top - scrollerRect.top - margin, behavior });
+    } else if (targetRect.bottom > scrollerRect.bottom - margin) {
+      scroller.scrollBy({ top: targetRect.bottom - scrollerRect.bottom + margin, behavior });
+    }
+  }
+  function findScrollParent(host, el) {
+    var node = el.parentElement;
+    while (node && host.contains(node)) {
+      var overflowY = getComputedStyle(node).overflowY;
+      if ((overflowY === "auto" || overflowY === "scroll") && node.scrollHeight > node.clientHeight) {
+        return node;
+      }
+      node = node.parentElement;
+    }
+    return null;
+  }
+  function tableOfContents(config) {
+    var settings = config || {};
+    return {
+      activeId: settings.activeId || "",
+      defaultOpen: settings.defaultOpen !== false,
+      scrollActiveIntoView: settings.scrollActiveIntoView === true,
+      init: function() {
+        var self = this;
+        if (!this.scrollActiveIntoView) return;
+        var reveal = function() {
+          if (self.activeId) self.$nextTick(function() {
+            revealActiveItem(self.$root);
+          });
+        };
+        reveal();
+        this.$watch("activeId", reveal);
+      },
+      /** The group's item is open when the active item is it or below it. */
+      isOpen: function(group) {
+        if (this.defaultOpen) return true;
+        if (!this.activeId) return false;
+        var item = group.parentElement;
+        if (item.getAttribute("data-toc-item-id") === this.activeId) return true;
+        return Array.prototype.some.call(
+          item.querySelectorAll("[data-toc-item-id]"),
+          function(el) {
+            return el.getAttribute("data-toc-item-id") === this.activeId;
+          },
+          this
+        );
+      }
+    };
+  }
+  function tableOfContentsCollapsible(config) {
+    var settings = config || {};
+    var base = tableOfContents(config);
+    return Object.assign(base, {
+      open: false,
+      barHidden: false,
+      hideOnScroll: settings.hideOnScroll === true,
+      scrollContainer: settings.scrollContainer || null,
+      _lastScrollY: 0,
+      _ticking: false,
+      _scrollTarget: null,
+      _onScroll: null,
+      _onKeydown: null,
+      init: function() {
+        var self = this;
+        var container = this.scrollContainer ? document.querySelector(this.scrollContainer) : null;
+        this._scrollTarget = container || window;
+        this._lastScrollY = this._currentScrollY();
+        this._onScroll = function() {
+          self._handleScroll();
+        };
+        this._scrollTarget.addEventListener("scroll", this._onScroll, { passive: true });
+        this._onKeydown = function(event) {
+          if (self.open && event.key === "Escape") self.close();
+        };
+        document.addEventListener("keydown", this._onKeydown);
+        this.$watch("open", function(open) {
+          self.$nextTick(function() {
+            if (open) {
+              var first = self.$refs.sheet && self.$refs.sheet.querySelector(
+                'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+              );
+              if (first) first.focus();
+            } else if (self.$refs.trigger) {
+              var trigger = self.$refs.trigger.querySelector("button") || self.$refs.trigger;
+              trigger.focus();
+            }
+          });
+        });
+      },
+      destroy: function() {
+        if (this._scrollTarget) this._scrollTarget.removeEventListener("scroll", this._onScroll);
+        document.removeEventListener("keydown", this._onKeydown);
+      },
+      close: function() {
+        this.open = false;
+      },
+      onListClick: function(event) {
+        if (event.target.closest("a, button")) this.close();
+      },
+      _currentScrollY: function() {
+        return this._scrollTarget && this._scrollTarget !== window ? this._scrollTarget.scrollTop : window.scrollY;
+      },
+      _handleScroll: function() {
+        var self = this;
+        if (this._ticking) return;
+        this._ticking = true;
+        requestAnimationFrame(function() {
+          self._ticking = false;
+          var currentY = self._currentScrollY();
+          if (!self.hideOnScroll) {
+            self.barHidden = false;
+            self._lastScrollY = currentY;
+            return;
+          }
+          var delta = currentY - self._lastScrollY;
+          if (Math.abs(delta) < 4) return;
+          self.barHidden = currentY > 8 && delta > 0;
+          self._lastScrollY = currentY;
+        });
+      }
+    });
   }
 
   // resources/js/tedi.js
@@ -1409,11 +2738,16 @@
     Alpine.data("tediOverlay", overlay);
     Alpine.data("tediDropdown", dropdown);
     Alpine.data("tediFilter", filter);
+    Alpine.data("tediFormField", formField);
     Alpine.data("tediMultiselect", multiselect);
+    Alpine.data("tediSearch", search);
     Alpine.data("tediModal", modal);
     Alpine.data("tediTableOfContents", tableOfContents);
+    Alpine.data("tediTableOfContentsCollapsible", tableOfContentsCollapsible);
     Alpine.data("tediScrollVisibility", scrollVisibility);
     Alpine.data("tediHashTrigger", hashTrigger);
+    Alpine.data("tediSheet", sheet);
+    Alpine.data("tediProgressBar", progressBar);
   }
   if (window.Alpine) {
     register(window.Alpine);

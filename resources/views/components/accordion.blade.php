@@ -1,6 +1,6 @@
 {{--
     TEDI Accordion.
-    Port of angular/tedi/components/content/accordion/accordion/accordion.component.ts
+    Port of angular/src/tedi/components/content/accordion/accordion/accordion.component.ts
 
     `allowMultiple` and `defaultExpanded` are exposed to `tedi-accordion-item`
     children via @aware (Angular: `inject(AccordionComponent, {optional:true})`).

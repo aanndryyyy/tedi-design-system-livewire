@@ -46,9 +46,10 @@
 <tedi:row justify-items="center">
     <tedi:col>
         <tedi:tooltip open-with="none" :position="$position" :open="(bool) $open">
-            <tedi:tooltip-trigger>
+            <tedi:tooltip-trigger :interactive="false">
                 <tedi:button
                     x-on:click="toggle()"
+                    x-bind:aria-expanded="open ? 'true' : 'false'"
                     x-text="open ? 'Hide tooltip' : 'Show tooltip'"
                 >Show tooltip</tedi:button>
             </tedi:tooltip-trigger>

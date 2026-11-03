@@ -304,6 +304,17 @@ BLADE);
     {
         $html = Blade::render('<tedi:card-row>x</tedi:card-row>');
         $this->assertHasClass('tedi-card-row', $html, on: 'tedi-card-row');
+        $this->assertMissingClass('tedi-card-row--column', $html, on: 'tedi-card-row');
+    }
+
+    public function test_card_row_direction(): void
+    {
+        // CardRowComponent.classes(): only "column" adds a modifier; "row" is the default.
+        $html = Blade::render('<tedi:card-row direction="row">x</tedi:card-row>');
+        $this->assertSame(['tedi-card-row'], $this->classesOf($html, 'tedi-card-row'));
+
+        $html = Blade::render('<tedi:card-row direction="column">x</tedi:card-row>');
+        $this->assertSame(['tedi-card-row', 'tedi-card-row--column'], $this->classesOf($html, 'tedi-card-row'));
     }
 
     // -- accordion --------------------------------------------------------------
@@ -497,5 +508,69 @@ BLADE);
 
         $withArrows = Blade::render('<tedi:carousel-indicators with-arrows />');
         $this->assertHasClass('tedi-button', $withArrows, on: 'tedi-button');
+        $this->assertHasClass('tedi-button--icon-only', $withArrows, on: 'tedi-button');
+        // Upstream binds [disabled] to !canPrev()/!canNext() (#528).
+        $this->assertStringContainsString('x-bind:disabled="!canPrev"', $withArrows);
+        $this->assertStringContainsString('x-bind:disabled="!canNext"', $withArrows);
+        // One dot per positionCount(), not per slide.
+        $this->assertStringContainsString('x-for="i in positionCount"', $dots);
+        $this->assertStringContainsString('Show slide __N__', html_entity_decode($dots, ENT_QUOTES));
+    }
+
+    public function test_carousel_content_renders_body_wrapper_and_navigation_slot(): void
+    {
+        $html = Blade::render(<<<'BLADE'
+<tedi:carousel-content :loop="false" :swipe-threshold="0.5" class="extra">
+    <tedi:carousel-slide>s1</tedi:carousel-slide>
+    <x-slot:navigation>
+        <tedi:carousel-navigation overlay />
+    </x-slot:navigation>
+</tedi:carousel-content>
+BLADE);
+
+        // carousel.component.html: body > content + navigation.
+        $this->assertSame(['tedi-carousel__body'], $this->classesOf($html, 'tedi-carousel__body'));
+        $this->assertMatchesRegularExpression('/class="tedi-carousel__body">\s*<div[^>]*tedi-carousel__content/s', $html);
+        $this->assertHasClass('extra', $html, on: 'tedi-carousel__content');
+        $this->assertHasClass('tedi-carousel-navigation--overlay', $html, on: 'tedi-carousel-navigation--overlay');
+        $this->assertMatchesRegularExpression('/<tedi-carousel-navigation[^>]*>.*<\/tedi-carousel-navigation>\s*<\/div>\s*$/s', trim($html));
+
+        // The content's inputs are handed to tediCarousel.
+        $decoded = $this->decodeAlpineConfig($html);
+        $this->assertStringContainsString('"loop":false', $decoded);
+        $this->assertStringContainsString('"swipeThreshold":0.5', $decoded);
+    }
+
+    public function test_carousel_content_clamps_swipe_threshold_and_defaults_to_loop(): void
+    {
+        $decoded = $this->decodeAlpineConfig(Blade::render('<tedi:carousel-content :swipe-threshold="3">x</tedi:carousel-content>'));
+        $this->assertStringContainsString('"swipeThreshold":1', $decoded);
+        $this->assertStringContainsString('"loop":true', $decoded);
+
+        $default = $this->decodeAlpineConfig(Blade::render('<tedi:carousel-content>x</tedi:carousel-content>'));
+        $this->assertStringContainsString('"swipeThreshold":0.3', $default);
+    }
+
+    /** Js::from() emits JSON.parse('…') with `"` escaped as a \\u0022 sequence; undo both layers. */
+    private function decodeAlpineConfig(string $html): string
+    {
+        return str_replace('\\'.'u0022', '"', html_entity_decode($html, ENT_QUOTES));
+    }
+
+    public function test_carousel_navigation_overlay_uses_floating_buttons(): void
+    {
+        $plain = Blade::render('<tedi:carousel-navigation />');
+        $this->assertMissingClass('tedi-carousel-navigation--overlay', $plain);
+        $this->assertHasClass('tedi-button--secondary', $plain, on: 'tedi-button');
+        $this->assertHasClass('tedi-button--icon-only', $plain, on: 'tedi-button');
+        $this->assertStringNotContainsString('tedi-floating-button', $plain);
+
+        $overlay = Blade::render('<tedi:carousel-navigation overlay />');
+        $this->assertHasClass('tedi-carousel-navigation--overlay', $overlay, on: 'tedi-carousel-navigation--overlay');
+        $this->assertHasClass('tedi-floating-button--secondary', $overlay, on: 'tedi-floating-button');
+        $this->assertHasClass('tedi-floating-button--icon-only', $overlay, on: 'tedi-floating-button');
+        $this->assertStringContainsString('position: static', $overlay);
+        $this->assertStringContainsString('x-bind:disabled="!canPrev"', $overlay);
+        $this->assertStringContainsString('x-bind:disabled="!canNext"', $overlay);
     }
 }

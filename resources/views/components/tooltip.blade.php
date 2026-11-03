@@ -25,15 +25,26 @@
         on `tediOverlay`, and per CONVENTIONS.md §7 an inert prop is worse than
         an omitted one. A consumer who needs it can call `position()` on the
         Alpine component themselves.
-      - The sr-only description mirroring. Angular reads the projected
-        content's `textContent` in `ngAfterContentChecked`; Blade cannot
-        introspect its own slot, so it is an explicit `description` prop
-        (CONVENTIONS.md §5). Angular then sets `aria-describedby` on whatever
-        focusable element the trigger projected — also unreachable from here.
-        See tooltip-trigger.blade.php's `described-by` prop.
       - Touch handling (`touchstart`/`touchend` toggling, with the 300ms guard
         that suppresses the synthetic click). Modern browsers fire
         `mouseenter` + `click` on tap, which `openWith="both"` already handles.
+
+    Screen-reader wiring follows Angular 9 (#45 / #585): there is no sr-only
+    copy of the content any more. `tedi-tooltip-content` itself carries
+    `role="tooltip"` and the description id, and the trigger's interactive
+    element points `aria-describedby` at it. The id is `description-id` when
+    given (read by both children through `@aware`), otherwise Alpine's
+    `$id('tedi-tooltip')`, scoped by `x-id` on this element. Angular's panel
+    only exists while open; here it is always in the DOM (`x-show`), which
+    `aria-describedby` resolves either way. Escape closes the tooltip through
+    `tediOverlay`'s document-level listener, which upstream now has too.
+    BREAKING: the old `description` prop (the sr-only text) is removed, because
+    the content is now the description.
+
+    The aria-describedby wiring needs Alpine: when the trigger is not a
+    `:text="true"` span, the element it lands on is resolved in the browser
+    (see tooltip-trigger.blade.php). Without JS no description is wired, which
+    matches Angular's SSR output (its content is not rendered while closed).
 
     `open` is the initial open state, not a two-way model: Angular's `open`
     input distinguishes `undefined` (uncontrolled) from a boolean (controlled),
@@ -54,17 +65,11 @@
     /** Extra px between tooltip and trigger, on top of the 8px base gap. */
     'offset' => 4,
     /**
-     * sr-only text describing the trigger. Angular derives this from the
-     * projected content's textContent; Blade needs it spelled out (§5).
+     * id of the tooltip content (role="tooltip"), which the trigger's
+     * aria-describedby points at. Generated client-side by Alpine when omitted.
      */
-    'description' => null,
-    /** id of the sr-only description, for the trigger's `described-by`. */
     'descriptionId' => null,
 ])
-
-@php
-    $descriptionId = $descriptionId ?: \Tedi\Livewire\Tedi::id('tedi-tooltip');
-@endphp
 
 <tedi-tooltip
     {{ $attributes }}
@@ -76,10 +81,7 @@
         hoverDelay: {{ (int) $timeoutDelay }},
         open: {{ $open ? 'true' : 'false' }},
     })"
+    @unless ($descriptionId) x-id="['tedi-tooltip']" @endunless
 >
     {{ $slot }}
-
-    @if ($description)
-        <span id="{{ $descriptionId }}" class="sr-only">{{ $description }}</span>
-    @endif
 </tedi-tooltip>

@@ -1,6 +1,6 @@
 {{--
     TEDI Status badge.
-    Port of angular/tedi/components/tags/status-badge/status-badge.component.{ts,html}
+    Port of angular/src/tedi/components/tags/status-badge/status-badge.component.{ts,html}
 
     Angular exposes a `class` input purely so consumers can append extra
     classes to `classes()`. Blade's `$attributes->class()` already merges any

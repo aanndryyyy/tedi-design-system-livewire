@@ -5,39 +5,39 @@
     'args' => [],
 ])
 
-{{--
-    Angular's version also shows a tooltip-trigger row (tedi-tooltip is CDK
-    Overlay positioned, out of scope per CONVENTIONS.md §7 item 3) — dropped.
---}}
 <tedi:row :cols="1" :gap-y="4">
-    <div>
-        <tedi:form.label color="primary" class="flex align-items-center gap-2">
-            <tedi:checkbox />
-            Text
-        </tedi:form.label>
-        <tedi:feedback-text text="Hint text" />
-    </div>
-    <div>
-        <tedi:form.label color="primary" class="flex align-items-center gap-2">
-            <tedi:checkbox :invalid="true" />
-            Text
-        </tedi:form.label>
-        <tedi:feedback-text text="Feedback text" type="error" />
-    </div>
-    <tedi:form.label color="primary" :required="true" class="flex align-items-center gap-2">
+    <tedi:form.label color="primary" class="flex align-items-center gap-2">
         <tedi:checkbox />
-        Text
+        Nõustun tingimustega
+    </tedi:form.label>
+    <tedi:form.label color="primary" :required="true" class="flex align-items-center">
+        <tedi:checkbox style="margin-right: var(--form-checkbox-radio-inner-spacing)" />
+        Nõustun tingimustega
     </tedi:form.label>
     <tedi:form.label color="primary" class="flex align-items-center gap-2">
         <tedi:checkbox />
         <tedi:icon name="stethoscope" :size="16" />
-        Text
+        Analüüsid
     </tedi:form.label>
+    <div class="flex align-items-center gap-1">
+        <tedi:form.label color="primary" class="flex align-items-center gap-2">
+            <tedi:checkbox />
+            Analüüsid
+        </tedi:form.label>
+        <tedi:tooltip>
+            <tedi:tooltip-trigger>
+                <tedi:info-button />
+            </tedi:tooltip-trigger>
+            <tedi:tooltip-content>
+                Tooltip text
+            </tedi:tooltip-content>
+        </tedi:tooltip>
+    </div>
     <div>
         <tedi:form.label color="primary" class="flex align-items-center gap-2">
             <tedi:checkbox />
-            Text
+            Analüüsid
         </tedi:form.label>
-        <tedi:feedback-text text="Description" />
+        <tedi:feedback-text text="Valik tagab vereanalüüside võtmise ning tulemuste tõlgendamise" />
     </div>
 </tedi:row>

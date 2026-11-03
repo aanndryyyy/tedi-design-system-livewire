@@ -1,6 +1,6 @@
 {{--
     TEDI SideNav Dropdown Item.
-    Port of angular/tedi/components/layout/sidenav/sidenav-dropdown-item/sidenav-dropdown-item.component.{ts,html}
+    Port of angular/src/tedi/components/layout/sidenav/sidenav-dropdown-item/sidenav-dropdown-item.component.{ts,html}
 
     Angular's host is `<tedi-sidenav-dropdown-item role="presentation"
     style="display: contents">` with the class list on an inner `<li>`. Both are

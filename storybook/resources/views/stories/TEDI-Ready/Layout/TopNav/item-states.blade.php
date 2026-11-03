@@ -29,10 +29,10 @@
 <tedi:vertical-spacing :size="0.5">
     @foreach ($states as $state)
         <tedi:row>
-            <tedi:col :width="2" class="display-flex align-items-center">
+            <tedi:col :width="2" class="flex align-items-center">
                 <tedi:text modifiers="bold">{{ $state }}</tedi:text>
             </tedi:col>
-            <tedi:col class="display-flex align-items-center">
+            <tedi:col class="flex align-items-center">
                 <ul style="display: flex; gap: 1rem; list-style: none; margin: 0; padding: 0">
                     @foreach ($columns as $key => $column)
                         <tedi:top-nav-item

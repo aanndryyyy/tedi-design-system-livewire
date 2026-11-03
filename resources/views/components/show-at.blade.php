@@ -1,6 +1,6 @@
 {{--
     TEDI Show At.
-    Port of angular/tedi/directives/show-at/show-at.directive.ts
+    Port of angular/src/tedi/directives/show-at/show-at.directive.ts
 
     Shows its content at and above a grid breakpoint. `breakpoint="md"` means
     visible from 48rem up, hidden below it — the inclusive boundary upstream's

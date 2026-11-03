@@ -124,7 +124,7 @@
     </div>
 
     <div class="gx-case">
-        <div class="gx-case__label">card-header + card-row + card-icon (type/size)</div>
+        <div class="gx-case__label">card-header + card-row (direction: row / column) + card-icon (type/size)</div>
         <div class="gx-case__demo gx-case__demo--row" style="gap:1rem;align-items:flex-start">
             <tedi:card style="width:16rem">
                 <tedi:card-header>Header</tedi:card-header>
@@ -135,6 +135,10 @@
                 <tedi:card-row>
                     <tedi:card-icon type="brand" size="small"><tedi:icon name="star" :size="16" /></tedi:card-icon>
                     <tedi:card-content auto-width>Brand small icon</tedi:card-content>
+                </tedi:card-row>
+                <tedi:card-row direction="column">
+                    <tedi:card-content>Column (top)</tedi:card-content>
+                    <tedi:card-content background="secondary">Column (bottom)</tedi:card-content>
                 </tedi:card-row>
             </tedi:card>
         </div>
@@ -235,8 +239,9 @@
         <code>tedi-carousel-header</code>, <code>tedi-carousel-content</code>,
         <code>tedi-carousel-slide</code>, <code>tedi-carousel-footer</code>,
         <code>tedi-carousel-navigation</code>, <code>tedi-carousel-indicators</code>).
-        Ships correct markup/classes plus minimal Alpine index state — no drag, wheel,
-        or wrap-around cloning (documented divergence in <code>carousel.blade.php</code>).</p>
+        Ships correct markup/classes plus the <code>tediCarousel</code> behaviour — bounded
+        navigation (<code>loop</code>), drag with <code>swipeThreshold</code>, keyboard — but no
+        wheel or wrap-around cloning (documented divergence in <code>carousel.blade.php</code>).</p>
 
     <div class="gx-case">
         <div class="gx-case__label">1 slide per view, dots indicators</div>
@@ -273,6 +278,27 @@
                 </tedi:carousel-content>
                 <tedi:carousel-footer>
                     <tedi:carousel-indicators variant="numbers" with-arrows />
+                </tedi:carousel-footer>
+            </tedi:carousel>
+        </div>
+    </div>
+
+    <div class="gx-case">
+        <div class="gx-case__label">loop=false (bounded), slidesPerView=2.5, overlay navigation, dots</div>
+        <div class="gx-case__demo">
+            <tedi:carousel>
+                <tedi:carousel-content :slides-per-view="2.5" :loop="false" :swipe-threshold="0.5">
+                    @foreach (['One', 'Two', 'Three', 'Four', 'Five'] as $slide)
+                        <tedi:carousel-slide>
+                            <div style="background:var(--general-surface-secondary,#eee);padding:2rem 3.5rem;text-align:center">{{ $slide }}</div>
+                        </tedi:carousel-slide>
+                    @endforeach
+                    <x-slot:navigation>
+                        <tedi:carousel-navigation overlay />
+                    </x-slot:navigation>
+                </tedi:carousel-content>
+                <tedi:carousel-footer>
+                    <tedi:carousel-indicators />
                 </tedi:carousel-footer>
             </tedi:carousel>
         </div>

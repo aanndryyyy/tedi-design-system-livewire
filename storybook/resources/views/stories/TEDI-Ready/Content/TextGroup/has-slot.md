@@ -1,0 +1,1 @@
+`tedi-text-group-value` is a flex row that takes any content, so a trailing info tooltip, status badge or tag sits inline beside the text with the design system's inner spacing already applied.

@@ -1,9 +1,9 @@
 // Breakpoint visibility — the shared behaviour behind `tedi:hide-at` and
 // `tedi:show-at`.
 //
-// Port of `tedi/directives/hide-at/hide-at.directive.ts` and
-// `tedi/directives/show-at/show-at.directive.ts`, which resolve against
-// `tedi/services/breakpoint/breakpoint.service.ts`. Upstream subscribes to a
+// Port of `src/tedi/directives/hide-at/hide-at.directive.ts` and
+// `src/tedi/directives/show-at/show-at.directive.ts`, which resolve against
+// `src/tedi/services/breakpoint/breakpoint.service.ts`. Upstream subscribes to a
 // CDK BreakpointObserver over every `(min-width: Nrem)` in BREAKPOINTS, derives
 // the current breakpoint name from the largest one that matched, and then
 // compares indices:

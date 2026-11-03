@@ -1,39 +1,69 @@
 {{--
     TEDI Skeleton.
-    Port of react/src/tedi/components/loaders/skeleton/skeleton.tsx (CONVENTIONS.md §13).
+    Port of angular/src/tedi/components/loader/skeleton/skeleton.component.{ts,html}
 
-    A loading placeholder wrapper. It carries no visual of its own beyond
-    `pointer-events: none` and the corner radius — the shimmer belongs to the
-    `tedi:skeleton-block` children it wraps.
+    Previously ported from React (CONVENTIONS.md §13); Angular now ships it in
+    `tedi/`, which is the source from here on (§1).
 
-    Accessibility. React declares the loader through an AccessibilityProvider
-    context when one is present, and otherwise announces `label` into an
-    `aria-live` region on mount, swapping to `completedLabel` on unmount after
-    `labelDelay` ms. There is no unmount and no provider on the server, so the
-    port keeps the announcement half only: a `role="status"` live region holding
-    `label`. `labelDelay` and `completedLabel` are runtime-only and dropped
-    (CONVENTIONS.md §7 item 2) — a screen reader gets the "loading" message,
-    and the "loaded" message is the consumer's to announce when they swap the
-    skeleton out.
+    A loading placeholder wrapper: the literal `tedi-skeleton` element (§4)
+    with `aria-busy="true"`, stacking the `tedi:skeleton-block` children it
+    wraps. Use one wrapper per loading region, not one per block. Since the
+    skeleton is removed once content arrives, set `aria-busy="false"` yourself
+    on the region that swaps skeleton for content.
 
-    Pass `label=""` to suppress the live region entirely, e.g. when several
-    skeletons share one announcement from a wrapping region. `:label="null"`
-    does NOT suppress it — Blade cannot distinguish an explicit null from an
-    omitted prop (CONVENTIONS.md §3).
+    Accessibility, as upstream. The `role="status"` live region is rendered
+    EMPTY and gains `label` only after `label-delay` ms — screen readers only
+    announce a live region they were already tracking, and brief loads stay
+    silent. When the skeleton is removed (Alpine's `destroy`, e.g. a Livewire
+    morph or an `x-if` swapping it out) and `label` had been announced,
+    `completed-label` is announced through a page-level polite live region —
+    the stand-in for CDK's `LiveAnnouncer`, which upstream uses because the
+    skeleton's own region leaves with it. Both behaviours are inline Alpine
+    (§8); without JS the region simply stays empty.
+
+    `label` and `completed-label` default to the translated
+    `skeleton.loading` / `skeleton.loading-completed`.
 --}}
 @props([
-    /** Screen-reader message announced while the placeholder is on the page. Pass "" for none. */
+    /** Announced once the skeleton has been on screen for `label-delay`. Say what is loading. */
     'label' => null,
+    /** Announced when the skeleton is removed, if `label` was announced first. */
+    'completedLabel' => null,
+    /** Delay in ms before `label` is announced. */
+    'labelDelay' => 200,
 ])
 
 @php
-    $label = $label ?? __('tedi::tedi.skeleton.loading');
+    $scope = \Illuminate\Support\Js::from([
+        'label' => $label ?? __('tedi::tedi.skeleton.loading'),
+        'completedLabel' => $completedLabel ?? __('tedi::tedi.skeleton.loading-completed'),
+        'labelDelay' => (int) $labelDelay,
+    ]);
 @endphp
 
-<div {{ $attributes->class(['tedi-skeleton']) }}>
-    @if (filled($label))
-        <span class="sr-only" role="status" aria-live="assertive" aria-atomic="true">{{ $label }}</span>
-    @endif
-
+<tedi-skeleton
+    aria-busy="true"
+    {{ $attributes->class(['tedi-skeleton']) }}
+    x-data="Object.assign({{ $scope }}, {
+        announcement: '',
+        init() { this._timer = setTimeout(() => { this.announcement = this.label }, this.labelDelay) },
+        destroy() {
+            clearTimeout(this._timer);
+            if (! this.announcement) return;
+            let region = document.getElementById('skeleton-live-announcer');
+            if (! region) {
+                region = document.createElement('div');
+                region.id = 'skeleton-live-announcer';
+                region.className = 'sr-only';
+                region.setAttribute('aria-live', 'polite');
+                region.setAttribute('aria-atomic', 'true');
+                document.body.appendChild(region);
+            }
+            region.textContent = '';
+            setTimeout(() => { region.textContent = this.completedLabel }, 100);
+        },
+    })"
+>
+    <span class="sr-only" role="status" aria-live="polite" aria-atomic="true" x-text="announcement"></span>
     {{ $slot }}
-</div>
+</tedi-skeleton>

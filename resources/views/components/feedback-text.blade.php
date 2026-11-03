@@ -1,8 +1,14 @@
 {{--
     TEDI Feedback text.
-    Port of angular/tedi/components/form/feedback-text/feedback-text.component.{ts,html}
+    Port of angular/src/tedi/components/form/feedback-text/feedback-text.component.{ts,html}
+
+    Since Angular 8.0 the host always carries an `id` — the `id` prop, or a
+    generated `tedi-feedback-text-…` — so a container can name it in a
+    control's `aria-describedby`.
 --}}
 @props([
+    /** Id of the element. Generated when not set. */
+    'id' => null,
     /** Helper text. Required. */
     'text',
     /** hint|valid|error */
@@ -14,6 +20,8 @@
 @php
     $role = in_array($type, ['valid', 'error'], true) ? 'alert' : null;
     $ariaLive = in_array($type, ['valid', 'error'], true) ? 'assertive' : 'polite';
+    // elementId()
+    $elementId = ($id !== null && $id !== '') ? $id : \Tedi\Livewire\Tedi::id('tedi-feedback-text');
 @endphp
 
 {{--
@@ -25,6 +33,7 @@
     unknown-element `inline` default never applies.
 --}}
 <tedi-feedback-text
+    id="{{ $elementId }}"
     @if ($role) role="{{ $role }}" @endif
     aria-live="{{ $ariaLive }}"
     {{ $attributes->class([

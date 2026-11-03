@@ -1,6 +1,6 @@
 {{--
     TEDI Date field — DOCUMENTED SUBSET.
-    Port of angular/tedi/components/form/date-field/{date-field.component.ts,html}
+    Port of angular/src/tedi/components/form/date-field/{date-field.component.ts,html}
 
     Angular's `tedi-date-field` is a thin composer: a <tedi-date-input> plus a
     CDK-overlay-mounted <tedi-calendar>. The selector is an element selector, but
@@ -55,15 +55,48 @@
       `unavailableDays`, `minYear` and `maxYear` are matcher machinery with no
       server-side analogue — they collapse into the flat `disabledDays` array of
       'Y-m-d' strings that <tedi:calendar> already takes.
-    * `size` is declared for API parity but emits NO class: `tedi-date-field--small`
-      has no rule in dist/tedi.css (grep 0), and Angular only forwards `size` to
-      the wrapping `tedi-form-field`. Set `size` on <tedi:form-field> instead.
+    * The FIELD CONTEXT (Angular 8.0's `TEDI_FIELD_CONTEXT`). Since 8.0 the
+      date field paints its own field surface — `tedi-field-surface` and its
+      `--invalid` / `--valid` / `--disabled` modifiers, plus
+      `tedi-date-field--small|large` — unless a wrapping form-field renders a
+      box that owns the surface. Angular injects the wrapper's computed state;
+      Blade cannot, so the wrapper's state is read from what the consumer WROTE
+      on the nearest enclosing `tedi:form-field` (`Tedi::fieldContext()`, the
+      form-field-scoped analogue of `@aware`), with form-field's `@props`
+      defaults applied:
+        - `size`: own `size` → the form-field's `size` → `default`.
+        - `clearable`: own `clearable` → the form-field's `clearable` → `true`
+          (Angular 9.0, #572: set it once on the form field).
+        - `invalid`: own `invalid`, or the form-field's `invalid`. Angular also
+          derives it from reactive-forms state and an error feedback text;
+          here the form-field's explicit `invalid` is that stand-in.
+        - `valid`: the form-field's `valid` (only a wrapper can know it).
+        - `disabled`: own `inputDisabled`, or the form-field's `disabled` (the
+          stand-in for an enclosing input group disabling the field).
+        - Surface ownership: the form-field only renders a box when it has an
+          `icon`, because a date field owns its clear button
+          (`ownsClearButton`) and so never asks the wrapper for one. With an
+          `icon` on the form-field, the box paints the surface and this root
+          carries none of the `tedi-field-surface*` classes.
+      Standalone (no form-field), every fallback is the default and the field
+      paints itself.
     * `selectionLevel` is forwarded to <tedi:calendar>, which seeds its opening
       grid from it when `view` is omitted (Angular's constructor effect:
       `this.view.set(this.selectionLevel())`). This component has no `view` prop
       of its own — Angular's `tedi-date-field` doesn't either — so a stray
       `view="…"` attribute on the field lands on the root <div> and never reaches
       the calendar.
+    * `readOnly` (Angular 9.0, #726) only locks the text input. While the
+      calendar is available (`enableCalendar`) the value stays editable, so the
+      clear button and the tag close buttons still show (`valueEditable()`).
+    * `name` (8.1, #686) is forwarded to the <input>, omitted when empty. An
+      `aria-describedby` written on this component is forwarded to the <input>
+      too (#675's `controlDescribedBy()`), not left on the wrapper <div>. The
+      form-field's own feedback-text id is not added automatically — Blade
+      cannot query it; pass it in `aria-describedby`.
+    * The 8.1 "clear uncommitted typed text on reset" fix (#677, the
+      `typedText` linked signal) is runtime-only: the text shown here is
+      always the explicit `display` prop, so there is no uncommitted text.
     * `canClear` reads an array `value` as "has a value" only when it is
       non-empty. Angular's `!!value` is true for `[]` as well, so a
       `mode="multiple"` field holding an explicitly-empty array shows a clear
@@ -127,8 +160,14 @@
     'firstDayOfWeek' => 1,
     /** Days that cannot be selected, as 'Y-m-d' strings. */
     'disabledDays' => [],
-    /** default|small — forwarded-only, emits no class. Set it on the wrapping form-field too. */
-    'size' => 'default',
+    /** default|small — overrides the wrapping form-field's size. Null inherits it (else `default`). */
+    'size' => null,
+    /** Whether the clear button shows once the field has a value. Null inherits the form-field's `clearable` (else true). */
+    'clearable' => null,
+    /** Forces the error state on (surface + `aria-invalid` on the input). Combines with the form-field's `invalid`. */
+    'invalid' => false,
+    /** `name` attribute of the <input>, for native form submission. Omitted when empty. */
+    'name' => null,
 ])
 
 @php
@@ -142,22 +181,69 @@
     $inputIsTrigger = $showCalendar && $calendarTrigger === 'input';
 
     $hasValue = is_array($value) ? count($value) > 0 : ($value !== null && $value !== '');
+
+    // TEDI_FIELD_CONTEXT (Tedi::fieldContext): the nearest form-field's state.
+    // The control half registers this field with it — no `reset`, because a
+    // date field owns its clear button (`ownsClearButton`), so the form-field
+    // renders neither a clear button nor, without an icon, a box for it.
+    // The registered value is the TEXT the field shows (the form-field only
+    // uses it for truthiness and a character count), never the raw value,
+    // which is an array in multiple / range mode.
+    $registeredValue = (string) $display !== ''
+        ? (string) $display
+        : implode(', ', array_filter(array_map(fn ($tag) => is_array($tag) ? (string) ($tag['label'] ?? '') : '', is_array($tags) ? $tags : [])));
+    $fieldContext = \Tedi\Livewire\Tedi::fieldContext($__env, [
+        'value' => $hasValue ? ($registeredValue !== '' ? $registeredValue : null) : null,
+        'disabled' => (bool) $inputDisabled,
+        'readOnly' => (bool) $readOnly,
+        'invalid' => (bool) $invalid,
+    ]);
+
+    // fieldDisabled() / invalid() / valid() / resolvedSize() / paintsSurface()
+    $fieldDisabled = (bool) $inputDisabled || (bool) ($fieldContext['disabled'] ?? false);
+    $isInvalid = (bool) $invalid || (bool) ($fieldContext['invalid'] ?? false);
+    $isValid = (bool) ($fieldContext['valid'] ?? false);
+    $resolvedSize = $size ?? ($fieldContext['size'] ?? 'default');
+    $paintsSurface = ! ($fieldContext['ownsSurface'] ?? false);
+    // clearableResolved(): own `clearable` wins, then the form-field's.
+    $clearableResolved = $clearable !== null ? (bool) $clearable : ($fieldContext['clearable'] ?? true);
+    // valueEditable(): readOnly only locks typing while the calendar is available.
+    $valueEditable = ! $fieldDisabled && (! $readOnly || $showCalendar);
     // canClear()
-    $canClear = $hasValue && ! $inputDisabled && ! $readOnly;
+    $canClear = $clearableResolved && $hasValue && $valueEditable;
+
+    // describedBy: the form-field's ids (its character counter), plus any
+    // aria-describedby written on the field, go to the <input>.
+    $describedBy = trim(implode(' ', array_merge(
+        $fieldContext['describedBy'] ?? [],
+        [(string) $attributes->get('aria-describedby', '')],
+    )));
 @endphp
 
-<div {{ $attributes->class(['tedi-date-field']) }}>
+<div {{ $attributes->except(['aria-describedby'])->class([
+    'tedi-date-field',
+    'tedi-field-surface' => $paintsSurface,
+    'tedi-field-surface--invalid' => $paintsSurface && $isInvalid,
+    'tedi-field-surface--valid' => $paintsSurface && $isValid,
+    'tedi-field-surface--disabled' => $paintsSurface && $fieldDisabled,
+    'tedi-date-field--small' => $resolvedSize === 'small',
+    'tedi-date-field--large' => $resolvedSize === 'large',
+]) }}>
     <tedi:date-input
         :input-id="$inputId"
+        :name="$name"
+        :aria-describedby="$describedBy"
         :value="$display"
         :tags="$tags"
         :mode="$mode"
         :multi-row="(bool) $multiRow"
         :ellipsis="$tagEllipsis"
-        :removable="(bool) $isTagRemovable"
+        :removable="(bool) $isTagRemovable && $valueEditable"
         :visible-tag-count="$visibleTagCount"
         :placeholder="$placeholder"
-        :disabled="(bool) $inputDisabled"
+        :disabled="$fieldDisabled"
+        :invalid="$isInvalid"
+        :size="$resolvedSize"
         :read-only="$readOnly || $inputIsTrigger"
         :required="(bool) $required"
         :icon-active="(bool) $open"
@@ -178,7 +264,7 @@
                 :number-of-months="$numberOfMonths"
                 :month-year-select-type="$monthYearSelectType"
                 :required="(bool) $required"
-                :input-disabled="(bool) $inputDisabled"
+                :input-disabled="$fieldDisabled"
                 :disabled-days="$disabledDays"
                 :first-day-of-week="$firstDayOfWeek"
             >{{-- one line: .tedi-calendar__footer relies on :empty --}}<x-slot:footer>{{ $footer ?? '' }}</x-slot:footer>

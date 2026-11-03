@@ -130,55 +130,130 @@ class FormFieldComponentsTest extends TestCase
         }
     }
 
+    /**
+     * Angular 8.0 (#612): the field state lives on the box's
+     * `tedi-field-surface--*` modifiers. The host's `--valid|invalid|disabled`
+     * classes are still emitted upstream but have no rule, so they are dropped.
+     */
     public function test_form_field_validation_precedence(): void
     {
         // invalid wins over valid
-        $html = Blade::render('<tedi:form-field :invalid="true" :valid="true"><input /></tedi:form-field>');
-        $this->assertHasClass('tedi-form-field--invalid', $html, on: 'tedi-form-field--invalid');
-        $this->assertMissingClass('tedi-form-field--valid', $html, on: 'tedi-form-field--valid');
+        $html = Blade::render('<tedi:form-field icon="search" :invalid="true" :valid="true"><tedi:text-field /></tedi:form-field>');
+        $this->assertHasClass('tedi-field-surface--invalid', $html, on: 'tedi-form-field__box');
+        $this->assertMissingClass('tedi-field-surface--valid', $html, on: 'tedi-form-field__box');
 
         // character count exceeding the limit forces invalid regardless of `invalid`
-        $html = Blade::render('<tedi:form-field :character-limit="5" :character-count="10"><input /></tedi:form-field>');
-        $this->assertHasClass('tedi-form-field--invalid', $html, on: 'tedi-form-field--invalid');
-        $this->assertHasClass('tedi-form-field__character-count--error', $html, on: 'tedi-form-field__character-count--error');
+        $html = Blade::render('<tedi:form-field icon="search" :character-limit="5" :character-count="10"><tedi:text-field /></tedi:form-field>');
+        $this->assertHasClass('tedi-field-surface--invalid', $html, on: 'tedi-form-field__box');
+        $this->assertHasClass('tedi-form-field__character-count--error', $html, on: 'tedi-form-field__character-count');
 
-        $html = Blade::render('<tedi:form-field :valid="true"><input /></tedi:form-field>');
-        $this->assertHasClass('tedi-form-field--valid', $html, on: 'tedi-form-field--valid');
+        $html = Blade::render('<tedi:form-field icon="search" :valid="true"><tedi:text-field /></tedi:form-field>');
+        $this->assertHasClass('tedi-field-surface--valid', $html, on: 'tedi-form-field__box');
+
+        foreach (['tedi-form-field--valid', 'tedi-form-field--invalid', 'tedi-form-field--disabled'] as $dropped) {
+            $html = Blade::render('<tedi:form-field :invalid="true" :disabled="true"><tedi:text-field /></tedi:form-field>');
+            $this->assertMissingClass($dropped, $html, on: 'tedi-form-field');
+        }
     }
 
-    public function test_form_field_disabled_class(): void
+    public function test_form_field_disabled_box(): void
     {
-        $html = Blade::render('<tedi:form-field :disabled="true"><input /></tedi:form-field>');
-        $this->assertHasClass('tedi-form-field--disabled', $html, on: 'tedi-form-field--disabled');
+        $html = Blade::render('<tedi:form-field icon="search" :disabled="true"><tedi:text-field /></tedi:form-field>');
+        $this->assertHasClass('tedi-field-surface--disabled', $html, on: 'tedi-form-field__box');
+        // The field context disables the control too.
+        $this->assertMatchesRegularExpression('/<input\s+tedi-text-field\s+disabled/', $html);
+
+        // The control's own `disabled` reaches the box through registration.
+        $html = Blade::render('<tedi:form-field icon="search"><tedi:text-field :disabled="true" /></tedi:form-field>');
+        $this->assertHasClass('tedi-field-surface--disabled', $html, on: 'tedi-form-field__box');
     }
 
-    public function test_form_field_icon_and_clearable_suppressed_for_textarea(): void
+    public function test_form_field_renders_no_box_without_an_icon_or_a_clear_button(): void
     {
-        // Angular's `--with-icon` host class has no rule in the vendored SCSS
-        // (see form-field.blade.php's doc comment) and is deliberately not
-        // emitted; what IS observable is that icon/clear markup itself is
-        // rendered normally, and suppressed entirely for a textarea.
-        $html = Blade::render('<tedi:form-field icon="search"><input /></tedi:form-field>');
-        $this->assertStringContainsString('tedi-form-field__icon', $html);
-
-        $html = Blade::render('<tedi:form-field clearable value="x"><input /></tedi:form-field>');
-        $this->assertStringContainsString('tedi-form-field__buttons', $html);
-
-        // textarea suppresses both, even with icon/clearable set
-        $html = Blade::render('<tedi:form-field icon="search" clearable value="x" textarea><textarea></textarea></tedi:form-field>');
-        $this->assertStringNotContainsString('tedi-form-field__icon', $html);
+        // clearable defaults to true, but a bare <input> registers no control
+        // and so gets no clear button — and with no icon, no box.
+        $html = Blade::render('<tedi:form-field><input /></tedi:form-field>');
+        $this->assertStringNotContainsString('tedi-form-field__box', $html);
         $this->assertStringNotContainsString('tedi-form-field__buttons', $html);
+
+        // Opting out of the clear button leaves a text field bare too, and it
+        // paints its own surface.
+        $html = Blade::render('<tedi:form-field :clearable="false"><tedi:text-field value="x" /></tedi:form-field>');
+        $this->assertStringNotContainsString('tedi-form-field__box', $html);
+        $this->assertHasClass('tedi-field-surface', $html, on: 'tedi-text-field');
+
+        // An icon alone renders the box, which then owns the surface.
+        $html = Blade::render('<tedi:form-field icon="search" :clearable="false"><tedi:text-field /></tedi:form-field>');
+        $this->assertHasClass('tedi-field-surface', $html, on: 'tedi-form-field__box');
+        $this->assertMissingClass('tedi-field-surface', $html, on: 'tedi-text-field');
+        $this->assertHasClass('tedi-form-field__icon', $html, on: 'tedi-form-field__icon');
+        $this->assertStringNotContainsString('tedi-form-field__buttons', $html);
+    }
+
+    public function test_form_field_box_carries_the_scrollbar_custom_property(): void
+    {
+        // textarea.component.scss reads it inside calc() with no fallback.
+        $html = Blade::render('<tedi:form-field><tedi:textarea /></tedi:form-field>');
+        $this->assertMatchesRegularExpression('/class="tedi-form-field__box[^"]*"\s+style="--tedi-form-field-control-scrollbar: 0px"/', $html);
+    }
+
+    /**
+     * Angular 9.0 (#572 / #751): clearable defaults to true, and a textarea is
+     * clearable too.
+     */
+    public function test_form_field_clear_button_defaults_on_for_text_field_and_textarea(): void
+    {
+        foreach (['<tedi:text-field value="abc" />', '<tedi:textarea value="abc" />'] as $control) {
+            $html = Blade::render('<tedi:form-field>'.$control.'</tedi:form-field>');
+            $this->assertHasClass('tedi-form-field__buttons', $html, on: 'tedi-form-field__buttons');
+            $this->assertMissingClass('tedi-form-field__buttons--hidden', $html, on: 'tedi-form-field__buttons');
+            $this->assertHasClass('tedi-form-field__clear', $html, on: 'tedi-form-field__clear');
+        }
     }
 
     public function test_form_field_clear_button_visibility(): void
     {
-        $html = Blade::render('<tedi:form-field clearable value="abc"><input /></tedi:form-field>');
+        $html = Blade::render('<tedi:form-field><tedi:text-field value="abc" /></tedi:form-field>');
         $this->assertHasClass('tedi-form-field__buttons', $html, on: 'tedi-form-field__buttons');
         $this->assertMissingClass('tedi-form-field__buttons--hidden', $html, on: 'tedi-form-field__buttons');
+        $this->assertStringContainsString('tabindex="0"', $html);
 
-        $html = Blade::render('<tedi:form-field clearable><input /></tedi:form-field>');
-        $this->assertHasClass('tedi-form-field__buttons--hidden', $html, on: 'tedi-form-field__buttons');
-        $this->assertStringContainsString('aria-hidden="true"', $html);
+        // Empty, disabled or read-only: rendered, but hidden and disabled.
+        foreach ([
+            '<tedi:text-field />',
+            '<tedi:text-field value="abc" :disabled="true" />',
+            '<tedi:text-field value="abc" readonly />',
+        ] as $control) {
+            $html = Blade::render('<tedi:form-field>'.$control.'</tedi:form-field>');
+            $this->assertHasClass('tedi-form-field__buttons--hidden', $html, on: 'tedi-form-field__buttons');
+            $this->assertStringContainsString('aria-hidden="true"', $html);
+            $this->assertStringContainsString('tabindex="-1"', $html);
+            $this->assertMatchesRegularExpression('/tedi-form-field__clear"[^>]*disabled/', $html);
+        }
+
+        // An explicit `value` on the form-field wins over the control's.
+        $html = Blade::render('<tedi:form-field value="x"><tedi:text-field /></tedi:form-field>');
+        $this->assertMissingClass('tedi-form-field__buttons--hidden', $html, on: 'tedi-form-field__buttons');
+    }
+
+    public function test_form_field_clear_on_interaction_class_needs_a_visible_button(): void
+    {
+        $html = Blade::render('<tedi:form-field show-clear-on-interaction><tedi:text-field value="abc" /></tedi:form-field>');
+        $this->assertHasClass('tedi-form-field--clear-on-interaction', $html, on: 'tedi-form-field');
+
+        $html = Blade::render('<tedi:form-field show-clear-on-interaction><tedi:text-field /></tedi:form-field>');
+        $this->assertMissingClass('tedi-form-field--clear-on-interaction', $html, on: 'tedi-form-field');
+
+        $html = Blade::render('<tedi:form-field show-clear-on-interaction :clearable="false"><tedi:text-field value="abc" /></tedi:form-field>');
+        $this->assertMissingClass('tedi-form-field--clear-on-interaction', $html, on: 'tedi-form-field');
+    }
+
+    public function test_form_field_icon_is_followed_by_a_separator_after_the_clear_button(): void
+    {
+        $html = Blade::render('<tedi:form-field icon="search"><tedi:text-field value="x" /></tedi:form-field>');
+        $this->assertHasClass('tedi-separator--vertical', $html, on: 'tedi-separator');
+        $this->assertHasClass('tedi-form-field__icon', $html, on: 'tedi-form-field__icon');
+        $this->assertStringContainsString('--_tedi-icon-size', $html);
     }
 
     /**
@@ -196,7 +271,7 @@ class FormFieldComponentsTest extends TestCase
      */
     public function test_form_field_buttons_emit_a_single_class_attribute(): void
     {
-        $html = Blade::render('<tedi:form-field clearable><input /></tedi:form-field>');
+        $html = Blade::render('<tedi:form-field><tedi:text-field /></tedi:form-field>');
 
         $this->assertSame(1, preg_match_all(
             '/<div\s+class="tedi-form-field__buttons[^"]*"/', $html
@@ -204,7 +279,9 @@ class FormFieldComponentsTest extends TestCase
 
         preg_match('/<div\s+class="tedi-form-field__buttons[^>]*>/s', $html, $match);
 
-        $this->assertSame(1, substr_count($match[0], 'class='),
+        // x-bind:class is a separate attribute Alpine merges at runtime; only a
+        // second plain `class` would be dropped by the parser.
+        $this->assertSame(1, preg_match_all('/(?<![\w:-])class=/', $match[0]),
             'A second class attribute on the wrapper would be dropped by the parser.');
     }
 
@@ -226,23 +303,64 @@ BLADE);
         $this->assertStringContainsString('tedi-feedback-text', $html);
     }
 
+    public function test_form_field_character_count_follows_the_control_and_describes_it(): void
+    {
+        $html = Blade::render('<tedi:form-field :character-limit="3"><tedi:text-field value="abcd" /></tedi:form-field>');
+
+        // The count comes from the control's value; exceeding it is an error
+        // on the box and on the control.
+        $this->assertMatchesRegularExpression('/>4\/3<\/span>/', $html);
+        $this->assertHasClass('tedi-form-field__character-count--error', $html, on: 'tedi-form-field__character-count');
+        $this->assertHasClass('tedi-field-surface--invalid', $html, on: 'tedi-form-field__box');
+        $this->assertStringContainsString('aria-invalid="true"', $html);
+        $this->assertStringContainsString('aria-live="polite"', $html);
+
+        // The counter's id is pushed into the control's aria-describedby,
+        // after the consumer's own ids.
+        preg_match('/id="([^"]+-character-count)"/', $html, $id);
+        $this->assertNotEmpty($id);
+        $this->assertStringContainsString('aria-describedby="'.$id[1].'"', $html);
+
+        $html = Blade::render('<tedi:form-field :character-limit="3"><tedi:text-field aria-describedby="own" value="ab" /></tedi:form-field>');
+        preg_match('/id="([^"]+-character-count)"/', $html, $id);
+        $this->assertStringContainsString('aria-describedby="own '.$id[1].'"', $html);
+        $this->assertMatchesRegularExpression('/>2\/3<\/span>/', $html);
+    }
+
+    public function test_form_field_label_and_extra_render_inside_the_host(): void
+    {
+        $html = Blade::render(<<<'BLADE'
+<tedi:form-field>
+    <x-slot:label><tedi:form.label for="f">Nimi</tedi:form.label></x-slot:label>
+    <tedi:text-field id="f" />
+    <x-slot:extra>Lisa</x-slot:extra>
+</tedi:form-field>
+BLADE);
+        $this->assertMatchesRegularExpression('/^\s*<tedi-form-field[^>]*>\s*<label/', $html);
+        $this->assertStringContainsString('<div class="tedi-form-field__extra">Lisa</div>', $html);
+
+        // With nothing in it, the extra row is empty so `:empty` hides it.
+        $html = Blade::render('<tedi:form-field><input /></tedi:form-field>');
+        $this->assertStringContainsString('<div class="tedi-form-field__extra"></div>', $html);
+    }
+
     public function test_form_field_inherits_disabled_and_invalid_from_input_group(): void
     {
         $html = Blade::render(<<<'BLADE'
 <tedi:input-group :disabled="true" :invalid="true">
-    <tedi:form-field><input /></tedi:form-field>
+    <tedi:form-field icon="search"><tedi:text-field /></tedi:form-field>
 </tedi:input-group>
 BLADE);
-        $this->assertHasClass('tedi-form-field--disabled', $html, on: 'tedi-form-field--disabled');
-        $this->assertHasClass('tedi-form-field--invalid', $html, on: 'tedi-form-field--invalid');
+        $this->assertHasClass('tedi-field-surface--disabled', $html, on: 'tedi-form-field__box');
+        $this->assertHasClass('tedi-field-surface--invalid', $html, on: 'tedi-form-field__box');
 
         // an explicit value on form-field itself still wins
         $html = Blade::render(<<<'BLADE'
 <tedi:input-group :disabled="true">
-    <tedi:form-field :disabled="false"><input /></tedi:form-field>
+    <tedi:form-field icon="search" :disabled="false"><tedi:text-field /></tedi:form-field>
 </tedi:input-group>
 BLADE);
-        $this->assertMissingClass('tedi-form-field--disabled', $html, on: 'tedi-form-field--disabled');
+        $this->assertMissingClass('tedi-field-surface--disabled', $html, on: 'tedi-form-field__box');
     }
 
     // ---- input-group -------------------------------------------------------
@@ -385,5 +503,113 @@ BLADE);
         $html = Blade::render('<tedi:select input-id="s-fb" :options="[]" :feedback-text="[\'text\' => \'Vali riik\', \'type\' => \'error\']" />');
         $this->assertHasClass('tedi-feedback-text--error', $html, on: 'tedi-feedback-text--error');
         $this->assertStringContainsString('Vali riik', $html);
+    }
+
+    public function test_select_value_marks_the_selected_option(): void
+    {
+        $html = Blade::render('<tedi:select input-id="s-v" placeholder="Vali" value="b" :options="[\'a\' => \'A\', \'b\' => \'B\']" />');
+        $this->assertMatchesRegularExpression('/<option\s+value="b"\s+selected/', $html);
+        $this->assertDoesNotMatchRegularExpression('/<option\s+value="a"\s+selected/', $html);
+        $this->assertStringNotContainsString('disabled selected hidden', $html);
+
+        // Values compare as strings.
+        $html = Blade::render('<tedi:select input-id="s-0" :value="0" :options="[\'0\', \'1\']" />');
+        $this->assertMatchesRegularExpression('/<option\s+value="0"\s+selected/', $html);
+
+        // allowMultiple takes an array.
+        $html = Blade::render('<tedi:select input-id="s-m" :allow-multiple="true" :value="[\'a\', \'b\']" :options="[\'a\' => \'A\', \'b\' => \'B\', \'c\' => \'C\']" />');
+        $this->assertSame(2, preg_match_all('/<option\s+value="[ab]"\s+selected/', $html));
+    }
+
+    /**
+     * Angular 9.0 (#745): null and '' both mean nothing is selected, so an
+     * option whose value is '' is never shown as selected.
+     */
+    public function test_select_empty_string_value_selects_nothing(): void
+    {
+        foreach (['value=""', ''] as $value) {
+            $html = Blade::render('<tedi:select input-id="s-e" placeholder="Vali" '.$value.' :options="[\'\' => \'Kõik\', \'a\' => \'A\']" />');
+            $this->assertStringContainsString('disabled selected hidden', $html);
+            $this->assertDoesNotMatchRegularExpression('/<option\s+value=""\s+selected/', $html);
+        }
+    }
+
+    public function test_select_name_and_aria(): void
+    {
+        $html = Blade::render('<tedi:select input-id="s-n" name="county" state="error" :options="[]" :feedback-text="[\'text\' => \'Viga\', \'type\' => \'error\']" />');
+        $this->assertMatchesRegularExpression('/<select[^>]*name="county"/s', $html);
+        $this->assertMatchesRegularExpression('/<select[^>]*aria-invalid="true"/s', $html);
+        $this->assertMatchesRegularExpression('/<select[^>]*aria-describedby="s-n-feedback"/s', $html);
+        $this->assertStringContainsString('id="s-n-feedback"', $html);
+
+        $html = Blade::render('<tedi:select input-id="s-plain" :options="[]" />');
+        $this->assertStringNotContainsString('aria-invalid', $html);
+        $this->assertStringNotContainsString('aria-describedby', $html);
+        $this->assertStringNotContainsString('name=', $html);
+    }
+
+    public function test_select_clearable_props_are_inert_and_do_not_leak(): void
+    {
+        $html = Blade::render('<tedi:select input-id="s-c" clearable show-clear-on-interaction :options="[]" />');
+        $this->assertStringNotContainsString('clearable', $html);
+        $this->assertStringNotContainsString('clear-on-interaction', $html);
+        $this->assertStringNotContainsString('tedi-select__clear', $html);
+    }
+
+    public function test_feedback_text_always_carries_an_id(): void
+    {
+        $this->assertStringContainsString('id="hint"', Blade::render('<tedi:feedback-text id="hint" text="Msg" />'));
+        $this->assertMatchesRegularExpression('/<tedi-feedback-text\s+id="tedi-feedback-text-[^"]+"/', Blade::render('<tedi:feedback-text text="Msg" />'));
+    }
+
+    public function test_label_size_falls_back_to_the_form_field(): void
+    {
+        $label = '<x-slot:label><tedi:form.label>Nimi</tedi:form.label></x-slot:label>';
+
+        $html = Blade::render('<tedi:form-field size="small">'.$label.'<input /></tedi:form-field>');
+        $this->assertHasClass('tedi-label--small', $html, on: 'tedi-label');
+
+        // large has no label size; it stays default.
+        $html = Blade::render('<tedi:form-field size="large">'.$label.'<input /></tedi:form-field>');
+        $this->assertMissingClass('tedi-label--small', $html, on: 'tedi-label');
+
+        // Its own size wins.
+        $html = Blade::render('<tedi:form-field size="small"><x-slot:label><tedi:form.label size="default">Nimi</tedi:form.label></x-slot:label><input /></tedi:form-field>');
+        $this->assertMissingClass('tedi-label--small', $html, on: 'tedi-label');
+    }
+
+    public function test_label_visually_hidden(): void
+    {
+        $this->assertHasClass('sr-only', Blade::render('<tedi:form.label visually-hidden>Nimi</tedi:form.label>'), on: 'tedi-label');
+
+        $html = Blade::render('<tedi:form.label visually-hidden="reserve-space">Nimi</tedi:form.label>');
+        $this->assertHasClass('tedi-label--reserve-space', $html, on: 'tedi-label');
+        $this->assertMissingClass('sr-only', $html, on: 'tedi-label');
+
+        $html = Blade::render('<tedi:form.label>Nimi</tedi:form.label>');
+        $this->assertMissingClass('sr-only', $html, on: 'tedi-label');
+        $this->assertMissingClass('tedi-label--reserve-space', $html, on: 'tedi-label');
+    }
+
+    public function test_label_row_root_is_the_selector_element(): void
+    {
+        $this->assertMatchesRegularExpression('/^<tedi-label-row\s+class="tedi-label-row"/', trim(Blade::render('<tedi:label-row>x</tedi:label-row>')));
+    }
+
+    public function test_clear_button_is_wired_to_the_form_field_behaviour(): void
+    {
+        $html = Blade::render('<tedi:form-field><tedi:text-field value="x" /></tedi:form-field>');
+
+        $this->assertStringContainsString('x-data="tediFormField({ clearOnInteraction: false })"', $html);
+        $this->assertStringContainsString('x-on:click="clear()"', $html);
+        $this->assertStringContainsString('x-bind:disabled="! showClear"', $html);
+        $this->assertStringContainsString("x-bind:class=\"{ 'tedi-form-field__buttons--hidden': ! showClear }\"", $html);
+    }
+
+    public function test_form_field_without_a_clear_button_carries_no_behaviour(): void
+    {
+        $html = Blade::render('<tedi:form-field :clearable="false"><tedi:text-field value="x" /></tedi:form-field>');
+
+        $this->assertStringNotContainsString('tediFormField', $html);
     }
 }

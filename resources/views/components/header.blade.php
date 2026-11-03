@@ -1,6 +1,6 @@
 {{--
     TEDI Header.
-    Port of angular/tedi/components/layout/header/header.component.{ts,html}
+    Port of angular/src/tedi/components/layout/header/header.component.{ts,html}
 
     Angular's selector is the attribute form `header[tedi-header]`; the Blade
     port renders the `<header>` element directly.
@@ -14,7 +14,7 @@
 --}}
 @props([])
 
-<header {{ $attributes->class(['tedi-header']) }}>
+<header {{ $attributes->class(['tedi-header', 'no-print']) }}>
     {{ $top ?? '' }}
 
     <div class="tedi-header__main">

@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'Fade',
-    'order' => 13,
+    'order' => 14,
     'status' => 'subset',
     'args' => [
         'slidesPerView' => 3,

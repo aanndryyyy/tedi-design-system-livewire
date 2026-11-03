@@ -1,96 +1,254 @@
-@use "sass:map";
-@use "@tedi-design-system/core/mixins";
-@use "@tedi-design-system/core/bootstrap-utility/breakpoints";
+.tedi-table-of-contents {
+  --tedi-table-of-contents-padding: var(--card-padding-md-default);
 
-$breakpoints: (
-  mobile: sm,
-  tablet: md,
-  desktop: lg,
-);
+  // Sticky geometry. `stickyOffset` / `stickyMaxHeight` inputs override the top
+  // and max-height custom properties; because the default max-height reads the
+  // top and bottom vars, changing the offset keeps the calculation in sync.
+  --tedi-table-of-contents-sticky-top: 1.5rem;
+  --tedi-table-of-contents-sticky-bottom: 1.5rem;
+  --tedi-table-of-contents-sticky-max-height: calc(
+    100dvh - var(--tedi-table-of-contents-sticky-top) -
+      var(--tedi-table-of-contents-sticky-bottom)
+  );
 
-.table-of-contents {
+  display: block;
+}
+
+.tedi-table-of-contents__container {
+  display: block;
+}
+
+.tedi-table-of-contents__container.tedi-table-of-contents--sticky {
+  position: sticky;
+  top: var(--tedi-table-of-contents-sticky-top);
+  display: flex;
+  flex-direction: column;
+
+  // Fill the viewport minus the top offset and a matching bottom gap. Override
+  // via `stickyMaxHeight` when the TOC scrolls inside a fixed-height container
+  // rather than the window (then 100dvh is the wrong basis).
+  max-height: var(--tedi-table-of-contents-sticky-max-height);
+}
+
+.tedi-table-of-contents--sticky > .tedi-card-content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tedi-table-of-contents--sticky .tedi-table-of-contents__heading {
+  flex: none;
+}
+
+.tedi-table-of-contents--sticky nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-block: var(--card-padding-md-default);
+  overflow-y: auto;
+}
+
+.tedi-table-of-contents--sticky .tedi-table-of-contents__list {
+  padding-block: 0;
+}
+
+.tedi-table-of-contents--transparent .tedi-table-of-contents__list {
+  position: relative;
+  padding-bottom: 0;
+  isolation: isolate;
+
+  &::before {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: -1;
+    width: var(--tedi-borders-01);
+    content: "";
+    background: var(--card-border-primary);
+  }
+}
+
+.tedi-table-of-contents__heading {
+  padding: var(--card-padding-md-default) var(--card-padding-md-default) 0
+    var(--card-padding-md-default);
+}
+
+.tedi-table-of-contents__list,
+.tedi-table-of-contents__group {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.tedi-table-of-contents__list {
+  padding: var(--card-padding-md-default) 0;
+}
+
+.tedi-table-of-contents--bordered .tedi-table-of-contents__list {
+  padding: var(--card-padding-xs) 0;
+}
+
+.tedi-table-of-contents__list--headless {
+  padding-top: var(--tedi-table-of-contents-padding);
+}
+
+.tedi-table-of-contents__item {
+  display: flex;
+  flex-direction: column;
+}
+
+.tedi-table-of-contents__row {
+  display: flex;
+  gap: var(--layout-grid-gutters-04);
+  align-items: center;
+  padding-block: var(--table-of-contents-padding-y);
+  padding-inline: var(--table-of-contents-padding-left-level-1);
+  border-left: var(--table-of-contents-active-item-border-width) solid
+    transparent;
+}
+
+.tedi-table-of-contents__row--level-2 {
+  padding-right: var(--list-padding-left-level-1);
+  padding-left: var(--list-padding-left-level-2);
+}
+
+.tedi-table-of-contents__number {
+  flex-shrink: 0;
+  min-width: 1.5rem;
+  color: var(--link-primary-default);
+  text-align: right;
+}
+
+.tedi-table-of-contents__separator {
+  padding-block: var(--layout-grid-gutters-04);
+  padding-right: var(--table-of-contents-padding-left-level-1);
+  padding-left: calc(
+    var(--table-of-contents-padding-left-level-1) - var(
+        --table-of-contents-active-item-border-width
+      )
+  );
+  border-left: var(--table-of-contents-active-item-border-width) solid
+    transparent;
+}
+
+.tedi-table-of-contents__content {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.tedi-table-of-contents__suffix {
+  flex: none;
+}
+
+.tedi-table-of-contents__item--selected > .tedi-table-of-contents__row {
+  border-left-color: var(--table-of-contents-border-active);
+
+  .tedi-table-of-contents__number {
+    color: var(--link-primary-active);
+  }
+
+  .tedi-table-of-contents__content :is(a, button) {
+    color: var(--link-primary-active);
+
+    &:hover {
+      color: var(--link-primary-active);
+
+      :not(tedi-icon) {
+        text-decoration: none;
+      }
+    }
+  }
+}
+
+.tedi-table-of-contents__item--selected > .tedi-table-of-contents__separator {
+  border-left-color: var(--table-of-contents-border-active);
+}
+
+.tedi-table-of-contents--bordered .tedi-table-of-contents__row {
+  border-bottom: var(--tedi-borders-01) solid var(--card-border-primary);
+}
+
+.tedi-table-of-contents--bordered
+  .tedi-table-of-contents__list
+  > .tedi-table-of-contents__item:last-child
+  > .tedi-table-of-contents__row {
+  border-bottom: 0;
+}
+
+.tedi-table-of-contents__bar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: var(--z-index-header);
+  display: flex;
+  gap: var(--layout-grid-gutters-16);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--card-padding-md-default);
+  background: var(--card-background-primary);
+  border-top: var(--tedi-borders-01) solid var(--card-border-primary);
+  border-top-left-radius: var(--card-radius-rounded);
+  border-top-right-radius: var(--card-radius-rounded);
+  transition: transform 0.3s ease;
+}
+
+.tedi-table-of-contents__bar--static {
+  position: static;
+}
+
+.tedi-table-of-contents__bar--hidden {
   display: none;
-  max-height: 100vh;
+}
 
-  &--position {
-    &-sticky {
-      position: sticky;
-      top: var(--tedi-dimensions-10);
-    }
-    &-fixed {
-      position: fixed;
-    }
+.tedi-table-of-contents__bar--tucked {
+  transform: translateY(100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tedi-table-of-contents__bar {
+    transition: none;
   }
+}
 
-  &__content {
-    padding: 0;
-    padding-bottom: var(--tedi-dimensions-10);
-  }
+.tedi-table-of-contents__bar-title {
+  margin: 0;
+}
 
-  &__header {
-    width: 100%;
-    padding: var(--tedi-dimensions-10);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
+.tedi-table-of-contents__sheet {
+  --tedi-table-of-contents-padding: var(--card-padding-md-default);
 
-  &__items {
-    gap: var(--tedi-dimensions-05);
-    display: flex;
-    flex-direction: column;
-  }
+  display: flex;
+  flex-direction: column;
+  max-height: 80dvh;
+}
 
-  &--modal-active {
-    display: initial;
-  }
+.tedi-table-of-contents__sheet-header {
+  display: flex;
+  flex: none;
+  gap: var(--layout-grid-gutters-16);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--card-padding-md-default);
+  border-bottom: var(--tedi-borders-01) solid var(--card-border-primary);
+}
 
-  @each $breakpoint-name, $breakpoint-value in $breakpoints {
-    &--modal-breakpoint-#{$breakpoint-name} {
-      @include breakpoints.media-breakpoint-up($breakpoint-value) {
-        display: initial;
-      }
-    }
-  }
+.tedi-table-of-contents__sheet-nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
 
-  &__footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: var(--z-index-fixed);
-    padding: 0;
-    --_card-padding-top: 0;
-    --_card-padding-left: 0;
-    --_card-padding-bottom: 0;
-    --_card-padding-right: 0;
+.tedi-table-of-contents__sheet-panel {
+  width: 100%;
+  overflow-y: auto;
+  background: var(--card-background-primary);
+  border-top-left-radius: var(--modal-radius);
+  border-top-right-radius: var(--modal-radius);
+}
 
-    &-trigger {
-      border: none;
-      width: 100%;
-      background-color: transparent;
-      padding: 0;
-      cursor: pointer;
-
-      .tedi-button {
-        padding: 0;
-      }
-
-      &:hover {
-        background-color: transparent;
-      }
-    }
-
-    .table-of-contents__header {
-      padding: var(--tedi-dimensions-10);
-    }
-
-    @each $breakpoint-name, $breakpoint-value in $breakpoints {
-      &--modal-breakpoint-#{$breakpoint-name} {
-        @include breakpoints.media-breakpoint-up($breakpoint-value) {
-          display: none;
-        }
-      }
-    }
-  }
+.tedi-table-of-contents__backdrop {
+  background: var(--general-surface-overlay);
 }

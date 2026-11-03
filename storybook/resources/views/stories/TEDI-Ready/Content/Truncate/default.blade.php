@@ -1,44 +1,68 @@
+{{--
+    Angular's maxLength control is an object (number or breakpoint object);
+    breakpoint objects are not ported (CONVENTIONS.md §7), so it is a number.
+--}}
 @storybook([
     'name' => 'Default',
     'order' => 1,
-    'status' => 'stable',
-    'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-(work-in-progress)?node-id=2427-40830&m=dev',
+    'status' => 'subset',
+    'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.75.90?node-id=10317-3250&m=dev',
     'args' => [
-        'content' => 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias, maiores! Tempora consequatur eveniet cupiditate. Aspernatur id quia fugiat, consequatur rerum ipsa ipsam ad suscipit provident odio est commodi velit ut quisquam amet, harum nisi molestias excepturi sit perferendis, aliquid at consectetur? Minima quidem cumque eaque eveniet unde esse impedit necessitatibus aut non autem, maxime sed odit repellat distinctio, molestias laudantium saepe dignissimos eius!',
+        'text' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras quam sapien, ultrices quis suscipit in, sodales vel justo. Curabitur lobortis quam dolor, vel dapibus dui pellentesque in. Maecenas auctor lacus elit, a vulputate ante cursus vitae. Proin mollis auctor ipsum nec malesuada. Aliquam turpis dui, dictum sit amet eros ac, iaculis mollis diam. Vivamus sed nulla ut justo fermentum ornare. Nam iaculis accumsan euismod. Sed efficitur risus a nisl interdum, placerat tincidunt velit sollicitudin. Donec ac tincidunt lorem, id ornare felis. Vestibulum sed lacinia diam. Donec vehicula mi maximus purus sollicitudin, at pulvinar lacus placerat.',
         'maxLength' => 200,
         'ellipsis' => '...',
         'expandable' => true,
+        'expanded' => false,
     ],
     'argTypes' => [
-        'content' => [
+        'text' => [
+            'description' => 'Text to display and truncate when it exceeds `maxLength`.',
             'control' => 'text',
-            'description' => 'Text that will be truncated. React projects this as children; here it is a prop, because the server has to slice it.',
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
         ],
         'maxLength' => [
+            'description' => 'Maximum characters shown while collapsed, excluding the ellipsis. Accepts a number or a breakpoint object.',
             'control' => 'number',
-            'description' => 'Maximum number of characters to display.',
-            'table' => ['defaultValue' => ['summary' => '200']],
+            'table' => [
+                'category' => 'inputs',
+                'type' => ['summary' => 'number | BreakpointObject<number>'],
+                'defaultValue' => ['summary' => '200'],
+            ],
         ],
         'ellipsis' => [
+            'description' => 'Text appended when content is truncated.',
             'control' => 'text',
-            'description' => 'Custom content to display at the end of truncated text.',
-            'table' => ['defaultValue' => ['summary' => '...']],
+            'table' => [
+                'category' => 'inputs',
+                'type' => ['summary' => 'string'],
+                'defaultValue' => ['summary' => '...'],
+            ],
         ],
         'expandable' => [
+            'description' => 'Shows an expand/collapse button when the text exceeds `maxLength`. When false, `expanded` can still be controlled programmatically.',
             'control' => 'boolean',
-            'description' => 'Whether the truncated text should be expandable.',
-            'table' => ['defaultValue' => ['summary' => 'true']],
+            'table' => [
+                'category' => 'inputs',
+                'type' => ['summary' => 'boolean'],
+                'defaultValue' => ['summary' => 'true'],
+            ],
+        ],
+        'expanded' => [
+            'description' => 'Whether to show the full text. Supports two-way binding with `[(expanded)]`.',
+            'control' => 'boolean',
+            'table' => [
+                'category' => 'inputs',
+                'type' => ['summary' => 'boolean'],
+                'defaultValue' => ['summary' => 'false'],
+            ],
         ],
     ],
 ])
 
-<tedi:row>
-    <tedi:col>
-        <tedi:truncate
-            :content="$content"
-            :max-length="$maxLength"
-            :ellipsis="$ellipsis"
-            :expandable="(bool) $expandable"
-        />
-    </tedi:col>
-</tedi:row>
+<tedi:truncate
+    :text="$text"
+    :max-length="(int) $maxLength"
+    :ellipsis="$ellipsis"
+    :expandable="(bool) $expandable"
+    :expanded="(bool) $expanded"
+/>

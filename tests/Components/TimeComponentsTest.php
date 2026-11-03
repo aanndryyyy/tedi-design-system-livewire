@@ -174,7 +174,7 @@ class TimeComponentsTest extends TestCase
 
         $this->assertHasClass('tedi-time-picker__grid', $html, on: 'tedi-radio-card-group');
         $this->assertStringContainsString('role="radiogroup"', $html);
-        $this->assertStringContainsString('grid-template-columns: repeat(2, 1fr)', $html);
+        $this->assertStringContainsString('style="display: grid; grid-template-columns: repeat(2, 1fr)', $html);
         $this->assertHasClass('tedi-radio-card--secondary', $html, on: 'tedi-radio-card');
         $this->assertSame(2, substr_count($html, 'type="radio"'));
         $this->assertStringContainsString('value="11:30"', $html);
@@ -221,6 +221,10 @@ class TimeComponentsTest extends TestCase
 
         $this->assertHasClass('tedi-time-field', $html, on: 'tedi-time-field');
         $this->assertMatchesRegularExpression('/^\s*<div class="tedi-time-field">/', $html);
+
+        // The root is static apart from the size modifiers (attributes go on the input).
+        $html = Blade::render('<tedi:time-field class="mine" />');
+        $this->assertSame(['tedi-time-field'], $this->classesOf($html, 'tedi-time-field'));
     }
 
     public function test_time_field_puts_wire_model_on_the_input(): void
@@ -352,6 +356,58 @@ class TimeComponentsTest extends TestCase
 
         $html = Blade::render('<tedi:time-field value="13:30" :clearable="false" />');
         $this->assertStringNotContainsString('tedi-time-field__clear', $html);
+
+        // Angular 9.0: a disabled field hides the button rather than disabling it.
+        $html = Blade::render('<tedi:time-field value="13:30" :disabled="true" />');
+        $this->assertStringNotContainsString('tedi-time-field__clear', $html);
+        $html = Blade::render('<tedi:time-field value="13:30" />');
+        $this->assertDoesNotMatchRegularExpression('/<button[^>]*tedi-time-field__clear[^>]*disabled/s', $html);
+
+        // clearable is set once on the form-field (#572); the field's own wins.
+        $html = Blade::render('<tedi:form-field :clearable="false"><tedi:time-field value="13:30" /></tedi:form-field>');
+        $this->assertStringNotContainsString('tedi-time-field__clear', $html);
+        $html = Blade::render('<tedi:form-field :clearable="false"><tedi:time-field value="13:30" :clearable="true" /></tedi:form-field>');
+        $this->assertHasClass('tedi-time-field__clear', $html, on: 'tedi-time-field__clear');
+    }
+
+    /** resolvedSize(): own `size`, then the wrapping form-field's, then `default`. */
+    public function test_time_field_size_classes(): void
+    {
+        $html = Blade::render('<tedi:time-field />');
+        $this->assertSame(['tedi-time-field'], $this->classesOf($html, 'tedi-time-field'));
+
+        $html = Blade::render('<tedi:time-field size="small" />');
+        $this->assertHasClass('tedi-time-field--small', $html, on: 'tedi-time-field');
+
+        $html = Blade::render('<tedi:form-field size="large"><tedi:time-field /></tedi:form-field>');
+        $this->assertHasClass('tedi-time-field--large', $html, on: 'tedi-time-field');
+
+        $html = Blade::render('<tedi:form-field size="small"><tedi:time-field size="default" /></tedi:form-field>');
+        $this->assertMissingClass('tedi-time-field--small', $html, on: 'tedi-time-field');
+    }
+
+    /** Angular 8.0: `.tedi-time-field__field` paints the surface on both branches. */
+    public function test_time_field_paints_its_own_surface(): void
+    {
+        foreach (['', 'picker-variant="none"'] as $branch) {
+            $html = Blade::render('<tedi:time-field '.$branch.' />');
+            $this->assertHasClass('tedi-field-surface', $html, on: 'tedi-time-field__field');
+        }
+
+        $html = Blade::render('<tedi:time-field :invalid="true" :disabled="true" />');
+        $this->assertHasClass('tedi-field-surface--invalid', $html, on: 'tedi-time-field__field');
+        $this->assertHasClass('tedi-field-surface--disabled', $html, on: 'tedi-time-field__field');
+
+        $html = Blade::render('<tedi:form-field :valid="true"><tedi:time-field /></tedi:form-field>');
+        $this->assertHasClass('tedi-field-surface--valid', $html, on: 'tedi-time-field__field');
+
+        $html = Blade::render('<tedi:form-field :invalid="true"><tedi:time-field /></tedi:form-field>');
+        $this->assertHasClass('tedi-field-surface--invalid', $html, on: 'tedi-time-field__field');
+        $this->assertStringContainsString('aria-invalid="true"', $html);
+
+        // A form-field with an icon renders a box that owns the surface.
+        $html = Blade::render('<tedi:form-field icon="info"><tedi:time-field /></tedi:form-field>');
+        $this->assertMissingClass('tedi-field-surface', $html, on: 'tedi-time-field__field');
     }
 
     public function test_time_field_icon_is_labelled(): void

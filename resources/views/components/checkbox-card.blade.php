@@ -1,6 +1,6 @@
 {{--
     TEDI Checkbox Card.
-    Port of angular/tedi/components/form/checkbox-card/{checkbox-card.component.ts,html}
+    Port of angular/src/tedi/components/form/checkbox-card/{checkbox-card.component.ts,html}
 
     Angular's selector is `label[tedi-checkbox-card]` (attribute-based, not an
     element/class selector). The vendored SCSS targets that literal attribute,
@@ -14,7 +14,7 @@
 @props([
     /** primary|secondary */
     'variant' => 'primary',
-    /** Whether to show the checkbox indicator. */
+    /** Show the checkbox indicator. When false, the checkbox is visually hidden but stays functional. */
     'showIndicator' => true,
 ])
 

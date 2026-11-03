@@ -1,6 +1,6 @@
 {{--
     TEDI Card Icon.
-    Port of angular/tedi/components/content/card/card-icon/card-icon.component.ts
+    Port of angular/src/tedi/components/content/card/card-icon/card-icon.component.ts
 
     Extends CardContentComponent: background is derived from `type` (not
     inherited from the card — `inheritedBackground()` is overridden to ignore

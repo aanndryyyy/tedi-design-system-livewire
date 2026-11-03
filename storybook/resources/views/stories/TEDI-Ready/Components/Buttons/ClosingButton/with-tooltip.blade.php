@@ -17,14 +17,14 @@
 ])
 
 <div class="flex gap-2">
-    <tedi:tooltip description="Sulge" description-id="closing-tooltip-close">
+    <tedi:tooltip description-id="closing-tooltip-close">
         <tedi:tooltip-trigger described-by="closing-tooltip-close">
             <tedi:closing-button :show-title="false" />
         </tedi:tooltip-trigger>
         <tedi:tooltip-content>Sulge</tedi:tooltip-content>
     </tedi:tooltip>
 
-    <tedi:tooltip description="Kustuta" description-id="closing-tooltip-delete">
+    <tedi:tooltip description-id="closing-tooltip-delete">
         <tedi:tooltip-trigger described-by="closing-tooltip-delete">
             <tedi:closing-button icon="delete" :show-title="false" aria-label="Kustuta" />
         </tedi:tooltip-trigger>

@@ -502,4 +502,26 @@ class CalendarComponentsTest extends TestCase
 
         $this->assertSame(12, substr_count($html, 'tedi-calendar-year-grid__year--disabled'));
     }
+
+    /**
+     * Angular 9.0 validates the value's shape at render time: a range whose
+     * `from` is not a date is no range, one whose `to` is not a date keeps its
+     * `from`, and non-date entries of a multiple value are skipped — never an
+     * exception mid-render.
+     */
+    public function test_day_grid_tolerates_malformed_values(): void
+    {
+        $month = ':month="\''.self::MONTH.'\'"';
+
+        $html = Blade::render('<tedi:calendar-day-grid '.$month.' mode="range" :value="[\'from\' => \'nonsense\', \'to\' => \'2030-05-10\']" />');
+        $this->assertSame(0, substr_count($html, 'tedi-calendar-day-grid__day--selected'));
+        $this->assertStringNotContainsString('--range-', $html);
+
+        $html = Blade::render('<tedi:calendar-day-grid '.$month.' mode="range" :value="[\'from\' => \'2030-05-03\', \'to\' => [\'x\']]" />');
+        $this->assertSame(1, substr_count($html, 'tedi-calendar-day-grid__day--selected'));
+        $this->assertStringNotContainsString('--range-middle', $html);
+
+        $html = Blade::render('<tedi:calendar-day-grid '.$month.' mode="multiple" :value="[\'2030-05-03\', [\'nested\'], \'nonsense\', true]" />');
+        $this->assertSame(1, substr_count($html, 'tedi-calendar-day-grid__day--selected'));
+    }
 }

@@ -1,36 +1,69 @@
 @storybook([
     'name' => 'Default',
     'order' => 1,
-    'status' => 'stable',
-    'design' => 'https://www.figma.com/file/jWiRIXhHRxwVdMSimKX2FF/TEDI-Design-System-(draft)?type=design&node-id=2188-34298&m=dev',
+    'status' => 'subset',
+    'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.75.90?node-id=2188-34298&m=dev',
     'args' => [
         'label' => 'Loading something',
-        'blockWidth' => 50,
-        'blockHeight' => 'h2',
+        'completedLabel' => '',
+        'labelDelay' => 200,
+        'width' => 50,
+        'height' => 'h2',
     ],
     'argTypes' => [
         'label' => [
+            'description' => 'Announced once the skeleton has been on screen for `labelDelay`. Name what is loading.',
             'control' => 'text',
-            'description' => 'The accessibility label announced by screen readers when the skeleton component mounts. This message informs users that content is loading. If omitted, all skeletons on the page are combined into a single status message. Pass an empty string to render no live region at all.',
             'table' => [
                 'category' => 'inputs',
-                'defaultValue' => ['summary' => 'skeleton.loading'],
+                'type' => ['summary' => 'string'],
+                'defaultValue' => ['summary' => 'skeleton.loading translation'],
             ],
         ],
-        'blockWidth' => [
+        'completedLabel' => [
+            'description' => 'Announced when the skeleton is removed. Silent if `label` was never announced.',
             'control' => 'text',
-            'description' => 'Width of the block. A bare number is a percentage of the parent, a value ending in px is used verbatim, and auto leaves it unset.',
-            'table' => ['category' => 'tedi:skeleton-block'],
+            'table' => [
+                'category' => 'inputs',
+                'type' => ['summary' => 'string'],
+                'defaultValue' => ['summary' => 'skeleton.loading-completed translation'],
+            ],
         ],
-        'blockHeight' => [
+        'labelDelay' => [
+            'description' => 'Delay in ms before `label` is announced.',
+            'control' => 'number',
+            'table' => [
+                'category' => 'inputs',
+                'type' => ['summary' => 'number'],
+                'defaultValue' => ['summary' => '200'],
+            ],
+        ],
+        'width' => [
+            'description' => 'Width of the block. A number is a percentage of the container, a `px` string is absolute, `auto` fills it.',
+            'control' => 'text',
+            'table' => [
+                'category' => 'SkeletonBlock inputs',
+                'type' => ['summary' => 'SkeletonBlockWidth'],
+                'defaultValue' => ['summary' => 'auto'],
+            ],
+        ],
+        'height' => [
+            'description' => "Height of the block. A text style takes that style's line height; a number is a height in px.",
             'control' => 'select',
             'options' => ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
-            'description' => 'Height of the block, as a typography token. A number is treated as pixels instead.',
-            'table' => ['category' => 'tedi:skeleton-block'],
+            'table' => [
+                'category' => 'SkeletonBlock inputs',
+                'type' => ['summary' => 'SkeletonBlockHeight'],
+                'defaultValue' => ['summary' => 'p'],
+            ],
         ],
     ],
 ])
 
-<tedi:skeleton :label="$label">
-    <tedi:skeleton-block :width="$blockWidth" :height="$blockHeight" />
+<tedi:skeleton
+    :label="$label ?: null"
+    :completed-label="$completedLabel ?: null"
+    :label-delay="(int) $labelDelay"
+>
+    <tedi:skeleton-block :width="$width" :height="$height" />
 </tedi:skeleton>

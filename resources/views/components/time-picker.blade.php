@@ -1,6 +1,6 @@
 {{--
     TEDI Time Picker.
-    Port of angular/tedi/components/form/time-picker/{time-picker.component.ts,html}
+    Port of angular/src/tedi/components/form/time-picker/{time-picker.component.ts,html}
 
     Angular's selector `tedi-time-picker` is an element selector, but the
     vendored SCSS contains NO `tedi-time-picker { … }` element rule — it styles
@@ -36,7 +36,13 @@
       consumers bind `wire:click` / `x-on:click` through `$attributes`
       (CONVENTIONS.md §7 item 2). Scroll-wheel snapping, keyboard roving and
       the ResizeObserver item-height measurement are likewise not ported — the
-      rendered markup, ids and ARIA wiring are.
+      rendered markup, ids and ARIA wiring are. That includes 9.0's item-height
+      re-sync and the gesture / scroll-settle guards (`syncItemHeight`,
+      `handleUserGesture`, `restoreColumnPosition`): all runtime scroll
+      handling, nothing in the markup.
+    - The `slots` grid's inline style carries `display: grid` itself, as
+      Angular's `gridStyle()` does since 8.1 (#609): the vendored
+      `.tedi-time-picker__grid` rule no longer sets it.
     - The inline `--tedi-time-picker-dropdown-min-width` custom property that
       Angular's time-field feeds from a JS width measurement is dropped; the
       vendored SCSS already falls back (`min-width: var(…, auto)`).
@@ -195,7 +201,7 @@
             <tedi:radio-card-group
                 class="tedi-time-picker__grid"
                 role="radiogroup"
-                style="grid-template-columns: repeat({{ $columns }}, 1fr)"
+                style="display: grid; grid-template-columns: repeat({{ $columns }}, 1fr)"
             >
                 @foreach ($timeSlots as $i => $slot)
                     <tedi:radio-card

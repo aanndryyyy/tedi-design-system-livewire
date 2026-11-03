@@ -57,22 +57,40 @@
     </div>
 
     <div class="gx-case">
-        <div class="gx-case__label">sticky: header (needs maxHeight) &middot; first column</div>
+        <div class="gx-case__label">sticky: header (needs maxHeight) &middot; first column &middot; last column (+ trailing expand control)</div>
         <div class="gx-case__demo gx-case__demo--stack" style="gap:1.5rem">
             <tedi:table :columns="$columns" :rows="$rows" :sticky-header="true" :max-height="160" />
             <tedi:table :columns="$columns" :rows="$rows" :sticky-first-column="true" />
             <tedi:table :columns="$columns" :rows="$rows" :sticky-header="true" :sticky-first-column="true" :max-height="160" />
+            <tedi:table :columns="$columns" :rows="$rows" :sticky-last-column="true" />
+            <tedi:table :columns="$columns" :rows="$rows" :sticky-header="true" :sticky-last-column="true" :max-height="160" />
+            <tedi:table
+                :columns="$columns"
+                :sticky-last-column="true"
+                :expandable="true"
+                :control-column-order="['content', 'expand']"
+                :rows="[['id' => 'r1', 'cells' => ['name' => 'Anna Tamm', 'role' => 'Engineer', 'salary' => '4200 €'], 'expandable' => true, 'sub' => 'Detail']]"
+            />
         </div>
     </div>
 
     <div class="gx-case">
-        <div class="gx-case__label">align: left | center | right &middot; valign: top | middle | bottom</div>
-        <div class="gx-case__demo">
+        <div class="gx-case__label">align: left | center | right &middot; valign: top | middle | bottom &middot; headerAlign overriding align &middot; ariaLabel (no caption)</div>
+        <div class="gx-case__demo gx-case__demo--stack" style="gap:1.5rem">
             <tedi:table
                 :columns="[
                     ['key' => 'l', 'header' => 'Vasak', 'align' => 'left', 'vAlign' => 'top', 'footer' => 'V'],
                     ['key' => 'c', 'header' => 'Kesk', 'align' => 'center', 'vAlign' => 'middle', 'footer' => 'K'],
                     ['key' => 'r', 'header' => 'Parem', 'align' => 'right', 'vAlign' => 'bottom', 'footer' => 'P'],
+                ]"
+                :rows="[['id' => 'r1', 'cells' => ['l' => '1', 'c' => '2', 'r' => '3']]]"
+            />
+            <tedi:table
+                aria-label="Joondused"
+                :columns="[
+                    ['key' => 'l', 'header' => 'Päis paremal', 'align' => 'left', 'headerAlign' => 'right'],
+                    ['key' => 'c', 'header' => 'Päis vasakul', 'align' => 'center', 'headerAlign' => 'left'],
+                    ['key' => 'r', 'header' => 'Päis keskel', 'align' => 'right', 'headerAlign' => 'center'],
                 ]"
                 :rows="[['id' => 'r1', 'cells' => ['l' => '1', 'c' => '2', 'r' => '3']]]"
             />
@@ -132,6 +150,13 @@
                 :columns="$columns"
                 :expandable="true"
                 :expand-button-label="['open' => 'Vaata', 'close' => 'Peida']"
+                :rows="[['id' => 'r1', 'cells' => ['name' => 'Anna Tamm', 'role' => 'Engineer', 'salary' => '4200 €'], 'expandable' => true, 'sub' => 'Detail']]"
+            />
+            <tedi:table
+                :columns="$columns"
+                :expandable="true"
+                :expand-button-label="['open' => 'Kuva rohkem', 'close' => 'Kuva vähem']"
+                :control-column-order="['content', 'expand']"
                 :rows="[['id' => 'r1', 'cells' => ['name' => 'Anna Tamm', 'role' => 'Engineer', 'salary' => '4200 €'], 'expandable' => true, 'sub' => 'Detail']]"
             />
             <tedi:table

@@ -1,6 +1,6 @@
 {{--
     TEDI Date picker year grid.
-    Port of angular/tedi/components/form/date-picker/date-picker-year-grid/{date-picker-year-grid.component.ts,date-picker-year-grid.component.html}
+    Port of angular/src/tedi/components/form/date-picker/date-picker-year-grid/{date-picker-year-grid.component.ts,date-picker-year-grid.component.html}
 
     Root element is the Angular template's own root,
     <div class="tedi-date-picker__month-year-grid" role="group">. There is no

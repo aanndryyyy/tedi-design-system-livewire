@@ -1,0 +1,1 @@
+Combine `stickyHeader` with `stickyLastColumn` to keep both the header and a trailing actions column (here **Muuda**) in view. Each edge casts its own elevation shadow while there is off-edge content: the header downward, the frozen column to its left. Scroll both ways to see the shadows meet at the top-right corner.

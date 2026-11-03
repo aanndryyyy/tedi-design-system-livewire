@@ -9,7 +9,6 @@
         'maxWidth' => 'medium',
         'color' => 'primary',
         'ariaLabel' => '',
-        'description' => '',
     ],
     'argTypes' => [
         'ngContent' => [
@@ -73,14 +72,6 @@
                 'type' => ['summary' => 'string'],
             ],
         ],
-        'description' => [
-            'control' => 'text',
-            'description' => 'sr-only description the info button is aria-describedby. Angular derives it from the projected content at runtime; Blade cannot introspect its slot, so it is an explicit prop (CONVENTIONS.md §5).',
-            'table' => [
-                'category' => 'inputs',
-                'type' => ['summary' => 'string'],
-            ],
-        ],
     ],
 ])
 
@@ -90,5 +81,4 @@
     :max-width="$maxWidth"
     :color="$color"
     :aria-label="$ariaLabel ?: null"
-    :description="$description ?: null"
 >{{ $ngContent }}</tedi:info-tooltip>

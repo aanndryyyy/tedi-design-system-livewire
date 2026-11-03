@@ -1,6 +1,6 @@
 {{--
     TEDI Info Button.
-    Port of angular/tedi/components/buttons/info-button/info-button.component.ts
+    Port of angular/src/tedi/components/buttons/info-button/info-button.component.ts
 
     Angular's selector is `button[tedi-info-button]`; `ariaLabel` is aliased
     to the literal `aria-label` DOM attribute (`input<string>(undefined, {
@@ -19,6 +19,7 @@
     type="button"
     {{ $attributes->class([
         'tedi-info-button',
+        'no-print',
         'tedi-info-button--inverted' => $color === 'inverted',
     ])->merge([
         'aria-label' => $ariaLabel ?: __('tedi::tedi.info-button.label'),

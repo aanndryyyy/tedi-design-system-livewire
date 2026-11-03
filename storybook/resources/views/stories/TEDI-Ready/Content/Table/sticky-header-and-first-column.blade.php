@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'Sticky Header And First Column',
-    'order' => 24,
+    'order' => 25,
     'status' => 'subset',
     'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.45.70?node-id=11335-186161&m=dev',
 ])

@@ -14,7 +14,7 @@
 
 <tedi:row :cols="2" :gap="3">
     <tedi:col>
-        <tedi:text as="p" modifiers="small bold">Button trigger</tedi:text>
+        <tedi:text as="p">Button trigger</tedi:text>
         <tedi:form-field>
             <x-slot:label>
                 <tedi:form.label for="dropdown-picker-button">Aeg</tedi:form.label>
@@ -30,7 +30,7 @@
         </tedi:form-field>
     </tedi:col>
     <tedi:col>
-        <tedi:text as="p" modifiers="small bold">Input trigger (recommended for dropdown)</tedi:text>
+        <tedi:text as="p">Input trigger (recommended for dropdown)</tedi:text>
         <tedi:form-field>
             <x-slot:label>
                 <tedi:form.label for="dropdown-picker-input">Aeg</tedi:form.label>

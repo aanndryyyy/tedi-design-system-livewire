@@ -1,6 +1,6 @@
 {{--
     TEDI Footer Section.
-    Port of angular/tedi/components/layout/footer/footer-section/footer-section.component.{ts,html}
+    Port of angular/src/tedi/components/layout/footer/footer-section/footer-section.component.{ts,html}
 
     Divergences (CONVENTIONS.md §7 — breakpoint state is not ported):
     - `hideIcon` (`isBelowBreakpoint('lg')`) is dropped, so `icon` always renders

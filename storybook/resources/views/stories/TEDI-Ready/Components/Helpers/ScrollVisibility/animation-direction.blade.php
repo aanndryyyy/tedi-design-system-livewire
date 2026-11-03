@@ -28,10 +28,20 @@
     .scroll-visibility-story-bar--right { top: 0; right: 0; width: 48px; height: 100vh; }
 </style>
 
+@php
+    // Upstream's per-bar landmark names (20.x a11y pass).
+    $navLabels = [
+        'up' => 'Üleval kinnituv navigatsioon',
+        'down' => 'All kinnituv navigatsioon',
+        'left' => 'Vasakul kinnituv navigatsioon',
+        'right' => 'Paremal kinnituv navigatsioon',
+    ];
+@endphp
+
 <div>
     @foreach (['up', 'down', 'left', 'right'] as $direction)
         <tedi:scroll-visibility :animation-direction="$direction" :scroll-distance="$scrollDistance">
-            <nav class="scroll-visibility-story-bar scroll-visibility-story-bar--{{ $direction }}">{{ ucfirst($direction) }}</nav>
+            <nav aria-label="{{ $navLabels[$direction] }}" class="scroll-visibility-story-bar scroll-visibility-story-bar--{{ $direction }}">{{ ucfirst($direction) }}</nav>
         </tedi:scroll-visibility>
     @endforeach
 

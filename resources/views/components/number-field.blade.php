@@ -1,6 +1,6 @@
 {{--
     TEDI Number field.
-    Port of angular/tedi/components/form/number-field/{number-field.component.ts,number-field.component.html}
+    Port of angular/src/tedi/components/form/number-field/{number-field.component.ts,number-field.component.html}
 
     ROOT ELEMENT. Angular's selector is the element `tedi-number-field`, but the
     vendored SCSS has no element rule for that tag — every rule keys on the

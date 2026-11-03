@@ -1,6 +1,6 @@
 {{--
     TEDI Input group.
-    Port of angular/tedi/components/form/input-group/{input-group.component.ts,input-group.component.html,
+    Port of angular/src/tedi/components/form/input-group/{input-group.component.ts,input-group.component.html,
     input-group-addon.directive.ts,input-group-prefix.directive.ts,input-group-suffix.directive.ts}
 
     Angular projects an arbitrary element marked with the `[tediInputGroupPrefix]`
@@ -19,8 +19,15 @@
     NOTE: Angular's host bindings also include
     `[class.tedi-input-group--invalid]`, but input-group.component.scss defines
     no `--invalid` rule of its own — validity is styled entirely on the nested
-    control (`tedi-form-field--invalid` / a `tedi-input--error` on `<select>`),
-    which is exactly what the `@@aware`-propagated `invalid` prop below drives.
+    control (the form-field box's `tedi-field-surface--invalid`, or a
+    `tedi-input--error` on `<select>`), which is exactly what the
+    `@@aware`-propagated `invalid` prop below drives.
+
+    Since Angular 8.0 a control can sit in the group without a form-field: a
+    bare text field paints its own `tedi-field-surface`, which the group's
+    `--has-prefix` / `--has-suffix` rules now square off (they used to key on
+    `tedi-form-field__input`). The `label` slot takes a `tedi:label-row` as
+    well as a `tedi:form.label`, as Angular's projection now does.
     Per the library-wide class/stylesheet guardrail (tests/IntegrityTest.php)
     this port only emits host classes the vendored SCSS defines, so the
     `--invalid` host class is deliberately dropped while the prop itself is

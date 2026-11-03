@@ -1,3 +1,15 @@
+@use "../card-mixins";
+
 .tedi-card-row {
   display: flex;
+
+  &:not(&--column) {
+    @include card-mixins.card-corners("horizontal");
+  }
+
+  &--column {
+    flex-direction: column;
+
+    @include card-mixins.card-corners("vertical");
+  }
 }

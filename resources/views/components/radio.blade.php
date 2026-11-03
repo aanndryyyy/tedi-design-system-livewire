@@ -1,6 +1,6 @@
 {{--
     TEDI Radio.
-    Port of angular/tedi/components/form/radio/radio.component.ts
+    Port of angular/src/tedi/components/form/radio/radio.component.ts
 
     Angular's selector is the attribute-based `input[type=radio][tedi-radio]`
     (not an element/class selector), so the vendored SCSS targets the literal
@@ -34,8 +34,9 @@
 @props([
     /** default|large */
     'size' => 'default',
-    /** Is radio invalid? */
+    /** Show the radio in an invalid state. */
     'invalid' => false,
+    /** Disable this radio. Also inherited from an enclosing `tedi:radio-group :disabled`. */
     'disabled' => false,
     'name' => null,
     'value' => null,

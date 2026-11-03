@@ -1,6 +1,6 @@
 {{--
     TEDI Footer Side.
-    Port of angular/tedi/components/layout/footer/footer-side/footer-side.component.ts
+    Port of angular/src/tedi/components/layout/footer/footer-side/footer-side.component.ts
 
     Angular derives `placement` (start|end) from the presence of a
     `tedi-footer-start` / `tedi-footer-end` host attribute (`HostAttributeToken`).

@@ -1,6 +1,6 @@
 {{--
     TEDI SideNav Group Title.
-    Port of angular/tedi/components/layout/sidenav/sidenav-group-title/sidenav-group-title.component.{ts,html}
+    Port of angular/src/tedi/components/layout/sidenav/sidenav-group-title/sidenav-group-title.component.{ts,html}
 
     No inputs. The Angular host carries `class="tedi-sidenav-group-title"` and
     the template a single `<div class="tedi-sidenav-group-title__text">`.

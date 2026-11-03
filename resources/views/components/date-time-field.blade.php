@@ -46,6 +46,32 @@
     are `tedi:link`, which is this package's link-styled button, and it already
     lays its icon out the way that rule intended.
 
+    React 20.1 sync:
+    * `clearable` (default true) now gates the clear button — upstream's
+      `isClearable: clearable`, previously hard-coded `true`.
+    * The popup ARIA moved from the container and the input to the calendar
+      icon button: `aria-haspopup="dialog"`, `aria-expanded` and, while open,
+      `aria-controls` pointing at the popup. The container no longer carries
+      `aria-haspopup`, and the input no longer carries `aria-expanded`. The
+      button's accessible name stays `date-picker.open-calendar` (the same
+      text as React's `dateField.openCalendar`), because the button is
+      `tedi:date-input`'s.
+    * THE FIELD SURFACE. Upstream's TextField always draws its own border.
+      Since the Angular 8.0 sync the border here is the field surface, and
+      the only vendored rule that paints one around a `tedi:date-input` is
+      `.tedi-date-field.tedi-field-surface`. So the date-input is wrapped in
+      a `tedi-date-field tedi-field-surface` element — the same shell
+      `tedi:date-field` renders — carrying the `--invalid|--valid|--disabled`
+      modifiers from the enclosing form-field (`Tedi::fieldContext()`). This
+      registers with that form-field as a control without `reset`, so a
+      wrapping form-field adds no clear button of its own and, unless it has
+      an `icon`, no box either; with an `icon` the box paints the surface
+      and the shell carries `tedi-date-field` alone.
+    * NOT ported: `labelProps` (this component renders no label — wrap it in
+      `tedi:form-field` with a `tedi:form.label`, and style that), and
+      `minYear` / `maxYear`, which only feed the calendar header's year
+      dropdown that `tedi:calendar` does not render (see calendar.blade.php).
+
     `{{ $attributes }}` goes on the container, as in `tedi:date-field`: this
     component renders no control of its own, and the nested `tedi:date-input`
     owns the native-control carve-out (CONVENTIONS.md §6).
@@ -91,16 +117,31 @@
     'stepMinutes' => 1,
     /** Heading above the time picker. Defaults to the translated "Time". */
     'timeHeading' => null,
+    /** Whether the field shows a clear button once it has a value. */
+    'clearable' => true,
 ])
 
 @php
     $inputId = $inputId ?? \Tedi\Livewire\Tedi::id('tedi-date-time-field');
+    // Upstream's `context.floatingId`: what the icon button's aria-controls names.
+    $popupId = $inputId.'-popup';
 
     $isRange = $mode === 'range';
     // effectiveLayout — range has its own branch, so the layout prop only
     // selects between side-by-side and multi-step for single mode.
     $isSideBySide = ! $isRange && $layout === 'side-by-side';
     $isMultiStep = ! $isRange && $layout === 'multi-step';
+
+    // TEDI_FIELD_CONTEXT, as in date-field.blade.php — see the header.
+    $fieldContext = \Tedi\Livewire\Tedi::fieldContext($__env, [
+        'value' => filled($display) ? (string) $display : null,
+        'disabled' => (bool) $disabled,
+        'readOnly' => (bool) $readOnly,
+    ]);
+    $disabled = (bool) $disabled || (bool) ($fieldContext['disabled'] ?? false);
+    $isInvalid = (bool) ($fieldContext['invalid'] ?? false);
+    $isValid = (bool) ($fieldContext['valid'] ?? false);
+    $paintsSurface = ! ($fieldContext['ownsSurface'] ?? false);
 
     $timeHeading = $timeHeading ?? __('tedi::tedi.dateTimeField.timeHeading');
 
@@ -115,23 +156,35 @@
     }
 @endphp
 
-<div {{ $attributes->class(['tedi-date-time-field__container']) }} aria-haspopup="dialog">
-    <tedi:date-input
-        class="tedi-date-time-field__textfield"
-        :input-id="$inputId"
-        :value="$display"
-        :placeholder="$placeholder"
-        :disabled="(bool) $disabled"
-        :read-only="(bool) $readOnly"
-        :required="(bool) $required"
-        :icon-active="(bool) $open"
-        :icon-disabled="(bool) $disabled"
-        :clearable="filled($display) && ! $disabled && ! $readOnly"
-        :aria-expanded="$open ? 'true' : 'false'"
-    />
+<div {{ $attributes->class(['tedi-date-time-field__container']) }}>
+    <div @class([
+        'tedi-date-field',
+        'tedi-field-surface' => $paintsSurface,
+        'tedi-field-surface--invalid' => $paintsSurface && $isInvalid,
+        'tedi-field-surface--valid' => $paintsSurface && $isValid,
+        'tedi-field-surface--disabled' => $paintsSurface && $disabled,
+    ])>
+        <tedi:date-input
+            class="tedi-date-time-field__textfield"
+            :input-id="$inputId"
+            :value="$display"
+            :placeholder="$placeholder"
+            :disabled="$disabled"
+            :invalid="$isInvalid"
+            :read-only="(bool) $readOnly"
+            :required="(bool) $required"
+            :icon-active="(bool) $open"
+            :icon-disabled="$disabled"
+            :clearable="(bool) $clearable && filled($display) && ! $disabled && ! $readOnly"
+            :icon-attributes="array_filter([
+                'aria-haspopup' => 'dialog',
+                'aria-controls' => ($open && ! $disabled) ? $popupId : null,
+            ])"
+        />
+    </div>
 
     @if ($open && ! $disabled)
-        <div class="tedi-date-time-field__popup" role="dialog">
+        <div class="tedi-date-time-field__popup" id="{{ $popupId }}" role="dialog">
             @if ($isRange)
                 <div class="tedi-date-time-field__range">
                     <tedi:calendar

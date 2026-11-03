@@ -166,8 +166,11 @@ class IntegrityTest extends TestCase
             'tedi-empty-state--default',
             'tedi-empty-state--separate',
             'tedi-feedback-text--hint',
-            'tedi-form-field__icon',
             'tedi-text-group--vertical',
+            // Upstream still emits it and documents it as the hook for
+            // restyling collapsed crumbs (breadcrumbs.component.ts); the SCSS
+            // rule went in #541.
+            'tedi-breadcrumbs__dropdown-item',
         ];
 
         $missing = [];

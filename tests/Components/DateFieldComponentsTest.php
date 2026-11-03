@@ -137,11 +137,15 @@ class DateFieldComponentsTest extends TestCase
         $html = Blade::render('<tedi:date-input mode="multiple" :tags="'.$this->tags(1).'" />');
         $this->assertRendersClass('tedi-tag--closable', $html);
 
-        foreach (['disabled', 'read-only', 'removable="false"'] as $off) {
-            $attr = $off === 'removable="false"' ? ':removable="false"' : ':'.$off.'="true"';
-            $html = Blade::render('<tedi:date-input mode="multiple" '.$attr.' :tags="'.$this->tags(1).'" />');
+        foreach ([':disabled="true"', ':removable="false"'] as $off) {
+            $html = Blade::render('<tedi:date-input mode="multiple" '.$off.' :tags="'.$this->tags(1).'" />');
             $this->assertRendersNoClass('tedi-tag--closable', $html);
         }
+
+        // Angular 9.0 (#726): readOnly only locks the text input; the parent
+        // decides through `removable` whether the value can still change.
+        $html = Blade::render('<tedi:date-input mode="multiple" :read-only="true" :tags="'.$this->tags(1).'" />');
+        $this->assertRendersClass('tedi-tag--closable', $html);
     }
 
     /**
@@ -216,11 +220,13 @@ class DateFieldComponentsTest extends TestCase
         $html = Blade::render('<tedi:date-input mode="multiple" :clearable="true" :tags="'.$this->tags(1).'" />');
         $this->assertRendersClass('tedi-date-input__clear', $html);
 
-        // ...but never while disabled, read-only, or empty.
-        foreach ([':disabled="true"', ':read-only="true"'] as $off) {
-            $html = Blade::render('<tedi:date-input value="05.06.2026" :clearable="true" '.$off.' />');
-            $this->assertRendersNoClass('tedi-date-input__clear', $html);
-        }
+        // ...but never while disabled or empty.
+        $html = Blade::render('<tedi:date-input value="05.06.2026" :clearable="true" :disabled="true" />');
+        $this->assertRendersNoClass('tedi-date-input__clear', $html);
+
+        // read-only no longer hides it (Angular 9.0, #726).
+        $html = Blade::render('<tedi:date-input value="05.06.2026" :clearable="true" :read-only="true" />');
+        $this->assertRendersClass('tedi-date-input__clear', $html);
 
         $html = Blade::render('<tedi:date-input :clearable="true" />');
         $this->assertRendersNoClass('tedi-date-input__clear', $html);
@@ -335,17 +341,90 @@ class DateFieldComponentsTest extends TestCase
         $this->assertRendersNoClass('tedi-calendar--multi-month', $html);
     }
 
-    /**
-     * `size` is forwarded-only: `.tedi-date-field--small` has no rule in
-     * dist/tedi.css, and Angular only hands the value to the wrapping form-field.
-     */
-    public function test_date_field_size_emits_no_class(): void
+    /** resolvedSize(): own `size`, then the wrapping form-field's, then `default`. */
+    public function test_date_field_size_classes(): void
     {
-        foreach (['default', 'small'] as $size) {
-            $html = Blade::render('<tedi:date-field size="'.$size.'" />');
-            $this->assertRendersNoClass('tedi-date-field--small', $html);
-            $this->assertRendersNoClass('tedi-date-field--'.$size, $html);
+        $html = Blade::render('<tedi:date-field />');
+        $this->assertMissingClass('tedi-date-field--small', $html, on: 'tedi-date-field');
+        $this->assertMissingClass('tedi-date-field--large', $html, on: 'tedi-date-field');
+
+        $html = Blade::render('<tedi:date-field size="small" />');
+        $this->assertHasClass('tedi-date-field--small', $html, on: 'tedi-date-field');
+
+        // Inherited from the form-field…
+        foreach (['small', 'large'] as $size) {
+            $html = Blade::render('<tedi:form-field size="'.$size.'"><tedi:date-field /></tedi:form-field>');
+            $this->assertHasClass('tedi-date-field--'.$size, $html, on: 'tedi-date-field');
         }
+
+        // …unless the field sets its own.
+        $html = Blade::render('<tedi:form-field size="small"><tedi:date-field size="default" /></tedi:form-field>');
+        $this->assertMissingClass('tedi-date-field--small', $html, on: 'tedi-date-field');
+
+        // The inner text-field reads the date field's context size, as in Angular,
+        // and never paints a surface of its own.
+        $html = Blade::render('<tedi:form-field size="small"><tedi:date-field /></tedi:form-field>');
+        $this->assertHasClass('tedi-text-field--small', $html, on: 'tedi-text-field');
+        $this->assertMissingClass('tedi-field-surface', $html, on: 'tedi-text-field');
+
+        // Only the NEAREST form-field counts — not any ancestor with a `size`.
+        $html = Blade::render('<tedi:button-group size="small"><tedi:date-field /></tedi:button-group>');
+        $this->assertMissingClass('tedi-date-field--small', $html, on: 'tedi-date-field');
+    }
+
+    /** Angular 8.0: a standalone date field paints its own field surface. */
+    public function test_date_field_paints_its_own_surface(): void
+    {
+        $html = Blade::render('<tedi:date-field />');
+        $this->assertSame(['tedi-date-field', 'tedi-field-surface'], $this->classesOf($html, 'tedi-date-field'));
+
+        $html = Blade::render('<tedi:date-field :invalid="true" :input-disabled="true" />');
+        $this->assertHasClass('tedi-field-surface--invalid', $html, on: 'tedi-date-field');
+        $this->assertHasClass('tedi-field-surface--disabled', $html, on: 'tedi-date-field');
+        $this->assertMissingClass('tedi-field-surface--valid', $html, on: 'tedi-date-field');
+        $this->assertStringContainsString('aria-invalid="true"', $this->element('/<input\b[^>]*>/s', $html));
+
+        // State from the wrapping form-field.
+        $html = Blade::render('<tedi:form-field :valid="true"><tedi:date-field /></tedi:form-field>');
+        $this->assertHasClass('tedi-field-surface--valid', $html, on: 'tedi-date-field');
+
+        $html = Blade::render('<tedi:form-field :invalid="true"><tedi:date-field /></tedi:form-field>');
+        $this->assertHasClass('tedi-field-surface--invalid', $html, on: 'tedi-date-field');
+
+        $html = Blade::render('<tedi:form-field :disabled="true"><tedi:date-field /></tedi:form-field>');
+        $this->assertHasClass('tedi-field-surface--disabled', $html, on: 'tedi-date-field');
+        $this->assertMatchesRegularExpression('/<input[^>]*\sdisabled/', $html);
+    }
+
+    /** multiple / range values are arrays; registering them with a form-field must not break it. */
+    public function test_date_field_array_values_render_inside_a_form_field(): void
+    {
+        $html = Blade::render('<tedi:form-field><tedi:date-field mode="multiple" :value="[\'2026-06-18\']" :tags="'.$this->tags(1).'" /></tedi:form-field>');
+        $this->assertRendersClass('tedi-date-input__clear', $html);
+
+        $html = Blade::render('<tedi:form-field :character-limit="30"><tedi:date-field mode="range" :value="[\'from\' => \'2026-06-18\', \'to\' => \'2026-06-25\']" display="18.06.2026 – 25.06.2026" /></tedi:form-field>');
+        $this->assertHasClass('tedi-field-surface', $html, on: 'tedi-date-field');
+    }
+
+    /** A form-field with an `icon` renders a box, which owns the surface. */
+    public function test_date_field_leaves_the_surface_to_a_form_field_box(): void
+    {
+        $html = Blade::render('<tedi:form-field icon="info" :invalid="true"><tedi:date-field /></tedi:form-field>');
+
+        $this->assertSame(['tedi-date-field'], $this->classesOf($html, 'tedi-date-field'));
+    }
+
+    public function test_date_field_name_and_described_by_reach_the_input(): void
+    {
+        $html = Blade::render('<tedi:date-field name="start" aria-describedby="hint-1" />');
+        $input = $this->element('/<input\b[^>]*>/s', $html);
+
+        $this->assertStringContainsString('name="start"', $input);
+        $this->assertStringContainsString('aria-describedby="hint-1"', $input);
+        $this->assertSame(1, substr_count($html, 'aria-describedby='));
+
+        $html = Blade::render('<tedi:date-field />');
+        $this->assertStringNotContainsString('name=', $this->element('/<input\b[^>]*>/s', $html));
     }
 
     public function test_date_field_input_trigger_makes_the_input_read_only(): void
@@ -377,10 +456,34 @@ class DateFieldComponentsTest extends TestCase
         $html = Blade::render('<tedi:date-field value="2026-06-05" display="05.06.2026" />');
         $this->assertRendersClass('tedi-date-input__clear', $html);
 
-        foreach ([':input-disabled="true"', ':read-only="true"'] as $off) {
+        foreach ([':input-disabled="true"', ':clearable="false"'] as $off) {
             $html = Blade::render('<tedi:date-field value="2026-06-05" display="05.06.2026" '.$off.' />');
             $this->assertRendersNoClass('tedi-date-input__clear', $html);
         }
+
+        // readOnly keeps it while the calendar can still change the value
+        // (Angular 9.0, #726), and drops it when the calendar is off too.
+        $html = Blade::render('<tedi:date-field value="2026-06-05" display="05.06.2026" :read-only="true" />');
+        $this->assertRendersClass('tedi-date-input__clear', $html);
+        $html = Blade::render('<tedi:date-field value="2026-06-05" display="05.06.2026" :read-only="true" :enable-calendar="false" />');
+        $this->assertRendersNoClass('tedi-date-input__clear', $html);
+
+        // clearable is set once on the form-field (Angular 9.0, #572)…
+        $html = Blade::render('<tedi:form-field :clearable="false"><tedi:date-field value="2026-06-05" display="05.06.2026" /></tedi:form-field>');
+        $this->assertRendersNoClass('tedi-date-input__clear', $html);
+        // …and the field's own value wins over it.
+        $html = Blade::render('<tedi:form-field :clearable="false"><tedi:date-field :clearable="true" value="2026-06-05" display="05.06.2026" /></tedi:form-field>');
+        $this->assertRendersClass('tedi-date-input__clear', $html);
+    }
+
+    public function test_date_field_read_only_tags_stay_removable_with_the_calendar(): void
+    {
+        $tags = $this->tags(1);
+        $html = Blade::render('<tedi:date-field mode="multiple" :read-only="true" :tags="'.$tags.'" :value="[\'2026-06-01\']" />');
+        $this->assertRendersClass('tedi-tag--closable', $html);
+
+        $html = Blade::render('<tedi:date-field mode="multiple" :read-only="true" :enable-calendar="false" :tags="'.$tags.'" :value="[\'2026-06-01\']" />');
+        $this->assertRendersNoClass('tedi-tag--closable', $html);
     }
 
     public function test_date_field_display_and_tags_reach_the_input(): void

@@ -1,6 +1,6 @@
 {{--
     TEDI Date picker header — DOCUMENTED SUBSET.
-    Port of angular/tedi/components/form/date-picker/date-picker-header/{date-picker-header.component.ts,date-picker-header.component.html}
+    Port of angular/src/tedi/components/form/date-picker/date-picker-header/{date-picker-header.component.ts,date-picker-header.component.html}
 
     Root element is the Angular template's own root, a <div class="tedi-date-picker__header">.
     `tedi-date-picker-header` has no element selector anywhere in the vendored SCSS,

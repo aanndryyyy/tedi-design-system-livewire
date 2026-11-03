@@ -6,95 +6,15 @@ use Illuminate\Support\Facades\Blade;
 use Tedi\Livewire\Tests\TestCase;
 
 /**
- * Class-string parity for the five components ported from Angular's
- * `community/` entry point (CONVENTIONS.md §12).
+ * Class-string parity for the components ported from Angular's
+ * `community/` entry point (CONVENTIONS.md §12). floating-button and
+ * table-of-contents moved to `tedi/` upstream — see PromotedComponentsTest.
  *
  * The prop unions come from the community `export type` declarations:
- *   FloatingButtonVariant / Size / Axis, ChoicegroupVariant,
- *   TableOfContentsPosition / Breakpoint, ValidationState.
- *
- * table-of-contents is the one component here whose classes are not
- * `tedi-`-prefixed, so IntegrityTest's stylesheet guardrails skip it — these
- * assertions are its only coverage.
+ *   ChoicegroupVariant, ValidationState.
  */
 class CommunityComponentsTest extends TestCase
 {
-    // -- floating-button ------------------------------------------------
-
-    public function test_floating_button_renders_a_button_with_the_selector_attribute(): void
-    {
-        $html = Blade::render('<tedi:floating-button>Tagasiside</tedi:floating-button>');
-
-        $this->assertStringContainsString('<button', $html);
-        $this->assertStringContainsString('tedi-floating-button', $html);
-        $this->assertStringContainsString('type="button"', $html);
-        $this->assertHasClass('tedi-floating-button', $html, 'tedi-floating-button');
-    }
-
-    public function test_floating_button_variant_classes(): void
-    {
-        foreach (['primary', 'secondary'] as $variant) {
-            $html = Blade::render('<tedi:floating-button variant="'.$variant.'">x</tedi:floating-button>');
-
-            $this->assertHasClass('tedi-floating-button--'.$variant, $html);
-        }
-    }
-
-    public function test_floating_button_size_classes(): void
-    {
-        foreach (['default', 'large'] as $size) {
-            $html = Blade::render('<tedi:floating-button size="'.$size.'">x</tedi:floating-button>');
-
-            $this->assertHasClass('tedi-floating-button--'.$size, $html);
-        }
-    }
-
-    public function test_floating_button_defaults_match_angular(): void
-    {
-        $html = Blade::render('<tedi:floating-button>x</tedi:floating-button>');
-
-        $this->assertHasClass('tedi-floating-button--primary', $html);
-        $this->assertHasClass('tedi-floating-button--default', $html);
-    }
-
-    public function test_floating_button_vertical_axis_emits_a_class_and_horizontal_does_not(): void
-    {
-        $vertical = Blade::render('<tedi:floating-button axis="vertical">x</tedi:floating-button>');
-        $this->assertHasClass('tedi-floating-button--vertical', $vertical);
-
-        // Dropped: TEDI ships no `--horizontal` rule (CONVENTIONS.md §4).
-        $horizontal = Blade::render('<tedi:floating-button axis="horizontal">x</tedi:floating-button>');
-        $this->assertMissingClass('tedi-floating-button--horizontal', $horizontal);
-        $this->assertMissingClass('tedi-floating-button--vertical', $horizontal);
-    }
-
-    public function test_floating_button_padding_modifiers_mirror_base_button_directive(): void
-    {
-        $plain = Blade::render('<tedi:floating-button>x</tedi:floating-button>');
-        $this->assertHasClass('tedi-floating-button--pl', $plain);
-        $this->assertHasClass('tedi-floating-button--pr', $plain);
-
-        $start = Blade::render('<tedi:floating-button icon-start="add">x</tedi:floating-button>');
-        $this->assertMissingClass('tedi-floating-button--pl', $start);
-        $this->assertHasClass('tedi-floating-button--pr', $start);
-
-        $end = Blade::render('<tedi:floating-button icon-end="arrow_forward">x</tedi:floating-button>');
-        $this->assertHasClass('tedi-floating-button--pl', $end);
-        $this->assertMissingClass('tedi-floating-button--pr', $end);
-
-        $only = Blade::render('<tedi:floating-button icon-only icon-start="add" aria-label="Lisa" />');
-        $this->assertHasClass('tedi-floating-button--icon-only', $only);
-        $this->assertMissingClass('tedi-floating-button--pl', $only);
-        $this->assertMissingClass('tedi-floating-button--pr', $only);
-    }
-
-    public function test_floating_button_disabled(): void
-    {
-        $html = Blade::render('<tedi:floating-button disabled>x</tedi:floating-button>');
-
-        $this->assertStringContainsString('disabled', $html);
-    }
-
     // -- choicegroup ----------------------------------------------------
 
     public function test_choicegroup_variant_classes(): void
@@ -221,78 +141,6 @@ class CommunityComponentsTest extends TestCase
         $html = Blade::render('<tedi:file-dropzone error="Fail on liiga suur" />');
 
         $this->assertStringContainsString('Fail on liiga suur', $html);
-    }
-
-    // -- table-of-contents ----------------------------------------------
-
-    public function test_table_of_contents_base_and_position_classes(): void
-    {
-        foreach (['default', 'fixed', 'sticky'] as $position)  {
-            $html = Blade::render('<tedi:table-of-contents heading="Sisukord" position="'.$position.'" />');
-
-            $this->assertHasClass('table-of-contents', $html, 'table-of-contents');
-            $this->assertHasClass('table-of-contents--position-'.$position, $html, 'table-of-contents');
-        }
-    }
-
-    public function test_table_of_contents_modal_breakpoint_classes(): void
-    {
-        foreach (['mobile', 'tablet', 'desktop'] as $breakpoint) {
-            $html = Blade::render('<tedi:table-of-contents heading="Sisukord" modal-breakpoint="'.$breakpoint.'" />');
-
-            $this->assertHasClass('table-of-contents--modal-breakpoint-'.$breakpoint, $html, 'table-of-contents');
-            $this->assertHasClass('table-of-contents__footer--modal-breakpoint-'.$breakpoint, $html, 'table-of-contents__footer');
-        }
-    }
-
-    public function test_table_of_contents_never_breakpoint_emits_no_nav_modifier(): void
-    {
-        $html = Blade::render('<tedi:table-of-contents heading="Sisukord" modal-breakpoint="never" />');
-
-        $tokens = $this->classesOf($html, 'table-of-contents');
-
-        foreach (['mobile', 'tablet', 'desktop', 'never'] as $breakpoint) {
-            $this->assertNotContains('table-of-contents--modal-breakpoint-'.$breakpoint, $tokens);
-        }
-    }
-
-    public function test_table_of_contents_heading_and_aria_label(): void
-    {
-        $html = Blade::render('<tedi:table-of-contents heading="Sisukord" />');
-        $this->assertStringContainsString('Sisukord', $html);
-        $this->assertStringContainsString('aria-label="Table of contents"', $html);
-
-        $custom = Blade::render('<tedi:table-of-contents heading="Sisukord" aria-label="Peatükid" />');
-        $this->assertStringContainsString('aria-label="Peatükid"', $custom);
-    }
-
-    public function test_table_of_contents_item_classes_and_target(): void
-    {
-        $html = Blade::render('<tedi:table-of-contents-item id-to="ptk-1">Üldsätted</tedi:table-of-contents-item>');
-
-        $this->assertHasClass('table-of-contents__item', $html, 'table-of-contents__item');
-        $this->assertMissingClass('table-of-contents__item--active', $html, 'table-of-contents__item');
-        $this->assertStringContainsString('data-toc-id="ptk-1"', $html);
-        $this->assertStringContainsString('href="#ptk-1"', $html);
-        $this->assertHasClass('table-of-contents__item-anchor', $html, 'table-of-contents__item-anchor');
-    }
-
-    public function test_table_of_contents_item_active_class(): void
-    {
-        $html = Blade::render('<tedi:table-of-contents-item id-to="ptk-1" :selected="true">x</tedi:table-of-contents-item>');
-
-        $this->assertHasClass('table-of-contents__item--active', $html, 'table-of-contents__item');
-    }
-
-    public function test_table_of_contents_item_anchor_carries_the_neutral_button_classes(): void
-    {
-        // Angular renders <a tedi-button variant="neutral">, so the anchor gets
-        // the full ButtonComponent class list.
-        $html = Blade::render('<tedi:table-of-contents-item id-to="ptk-1">x</tedi:table-of-contents-item>');
-
-        foreach (['tedi-button', 'tedi-button--neutral', 'tedi-button--default', 'tedi-button--pl', 'tedi-button--pr'] as $class) {
-            $this->assertHasClass($class, $html, 'table-of-contents__item-anchor');
-        }
     }
 
     // -- vertical-stepper -----------------------------------------------
@@ -574,10 +422,10 @@ class CommunityComponentsTest extends TestCase
     {
         $html = $this->multiselect();
 
-        $this->assertSame(3, substr_count($html, 'class="tedi-dropdown-item-value__checkbox"'));
+        $this->assertSame(3, substr_count($html, 'class="tedi-option-content__checkbox"'));
         $this->assertStringContainsString('<li', $html);
         $this->assertStringContainsString('tedi-dropdown-item', $html);
-        $this->assertHasClass('tedi-dropdown-item-value--checkbox', $html, 'tedi-dropdown-item-value');
+        $this->assertHasClass('tedi-option-content--checkbox', $html, 'tedi-option-content');
     }
 
     public function test_multiselect_disabled_option_is_marked_on_the_row(): void

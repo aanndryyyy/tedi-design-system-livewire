@@ -1,6 +1,6 @@
 {{--
     TEDI Vertical Stepper Item (community).
-    Port of angular/community/components/navigation/vertical-stepper/vertical-stepper-item/vertical-stepper-item.component.{ts,html}
+    Port of angular/src/community/components/navigation/vertical-stepper/vertical-stepper-item/vertical-stepper-item.component.{ts,html}
 
     Ported from the `community/` tree — see CONVENTIONS.md §12. Angular's
     selector is the element `tedi-vertical-stepper-item`, so per §4 the root is

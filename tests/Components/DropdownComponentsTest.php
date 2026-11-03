@@ -11,8 +11,6 @@ use Tedi\Livewire\Tests\TestCase;
  * The prop unions are taken from the Angular `export type` declarations:
  *   DropdownRole                 = 'menu' | 'listbox'
  *   DropdownTriggerAriaHasPopup  = 'menu' | 'listbox' | 'dialog' | 'true'
- *   DropdownItemValueType        = 'default' | 'checkbox' | 'radio'
- *   DropdownItemValueLayout      = 'horizontal' | 'vertical'
  *
  * `li[tedi-dropdown-item]` deliberately carries no classes — Angular's host
  * emits only role/aria/tabindex — so its assertions are attribute-based.
@@ -120,25 +118,37 @@ class DropdownComponentsTest extends TestCase
 
     public function test_trigger_aria_haspopup_union(): void
     {
-        foreach (['menu', 'listbox', 'dialog', 'true'] as $value) {
+        // DropdownTriggerAriaHasPopup = 'menu' | 'listbox' | 'dialog' | 'true' | 'false'
+        foreach (['menu', 'listbox', 'dialog', 'true', 'false'] as $value) {
             $html = Blade::render('<tedi:dropdown-trigger aria-haspopup="'.$value.'">T</tedi:dropdown-trigger>');
 
-            $this->assertStringContainsString("setAttribute('aria-haspopup', '".$value."')", $html);
+            $this->assertStringContainsString("ariaHaspopup: '".$value."'", $html);
         }
     }
 
-    public function test_trigger_defaults_aria_haspopup_to_menu(): void
+    public function test_trigger_aria_haspopup_defaults_to_the_content_role(): void
+    {
+        // Angular 9: no fixed default; tediDropdown.initTrigger derives it
+        // from the rendered ul[role] (none for a plain `list`).
+        $html = Blade::render('<tedi:dropdown-trigger>T</tedi:dropdown-trigger>');
+
+        $this->assertStringContainsString('ariaHaspopup: null', $html);
+        $this->assertStringContainsString('x-init="initTrigger($el, {', $html);
+    }
+
+    public function test_trigger_binds_the_669_activation_keys(): void
     {
         $html = Blade::render('<tedi:dropdown-trigger>T</tedi:dropdown-trigger>');
 
-        $this->assertStringContainsString("setAttribute('aria-haspopup', 'menu')", $html);
+        $this->assertStringContainsString('x-on:keyup="triggerKeyup($event)"', $html);
+        $this->assertStringContainsString('x-on:focusout="triggerFocusout($event)"', $html);
     }
 
     public function test_trigger_omits_id_wiring_without_a_container_id(): void
     {
         $html = Blade::render('<tedi:dropdown-trigger>T</tedi:dropdown-trigger>');
 
-        $this->assertStringNotContainsString('aria-controls', $html);
+        $this->assertStringContainsString('containerId: null', $html);
     }
 
     public function test_trigger_wires_ids_from_the_dropdowns_container_id(): void
@@ -147,8 +157,8 @@ class DropdownComponentsTest extends TestCase
             '<tedi:dropdown container-id="dd1"><tedi:dropdown-trigger>T</tedi:dropdown-trigger></tedi:dropdown>'
         );
 
-        $this->assertStringContainsString("setAttribute('id', 'dd1_trigger')", $html);
-        $this->assertStringContainsString("setAttribute('aria-controls', 'dd1')", $html);
+        // initTrigger sets id="dd1_trigger", and aria-controls="dd1" only while open.
+        $this->assertStringContainsString("containerId: 'dd1'", $html);
     }
 
     // -- dropdown-content -----------------------------------------------
@@ -182,12 +192,22 @@ class DropdownComponentsTest extends TestCase
         $this->assertSame(1, substr_count($html, 'menuKeydown'));
     }
 
+    /** The opening `<ul …>` tag, whitespace-collapsed. */
+    private function listTag(string $html): string
+    {
+        preg_match('/<ul\b[^>]*>/', $html, $m);
+        $this->assertNotEmpty($m, 'No <ul> rendered.');
+
+        return preg_replace('/\s+/', ' ', $m[0]);
+    }
+
     public function test_content_role_union_lands_on_the_list(): void
     {
-        foreach (['menu', 'listbox'] as $role) {
+        // DropdownRole = 'menu' | 'listbox' | 'list'
+        foreach (['menu', 'listbox', 'list'] as $role) {
             $html = Blade::render('<tedi:dropdown-content dropdown-role="'.$role.'">x</tedi:dropdown-content>');
 
-            $this->assertStringContainsString('<ul role="'.$role.'">', $html);
+            $this->assertStringContainsString('role="'.$role.'"', $this->listTag($html));
         }
     }
 
@@ -195,17 +215,34 @@ class DropdownComponentsTest extends TestCase
     {
         $html = Blade::render('<tedi:dropdown-content>x</tedi:dropdown-content>');
 
-        $this->assertStringContainsString('<ul role="menu">', $html);
+        $this->assertStringContainsString('role="menu"', $this->listTag($html));
     }
 
-    public function test_content_labels_itself_from_the_container_id(): void
+    public function test_content_list_classes(): void
+    {
+        foreach (['menu', 'listbox'] as $role) {
+            $html = Blade::render('<tedi:dropdown-content dropdown-role="'.$role.'">x</tedi:dropdown-content>');
+            $this->assertHasClass('tedi-dropdown-content__list', $html, 'tedi-dropdown-content__list');
+            $this->assertMissingClass('tedi-dropdown-content__list--plain', $html, 'tedi-dropdown-content__list');
+        }
+
+        $html = Blade::render('<tedi:dropdown-content dropdown-role="list">x</tedi:dropdown-content>');
+        $this->assertHasClass('tedi-dropdown-content__list', $html, 'tedi-dropdown-content__list');
+        $this->assertHasClass('tedi-dropdown-content__list--plain', $html, 'tedi-dropdown-content__list');
+    }
+
+    public function test_content_labels_its_list_from_the_container_id(): void
     {
         $html = Blade::render(
             '<tedi:dropdown container-id="dd1"><tedi:dropdown-content>x</tedi:dropdown-content></tedi:dropdown>'
         );
 
-        $this->assertStringContainsString('id="dd1"', $html);
-        $this->assertStringContainsString('aria-labelledby="dd1_trigger"', $html);
+        // Angular 9 moved both onto the <ul>; the presentational host keeps neither.
+        $ul = $this->listTag($html);
+        $this->assertStringContainsString('id="dd1"', $ul);
+        $this->assertStringContainsString('aria-labelledby="dd1_trigger"', $ul);
+        $this->assertSame(1, substr_count($html, 'aria-labelledby='));
+        $this->assertSame(1, substr_count($html, 'id="dd1"'));
     }
 
     public function test_content_omits_aria_labelledby_without_a_container_id(): void
@@ -225,7 +262,7 @@ class DropdownComponentsTest extends TestCase
         BLADE);
 
         $this->assertLessThan(
-            strpos($html, '<ul role='),
+            strpos($html, '<ul'),
             strpos($html, 'Ülemine sisu'),
             'The `before` slot must render above the item list, like Angular\'s untargeted <ng-content />.'
         );
@@ -324,7 +361,79 @@ class DropdownComponentsTest extends TestCase
         $this->assertStringNotContainsString('x-on:click', $html);
 
         $html = Blade::render('<tedi:dropdown-item :disabled="true">x</tedi:dropdown-item>');
-        $this->assertStringNotContainsString('x-on:click', $html);
+        $this->assertStringNotContainsString('x-on:click="hide(true)"', $html);
+    }
+
+    public function test_disabled_item_cancels_clicks_in_the_capture_phase(): void
+    {
+        $html = Blade::render('<tedi:dropdown-item :disabled="true">x</tedi:dropdown-item>');
+        $this->assertStringContainsString('x-on:click.capture.prevent.stop', $html);
+
+        $html = Blade::render('<tedi:dropdown-item>x</tedi:dropdown-item>');
+        $this->assertStringNotContainsString('x-on:click.capture', $html);
+    }
+
+    /** The opening `<li …>` tag. */
+    private function itemTag(string $html): string
+    {
+        preg_match('/<li\b[^>]*>/', $html, $m);
+        $this->assertNotEmpty($m, 'No <li> rendered.');
+
+        return $m[0];
+    }
+
+    public function test_list_role_items_carry_no_host_aria(): void
+    {
+        $html = Blade::render(<<<'BLADE'
+        <tedi:dropdown-content dropdown-role="list">
+            <tedi:dropdown-item :disabled="true"><a href="/a">A</a></tedi:dropdown-item>
+        </tedi:dropdown-content>
+        BLADE);
+
+        $li = $this->itemTag(preg_replace('/^.*?(<li\b)/s', '$1', $html));
+        foreach (['role=', 'aria-selected', 'aria-disabled', 'tabindex'] as $attribute) {
+            $this->assertStringNotContainsString($attribute, $li);
+        }
+    }
+
+    public function test_interactive_content_moves_semantics_to_the_control(): void
+    {
+        foreach (['menu' => 'menuitem', 'listbox' => 'option'] as $role => $itemRole) {
+            $html = Blade::render(
+                '<tedi:dropdown-content dropdown-role="'.$role.'">'
+                .'<tedi:dropdown-item :interactive-content="true" :disabled="true" :selected="true"><button>B</button></tedi:dropdown-item>'
+                .'</tedi:dropdown-content>'
+            );
+
+            $li = $this->itemTag(preg_replace('/^.*?(<li\b)/s', '$1', $html));
+            $this->assertStringContainsString('role="none"', $li);
+            foreach (['aria-selected=', 'aria-disabled=', 'tabindex='] as $attribute) {
+                $this->assertStringNotContainsString($attribute, $li);
+            }
+
+            $this->assertStringContainsString("control.setAttribute('role', '".$itemRole."')", $html);
+            $this->assertStringContainsString("control.setAttribute('aria-disabled', 'true')", $html);
+        }
+
+        $html = Blade::render(
+            '<tedi:dropdown-content dropdown-role="listbox">'
+            .'<tedi:dropdown-item :interactive-content="true" :selected="true"><button>B</button></tedi:dropdown-item>'
+            .'</tedi:dropdown-content>'
+        );
+        $this->assertStringContainsString("control.setAttribute('aria-selected', 'true')", $html);
+        $this->assertStringContainsString("control.setAttribute('tabindex', '-1')", $html);
+    }
+
+    public function test_interactive_content_is_inert_in_a_plain_list(): void
+    {
+        $html = Blade::render(
+            '<tedi:dropdown-content dropdown-role="list">'
+            .'<tedi:dropdown-item :interactive-content="true"><a href="/a">A</a></tedi:dropdown-item>'
+            .'</tedi:dropdown-content>'
+        );
+
+        $this->assertStringNotContainsString('control.setAttribute', $html);
+        $this->assertStringNotContainsString('role="none"', $html);
     }
 
     public function test_item_guards_mouse_focus_only_when_disabled(): void
@@ -355,25 +464,25 @@ class DropdownComponentsTest extends TestCase
         $this->assertSame(2, preg_match_all('/<li\b[^>]*\btedi-dropdown-item\b/', $html));
         $this->assertStringContainsString('aria-selected="true"', $html);
         $this->assertStringContainsString('aria-disabled="true"', $html);
-        $this->assertStringContainsString('<ul role="listbox"', $html);
+        $this->assertStringContainsString('role="listbox"', $this->listTag($html));
     }
 
     public function test_item_wraps_plain_content_in_a_value_and_label(): void
     {
         $html = Blade::render('<tedi:dropdown-item>Kontaktid</tedi:dropdown-item>');
 
-        $this->assertHasClass('tedi-dropdown-item-value', $html, 'tedi-dropdown-item-value');
-        $this->assertHasClass('tedi-dropdown-item-value__label', $html, 'tedi-dropdown-item-value__label');
+        $this->assertHasClass('tedi-option-content', $html, 'tedi-option-content');
+        $this->assertHasClass('tedi-option-content__label', $html, 'tedi-option-content__label');
         $this->assertStringContainsString('Kontaktid', $html);
     }
 
     public function test_item_clip_content_reaches_the_generated_label(): void
     {
         $html = Blade::render('<tedi:dropdown-item :clip-content="false">x</tedi:dropdown-item>');
-        $this->assertHasClass('tedi-dropdown-item-value__label--no-clip', $html, 'tedi-dropdown-item-value__label');
+        $this->assertHasClass('tedi-option-content__label--no-clip', $html, 'tedi-option-content__label');
 
         $html = Blade::render('<tedi:dropdown-item>x</tedi:dropdown-item>');
-        $this->assertMissingClass('tedi-dropdown-item-value__label--no-clip', $html, 'tedi-dropdown-item-value__label');
+        $this->assertMissingClass('tedi-option-content__label--no-clip', $html, 'tedi-option-content__label');
     }
 
     public function test_item_value_slot_suppresses_the_generated_wrapper(): void
@@ -381,147 +490,19 @@ class DropdownComponentsTest extends TestCase
         $html = Blade::render(<<<'BLADE'
         <tedi:dropdown-item>
             <x-slot:item-value>
-                <tedi:dropdown-item-value layout="vertical">
-                    <tedi:dropdown-item-value-label>Tallinn</tedi:dropdown-item-value-label>
-                    <tedi:dropdown-item-value-meta>3 vaba aega</tedi:dropdown-item-value-meta>
-                </tedi:dropdown-item-value>
+                <tedi:option-content layout="vertical">
+                    <tedi:option-content-label>Tallinn</tedi:option-content-label>
+                    <tedi:option-content-meta>3 vaba aega</tedi:option-content-meta>
+                </tedi:option-content>
             </x-slot:item-value>
         </tedi:dropdown-item>
         BLADE);
 
-        $this->assertSame(1, substr_count($html, '<tedi-dropdown-item-value '));
-        $this->assertHasClass('tedi-dropdown-item-value--vertical', $html, 'tedi-dropdown-item-value');
-    }
-
-    // -- dropdown-item-value --------------------------------------------
-
-    public function test_item_value_layout_union_classes(): void
-    {
-        $html = Blade::render('<tedi:dropdown-item-value>x</tedi:dropdown-item-value>');
-        $this->assertHasClass('tedi-dropdown-item-value', $html, 'tedi-dropdown-item-value');
-        $this->assertHasClass('tedi-dropdown-item-value--horizontal', $html, 'tedi-dropdown-item-value');
-        $this->assertMissingClass('tedi-dropdown-item-value--vertical', $html, 'tedi-dropdown-item-value');
-
-        $html = Blade::render('<tedi:dropdown-item-value layout="vertical">x</tedi:dropdown-item-value>');
-        $this->assertHasClass('tedi-dropdown-item-value--vertical', $html, 'tedi-dropdown-item-value');
-        $this->assertMissingClass('tedi-dropdown-item-value--horizontal', $html, 'tedi-dropdown-item-value');
-    }
-
-    public function test_item_value_type_union_classes(): void
-    {
-        $expected = [
-            'default' => null,
-            'checkbox' => 'tedi-dropdown-item-value--checkbox',
-            'radio' => 'tedi-dropdown-item-value--radio',
-        ];
-
-        foreach ($expected as $type => $class) {
-            $html = Blade::render('<tedi:dropdown-item-value type="'.$type.'">x</tedi:dropdown-item-value>');
-
-            foreach (array_filter($expected) as $candidate) {
-                if ($candidate === $class) {
-                    $this->assertHasClass($candidate, $html, 'tedi-dropdown-item-value');
-                } else {
-                    $this->assertMissingClass($candidate, $html, 'tedi-dropdown-item-value');
-                }
-            }
-        }
-    }
-
-    public function test_item_value_renders_the_matching_indicator(): void
-    {
-        $html = Blade::render('<tedi:dropdown-item-value>x</tedi:dropdown-item-value>');
-        $this->assertStringNotContainsString('type="checkbox"', $html);
-        $this->assertStringNotContainsString('type="radio"', $html);
-
-        $html = Blade::render('<tedi:dropdown-item-value type="checkbox">x</tedi:dropdown-item-value>');
-        $this->assertStringContainsString('type="checkbox"', $html);
-        $this->assertStringContainsString('tedi-checkbox', $html);
-        $this->assertHasClass('tedi-dropdown-item-value__checkbox', $html, 'tedi-dropdown-item-value__checkbox');
-        $this->assertStringContainsString('aria-hidden="true"', $html);
-        $this->assertStringContainsString('tabindex="-1"', $html);
-
-        $html = Blade::render('<tedi:dropdown-item-value type="radio">x</tedi:dropdown-item-value>');
-        $this->assertStringContainsString('type="radio"', $html);
-        $this->assertHasClass('tedi-dropdown-item-value__radio', $html, 'tedi-dropdown-item-value__radio');
-    }
-
-    public function test_item_value_indicator_reflects_selected_and_disabled(): void
-    {
-        $html = Blade::render('<tedi:dropdown-item-value type="checkbox" :selected="true" :disabled="true">x</tedi:dropdown-item-value>');
-        $this->assertStringContainsString('checked', $html);
-        $this->assertStringContainsString('disabled', $html);
-
-        $html = Blade::render('<tedi:dropdown-item-value type="radio">x</tedi:dropdown-item-value>');
-        $this->assertStringNotContainsString('checked', $html);
-        $this->assertStringNotContainsString('disabled', $html);
-    }
-
-    public function test_item_value_indeterminate_is_set_as_a_dom_property(): void
-    {
-        $html = Blade::render('<tedi:dropdown-item-value type="checkbox" :indeterminate="true">x</tedi:dropdown-item-value>');
-        $this->assertStringContainsString('x-init="$el.indeterminate = true"', $html);
-
-        $html = Blade::render('<tedi:dropdown-item-value type="checkbox">x</tedi:dropdown-item-value>');
-        $this->assertStringNotContainsString('indeterminate', $html);
-    }
-
-    public function test_item_value_content_wrapper_and_slots(): void
-    {
-        $html = Blade::render(<<<'BLADE'
-        <tedi:dropdown-item-value>
-            <x-slot:icon><tedi:icon name="edit" :size="18" /></x-slot:icon>
-            <tedi:dropdown-item-value-label>Muuda</tedi:dropdown-item-value-label>
-            <x-slot:after><span id="trailing">→</span></x-slot:after>
-        </tedi:dropdown-item-value>
-        BLADE);
-
-        $this->assertHasClass('tedi-dropdown-item-value__content', $html, 'tedi-dropdown-item-value__content');
-
-        $this->assertLessThan(
-            strpos($html, 'tedi-dropdown-item-value__content'),
-            strpos($html, 'tedi-icon'),
-            'The icon slot must render before the content wrapper, as in Angular.'
-        );
-
-        $this->assertLessThan(
-            strpos($html, 'id="trailing"'),
-            strpos($html, 'tedi-dropdown-item-value__content'),
-            'The after slot must render below the content wrapper, as in Angular.'
-        );
-    }
-
-    // -- dropdown-item-value-label / -meta -------------------------------
-
-    public function test_label_classes_and_element(): void
-    {
-        $html = Blade::render('<tedi:dropdown-item-value-label>Tallinn</tedi:dropdown-item-value-label>');
-        $this->assertStringContainsString('<tedi-dropdown-item-value-label', $html);
-        $this->assertHasClass('tedi-dropdown-item-value__label', $html, 'tedi-dropdown-item-value__label');
-        $this->assertMissingClass('tedi-dropdown-item-value__label--no-clip', $html, 'tedi-dropdown-item-value__label');
-
-        $html = Blade::render('<tedi:dropdown-item-value-label :clip-content="false">Tallinn</tedi:dropdown-item-value-label>');
-        $this->assertHasClass('tedi-dropdown-item-value__label--no-clip', $html, 'tedi-dropdown-item-value__label');
-    }
-
-    public function test_meta_classes_and_element(): void
-    {
-        $html = Blade::render('<tedi:dropdown-item-value-meta>3 vaba aega</tedi:dropdown-item-value-meta>');
-
-        $this->assertStringContainsString('<tedi-dropdown-item-value-meta', $html);
-        $this->assertHasClass('tedi-dropdown-item-value__meta', $html, 'tedi-dropdown-item-value__meta');
-        $this->assertStringContainsString('3 vaba aega', $html);
+        $this->assertSame(1, substr_count($html, '<tedi-option-content '));
+        $this->assertHasClass('tedi-option-content--vertical', $html, 'tedi-option-content');
     }
 
     // -- attribute merging (CONVENTIONS.md §6) ---------------------------
-
-    public function test_consumer_classes_merge_instead_of_replacing(): void
-    {
-        $html = Blade::render('<tedi:dropdown-item-value class="my-own">x</tedi:dropdown-item-value>');
-
-        $this->assertHasClass('tedi-dropdown-item-value', $html, 'tedi-dropdown-item-value');
-        $this->assertHasClass('my-own', $html, 'tedi-dropdown-item-value');
-    }
 
     public function test_consumer_aria_label_wins_over_the_computed_role(): void
     {

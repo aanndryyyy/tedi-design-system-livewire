@@ -1,9 +1,18 @@
 {{--
     TEDI Icon — Material Symbols ligature.
-    Port of angular/tedi/components/base/icon/icon.component.{ts,html}
+    Port of angular/src/tedi/components/base/icon/icon.component.{ts,html}
 
     Renders the icon name as a text ligature; the font is supplied by
     @tedi-design-system/core (dist/fonts/material-symbols-*.woff2).
+
+    Icon fonts (Angular 9 / core 6.12, #774): upstream now recommends using a
+    single `type` throughout an app and loading only that style's font
+    (`index-without-icons` + `icons/<type>`) instead of all three via `index`.
+    This package's stylesheet still `@use`s core's full `index`, so dist/tedi.css
+    declares all three `@font-face` rules. Browsers only download a face that
+    is actually used, so an app that sticks to one `type` fetches one woff2;
+    the other two are only fetched if a page uses them (or a service worker
+    precaches every file under dist/fonts).
 --}}
 @props([
     /** Material Symbols icon name, e.g. "add", "arrow_forward". Required. */
@@ -16,7 +25,7 @@
     'background' => null,
     /** filled|outlined */
     'variant' => 'outlined',
-    /** outlined|sharp|rounded */
+    /** outlined|sharp|rounded — use one type throughout the app; each is a separate font file. */
     'type' => 'outlined',
     /** Accessible label. When omitted the icon is aria-hidden. */
     'label' => null,

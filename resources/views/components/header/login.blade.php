@@ -1,6 +1,6 @@
 {{--
     TEDI Header Login.
-    Port of angular/tedi/components/layout/header/header-login/header-login.component.{ts,html}
+    Port of angular/src/tedi/components/layout/header/header-login/header-login.component.{ts,html}
 
     Angular auto-picks `small` below the `md` breakpoint when `size` is unset.
     Breakpoints are not ported (CONVENTIONS.md §7), so an unset `size` resolves

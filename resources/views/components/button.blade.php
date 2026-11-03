@@ -1,6 +1,6 @@
 {{--
     TEDI Button.
-    Port of angular/tedi/components/buttons/button/{button.component.ts,base-button.directive.ts}
+    Port of angular/src/tedi/components/buttons/button/{button.component.ts,base-button.directive.ts}
 
     Angular's BaseButtonDirective inspects projected DOM (AfterContentChecked) to
     derive --icon-only / --pl / --pr. Blade cannot introspect its own slot, so per
@@ -46,6 +46,7 @@
     @endif
     {{ $attributes->class([
         'tedi-button',
+        'no-print',
         'tedi-button--'.$variant,
         'tedi-button--'.$size,
         'tedi-button--icon-only' => $iconOnly,

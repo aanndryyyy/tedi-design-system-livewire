@@ -1,6 +1,6 @@
 {{--
     TEDI Slider — DOCUMENTED SUBSET (the thumb tooltip is not ported).
-    Port of angular/tedi/components/form/slider/{slider.component.ts,slider.component.html}
+    Port of angular/src/tedi/components/form/slider/{slider.component.ts,slider.component.html}
 
     Root element: Angular's selector is the ELEMENT `tedi-slider`, but the
     vendored SCSS contains no `tedi-slider { … }` element rule — every rule keys
@@ -51,6 +51,15 @@
 
     Angular's writeValue() maps a null/NaN value to `min()`; `$value ?? $min` in
     the clamp reproduces that.
+
+    `hideLabel` (9.0 sync): upstream dropped the slider's own
+    `tedi-slider__label--reserve-space` rule and class. The label now carries
+    the state itself, through the label component's `visuallyHidden` input —
+    `labelVisuallyHidden()` maps `'keep-space'` to `'reserve-space'`, which
+    the label renders as `tedi-label--reserve-space` (`true` stays `sr-only`).
+    `tedi:form.label` declares no `visuallyHidden` prop in this package, so the
+    class the label would compute is passed straight through `class`; the
+    rendered class list is identical to Angular's.
 --}}
 @props([
     /** Id for the range <input>, also the label's `for`. Auto-generated (Tedi::id()) when omitted. */
@@ -59,7 +68,7 @@
     'name' => null,
     /** Label rendered above the slider. */
     'label' => null,
-    /** false|true|'keep-space' — true hides the label visually (sr-only), 'keep-space' also reserves its vertical space. */
+    /** false|true|'keep-space' — true hides the label visually (sr-only), 'keep-space' also keeps its line of layout (tedi-label--reserve-space). */
     'hideLabel' => false,
     /** Marks the field as required. */
     'required' => false,
@@ -132,10 +141,11 @@
     // feedbackId()
     $feedbackId = $feedbackText ? $inputId.'-feedback' : null;
 
-    // [class.sr-only] / [class.tedi-slider__label--reserve-space] on the label.
+    // labelVisuallyHidden() — 'keep-space' becomes the label's 'reserve-space',
+    // and the label's classes() turns that into the class below.
     $labelClass = $hideLabel === true
         ? 'sr-only'
-        : ($hideLabel === 'keep-space' ? 'tedi-slider__label--reserve-space' : '');
+        : ($hideLabel === 'keep-space' ? 'tedi-label--reserve-space' : '');
 @endphp
 
 <div @class([

@@ -1,6 +1,6 @@
 {{--
     TEDI Text Group.
-    Port of angular/tedi/components/content/text-group/text-group.component.{ts,html}
+    Port of angular/src/tedi/components/content/text-group/text-group.component.{ts,html}
 
     The Angular template wraps the label slot content in `<span tedi-label>`
     — ported here as `<tedi:form.label as="span">` using LabelComponent's

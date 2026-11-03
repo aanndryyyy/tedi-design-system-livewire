@@ -1,6 +1,6 @@
 {{--
     TEDI Header Top.
-    Port of angular/tedi/components/layout/header/header-top/header-top.component.ts
+    Port of angular/src/tedi/components/layout/header/header-top/header-top.component.ts
 
     Breakpoint overrides ([xs]-[xxl]) are not ported (CONVENTIONS.md §7) — only
     the base `alignment` prop is supported.

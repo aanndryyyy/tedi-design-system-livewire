@@ -1,6 +1,6 @@
 {{--
     TEDI Time Field — DOCUMENTED SUBSET.
-    Port of angular/tedi/components/form/time-field/{time-field.component.ts,html}
+    Port of angular/src/tedi/components/form/time-field/{time-field.component.ts,html}
 
     Angular's selector `tedi-time-field` is an element selector, but the vendored
     SCSS has no `tedi-time-field { … }` element rule — it styles `.tedi-time-field`
@@ -39,6 +39,23 @@
     - `aria-invalid` follows Angular's `invalid() || null`: present as `"true"`
       when invalid, absent otherwise. `aria-expanded` likewise
       (`popoverIsOpen() || null`).
+    - THE FIELD CONTEXT (Angular 8.0's `TEDI_FIELD_CONTEXT`), resolved exactly
+      as in date-field.blade.php — from what the consumer wrote on the nearest
+      enclosing `tedi:form-field` (`Tedi::fieldContext()`), with form-field's
+      defaults applied:
+        - `size`: own → the form-field's → `default`; emitted as
+          `tedi-time-field--small|large` on the root.
+        - `clearable`: own → the form-field's → `true` (9.0, #572). The own
+          prop's default is now null, not `true`, so it can inherit.
+        - `invalid` / `disabled`: own, or the form-field's. `valid`: the
+          form-field's.
+        - `.tedi-time-field__field` paints the surface (`tedi-field-surface`
+          and its `--invalid|--valid|--disabled` modifiers) unless the
+          form-field has an `icon`, which makes it render a box that owns the
+          surface. The time field owns its clear button, so it never asks the
+          wrapper for one.
+    - The clear button no longer carries `disabled` (9.0): a disabled field
+      hides it instead (`showClear()` gained `!isDisabled()`).
 --}}
 @props([
     /** Id for the <input>, also used for the label's `for`. Auto-generated (Tedi::id()) when omitted. */
@@ -47,12 +64,14 @@
     'value' => null,
     /** Placeholder shown when the input is empty. */
     'placeholder' => null,
-    /** Marks the field invalid: renders `aria-invalid="true"` on the input. */
+    /** Marks the field invalid: `aria-invalid="true"` and the error surface. Combines with the form-field's `invalid`. */
     'invalid' => false,
-    /** Disables interaction. Also suppresses the popover branch, as in Angular. */
+    /** Disables interaction. Also suppresses the popover branch, as in Angular. Combines with the form-field's `disabled`. */
     'disabled' => false,
-    /** Show a clear button when the field has a value. */
-    'clearable' => true,
+    /** default|small — overrides the wrapping form-field's size. Null inherits it (else `default`). */
+    'size' => null,
+    /** Show a clear button when the field has a value. Null inherits the form-field's `clearable` (else true). */
+    'clearable' => null,
     /** scroll|slots|dropdown|none — `none` renders just the input with no picker UI. */
     'pickerVariant' => 'scroll',
     /** button|input — what opens the picker: only the icon, or also the input. */
@@ -74,19 +93,38 @@
     // precedent select.blade.php).
     $inputId = $inputId ?? \Tedi\Livewire\Tedi::id('tedi-time-field');
 
+    $hasValue = $value !== null && $value !== '';
+
+    // TEDI_FIELD_CONTEXT (Tedi::fieldContext): the nearest form-field's state.
+    // Registered without `reset`: the time field owns its clear button.
+    $fieldContext = \Tedi\Livewire\Tedi::fieldContext($__env, [
+        'value' => $hasValue ? $value : null,
+        'disabled' => (bool) $disabled,
+        'invalid' => (bool) $invalid,
+    ]);
+    $disabled = (bool) $disabled || (bool) ($fieldContext['disabled'] ?? false);
+    $invalid = (bool) $invalid || (bool) ($fieldContext['invalid'] ?? false);
+    $isValid = (bool) ($fieldContext['valid'] ?? false);
+    $resolvedSize = $size ?? ($fieldContext['size'] ?? 'default');
+    $paintsSurface = ! ($fieldContext['ownsSurface'] ?? false);
+    $clearableResolved = $clearable !== null ? (bool) $clearable : ($fieldContext['clearable'] ?? true);
+
     // hasPicker(): useNativePicker is dropped, so it reduces to the variant check.
     $hasPicker = $pickerVariant !== 'none';
     // usePopover(): useMobileModal() is always false here (modal branch not ported).
     $usePopover = $hasPicker && ! $disabled;
     $inputIsTrigger = $pickerTrigger === 'input' && $hasPicker;
 
-    $hasValue = $value !== null && $value !== '';
-    $showClear = $hasValue && $clearable;
+    $showClear = $hasValue && $clearableResolved && ! $disabled;
 
-    $fieldClasses = ['tedi-time-field__field'];
-    if ($usePopover && ! $inputIsTrigger) {
-        $fieldClasses[] = 'tedi-time-field__field--button-trigger';
-    }
+    $fieldClasses = [
+        'tedi-time-field__field',
+        'tedi-time-field__field--button-trigger' => $usePopover && ! $inputIsTrigger,
+        'tedi-field-surface' => $paintsSurface,
+        'tedi-field-surface--invalid' => $paintsSurface && $invalid,
+        'tedi-field-surface--valid' => $paintsSurface && $isValid,
+        'tedi-field-surface--disabled' => $paintsSurface && $disabled,
+    ];
 
     $iconClasses = ['tedi-time-field__icon'];
     if ($open) {
@@ -96,7 +134,11 @@
     $iconLabel = __('tedi::tedi.time-field.select-time');
 @endphp
 
-<div class="tedi-time-field">
+<div @class([
+    'tedi-time-field',
+    'tedi-time-field--small' => $resolvedSize === 'small',
+    'tedi-time-field--large' => $resolvedSize === 'large',
+])>
     {{-- The popover wrapper only exists in the popover branch; Angular renders a
          bare field div otherwise, and `.tedi-time-field__popover` is a flex box
          that would change the layout if emitted unconditionally. --}}
@@ -125,7 +167,6 @@
                         class="tedi-time-field__clear"
                         :icon-size="18"
                         :aria-label="__('tedi::tedi.time-field.clear')"
-                        :disabled="$disabled ? 'disabled' : null"
                     />
                     <tedi:separator axis="vertical" size="1rem" />
                 @endif

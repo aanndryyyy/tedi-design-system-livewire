@@ -51,10 +51,11 @@
     </div>
 
     <div class="gx-case">
-        <div class="gx-case__label">states: disabled | read-only | required (no host modifier classes)</div>
+        <div class="gx-case__label">states: disabled | read-only (clear still shows) | required | name + described-by + invalid (no host modifier classes)</div>
         <div class="gx-case__demo gx-case__demo--stack">
             <tedi:date-input input-id="di-disabled" value="08.06.2026" :disabled="true" :clearable="true" />
             <tedi:date-input input-id="di-readonly" value="08.06.2026" :read-only="true" :clearable="true" />
+            <tedi:date-input input-id="di-named" name="start" aria-describedby="di-named-hint" :invalid="true" />
             <tedi:date-input input-id="di-required" :required="true" />
         </div>
     </div>
@@ -109,8 +110,10 @@
     <p>
         Port of <code>form/date-field</code>. The CDK-overlay panel is dropped: the
         <code>tedi-date-field__overlay</code> renders inline under an explicit <code>open</code>
-        prop (CONVENTIONS §7 item 3). <code>size</code> is declared for API parity but emits no
-        class — TEDI ships no <code>.tedi-date-field--small</code> rule.
+        prop (CONVENTIONS §7 item 3). Since Angular 8.0 the field paints its own
+        <code>tedi-field-surface</code> unless a form-field box (one with an <code>icon</code>)
+        owns it, and <code>size</code> / <code>clearable</code> / state fall back to the nearest
+        form-field's.
     </p>
 
     <div class="gx-case">
@@ -121,19 +124,42 @@
     </div>
 
     <div class="gx-case">
-        <div class="gx-case__label">size: default | small (forwarded-only, no class)</div>
+        <div class="gx-case__label">size: default | small | inherited small | inherited large</div>
         <div class="gx-case__demo gx-case__demo--stack">
             <tedi:date-field input-id="df-size-default" size="default" />
             <tedi:date-field input-id="df-size-small" size="small" />
+            <tedi:form-field size="small"><tedi:date-field input-id="df-size-ff-small" /></tedi:form-field>
+            <tedi:form-field size="large"><tedi:date-field input-id="df-size-ff-large" /></tedi:form-field>
         </div>
     </div>
 
     <div class="gx-case">
-        <div class="gx-case__label">states: input-disabled | read-only | required</div>
+        <div class="gx-case__label">states: input-disabled | read-only (still clearable) | read-only, no calendar | required | invalid</div>
         <div class="gx-case__demo gx-case__demo--stack">
             <tedi:date-field input-id="df-disabled" value="2026-06-08" display="08.06.2026" :input-disabled="true" />
             <tedi:date-field input-id="df-readonly" value="2026-06-08" display="08.06.2026" :read-only="true" />
+            <tedi:date-field input-id="df-readonly-nocal" value="2026-06-08" display="08.06.2026" :read-only="true" :enable-calendar="false" />
             <tedi:date-field input-id="df-required" :required="true" />
+            <tedi:date-field input-id="df-invalid" :invalid="true" />
+        </div>
+    </div>
+
+    <div class="gx-case">
+        <div class="gx-case__label">field surface from the form-field: valid | invalid | disabled | icon (box owns the surface)</div>
+        <div class="gx-case__demo gx-case__demo--stack">
+            <tedi:form-field :valid="true"><tedi:date-field input-id="df-ff-valid" /></tedi:form-field>
+            <tedi:form-field :invalid="true"><tedi:date-field input-id="df-ff-invalid" /></tedi:form-field>
+            <tedi:form-field :disabled="true"><tedi:date-field input-id="df-ff-disabled" /></tedi:form-field>
+            <tedi:form-field icon="info"><tedi:date-field input-id="df-ff-icon" /></tedi:form-field>
+        </div>
+    </div>
+
+    <div class="gx-case">
+        <div class="gx-case__label">clearable: form-field false | own true wins | name + aria-describedby</div>
+        <div class="gx-case__demo gx-case__demo--stack">
+            <tedi:form-field :clearable="false"><tedi:date-field input-id="df-ff-noclear" value="2026-06-08" display="08.06.2026" /></tedi:form-field>
+            <tedi:form-field :clearable="false"><tedi:date-field input-id="df-own-clear" value="2026-06-08" display="08.06.2026" :clearable="true" /></tedi:form-field>
+            <tedi:date-field input-id="df-name" name="start" aria-describedby="df-name-hint" />
         </div>
     </div>
 

@@ -20,7 +20,12 @@
                     <tedi:button id="{{ $state }}" variant="danger" :disabled="$state === 'Disabled'">Create</tedi:button>
                     <tedi:button id="{{ $state }}" variant="danger" :disabled="$state === 'Disabled'" icon-end="arrow_right_alt">Continue</tedi:button>
                     <tedi:button id="{{ $state }}" variant="danger" :disabled="$state === 'Disabled'" icon-start="edit">Edit</tedi:button>
-                    <tedi:button id="{{ $state }}" variant="danger" :disabled="$state === 'Disabled'" icon-only icon-start="arrow_forward" aria-label="Edasi" />
+                    <tedi:tooltip>
+                        <tedi:tooltip-trigger>
+                            <tedi:button id="{{ $state }}" variant="danger" :disabled="$state === 'Disabled'" icon-only icon-start="arrow_forward" aria-label="Edasi" />
+                        </tedi:tooltip-trigger>
+                        <tedi:tooltip-content>Edasi</tedi:tooltip-content>
+                    </tedi:tooltip>
                 </div>
             </div>
         @endforeach
@@ -34,7 +39,12 @@
                     <tedi:button id="{{ $state }}" variant="danger" size="small" :disabled="$state === 'Disabled'">Create</tedi:button>
                     <tedi:button id="{{ $state }}" variant="danger" size="small" :disabled="$state === 'Disabled'" icon-end="arrow_right_alt">Continue</tedi:button>
                     <tedi:button id="{{ $state }}" variant="danger" size="small" :disabled="$state === 'Disabled'" icon-start="edit">Edit</tedi:button>
-                    <tedi:button id="{{ $state }}" variant="danger" size="small" :disabled="$state === 'Disabled'" icon-only icon-start="arrow_forward" aria-label="Edasi" />
+                    <tedi:tooltip>
+                        <tedi:tooltip-trigger>
+                            <tedi:button id="{{ $state }}" variant="danger" size="small" :disabled="$state === 'Disabled'" icon-only icon-start="arrow_forward" aria-label="Edasi" />
+                        </tedi:tooltip-trigger>
+                        <tedi:tooltip-content>Edasi</tedi:tooltip-content>
+                    </tedi:tooltip>
                 </div>
             </div>
         @endforeach

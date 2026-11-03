@@ -1,6 +1,6 @@
 {{--
     TEDI Text.
-    Port of angular/tedi/components/base/text/text.component.{ts,html}
+    Port of angular/src/tedi/components/base/text/text.component.{ts,html}
 
     Angular uses the attribute selector [tedi-text], so the consumer picks the
     element. In Blade that becomes the `as` prop.

@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'With Footer',
-    'order' => 30,
+    'order' => 32,
     'status' => 'subset',
     'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.45.70?node-id=11335-186161&m=dev',
 ])
@@ -33,10 +33,10 @@
 
 @php
     $footerColumns = [
-        ['key' => 'name', 'header' => 'Name', 'footer' => 'Total'],
-        ['key' => 'role', 'header' => 'Role'],
-        ['key' => 'location', 'header' => 'Location'],
-        ['key' => 'salary', 'header' => 'Salary', 'align' => 'right', 'footer' => array_sum(array_column($seed, 'salary')).' €'],
+        ['key' => 'name', 'header' => 'Nimi', 'footer' => count($seed).' inimest'],
+        ['key' => 'role', 'header' => 'Roll'],
+        ['key' => 'location', 'header' => 'Asukoht'],
+        ['key' => 'salary', 'header' => 'Palk (€)', 'align' => 'right', 'footer' => 'Kokku €'.array_sum(array_column($seed, 'salary'))],
     ];
 @endphp
 

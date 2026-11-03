@@ -2,7 +2,7 @@
     'name' => 'Default',
     'order' => 1,
     'status' => 'stable',
-    'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.41.64?node-id=4228-72936&m=dev',
+    'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.102.102?node-id=65246-120117&m=dev',
     'args' => [
         'size' => 'default',
         'invalid' => false,
@@ -21,7 +21,7 @@
         ],
         'invalid' => [
             'control' => 'boolean',
-            'description' => 'Is checkbox invalid?',
+            'description' => 'Show the checkbox in an invalid state.',
             'table' => [
                 'category' => 'Checkbox',
                 'type' => ['summary' => 'boolean'],
@@ -30,7 +30,7 @@
         ],
         'disabled' => [
             'control' => 'boolean',
-            'description' => 'Is checkbox disabled?',
+            'description' => 'Disable the checkbox.',
             'table' => [
                 'category' => 'Checkbox',
                 'type' => ['summary' => 'boolean'],
@@ -44,5 +44,5 @@
      this template-only port doesn't wire up. --}}
 <tedi:form.label color="primary" class="flex align-items-center gap-2">
     <tedi:checkbox :size="$size" :invalid="(bool) $invalid" :disabled="(bool) $disabled" />
-    Text
+    Tekst
 </tedi:form.label>

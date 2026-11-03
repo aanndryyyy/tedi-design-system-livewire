@@ -1,0 +1,6 @@
+.tedi-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--loader-skeleton-inner-spacing-y);
+  pointer-events: none;
+}

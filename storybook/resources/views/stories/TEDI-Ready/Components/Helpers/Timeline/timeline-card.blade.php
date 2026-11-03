@@ -5,7 +5,7 @@
     'args' => [
         'activeIndex' => 1,
         'variant' => 'card',
-        'cardPadding' => 1,
+        'cardPadding' => 0.5,
     ],
     'argTypes' => [
         'activeIndex' => [
@@ -20,7 +20,8 @@
         'cardPadding' => [
             'control' => 'select',
             'options' => [0, 0.5, 0.75, 1, 1.5, 2, 2.5, 3],
-            'description' => 'Item padding in rems for the card variant. Same values as the Card component.',
+            'description' => "Vertical padding of each item in the card variant, in rems (same scale as the Card component). Both the gaps between items and the card's top/bottom edges resolve to twice this value. Horizontal item padding is fixed at the card default.",
+            'table' => ['category' => 'timeline', 'type' => ['summary' => 'TimelineCardPadding'], 'defaultValue' => ['summary' => '0.5']],
         ],
     ],
 ])

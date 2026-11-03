@@ -1,6 +1,6 @@
 {{--
     TEDI Card Header.
-    Port of angular/tedi/components/content/card/card-header/card-header.component.ts
+    Port of angular/src/tedi/components/content/card/card-header/card-header.component.ts
 
     Extends CardContentComponent in Angular: same shape and padding
     inheritance from the parent tedi-card, but background defaults to

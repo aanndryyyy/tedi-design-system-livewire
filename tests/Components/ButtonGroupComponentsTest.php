@@ -78,6 +78,8 @@ class ButtonGroupComponentsTest extends TestCase
         $this->assertStringContainsString('type="button"', $html);
         $this->assertHasClass('tedi-button', $html, 'tedi-button-group-button');
         $this->assertHasClass('tedi-button-group-button', $html, 'tedi-button-group-button');
+        // Angular 9 added `no-print` to the directive's class list, as tedi-button has.
+        $this->assertHasClass('no-print', $html, 'tedi-button-group-button');
     }
 
     public function test_item_label_is_wrapped_in_the_label_span(): void

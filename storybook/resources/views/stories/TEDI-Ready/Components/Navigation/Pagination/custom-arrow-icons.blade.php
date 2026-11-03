@@ -4,7 +4,7 @@
 --}}
 @storybook([
     'name' => 'Custom Arrow Icons',
-    'order' => 18,
+    'order' => 20,
     'status' => 'subset',
     'args' => [
         'pageCount' => 10,

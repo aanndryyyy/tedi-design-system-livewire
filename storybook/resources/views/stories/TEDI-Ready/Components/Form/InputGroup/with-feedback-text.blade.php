@@ -10,7 +10,7 @@
     <tedi:input-group>
         <tedi:form.label for="feedback-hint">Summa</tedi:form.label>
         <tedi:form-field>
-            <input type="text" id="feedback-hint" placeholder="0.00" />
+            <tedi:text-field id="feedback-hint" placeholder="0.00" />
         </tedi:form-field>
         <x-slot:suffix>EUR</x-slot:suffix>
         <x-slot:feedback>
@@ -21,7 +21,7 @@
     <tedi:input-group :invalid="true">
         <tedi:form.label for="feedback-error">Summa</tedi:form.label>
         <tedi:form-field>
-            <input type="text" id="feedback-error" placeholder="0.00" />
+            <tedi:text-field id="feedback-error" placeholder="0.00" />
         </tedi:form-field>
         <x-slot:suffix>EUR</x-slot:suffix>
         <x-slot:feedback>

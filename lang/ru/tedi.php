@@ -1,7 +1,7 @@
 <?php
 
 // Generated from @tedi-design-system/angular
-// src/tedi/services/translation/translations.ts — do not edit by hand.
+// src/tedi/services/translation/translations.ts by scripts/generate-lang.cjs — do not edit by hand.
 // Function entries become :placeholders, key.true/key.false variants for a
 // boolean selector, and "{1} …|[0,*] …" choice strings for count wording.
 
@@ -233,4 +233,12 @@ return [
     "dateTimeField.timeHeading" => "Время",
     "dateTimeField.selectTime" => "Выбрать время",
     "dateTimeField.back" => "Назад",
+    "sheet.close" => "Закрыть",
+    "sheet.collapse" => "Свернуть",
+    "sheet.expand" => "Развернуть",
+    "stepper.previous" => "Предыдущий шаг",
+    "stepper.next" => "Следующий шаг",
+    "stepper.open-steps" => "Открыть шаги",
+    "stepper.steps" => "Шаги",
+    "stepper.status" => "Шаг :current из :total",
 ];

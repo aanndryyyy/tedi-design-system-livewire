@@ -1,6 +1,6 @@
 {{--
     TEDI Hide At.
-    Port of angular/tedi/directives/hide-at/hide-at.directive.ts
+    Port of angular/src/tedi/directives/hide-at/hide-at.directive.ts
 
     Hides its content at and above a grid breakpoint. `breakpoint="md"` means
     hidden from 48rem up, visible below it — the inclusive boundary upstream's

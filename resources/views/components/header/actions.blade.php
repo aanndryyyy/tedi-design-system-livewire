@@ -1,6 +1,6 @@
 {{--
     TEDI Header Actions.
-    Port of angular/tedi/components/layout/header/header-actions/header-actions.component.ts
+    Port of angular/src/tedi/components/layout/header/header-actions/header-actions.component.ts
 --}}
 @props([])
 

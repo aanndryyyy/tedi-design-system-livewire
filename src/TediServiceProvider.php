@@ -23,6 +23,7 @@ class TediServiceProvider extends ServiceProvider
 
         $this->registerShortSyntax();
         $this->registerDirectives();
+        $this->registerFieldContextTracking();
         $this->registerPublishing();
     }
 
@@ -46,6 +47,22 @@ class TediServiceProvider extends ServiceProvider
                 '<$1x-tedi::$2',
                 $template
             );
+        });
+    }
+
+    /**
+     * Track which field-context providers are mid-render, for
+     * Tedi::fieldContext(). A control composed in a provider's own TEMPLATE
+     * (date-input's text field) cannot see it on the component stack, which
+     * only holds components whose slot is being rendered. Every view is
+     * observed — not only TEDI's — because any view starting at a given depth
+     * proves that everything previously recorded at that depth or deeper has
+     * finished rendering.
+     */
+    protected function registerFieldContextTracking(): void
+    {
+        \Illuminate\Support\Facades\View::composer('*', function ($view): void {
+            Tedi::trackRender($this->app['view'], $view->name());
         });
     }
 

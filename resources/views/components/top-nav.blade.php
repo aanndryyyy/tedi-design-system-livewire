@@ -32,7 +32,12 @@
     `key` is how an item and its panel find each other, and it stands in for
     upstream's item *index*, which the server has no way to count
     (CONVENTIONS.md §5). It also builds the `aria-controls` / panel `id` pair.
-    Give every submenu item one.
+    Give every submenu item one. The pair is `panel-id` + `-` + `key`
+    (default prefix `top-nav-submenu`): upstream 20.x switched its panel id to
+    a `useSafeId` id prefixed `tedi-top-nav-submenu`, generated per instance, but a
+    generated value cannot reach the items through `aware` (CONVENTIONS.md §3),
+    so the port keeps its deterministic, already CSS-safe prefix. Pass a
+    distinct `panel-id` when a page has two navs.
 
     NOT PORTED — the mobile branch. Below `mobileBreakpoint` upstream replaces
     the whole bar with `MobileNav`, which it builds by walking its children with

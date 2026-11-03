@@ -1,6 +1,6 @@
 {{--
     TEDI Button Group Button.
-    Port of angular/tedi/components/buttons/button-group/button-group-button/button-group-button.directive.ts
+    Port of angular/src/tedi/components/buttons/button-group/button-group-button/button-group-button.directive.ts
 
     Angular's selector is the ATTRIBUTE `button[tedi-button-group-button]`, so
     per CONVENTIONS.md §4 the root is a literal `<button tedi-button-group-button>`
@@ -122,6 +122,7 @@
     {{ $attributes->class([
         'tedi-button',
         'tedi-button-group-button',
+        'no-print',
         'tedi-button--'.$variant,
         'tedi-button--'.$size,
         'tedi-button--icon-only' => $isIconOnly,

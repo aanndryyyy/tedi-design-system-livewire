@@ -51,6 +51,30 @@ class AwareTest extends TestCase
         $this->assertMissingClass('tedi-radio-card--grouped', $html, 'tedi-radio-card');
     }
 
+    // -- radio-card-group -> radio-card @aware(['bordered']) ----------------
+
+    public function test_radio_card_reads_explicit_group_bordered(): void
+    {
+        $html = Blade::render(
+            '<tedi:radio-card-group :bordered="true">'
+            .'<tedi:radio-card name="g" value="a">A</tedi:radio-card>'
+            .'</tedi:radio-card-group>'
+        );
+
+        $this->assertHasClass('tedi-radio-card--bordered', $html, 'tedi-radio-card');
+    }
+
+    public function test_radio_card_bordered_fallback_matches_group_default_when_omitted(): void
+    {
+        // radio-card-group's own default is bordered=false, matching the card's
+        // @aware fallback, so an omitted and an explicit false render alike.
+        foreach (['<tedi:radio-card-group>', '<tedi:radio-card-group :bordered="false">'] as $open) {
+            $html = Blade::render($open.'<tedi:radio-card name="g" value="a">A</tedi:radio-card></tedi:radio-card-group>');
+
+            $this->assertMissingClass('tedi-radio-card--bordered', $html, 'tedi-radio-card');
+        }
+    }
+
     // -- tabs.trigger / tabs.content @aware(['value', 'defaultValue']) ------
 
     public function test_tabs_trigger_reads_default_value_through_the_intermediate_list(): void
@@ -484,7 +508,7 @@ class AwareTest extends TestCase
     {
         $html = Blade::render(sprintf(self::DROPDOWN, ' container-id="d1"', ''));
 
-        $this->assertStringContainsString("setAttribute('id', 'd1_trigger')", $html);
+        $this->assertStringContainsString("containerId: 'd1'", $html);
         $this->assertStringContainsString('aria-labelledby="d1_trigger"', $html);
         $this->assertStringContainsString('id="d1"', $html);
     }
@@ -505,7 +529,7 @@ class AwareTest extends TestCase
     {
         $listbox = Blade::render(sprintf(self::DROPDOWN, '', ' dropdown-role="listbox"'));
 
-        $this->assertStringContainsString('<ul role="listbox">', $listbox);
+        $this->assertMatchesRegularExpression('/<ul\b[^>]*\brole="listbox"/', $listbox);
         $this->assertStringContainsString('role="option"', $listbox);
     }
 
@@ -514,7 +538,7 @@ class AwareTest extends TestCase
         $omitted = Blade::render(sprintf(self::DROPDOWN, '', ''));
         $explicit = Blade::render(sprintf(self::DROPDOWN, '', ' dropdown-role="menu"'));
 
-        $this->assertStringContainsString('<ul role="menu">', $omitted);
+        $this->assertMatchesRegularExpression('/<ul\b[^>]*\brole="menu"/', $omitted);
         $this->assertStringContainsString('role="menuitem"', $omitted);
         $this->assertSame($explicit, $omitted,
             'Omitting dropdown-role must render identically to passing its default.');
@@ -729,5 +753,91 @@ class AwareTest extends TestCase
         $this->assertHasClass('tedi-top-nav__submenu', $panel, 'tedi-top-nav__submenu');
         $this->assertStringContainsString('id="top-nav-submenu-a"', $panel);
         $this->assertStringContainsString('max-width: 87.5rem', $panel);
+    }
+
+    // -- form-field -> text-field / textarea / form.label, via Tedi::fieldContext()
+    // The field context is not @aware, but it has the same blind spot: it only
+    // sees what the consumer wrote, so Tedi::FIELD_DEFAULTS must equal
+    // form-field's @props defaults.
+
+    public function test_field_context_defaults_match_form_field_defaults(): void
+    {
+        $controls = '<x-slot:label><tedi:form.label for="a">A</tedi:form.label></x-slot:label>'
+            .'<tedi:text-field id="a" value="abc" /><tedi:textarea value="abc" />';
+
+        $omitted = Blade::render('<tedi:form-field>'.$controls.'</tedi:form-field>');
+        $explicit = Blade::render(
+            '<tedi:form-field size="default" :clearable="true" :valid="false">'.$controls.'</tedi:form-field>'
+        );
+
+        $this->assertSame($explicit, $omitted,
+            'Tedi::FIELD_DEFAULTS has drifted from form-field.blade.php @props.');
+    }
+
+    public function test_field_context_defaults_are_the_form_field_props_defaults(): void
+    {
+        $source = file_get_contents(__DIR__.'/../resources/views/components/form-field.blade.php');
+
+        foreach (\Tedi\Livewire\Tedi::FIELD_DEFAULTS as $prop => $default) {
+            $this->assertMatchesRegularExpression(
+                '/\''.$prop.'\' => '.preg_quote(var_export($default, true) === 'NULL' ? 'null' : var_export($default, true), '/').',/',
+                $source,
+                "form-field's @props default for `$prop` differs from Tedi::FIELD_DEFAULTS."
+            );
+        }
+    }
+
+    /**
+     * Tedi::fieldContext() reads the view factory's protected component stack.
+     * If Laravel ever renames it, controls would silently lose their field
+     * context; this makes that loud.
+     */
+    public function test_field_context_reaches_the_view_factory_internals(): void
+    {
+        $env = app('view');
+
+        foreach (['componentStack', 'componentData', 'renderCount'] as $property) {
+            $this->assertTrue(property_exists($env, $property),
+                "Illuminate\\View\\Factory::\${$property} is gone; update Tedi::fieldContext().");
+        }
+
+        $html = Blade::render('<tedi:form-field icon="search"><tedi:text-field /></tedi:form-field>');
+        $this->assertMissingClass('tedi-field-surface', $html, 'tedi-text-field');
+    }
+
+    // -- sheet -> sheet-content @aware(['open', 'collapsed', 'role']) --------
+    //    sheet -> sheet-header / sheet-body / sheet-footer @aware(['collapsed'])
+    //    (CONVENTIONS.md §13 — the React-sourced components.)
+
+    public function test_sheet_state_reaches_its_parts(): void
+    {
+        $html = Blade::render(
+            '<tedi:sheet open collapsed role="alertdialog"><tedi:sheet-content>'
+            .'<tedi:sheet-header title="T" collapsible /><tedi:sheet-body>b</tedi:sheet-body>'
+            .'<tedi:sheet-footer>f</tedi:sheet-footer></tedi:sheet-content></tedi:sheet>'
+        );
+
+        $this->assertStringContainsString('role="alertdialog"', $html);
+        $this->assertStringContainsString('data-status="open"', $html);
+        $this->assertMatchesRegularExpression('/<div\s+hidden\s+class="tedi-sheet__body"/', $html);
+        $this->assertMatchesRegularExpression('/<div\s+hidden\s+class="tedi-sheet__footer/', $html);
+        // The collapse toggle renders closed (collapsed = not expanded).
+        $this->assertStringContainsString('aria-expanded="false"', $html);
+    }
+
+    public function test_sheet_part_fallbacks_match_the_sheet_defaults_when_omitted(): void
+    {
+        $parts = '<tedi:sheet-content id="p"><tedi:sheet-header title="T" collapsible /><tedi:sheet-body>b</tedi:sheet-body>'
+            .'<tedi:sheet-footer>f</tedi:sheet-footer></tedi:sheet-content>';
+
+        $strip = fn (string $html) => preg_replace('/tedi-sheet-title-[0-9a-f]+/', 'ID', $html);
+
+        $omitted = $strip(Blade::render('<tedi:sheet>'.$parts.'</tedi:sheet>'));
+        $explicit = $strip(Blade::render('<tedi:sheet :open="false" :collapsed="false" role="dialog">'.$parts.'</tedi:sheet>'));
+
+        // Only the root's own x-data config may differ; everything inside must not.
+        $inner = fn (string $html) => substr($html, strpos($html, '>') + 1);
+        $this->assertSame($inner($explicit), $inner($omitted),
+            'Omitting open/collapsed/role must render the parts identically to passing their defaults.');
     }
 }

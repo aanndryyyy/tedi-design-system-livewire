@@ -1,6 +1,6 @@
 {{--
     TEDI Checkbox Group.
-    Port of angular/tedi/components/form/checkbox-group/checkbox-group.component.{ts,html}
+    Port of angular/src/tedi/components/form/checkbox-group/checkbox-group.component.{ts,html}
 
     Angular's selector `tedi-checkbox-group` is an element selector, but the
     vendored SCSS contains no `tedi-checkbox-group { … }` element rule (only the

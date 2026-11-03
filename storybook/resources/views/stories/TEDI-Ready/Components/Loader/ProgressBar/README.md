@@ -4,6 +4,15 @@
 Project a `<tedi-feedback-text>` inside `<tedi-progress-bar>` to add a hint
 or error message below the bar.
 
+### Announcing changes
+
+Progress bars are not live regions by default. Enable announcements when
+users need updates without navigating back to the bar. Upstream's **Announced**
+story is a client-side countdown and has no Blade equivalent; in Blade, set
+`announce="polite"` (or `assertive`) and the bundled `tediProgressBar`
+behaviour publishes each value change a Livewire re-render or an Alpine
+`:value` binding makes.
+
 ### Responsive inputs
 
 `size`, `labelPosition`, `showValue`, `valuePosition` and `valueLabel` can be

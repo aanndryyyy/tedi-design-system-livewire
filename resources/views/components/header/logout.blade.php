@@ -1,6 +1,6 @@
 {{--
     TEDI Header Logout.
-    Port of angular/tedi/components/layout/header/header-logout/header-logout.component.{ts,html}
+    Port of angular/src/tedi/components/layout/header/header-logout/header-logout.component.{ts,html}
 
     Breakpoints are not ported (CONVENTIONS.md §7); an unset `size` resolves to
     the non-mobile `default` branch — pass `size="small"` explicitly for the

@@ -80,9 +80,9 @@
                     :attributes="(new \Illuminate\View\ComponentAttributeBag)->merge($column['attributes'] ?? [])"
                 >
                     <x-slot:item-value>
-                        <tedi:dropdown-item-value type="checkbox" :selected="$isVisible" :disabled="$isLastVisible">
-                            <tedi:dropdown-item-value-label>{{ $column['label'] ?? $column['id'] }}</tedi:dropdown-item-value-label>
-                        </tedi:dropdown-item-value>
+                        <tedi:option-content type="checkbox" :selected="$isVisible" :disabled="$isLastVisible">
+                            <tedi:option-content-label>{{ $column['label'] ?? $column['id'] }}</tedi:option-content-label>
+                        </tedi:option-content>
                     </x-slot:item-value>
                 </tedi:dropdown-item>
             @endforeach

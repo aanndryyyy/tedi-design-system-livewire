@@ -1,115 +1,202 @@
 // =========================================================================
-// Table of contents — scroll spy, seek, and the mobile panel
+// Table of contents — the active trail, and the collapsible bottom sheet
 // =========================================================================
 //
-// Port of the community `table-of-contents.component.ts`. Big enough to earn
-// its place here rather than inline in the template (CONVENTIONS.md §8).
+// Port of `src/tedi/components/navigation/table-of-contents/`. Upstream's TOC
+// is CONTROLLED: the consumer owns `activeId` (scroll-spy, routing, clicks)
+// and the component only renders it. So this module has no scroll spy of its
+// own — that moved into the consumer, exactly as upstream's StickyInLayout
+// story does it. What it does own:
 //
-// What upstream does and this keeps:
+//   tableOfContents(config)
+//     - `activeId` as reactive state, so a consumer can drive it from Alpine
+//       (`x-model` / `wire:model` reach it through `x-modelable` on the root)
+//       and the items' selected class and `aria-current` follow without a
+//       server round-trip. The server renders the same state up front.
+//     - `isOpen(group)` — upstream's `isOpen()`: a nested group shows always
+//       when `defaultOpen`, otherwise only along the active trail. Angular
+//       walks `contentChildren()`; here the trail is read from the DOM
+//       through each item's `data-toc-item-id`.
+//     - `scrollActiveIntoView` — upstream's `revealActiveItem()` +
+//       `findScrollParent()`, verbatim: after `activeId` changes (and once on
+//       init, as `afterRenderEffect` does), scroll the TOC's own scroll region
+//       just enough to reveal the active row, 8px margin, smooth unless the
+//       user prefers reduced motion.
 //
-//   - one IntersectionObserver over every heading an item points at, whose
-//     callback sorts the targets by `getBoundingClientRect().top` and
-//     selects the first one wholly inside the viewport
-//   - `scrollAware` gates that callback, exactly as upstream's early return
-//   - `seekTo` sets a 500ms `isSeeking` window during which the observer
-//     stays quiet, so a smooth scroll does not repaint the active item on
-//     the way past every heading it crosses
-//   - clicking an item selects it, closes the mobile panel, then seeks
+//   tableOfContentsCollapsible(config)
+//     - everything above, plus the bottom sheet: `open`, `close()`, Escape,
+//       backdrop click and closing when a link or button in the list is
+//       activated (`onListClick`). Focus moves to the first tabbable element
+//       in the sheet on open and back to the bar's trigger on close — CDK
+//       Dialog's `autoFocus: 'first-tabbable'` + `restoreFocus`.
+//     - `hideOnScroll`: hide the bar on scroll down, reveal it on scroll up or
+//       within 8px of the top, ignoring deltas under 4px, one update per
+//       animation frame — upstream's `handleScroll()` verbatim. The scroll
+//       target is the window, or the element `scrollContainer` selects.
 //
-// Two deliberate differences, both consequences of there being no Angular
-// Router and no CDK Dialog here:
-//
-//   - upstream calls `router.navigate([], { fragment: id })`. This writes the
-//     same `#id` with `history.replaceState`, which records the fragment
-//     without the browser's instant jump that would fight the smooth scroll.
-//   - upstream opens the panel in a CDK dialog holding a second copy of the
-//     nav. Here the one nav gets `table-of-contents--modal-active`, which is
-//     the class upstream's copy is rendered with, so the same rule applies.
+// One structural divergence: CDK re-parents the sheet into an overlay
+// container at <body>. Here the sheet stays where it was written and is
+// positioned `fixed` (CONVENTIONS.md §11).
+
+function revealActiveItem(host) {
+    var activeItem = host.querySelector('[aria-current="location"]');
+    if (!activeItem) return;
+
+    var target = activeItem.querySelector(':scope > .tedi-table-of-contents__row') || activeItem;
+    var scroller = findScrollParent(host, target);
+    if (!scroller) return;
+
+    var scrollerRect = scroller.getBoundingClientRect();
+    var targetRect = target.getBoundingClientRect();
+    var margin = 8;
+    var behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+
+    if (targetRect.top < scrollerRect.top + margin) {
+        scroller.scrollBy({ top: targetRect.top - scrollerRect.top - margin, behavior: behavior });
+    } else if (targetRect.bottom > scrollerRect.bottom - margin) {
+        scroller.scrollBy({ top: targetRect.bottom - scrollerRect.bottom + margin, behavior: behavior });
+    }
+}
+
+function findScrollParent(host, el) {
+    var node = el.parentElement;
+
+    while (node && host.contains(node)) {
+        var overflowY = getComputedStyle(node).overflowY;
+
+        if ((overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight) {
+            return node;
+        }
+
+        node = node.parentElement;
+    }
+
+    return null;
+}
+
 export function tableOfContents(config) {
     var settings = config || {};
 
     return {
-        open: false,
         activeId: settings.activeId || '',
-        scrollAware: settings.scrollAware !== false,
-        scrollOnClick: settings.scrollOnClick !== false,
-        isSeeking: false,
-        _seekingTimeout: undefined,
-        _observer: undefined,
+        defaultOpen: settings.defaultOpen !== false,
+        scrollActiveIntoView: settings.scrollActiveIntoView === true,
 
         init: function () {
             var self = this;
 
-            if (typeof IntersectionObserver === 'undefined') return;
+            if (!this.scrollActiveIntoView) return;
 
-            this._observer = new IntersectionObserver(function () {
-                self._onIntersect();
-            }, { rootMargin: '0px 0px 0px 0px' });
+            var reveal = function () {
+                if (self.activeId) self.$nextTick(function () { revealActiveItem(self.$root); });
+            };
 
-            this._targets().forEach(function (target) {
-                self._observer.observe(target);
+            reveal();
+            this.$watch('activeId', reveal);
+        },
+
+        /** The group's item is open when the active item is it or below it. */
+        isOpen: function (group) {
+            if (this.defaultOpen) return true;
+            if (!this.activeId) return false;
+
+            var item = group.parentElement;
+            if (item.getAttribute('data-toc-item-id') === this.activeId) return true;
+
+            return Array.prototype.some.call(
+                item.querySelectorAll('[data-toc-item-id]'),
+                function (el) { return el.getAttribute('data-toc-item-id') === this.activeId; },
+                this
+            );
+        },
+    };
+}
+
+export function tableOfContentsCollapsible(config) {
+    var settings = config || {};
+    var base = tableOfContents(config);
+
+    return Object.assign(base, {
+        open: false,
+        barHidden: false,
+        hideOnScroll: settings.hideOnScroll === true,
+        scrollContainer: settings.scrollContainer || null,
+        _lastScrollY: 0,
+        _ticking: false,
+        _scrollTarget: null,
+        _onScroll: null,
+        _onKeydown: null,
+
+        init: function () {
+            var self = this;
+            var container = this.scrollContainer ? document.querySelector(this.scrollContainer) : null;
+
+            this._scrollTarget = container || window;
+            this._lastScrollY = this._currentScrollY();
+            this._onScroll = function () { self._handleScroll(); };
+            this._scrollTarget.addEventListener('scroll', this._onScroll, { passive: true });
+
+            this._onKeydown = function (event) {
+                if (self.open && event.key === 'Escape') self.close();
+            };
+            document.addEventListener('keydown', this._onKeydown);
+
+            this.$watch('open', function (open) {
+                self.$nextTick(function () {
+                    if (open) {
+                        var first = self.$refs.sheet && self.$refs.sheet.querySelector(
+                            'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                        );
+                        if (first) first.focus();
+                    } else if (self.$refs.trigger) {
+                        var trigger = self.$refs.trigger.querySelector('button') || self.$refs.trigger;
+                        trigger.focus();
+                    }
+                });
             });
         },
 
         destroy: function () {
-            if (this._observer) this._observer.disconnect();
-            clearTimeout(this._seekingTimeout);
+            if (this._scrollTarget) this._scrollTarget.removeEventListener('scroll', this._onScroll);
+            document.removeEventListener('keydown', this._onKeydown);
         },
 
-        /** Ids in document order, read off the rendered items. */
-        _ids: function () {
-            return Array.prototype.map.call(
-                this.$el.querySelectorAll('[data-toc-id]'),
-                function (el) { return el.getAttribute('data-toc-id'); }
-            ).filter(Boolean);
-        },
-
-        _targets: function () {
-            return this._ids()
-                .map(function (id) { return document.getElementById(id); })
-                .filter(Boolean);
-        },
-
-        _onIntersect: function () {
-            if (!this.scrollAware || this.isSeeking) return;
-
-            var targets = this._targets().sort(function (a, b) {
-                return a.getBoundingClientRect().top - b.getBoundingClientRect().top;
-            });
-
-            for (var i = 0; i < targets.length; i++) {
-                var rect = targets[i].getBoundingClientRect();
-
-                if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
-                    this.activeId = targets[i].id;
-                    break;
-                }
-            }
-        },
-
-        select: function (id) {
-            this.activeId = id;
+        close: function () {
             this.open = false;
-            this.seekTo(id);
         },
 
-        seekTo: function (id) {
+        onListClick: function (event) {
+            if (event.target.closest('a, button')) this.close();
+        },
+
+        _currentScrollY: function () {
+            return this._scrollTarget && this._scrollTarget !== window
+                ? this._scrollTarget.scrollTop
+                : window.scrollY;
+        },
+
+        _handleScroll: function () {
             var self = this;
 
-            if (!this.scrollOnClick || !id) return;
+            if (this._ticking) return;
+            this._ticking = true;
 
-            this.isSeeking = true;
-            clearTimeout(this._seekingTimeout);
-            this._seekingTimeout = setTimeout(function () {
-                self.isSeeking = false;
-            }, 500);
+            requestAnimationFrame(function () {
+                self._ticking = false;
+                var currentY = self._currentScrollY();
 
-            var target = document.getElementById(id);
-            if (target) target.scrollIntoView({ behavior: 'smooth' });
+                if (!self.hideOnScroll) {
+                    self.barHidden = false;
+                    self._lastScrollY = currentY;
+                    return;
+                }
 
-            if (window.history && window.history.replaceState) {
-                window.history.replaceState(null, '', '#' + id);
-            }
+                var delta = currentY - self._lastScrollY;
+                if (Math.abs(delta) < 4) return;
+
+                self.barHidden = currentY > 8 && delta > 0;
+                self._lastScrollY = currentY;
+            });
         },
-    };
+    });
 }

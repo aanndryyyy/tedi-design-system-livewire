@@ -1,6 +1,6 @@
 {{--
     TEDI Empty State.
-    Port of angular/tedi/components/helpers/empty-state/empty-state.component.{ts,html}
+    Port of angular/src/tedi/components/content/empty-state/empty-state.component.{ts,html}
 
     Description is the default slot (Angular's <ng-content />). Actions are
     the named `actions` slot (Angular's <ng-content select="[tedi-empty-state-actions]" />).

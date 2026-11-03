@@ -1,0 +1,1 @@
+`maxWidth` takes a preset — `none` sizes the panel to its content, `small` / `medium` / `large` are the fixed scale — or any CSS length (`20rem`, `340px`, `min(90vw, 30rem)`) when the scale doesn't fit. A length is applied inline, so no preset class competes with it.

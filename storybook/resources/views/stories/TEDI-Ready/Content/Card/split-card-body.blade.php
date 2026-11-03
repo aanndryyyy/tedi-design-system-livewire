@@ -7,10 +7,12 @@
 ])
 
 {{--
-    Angular's tip stacks the two blocks below the sm breakpoint via
-    `class="flex-column flex-sm-row"` utility classes. This package ports no
-    utility-class layer (see README), so tedi-card-row's row layout is kept
-    static here instead of responsive.
+    Angular stacks the two blocks below the sm breakpoint with
+    `direction="column"` plus `[sm]="{ direction: 'row' }"`. Breakpoint inputs
+    are not ported (CONVENTIONS.md §7), and core's `flex-column flex-sm-row`
+    utilities are no substitute: the row rounds the corners it shares with the
+    card from its `direction`, not from the computed flex direction. The row
+    layout Angular shows from `sm` up is therefore kept static here.
 --}}
 <tedi:card>
     <tedi:card-row>

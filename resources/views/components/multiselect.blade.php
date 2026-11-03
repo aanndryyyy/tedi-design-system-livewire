@@ -37,12 +37,12 @@
 
     KNOWN DIVERGENCES:
 
-    * The option rows use `tedi:dropdown-item-value` rather than upstream's
+    * The option rows use `tedi:option-content` rather than upstream's
       community `tedi-checkbox` element. That component's markup
       (`tedi-checkbox__input-area` / `__indicator` / `__label`) is styled only
       by `community/.../checkbox.component.scss`, which is NOT vendored here —
       the vendored checkbox is `tedi/`'s attribute-based
-      `input[tedi-checkbox]`. `dropdown-item-value` is the port's existing
+      `input[tedi-checkbox]`. `option-content` is the port's existing
       checkbox-inside-a-dropdown-row idiom (filter uses it too), it emits only
       classes the vendored SCSS defines, and its `pointer-events: none` on
       `__checkbox` reproduces exactly what upstream's
@@ -51,11 +51,14 @@
       NOT emitted — the first is styled only in the un-vendored community
       stylesheet, the second is styled nowhere at all (CONVENTIONS.md §4).
 
-    * `tedi-card--spacing-none` is DROPPED. Upstream wraps the panel in the
-      deprecated community `tedi-card` with `spacing="none"`; that stylesheet
-      is not vendored and nothing styles the class. The panel composes this
-      package's `tedi:card` / `tedi:card-content` with zero padding instead,
-      which is the same rendered result through classes that do have rules.
+    * The panel is the TEDI-ready card, as upstream now uses too (#607):
+      `tedi:card background="primary" :padding="0"` around a bare
+      `tedi:card-content`, which inherits both from the card.
+
+    * Upstream deprecates this component (Angular 9, #705: "Use Select with
+      `[multiple]="true"` from TEDI-ready instead") with a console warning in
+      its constructor, and removed its stories (#816). Neither the warning nor
+      the stories are ported; the deprecation is recorded here instead.
 
     * `dropdownWidthRef` was an `ElementRef`, which cannot cross into Blade
       (CONVENTIONS.md §5). It becomes `dropdown-width`: `trigger` (upstream's
@@ -207,12 +210,12 @@
     $allSelected = $allOptionValues !== []
         && array_diff($allOptionValues, $selected) === [];
 
-    // `tedi:dropdown-item-value` renders its checkbox itself and puts the
+    // `tedi:option-content` renders its checkbox itself and puts the
     // attribute bag on its own root, so the indicator cannot be bound from the
     // template — the same bind filter.js does from syncOptionIndicator().
     // Server-side it is already correct; this only matters once Alpine takes over.
     $checkboxEffect = fn (string $expression): string =>
-        "\$el.querySelector('.tedi-dropdown-item-value__checkbox').checked = ".$expression;
+        "\$el.querySelector('.tedi-option-content__checkbox').checked = ".$expression;
 
     // Built here rather than inline: a `new \Foo(…)` echo inside a component
     // tag's attribute list is not parsed by Blade's component-tag compiler,
@@ -345,12 +348,14 @@
 
     <tedi:card
         class="tedi-select__dropdown"
+        background="primary"
+        :padding="0"
         x-ref="panel"
         x-show="open"
         x-cloak
         x-bind:data-placement="side"
     >
-        <tedi:card-content :padding="0">
+        <tedi:card-content>
             <ul
                 id="{{ $listboxId }}"
                 class="tedi-select__options"
@@ -374,10 +379,10 @@
                             x-bind:aria-selected="allOptionsSelected"
                             x-on:click="activate({{ $row['index'] }})"
                         >
-                            <tedi:dropdown-item-value type="checkbox" :selected="$allSelected"
+                            <tedi:option-content type="checkbox" :selected="$allSelected"
                                 :x-effect="$checkboxEffect('allOptionsSelected')">
                                 {{ __('tedi::tedi.select.select-all') }}
-                            </tedi:dropdown-item-value>
+                            </tedi:option-content>
                         </li>
                     @elseif ($row['kind'] === 'group')
                         <li
@@ -389,10 +394,10 @@
                             x-bind:aria-selected="isGroupSelected(@js($row['group']))"
                             x-on:click="activate({{ $row['index'] }})"
                         >
-                            <tedi:dropdown-item-value type="checkbox" :selected="$groupSelected($row['group'])"
+                            <tedi:option-content type="checkbox" :selected="$groupSelected($row['group'])"
                                 :x-effect="$checkboxEffect('isGroupSelected('.json_encode($row['group']).')')">
                                 <tedi:text color="tertiary">{{ $row['group'] }}</tedi:text>
-                            </tedi:dropdown-item-value>
+                            </tedi:option-content>
                         </li>
                     @elseif ($row['kind'] === 'group-heading')
                         <li tedi-dropdown-item class="tedi-select__group-name" role="presentation">
@@ -408,14 +413,14 @@
                             x-bind:aria-selected="isOptionSelected(@js($row['value']))"
                             x-on:click="activate({{ $row['index'] }})"
                         >
-                            <tedi:dropdown-item-value
+                            <tedi:option-content
                                 type="checkbox"
                                 :selected="isset($selectedSet[$row['value']])"
                                 :disabled="$row['disabled']"
                                 :x-effect="$checkboxEffect('isOptionSelected('.json_encode($row['value']).')')"
                             >
                                 {{ $row['label'] }}
-                            </tedi:dropdown-item-value>
+                            </tedi:option-content>
                         </li>
                     @endif
                 @empty

@@ -46,5 +46,6 @@
     :columns="$columns"
     :rows="$expandableRows"
     :expandable="true"
-    :expand-button-label="['open' => 'Show details', 'close' => 'Hide details']"
+    :expand-button-label="['open' => 'Kuva rohkem', 'close' => 'Kuva vähem']"
+    :control-column-order="['content', 'expand']"
 />

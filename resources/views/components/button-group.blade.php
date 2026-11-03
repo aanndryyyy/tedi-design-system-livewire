@@ -271,17 +271,17 @@
                         :x-on:click.capture="$itemToggleJs"
                     >
                         <x-slot:item-value>
-                            <tedi:dropdown-item-value>
+                            <tedi:option-content>
                                 @if ($leadIcon)
                                     <tedi:icon :name="$leadIcon" color="inherit" :size="18" />
                                 @endif
 
-                                <tedi:dropdown-item-value-label>{{ $item['label'] ?? '' }}</tedi:dropdown-item-value-label>
+                                <tedi:option-content-label>{{ $item['label'] ?? '' }}</tedi:option-content-label>
 
                                 @if ($item['iconRight'] ?? null)
                                     <tedi:icon :name="$item['iconRight']" color="inherit" :size="18" />
                                 @endif
-                            </tedi:dropdown-item-value>
+                            </tedi:option-content>
                         </x-slot:item-value>
                     </tedi:dropdown-item>
                 @endforeach

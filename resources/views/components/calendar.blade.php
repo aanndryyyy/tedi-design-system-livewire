@@ -1,6 +1,6 @@
 {{--
     TEDI Calendar — DOCUMENTED SUBSET.
-    Port of angular/tedi/components/content/calendar/{calendar.component.ts,calendar.component.html}
+    Port of angular/src/tedi/components/content/calendar/{calendar.component.ts,calendar.component.html}
 
     Root element: a <div> carrying the host classes. `tedi-calendar` is NOT one of
     the tags the vendored SCSS targets with an ELEMENT selector (verified by

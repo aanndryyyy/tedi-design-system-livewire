@@ -173,7 +173,7 @@ class FilterComponentsTest extends TestCase
         $html = $this->withOptions();
 
         $this->assertStringContainsString('<tedi-dropdown', $html);
-        $this->assertStringContainsString('aria-haspopup', $html);
+        $this->assertStringContainsString("ariaHaspopup: 'dialog'", $html);
         $this->assertStringContainsString('arrow_drop_down', $html);
         $this->assertStringNotContainsString('>check</tedi-icon>', $html);
     }
@@ -274,7 +274,7 @@ class FilterComponentsTest extends TestCase
         $html = $this->multi();
 
         $this->assertHasClass(
-            'tedi-dropdown-item-value--checkbox', $html, 'tedi-dropdown-item-value--checkbox'
+            'tedi-option-content--checkbox', $html, 'tedi-option-content--checkbox'
         );
     }
 

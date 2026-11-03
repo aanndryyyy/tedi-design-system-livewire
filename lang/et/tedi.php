@@ -1,7 +1,7 @@
 <?php
 
 // Generated from @tedi-design-system/angular
-// src/tedi/services/translation/translations.ts — do not edit by hand.
+// src/tedi/services/translation/translations.ts by scripts/generate-lang.cjs — do not edit by hand.
 // Function entries become :placeholders, key.true/key.false variants for a
 // boolean selector, and "{1} …|[0,*] …" choice strings for count wording.
 
@@ -233,4 +233,12 @@ return [
     "dateTimeField.timeHeading" => "Kellaaeg",
     "dateTimeField.selectTime" => "Vali kellaaeg",
     "dateTimeField.back" => "Tagasi",
+    "sheet.close" => "Sulge",
+    "sheet.collapse" => "Ahenda",
+    "sheet.expand" => "Laienda",
+    "stepper.previous" => "Eelmine samm",
+    "stepper.next" => "Järgmine samm",
+    "stepper.open-steps" => "Ava sammud",
+    "stepper.steps" => "Sammud",
+    "stepper.status" => "Samm :current / :total",
 ];

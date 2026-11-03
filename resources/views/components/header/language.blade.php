@@ -1,6 +1,6 @@
 {{--
     TEDI Header Language.
-    Port of angular/tedi/components/layout/header/header-language/header-language.component.{ts,html}
+    Port of angular/src/tedi/components/layout/header/header-language/header-language.component.{ts,html}
 
     Angular wraps the trigger and the option list in `<tedi-popover>`. That
     component is now ported (`tedi:popover`, positioned by `tediOverlay` — see

@@ -1,0 +1,44 @@
+$headings: (h1, h2, h3, h4, h5, h6);
+$shimmer-edge: color-mix(
+  in srgb,
+  var(--loader-skeleton-color) 70%,
+  var(--tedi-neutral-100)
+);
+
+.tedi-skeleton-block {
+  display: block;
+  width: 100%;
+  background: linear-gradient(
+    to right,
+    #{$shimmer-edge} 8%,
+    var(--loader-skeleton-color) 18%,
+    #{$shimmer-edge} 33%
+  );
+  background-size: 1000px 100px;
+  border-radius: var(--loader-skeleton-radius);
+  animation: tedi-skeleton-block-wave 2s infinite ease-in-out;
+
+  &--p {
+    height: var(--body-regular-line-height);
+  }
+
+  @each $heading in $headings {
+    &--#{$heading} {
+      height: var(--heading-#{$heading}-line-height);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes tedi-skeleton-block-wave {
+  0% {
+    background-position: -400px 0;
+  }
+
+  100% {
+    background-position: 600px 0;
+  }
+}

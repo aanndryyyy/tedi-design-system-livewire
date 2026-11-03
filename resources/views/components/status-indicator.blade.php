@@ -1,6 +1,6 @@
 {{--
     TEDI Status indicator.
-    Port of angular/tedi/components/tags/status-indicator/status-indicator.component.ts
+    Port of angular/src/tedi/components/tags/status-indicator/status-indicator.component.ts
 
     Angular's template is empty — the component is host-classes-only. The
     Blade port is a single decorative <span>.

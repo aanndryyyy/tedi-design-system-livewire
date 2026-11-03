@@ -230,6 +230,32 @@ class BreadcrumbsComponentsTest extends TestCase
         $this->assertStringContainsString('aria-label="Näita rohkem"', $html);
     }
 
+    public function test_ellipsis_dropdown_is_a_plain_list_of_links(): void
+    {
+        // #541: dropdownRole="list", so the collapsed crumbs stay links and
+        // the rows carry no menuitem role or roving tabindex.
+        $html = Blade::render('<tedi:breadcrumbs :max-items="4" :items="'.$this->trail(6).'" />');
+
+        $this->assertMatchesRegularExpression('/<ul\b[^>]*\brole="list"/', $html);
+        $this->assertHasClass('tedi-dropdown-content__list--plain', $html, 'tedi-dropdown-content__list');
+        $this->assertStringNotContainsString('role="menu"', $html);
+        $this->assertStringNotContainsString('role="menuitem"', $html);
+        $this->assertSame(0, preg_match('/<li\b[^>]*tedi-breadcrumbs__dropdown-item[^>]*tabindex/', $html));
+        $this->assertSame(0, preg_match('/<li\b[^>]*tabindex[^>]*tedi-breadcrumbs__dropdown-item/', $html));
+    }
+
+    public function test_collapsed_crumbs_keep_their_own_underline(): void
+    {
+        // Upstream dropped the rule forcing collapsed crumbs to be non-underlined.
+        $items = "[['label' => 'A', 'href' => '#'], ['label' => 'B', 'href' => '#', 'underline' => false], ['label' => 'C', 'href' => '#'], ['label' => 'Current']]";
+        $html = Blade::render('<tedi:breadcrumbs :max-items="2" :items="'.$items.'" />');
+
+        preg_match_all('/<li\b[^>]*tedi-breadcrumbs__dropdown-item.*?<\/li>/s', $html, $rows);
+        $this->assertCount(2, $rows[0]);
+        $this->assertMissingClass('tedi-link--no-underline', $rows[0][1], 'tedi-link');
+        $this->assertHasClass('tedi-link--no-underline', $rows[0][0], 'tedi-link');
+    }
+
     public function test_ellipsis_dropdown_wires_aria_between_trigger_and_panel(): void
     {
         $html = Blade::render('<tedi:breadcrumbs :max-items="4" :items="'.$this->trail(6).'" />');

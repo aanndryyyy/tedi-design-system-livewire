@@ -27,7 +27,10 @@
     positioning CSS for it (`.tedi-affix` is `z-index` and nothing else). Since
     the whole point of the component is lost without it, the port writes the
     equivalent inline style itself — `position: sticky` plus the `top`/`bottom`
-    offset — which is what StickyBox produces in the common case. What is NOT
+    offset — which is what StickyBox produces in the common case. Upstream's
+    `--tedi-affix-offset-top` / `--tedi-affix-offset-bottom` custom properties
+    are written alongside, in px, exactly as upstream computes them (without
+    the header height — see below). What is NOT
     ported is StickyBox's measurement: it also shrinks the sticky area to the
     parent's box and handles content taller than the viewport by pinning the
     bottom edge instead.
@@ -97,6 +100,12 @@
         if (is_numeric($bottom)) {
             $stickyStyles[] = 'bottom: '.$bottom.'rem';
         }
+
+        // Upstream writes these on the StickyBox in px (offset × 16), so
+        // descendants can size themselves against the pinned area — React's
+        // table-of-contents reads them. A non-numeric offset counts as 0.
+        $stickyStyles[] = '--tedi-affix-offset-top: '.((is_numeric($top) ? (float) $top : 0) * 16).'px';
+        $stickyStyles[] = '--tedi-affix-offset-bottom: '.((is_numeric($bottom) ? (float) $bottom : 0) * 16).'px';
     }
 
     // ->style([]) would emit a literal style="" in fixed mode, so only chain

@@ -5,22 +5,17 @@
     'args' => [],
 ])
 
-{{--
-    Angular repeats name="horizontal-demo" on every input; the Blade port
-    hoists it to the group, which propagates it to each <tedi:radio> via
-    @aware for the same rendered DOM.
---}}
-<tedi:radio-group label="Label" name="horizontal-demo">
+<tedi:radio-group label="Tooraine">
     <tedi:form.label color="primary" class="flex align-items-center gap-2">
-        <tedi:radio />
-        Text
+        <tedi:radio name="horizontal-demo" />
+        Kartul
     </tedi:form.label>
     <tedi:form.label color="primary" class="flex align-items-center gap-2">
-        <tedi:radio />
-        Text
+        <tedi:radio name="horizontal-demo" />
+        Kapsas
     </tedi:form.label>
     <tedi:form.label color="primary" class="flex align-items-center gap-2">
-        <tedi:radio :checked="true" />
-        Text
+        <tedi:radio name="horizontal-demo" :checked="true" />
+        Peet
     </tedi:form.label>
 </tedi:radio-group>
