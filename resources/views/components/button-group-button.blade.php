@@ -118,6 +118,7 @@
     {{-- Escaped, not raw: json_encode quotes the value with `"`, which e()
          turns into &quot; so it cannot terminate the attribute. --}}
     x-on:click="tediToggle({{ $valueJs }})"
+    @if ($selected) x-init="tediSeed({{ $valueJs }})" @endif
     x-bind:aria-pressed="tediIsSelected({{ $valueJs }}).toString()"
     {{ $attributes->class([
         'tedi-button',

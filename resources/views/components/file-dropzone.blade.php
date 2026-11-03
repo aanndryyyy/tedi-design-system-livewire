@@ -152,10 +152,16 @@
                 :color="$disabled ? 'tertiary' : 'secondary'"
                 x-text="dragActive ? 'file_upload' : 'attach_file'"
             />
+            @php
+                // Directives such as @js are not compiled inside a component
+                // tag's attributes, so the expression is built here.
+                $labelXText = 'dragActive ? '.\Illuminate\Support\Js::from(__('tedi::tedi.file-upload.drag-and-drop'))
+                    .' : '.\Illuminate\Support\Js::from((string) $label);
+            @endphp
             <tedi:form.label
                 :for="$inputId"
                 class="tedi-file-dropzone__label"
-                x-text="dragActive ? @js(__('tedi::tedi.file-upload.drag-and-drop')) : @js($label)"
+                :x-text="$labelXText"
             >{{ $label }}</tedi:form.label>
         </div>
     </button>

@@ -78,7 +78,8 @@
     The layer is additive: `value` still decides the rendered `aria-pressed` and
     the dropdown's `--selected` class, so a JS-stripped page keeps the correct
     static markup. Slot-written items participate too — they sit in the same
-    Alpine scope — but they still pass their own initial `:selected`.
+    Alpine scope — and pass their own initial `:selected`, which seeds the
+    live value (`tediSeed`) when the group itself was given no `value`.
 
     `output()` (`selectionChange`) is not re-emitted (§7.2); the Alpine state is
     the source of truth after hydration. A consumer needing the server to know
@@ -172,6 +173,19 @@
     x-data="{
         tediValue: @js($initialValue),
         tediMultiple: @js((bool) $multiple),
+        {{-- Slot-written buttons that render :selected seed the live value, so
+             Alpine does not overwrite their server state with an empty group
+             value. Only when the group was given no value: then it wins. --}}
+        tediSeedable: @js($initialValue === null || $initialValue === '' || $initialValue === []),
+        tediSeed(value) {
+            if (! this.tediSeedable) return;
+            if (this.tediMultiple) {
+                const current = Array.isArray(this.tediValue) ? this.tediValue : [];
+                if (! current.includes(value)) this.tediValue = [...current, value];
+            } else if (this.tediValue === null || this.tediValue === '') {
+                this.tediValue = value;
+            }
+        },
         @if ($dropdownMode)
         {{-- The trigger's x-effect/x-text are unconditional (a Blade directive
              inside a <tedi:…> tag leaves its opening tag uncompiled), so these
