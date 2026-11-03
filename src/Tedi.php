@@ -155,8 +155,10 @@ class Tedi
                     'provider' => 'form-field',
                     'size' => Tedi::fieldSize($field['size']),
                     // hasBox(): an icon, or a clear button for a control that
-                    // can be reset.
-                    'ownsSurface' => ! empty($field['icon']) || ($clearable && ! empty($control['reset'])),
+                    // can be reset. The REGISTERED control decides, as it does
+                    // in form-field.blade.php: only the first control registers,
+                    // so a second control must agree with the box actually drawn.
+                    'ownsSurface' => ! empty($field['icon']) || ($clearable && ! empty($registered['reset'])),
                     'invalid' => (bool) $aware('invalid', false) || $exceeded,
                     'valid' => (bool) $field['valid'],
                     'disabled' => (bool) $aware('disabled', false),
@@ -228,6 +230,30 @@ class Tedi
         if (in_array($name, self::RENDER_PROVIDERS, true)) {
             static::$rendering[] = ['depth' => $depth, 'frames' => $frames];
         }
+    }
+
+    /** Per-process random part of the table-of-contents numbering markers. */
+    private static ?string $tocToken = null;
+
+    /**
+     * A placeholder table-of-contents items emit for their number, rewritten
+     * by the enclosing item or root once the order is known. The random part
+     * keeps consumer text that happens to contain the marker's fixed prefix
+     * from being rewritten.
+     */
+    public static function tocMarker(string $kind): string
+    {
+        self::$tocToken ??= bin2hex(random_bytes(6));
+
+        return '__TEDI_TOC_'.$kind.'_'.self::$tocToken.'__';
+    }
+
+    /** Matches both markers; group 1 is NUMBER or PREFIX. */
+    public static function tocMarkerPattern(): string
+    {
+        self::$tocToken ??= bin2hex(random_bytes(6));
+
+        return '/__TEDI_TOC_(NUMBER|PREFIX)_'.self::$tocToken.'__/';
     }
 
     /**

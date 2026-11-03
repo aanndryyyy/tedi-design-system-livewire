@@ -62,7 +62,9 @@ class TediServiceProvider extends ServiceProvider
     protected function registerFieldContextTracking(): void
     {
         \Illuminate\Support\Facades\View::composer('*', function ($view): void {
-            Tedi::trackRender($this->app['view'], $view->name());
+            // The view's own factory, not the container's: the same one
+            // fieldContext() reads as $__env, also under Octane.
+            Tedi::trackRender($view->getFactory(), $view->name());
         });
     }
 

@@ -129,7 +129,16 @@ export function tableOfContentsCollapsible(config) {
 
         init: function () {
             var self = this;
-            var container = this.scrollContainer ? document.querySelector(this.scrollContainer) : null;
+            var container = null;
+            if (this.scrollContainer) {
+                // An invalid selector throws; fall back to the window rather than
+                // aborting init and leaving the sheet dead.
+                try {
+                    container = document.querySelector(this.scrollContainer);
+                } catch (e) {
+                    container = null;
+                }
+            }
 
             this._scrollTarget = container || window;
             this._lastScrollY = this._currentScrollY();

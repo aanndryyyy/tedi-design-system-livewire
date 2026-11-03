@@ -60,7 +60,8 @@
       the control, fires `input` and `change` (so `wire:model` follows) and focuses
       it, which is Angular's `reset()` + `focus()`. Without the bundle the button
       keeps its render-time state and only `clearAttributes` (e.g. `wire:click`)
-      act on a click. The `clear` output is not re-emitted (CONVENTIONS.md §7 item 2).
+      act on a click. An `x-on:click` / `@click` in `clearAttributes` runs after
+      `clear()` rather than replacing it. The `clear` output is not re-emitted (CONVENTIONS.md §7 item 2).
     * `handleBoxMouseDown` (click-to-focus on the box padding) is not ported.
     * `--tedi-form-field-control-scrollbar` is always `0px`: Angular measures
       the textarea's classic scrollbar with a ResizeObserver; nothing measures
@@ -134,6 +135,16 @@
         ];
     }
 
+    // A consumer click handler in clearAttributes runs after clear(); merging
+    // it as-is would replace clear() (an attribute bag keeps one value per key).
+    $clearAttributesRest = $clearAttributes instanceof \Illuminate\View\ComponentAttributeBag ? $clearAttributes->getAttributes() : (array) $clearAttributes;
+    $consumerClicks = array_values(array_filter([
+        $clearAttributesRest['x-on:click'] ?? null,
+        $clearAttributesRest['@click'] ?? null,
+    ]));
+    unset($clearAttributesRest['x-on:click'], $clearAttributesRest['@click']);
+    $clearClick = implode('; ', array_merge(['clear()'], $consumerClicks));
+
     $showFeedbackRow = (isset($feedback) && $feedback->isNotEmpty()) || $characterLimit !== null;
     // Shared with the control, which may already have put it in its aria-describedby.
     $baseId = $__tediFieldId ?? \Tedi\Livewire\Tedi::id('tedi-form-field');
@@ -145,12 +156,7 @@
     'tedi-form-field--clear-on-interaction' => $showClearOnInteraction && $showClearButton,
     'tedi-form-field--small' => $size === 'small',
     'tedi-form-field--large' => $size === 'large',
-]) }}
-    @if ($renderClearButton)
-        x-data="tediFormField({ clearOnInteraction: @js((bool) $showClearOnInteraction) })"
-        x-bind:class="{ 'tedi-form-field--clear-on-interaction': clearOnInteraction && showClear }"
-    @endif
->
+]) }}>
     @if (isset($label) && $label->isNotEmpty())
         {{ $label }}
     @endif
@@ -176,6 +182,8 @@
                         'tedi-form-field__buttons--hidden' => ! $showClearButton,
                     ])
                     @if (! $showClearButton) aria-hidden="true" @endif
+                    x-data="tediFormField({ clearOnInteraction: @js((bool) $showClearOnInteraction) })"
+                    x-effect="syncRoot()"
                     x-bind:class="{ 'tedi-form-field__buttons--hidden': ! showClear }"
                     x-bind:aria-hidden="showClear ? null : 'true'"
                 >
@@ -190,8 +198,8 @@
                         :disabled="! $showClearButton"
                         x-bind:tabindex="showClear ? 0 : -1"
                         x-bind:disabled="! showClear"
-                        x-on:click="clear()"
-                        {{ $attributes->only([])->merge($clearAttributes) }}
+                        x-on:click="{{ $clearClick }}"
+                        {{ $attributes->only([])->merge($clearAttributesRest) }}
                     />
 
                     @if ($icon)

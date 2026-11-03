@@ -511,4 +511,33 @@ class DropdownComponentsTest extends TestCase
         $this->assertStringContainsString('role="none"', $html);
         $this->assertStringNotContainsString('role="menuitem"', $html);
     }
+
+    public function test_trigger_init_config_cannot_break_out_of_its_string(): void
+    {
+        $html = Blade::render(
+            '<tedi:dropdown container-id="x\' + alert(1) + \'"><tedi:dropdown-trigger>T</tedi:dropdown-trigger><tedi:dropdown-content><tedi:dropdown-item>A</tedi:dropdown-item></tedi:dropdown-content></tedi:dropdown>'
+        );
+
+        preg_match('/x-init="initTrigger\(\$el, \{(.*?)\}\)"/s', $html, $m);
+        $this->assertNotEmpty($m, 'initTrigger config not found');
+        // The attribute value as the browser decodes it, before Alpine runs it.
+        $decoded = html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5);
+        // Js::from delimits with ' and hex-escapes every quote inside, so the
+        // consumer's quotes can no longer end the string literal.
+        $this->assertStringContainsString("containerId: 'x\\u0027 + alert(1) + \\u0027'", $decoded);
+    }
+
+    public function test_trigger_aria_is_reapplied_after_a_livewire_morph(): void
+    {
+        // The decorated element is consumer markup, so its role/tabindex/ARIA
+        // come from initTrigger; Livewire's morph strips them and x-init does
+        // not re-run, so the morph hook re-applies them (also for tediFilter,
+        // which mixes in dropdownTrigger) and destroy() unregisters it.
+        $js = file_get_contents(__DIR__.'/../../resources/js/src/dropdown.js');
+
+        $this->assertStringContainsString("livewire.hook('morph.updated'", $js);
+        $this->assertStringContainsString('payload.el === self._focusableTrigger()', $js);
+        $this->assertStringContainsString('self._applyTriggerAria();', $js);
+        $this->assertStringContainsString('var hostDestroy = this.destroy;', $js);
+    }
 }

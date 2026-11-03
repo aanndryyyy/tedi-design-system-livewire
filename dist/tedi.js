@@ -64,6 +64,11 @@
       lastTime: 0,
       samples: [],
       minSwipeDistance: MIN_SWIPE_DISTANCE,
+      /** The dragging pointer, and whether the viewport has captured it yet. */
+      pointerId: null,
+      captured: false,
+      /** Set by a release that was a swipe, so the click it produces is swallowed. */
+      suppressClick: false,
       configure(options = {}) {
         Object.assign(this, options);
         this.swipeThreshold = Math.min(Math.max(Number(this.swipeThreshold) || 0, 0), 1);
@@ -155,9 +160,9 @@
       },
       pointerDown(ev) {
         if (!this.count) return;
-        if (this.viewport && this.viewport.setPointerCapture) {
-          this.viewport.setPointerCapture(ev.pointerId);
-        }
+        this.pointerId = ev.pointerId;
+        this.captured = false;
+        this.suppressClick = false;
         this.dragging = true;
         this.animate = false;
         this.startX = ev.clientX;
@@ -168,8 +173,21 @@
         this.minSwipeDistance = ev.pointerType === "mouse" ? MIN_MOUSE_SWIPE_DISTANCE : MIN_SWIPE_DISTANCE;
       },
       pointerMove(ev) {
-        if (!this.dragging) return;
+        if (!this.dragging || ev.pointerId !== this.pointerId) return;
+        if (!this.captured && ev.pointerType === "mouse" && ev.buttons === 0) {
+          this.pointerCancel();
+          return;
+        }
         const dx = ev.clientX - this.startX;
+        if (!this.captured && Math.abs(dx) >= this.minSwipeDistance) {
+          this.captured = true;
+          if (this.viewport && this.viewport.setPointerCapture) {
+            try {
+              this.viewport.setPointerCapture(ev.pointerId);
+            } catch (e) {
+            }
+          }
+        }
         this.lastX = ev.clientX;
         this.lastTime = ev.timeStamp;
         this.samples.push({ x: ev.clientX, t: ev.timeStamp });
@@ -193,11 +211,15 @@
         this.index = this.snap(this.startIndex);
       },
       pointerUp(ev) {
-        if (!this.dragging) return;
+        if (!this.dragging || ev && ev.pointerId !== void 0 && ev.pointerId !== this.pointerId) return;
         if (ev && typeof ev.clientX === "number") {
           this.pointerMove(ev);
         }
         this.dragging = false;
+        if (Math.abs(this.lastX - this.startX) >= this.minSwipeDistance) {
+          this.suppressClick = true;
+          setTimeout(() => this.suppressClick = false, 0);
+        }
         const target = this.swipeTarget(ev && ev.timeStamp !== void 0 ? ev.timeStamp : this.lastTime);
         if (Math.abs(target - this.index) < EPSILON && Math.abs(target - this.startIndex) < EPSILON) {
           this.animate = true;
@@ -205,6 +227,13 @@
           return;
         }
         this.moveTo(target);
+      },
+      /** Capture-phase click on the viewport: swallow the click a swipe's release produced. */
+      clickCapture(ev) {
+        if (!this.suppressClick) return;
+        this.suppressClick = false;
+        ev.preventDefault();
+        ev.stopPropagation();
       },
       /**
        * Where a released drag settles. Walks stop position to stop position in the
@@ -631,8 +660,43 @@
      * config.containerId   pairs id / aria-controls, or null
      */
     initTrigger: function(el, config) {
+      var self = this;
       var cfg = config || {};
+      var hasPopup = cfg.ariaHaspopup;
+      if (!hasPopup) {
+        var list = el.parentElement && el.parentElement.querySelector(".tedi-dropdown__panel ul[role]");
+        var role = list ? list.getAttribute("role") : "menu";
+        hasPopup = role === "menu" || role === "listbox" ? role : "false";
+      }
+      this._triggerAria = { containerId: cfg.containerId || null, hasPopup };
+      this._applyTriggerAria();
+      this.$watch("open", function() {
+        self._applyTriggerAria();
+      });
+      var livewire = window.Livewire;
+      if (livewire && typeof livewire.hook === "function") {
+        var off = livewire.hook("morph.updated", function(payload) {
+          if (payload && payload.el && payload.el === self._focusableTrigger()) {
+            self._applyTriggerAria();
+          }
+        });
+        if (typeof off === "function") {
+          var hostDestroy = this.destroy;
+          this.destroy = function() {
+            off();
+            if (typeof hostDestroy === "function") hostDestroy.call(this);
+          };
+        }
+      }
+    },
+    /**
+     * Writes the trigger's role/tabindex, id and ARIA state onto the
+     * resolved control. Idempotent, so a morph can call it again.
+     */
+    _applyTriggerAria: function() {
+      var cfg = this._triggerAria;
       var focusable = this._focusableTrigger();
+      if (!cfg || !focusable) return;
       if (!focusable.matches(NATIVE_INTERACTIVE_SELECTOR)) {
         if (!focusable.hasAttribute("role")) focusable.setAttribute("role", "button");
         if (!focusable.hasAttribute("tabindex")) focusable.setAttribute("tabindex", "0");
@@ -640,27 +704,17 @@
       if (cfg.containerId) {
         focusable.setAttribute("id", cfg.containerId + "_trigger");
       }
-      var hasPopup = cfg.ariaHaspopup;
-      if (!hasPopup) {
-        var list = el.parentElement && el.parentElement.querySelector(".tedi-dropdown__panel ul[role]");
-        var role = list ? list.getAttribute("role") : "menu";
-        hasPopup = role === "menu" || role === "listbox" ? role : "false";
-      }
-      if (hasPopup === "false") {
+      if (cfg.hasPopup === "false") {
         focusable.removeAttribute("aria-haspopup");
       } else {
-        focusable.setAttribute("aria-haspopup", hasPopup);
+        focusable.setAttribute("aria-haspopup", cfg.hasPopup);
       }
-      var sync = function(open) {
-        focusable.setAttribute("aria-expanded", open ? "true" : "false");
-        if (cfg.containerId && open) {
-          focusable.setAttribute("aria-controls", cfg.containerId);
-        } else {
-          focusable.removeAttribute("aria-controls");
-        }
-      };
-      sync(this.open);
-      this.$watch("open", sync);
+      focusable.setAttribute("aria-expanded", this.open ? "true" : "false");
+      if (cfg.containerId && this.open) {
+        focusable.setAttribute("aria-controls", cfg.containerId);
+      } else {
+        focusable.removeAttribute("aria-controls");
+      }
     },
     /**
      * The trigger directive's element resolution: a natively interactive
@@ -1102,7 +1156,7 @@
       },
       selectOption: function(value) {
         this.value = this.singleValue === value ? "" : value;
-        if (cfg.clearSearchOnSelect) this.searchTerm = "";
+        if (cfg.clearSearchOnSelect) this.clearSearch();
         this.hide(true);
       },
       toggleOption: function(value) {
@@ -1110,7 +1164,7 @@
         this.value = current.indexOf(value) !== -1 ? current.filter(function(v) {
           return v !== value;
         }) : current.concat([value]);
-        if (cfg.clearSearchOnSelect) this.searchTerm = "";
+        if (cfg.clearSearchOnSelect) this.clearSearch();
       },
       toggleSelectAll: function() {
         var filtered = this.filteredOptions.filter(function(opt) {
@@ -1138,39 +1192,19 @@
       clearSingleSelection: function() {
         this.value = "";
       },
-      onSearchClear: function() {
-        this.searchTerm = "";
-      },
       /**
-       * form-field decides its clear button's visibility from the `value` it
-       * was given at render time, and there is no way to re-render it from
-       * here. The button itself is always in the DOM when `clearable`, so this
-       * reproduces form-field's own hidden/disabled bookkeeping on it as
-       * `searchTerm` changes.
-       *
-       * Bound with x-effect on the BUTTON, through form-field's
-       * `clear-attributes`, not on the search wrapper: Alpine initialises a
-       * parent's directives before its children's, so an effect on the
-       * wrapper would run before `x-ref="searchClear"` existed, bail out at
-       * the guard below, and — having read no reactive state — never run
-       * again. Reading `searchTerm` before the guard makes the dependency
-       * register even on a bail-out.
+       * clearSearchOnSelect: empty the search programmatically. x-model writes
+       * the input's value without an event, so the form-field's clear button
+       * (tediFormField, which re-syncs on input/change) is told with a
+       * `change`. x-model listens to `input`, so this does not loop.
        */
-      syncSearchClear: function() {
-        var show = this.searchTerm !== "";
-        var button = this.$refs.searchClear;
-        if (!button) return;
-        var wrapper = button.closest(".tedi-form-field__buttons");
-        button.disabled = !show;
-        button.setAttribute("tabindex", show ? "0" : "-1");
-        if (wrapper) {
-          wrapper.classList.toggle("tedi-form-field__buttons--hidden", !show);
-          if (show) {
-            wrapper.removeAttribute("aria-hidden");
-          } else {
-            wrapper.setAttribute("aria-hidden", "true");
-          }
-        }
+      clearSearch: function() {
+        this.searchTerm = "";
+        var root = this.$root;
+        this.$nextTick(function() {
+          var input = root.querySelector('[role="searchbox"]');
+          if (input) input.dispatchEvent(new Event("change", { bubbles: true }));
+        });
       },
       /**
        * `tedi:option-content` renders its checkbox/radio itself and puts
@@ -1339,24 +1373,53 @@
       filled: false,
       blocked: false,
       init() {
-        this._control = this.$el.querySelector(
-          '.tedi-form-field__box input:not([type="hidden"]), .tedi-form-field__box textarea'
-        );
+        var _a;
+        this._root = this.$el.closest(".tedi-form-field");
+        this._control = (_a = this.$el.closest(".tedi-form-field__box")) == null ? void 0 : _a.querySelector('input:not([type="hidden"]), textarea');
         if (!this._control) {
           return;
         }
+        this._sync = () => this.sync();
         this.sync();
-        this._control.addEventListener("input", () => this.sync());
-        this._control.addEventListener("change", () => this.sync());
+        this._control.addEventListener("input", this._sync);
+        this._control.addEventListener("change", this._sync);
+        const livewire = window.Livewire;
+        if (livewire && typeof livewire.hook === "function") {
+          const off = livewire.hook("morph.updated", ({ el }) => {
+            var _a2;
+            if (this._control && (el === this._control || ((_a2 = el.contains) == null ? void 0 : _a2.call(el, this._control)))) {
+              queueMicrotask(this._sync);
+            }
+          });
+          this._offMorph = typeof off === "function" ? off : null;
+        }
+      },
+      destroy() {
+        var _a, _b, _c;
+        (_a = this._control) == null ? void 0 : _a.removeEventListener("input", this._sync);
+        (_b = this._control) == null ? void 0 : _b.removeEventListener("change", this._sync);
+        (_c = this._offMorph) == null ? void 0 : _c.call(this);
+        this._control = null;
       },
       sync() {
         const control = this._control;
+        if (!control) {
+          return;
+        }
         this.filled = control.value !== "";
         this.blocked = control.disabled || control.readOnly;
       },
       /** showClearButton(): filled, enabled and editable. */
       get showClear() {
         return this.filled && !this.blocked;
+      },
+      /** The root's `--clear-on-interaction` modifier, kept in step with showClear. */
+      syncRoot() {
+        var _a;
+        (_a = this._root) == null ? void 0 : _a.classList.toggle(
+          "tedi-form-field--clear-on-interaction",
+          this.clearOnInteraction && this.showClear
+        );
       },
       clear() {
         const control = this._control;
@@ -1897,6 +1960,7 @@
       _previousOverflow: "",
       _scrollLocked: false,
       _timer: null,
+      _offMorph: null,
       /** The collapse toggle's open state — the inverse of `collapsed`. */
       get expanded() {
         return !this.collapsed;
@@ -1932,8 +1996,19 @@
           self._syncTrigger();
           if (self.open) self._activate(true);
         });
+        var livewire = window.Livewire;
+        if (livewire && typeof livewire.hook === "function") {
+          var off = livewire.hook("morph.updated", function(payload) {
+            if (payload && payload.el && payload.el === self._triggerElement()) {
+              self._syncTrigger();
+            }
+          });
+          this._offMorph = typeof off === "function" ? off : null;
+        }
       },
       destroy: function() {
+        if (this._offMorph) this._offMorph();
+        this._offMorph = null;
         document.removeEventListener("pointerdown", this._onPointerDownOutside, true);
         document.removeEventListener("keydown", this._onKeydown);
         window.removeEventListener("blur", this._onBlur);
@@ -2385,6 +2460,7 @@
         if (event.target !== this.$refs.trigger) return;
         switch (event.key) {
           case "Escape":
+            if (this.panelVisible) event.stopPropagation();
             this.closePanel();
             return;
           case "ArrowDown":
@@ -2672,7 +2748,14 @@
       _onKeydown: null,
       init: function() {
         var self = this;
-        var container = this.scrollContainer ? document.querySelector(this.scrollContainer) : null;
+        var container = null;
+        if (this.scrollContainer) {
+          try {
+            container = document.querySelector(this.scrollContainer);
+          } catch (e) {
+            container = null;
+          }
+        }
         this._scrollTarget = container || window;
         this._lastScrollY = this._currentScrollY();
         this._onScroll = function() {

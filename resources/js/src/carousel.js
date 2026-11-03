@@ -17,6 +17,14 @@
 //     returning to the start, and the release reading `pointerup`'s position;
 //   - the keyboard: ArrowRight/PageDown, ArrowLeft/PageUp, Home, End.
 //
+// Pointer details that keep links and buttons inside slides usable: the
+// viewport captures the pointer only once a drag passes `minSwipeDistance`
+// (capturing on pointerdown retargets a plain click to the viewport in
+// Chromium); a release after such a drag swallows the click it produces
+// (`clickCapture`, bound in the capture phase); and the viewport prevents
+// `dragstart`, so dragging a link or image swipes instead of starting a
+// native drag, whose `pointercancel` would snap the track back.
+//
 // What is not: the clone buffer upstream renders around a looping track (so a
 // looping track here rewinds from the last slide to the first rather than
 // continuing seamlessly, and cannot be dragged past either end), the wheel
@@ -59,6 +67,11 @@ export function carousel(slideCount = 0) {
         lastTime: 0,
         samples: [],
         minSwipeDistance: MIN_SWIPE_DISTANCE,
+        /** The dragging pointer, and whether the viewport has captured it yet. */
+        pointerId: null,
+        captured: false,
+        /** Set by a release that was a swipe, so the click it produces is swallowed. */
+        suppressClick: false,
 
         configure(options = {}) {
             Object.assign(this, options);
@@ -166,9 +179,13 @@ export function carousel(slideCount = 0) {
 
         pointerDown(ev) {
             if (!this.count) return;
-            if (this.viewport && this.viewport.setPointerCapture) {
-                this.viewport.setPointerCapture(ev.pointerId);
-            }
+            // No pointer capture yet: in Chromium a captured pointer's click is
+            // dispatched to the viewport, so capturing here would stop a plain
+            // click from ever reaching a link or button inside a slide.
+            // `pointerMove` captures once the drag passes `minSwipeDistance`.
+            this.pointerId = ev.pointerId;
+            this.captured = false;
+            this.suppressClick = false;
             this.dragging = true;
             this.animate = false;
             this.startX = ev.clientX;
@@ -180,9 +197,27 @@ export function carousel(slideCount = 0) {
         },
 
         pointerMove(ev) {
-            if (!this.dragging) return;
+            if (!this.dragging || ev.pointerId !== this.pointerId) return;
+
+            // Uncaptured, a mouse released outside the viewport sends no pointerup here.
+            if (!this.captured && ev.pointerType === 'mouse' && ev.buttons === 0) {
+                this.pointerCancel();
+                return;
+            }
 
             const dx = ev.clientX - this.startX;
+
+            if (!this.captured && Math.abs(dx) >= this.minSwipeDistance) {
+                this.captured = true;
+                if (this.viewport && this.viewport.setPointerCapture) {
+                    try {
+                        this.viewport.setPointerCapture(ev.pointerId);
+                    } catch (e) {
+                        // The pointer is already gone; pointerup/cancel ends the drag.
+                    }
+                }
+            }
+
             this.lastX = ev.clientX;
             this.lastTime = ev.timeStamp;
             this.samples.push({ x: ev.clientX, t: ev.timeStamp });
@@ -210,7 +245,7 @@ export function carousel(slideCount = 0) {
         },
 
         pointerUp(ev) {
-            if (!this.dragging) return;
+            if (!this.dragging || (ev && ev.pointerId !== undefined && ev.pointerId !== this.pointerId)) return;
 
             // The pointer can move after the last pointermove; the release reports where it ended.
             if (ev && typeof ev.clientX === 'number') {
@@ -218,6 +253,16 @@ export function carousel(slideCount = 0) {
             }
 
             this.dragging = false;
+
+            // A swipe is not a click: the release over a link or button inside
+            // a slide must not activate it. `clickCapture` swallows the click
+            // this release is about to produce; the timer clears the flag when
+            // none follows (touch, or a release outside the viewport).
+            if (Math.abs(this.lastX - this.startX) >= this.minSwipeDistance) {
+                this.suppressClick = true;
+                setTimeout(() => (this.suppressClick = false), 0);
+            }
+
             const target = this.swipeTarget(ev && ev.timeStamp !== undefined ? ev.timeStamp : this.lastTime);
             if (Math.abs(target - this.index) < EPSILON && Math.abs(target - this.startIndex) < EPSILON) {
                 this.animate = true;
@@ -225,6 +270,14 @@ export function carousel(slideCount = 0) {
                 return;
             }
             this.moveTo(target);
+        },
+
+        /** Capture-phase click on the viewport: swallow the click a swipe's release produced. */
+        clickCapture(ev) {
+            if (!this.suppressClick) return;
+            this.suppressClick = false;
+            ev.preventDefault();
+            ev.stopPropagation();
         },
 
         /**

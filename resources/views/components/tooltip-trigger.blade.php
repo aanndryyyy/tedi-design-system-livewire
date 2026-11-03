@@ -43,6 +43,13 @@
     `described-by` overrides it. On the `:text="true"` span the attribute is
     rendered directly (or bound, for the Alpine id).
 
+    Livewire's morph removes every attribute the server HTML lacks, and
+    `x-init` does not re-run, so the `x-init` also re-applies the attribute
+    from Livewire's `morph.updated` hook once morph has patched the resolved
+    element (guarded when Livewire is absent), and chains the unregister into
+    the tooltip scope's `destroy()`. The `:text="true"` span needs neither:
+    its attribute is in the server HTML, or `x-bind`, which morph re-evaluates.
+
     Enter / Space on a non-native trigger (Angular 9, #585): the synthesized
     span, or a consumer `role="button"` element, has no native click on those
     keys, so a keydown handler toggles the tooltip for `click` / `both`. It
@@ -90,7 +97,16 @@
     ]) }}
     x-ref="trigger"
     @if ($interactive && ! $wrapsText)
-        x-init="(() => { const c = $el.firstElementChild; if (! c) return; const t = c.matches('button, a[href]') ? c : (c.querySelector('button, a[href], [tabindex]') ?? c); t.setAttribute('aria-describedby', {!! $idExpression !!}) })()"
+        x-init="(() => {
+            const id = {!! $idExpression !!};
+            const target = () => { const c = $el.firstElementChild; return ! c ? null : (c.matches('button, a[href]') ? c : (c.querySelector('button, a[href], [tabindex]') ?? c)) };
+            const apply = () => target()?.setAttribute('aria-describedby', id);
+            apply();
+            const off = window.Livewire?.hook?.('morph.updated', ({ el }) => { if (el && el === target()) apply() });
+            if (typeof off !== 'function') return;
+            const hostDestroy = destroy;
+            destroy = function () { off(); if (typeof hostDestroy === 'function') hostDestroy.call(this) };
+        })()"
     @endif
     @if ($opensOnHover)
         x-on:mouseenter="hoverOpen()"

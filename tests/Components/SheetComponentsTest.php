@@ -203,4 +203,16 @@ class SheetComponentsTest extends TestCase
 
         $this->assertMatchesRegularExpression('/<span\s+data-tedi-contents x-on:click="hide\(\)"><button type="button">Tühista<\/button><\/span>/', $html);
     }
+
+    public function test_trigger_aria_is_reapplied_after_a_livewire_morph(): void
+    {
+        // The trigger is the consumer's element, so tediSheet writes its ARIA
+        // from JS; Livewire's morph strips it, so the hook must restore it and
+        // be unregistered on destroy.
+        $js = file_get_contents(__DIR__.'/../../resources/js/src/sheet.js');
+
+        $this->assertStringContainsString("livewire.hook('morph.updated'", $js);
+        $this->assertStringContainsString('self._syncTrigger();', $js);
+        $this->assertStringContainsString('if (this._offMorph) this._offMorph();', $js);
+    }
 }

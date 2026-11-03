@@ -80,13 +80,13 @@
         // already turned into "<prefix>.n" by their own parents.
         $index = 0;
         $subItemsHtml = preg_replace_callback(
-            '/__TEDI_TOC_(NUMBER|PREFIX)__/',
+            \Tedi\Livewire\Tedi::tocMarkerPattern(),
             function ($match) use (&$index) {
                 if ($match[1] === 'NUMBER') {
                     $index++;
                 }
 
-                return '__TEDI_TOC_PREFIX__.'.$index;
+                return \Tedi\Livewire\Tedi::tocMarker('PREFIX').'.'.$index;
             },
             $subItemsHtml,
         );
@@ -114,7 +114,7 @@
 >
     <span class="tedi-table-of-contents__row">
         @if ($numbered)
-            <span class="tedi-table-of-contents__number" aria-hidden="true">__TEDI_TOC_NUMBER__</span>
+            <span class="tedi-table-of-contents__number" aria-hidden="true">{{ \Tedi\Livewire\Tedi::tocMarker('NUMBER') }}</span>
         @endif
         <span class="tedi-table-of-contents__content">{{ $slot }}</span>
         @isset($suffix)

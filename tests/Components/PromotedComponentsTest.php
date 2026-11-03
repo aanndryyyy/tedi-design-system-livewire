@@ -576,4 +576,12 @@ class PromotedComponentsTest extends TestCase
             $this->assertHasClass('break-inside-'.$break, Blade::render('<tedi:print break-inside="'.$break.'">x</tedi:print>'));
         }
     }
+
+    public function test_truncate_survives_invalid_utf8(): void
+    {
+        $html = Blade::render('<tedi:truncate :text="$t" :max-length="3" />', ['t' => "abc\xC3\x28def"]);
+
+        $this->assertStringContainsString('tedi-truncate', $html);
+        $this->assertStringContainsString('x-data=', $html);
+    }
 }

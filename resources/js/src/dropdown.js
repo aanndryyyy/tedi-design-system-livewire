@@ -129,8 +129,59 @@ export var dropdownTrigger = {
      * config.containerId   pairs id / aria-controls, or null
      */
     initTrigger: function (el, config) {
+        var self = this;
         var cfg = config || {};
+
+        var hasPopup = cfg.ariaHaspopup;
+        if (!hasPopup) {
+            // The panel is a later sibling, so its x-ref is not registered
+            // yet when this x-init runs; read the server-rendered list
+            // through the shared parent instead.
+            var list = el.parentElement && el.parentElement.querySelector('.tedi-dropdown__panel ul[role]');
+            var role = list ? list.getAttribute('role') : 'menu';
+            hasPopup = role === 'menu' || role === 'listbox' ? role : 'false';
+        }
+
+        this._triggerAria = { containerId: cfg.containerId || null, hasPopup: hasPopup };
+        this._applyTriggerAria();
+        this.$watch('open', function () { self._applyTriggerAria(); });
+
+        // The decorated element is the consumer's own markup, so none of
+        // this can be rendered server-side, and x-init does not re-run.
+        // Livewire's morph strips every attribute the server HTML lacks, so
+        // a `wire:model.live` round-trip would leave a span trigger without
+        // role/tabindex (unreachable by keyboard) and without its ARIA
+        // state. Re-apply once morph has patched the decorated element —
+        // not an ancestor: `morph.updated` fires before the children are
+        // patched, so writing then would be undone a moment later.
+        var livewire = window.Livewire;
+        if (livewire && typeof livewire.hook === 'function') {
+            var off = livewire.hook('morph.updated', function (payload) {
+                if (payload && payload.el && payload.el === self._focusableTrigger()) {
+                    self._applyTriggerAria();
+                }
+            });
+
+            if (typeof off === 'function') {
+                // Mixed into hosts whose destroy() is their own (tediDropdown,
+                // tediFilter); Alpine reads destroy() at teardown, so chain it.
+                var hostDestroy = this.destroy;
+                this.destroy = function () {
+                    off();
+                    if (typeof hostDestroy === 'function') hostDestroy.call(this);
+                };
+            }
+        }
+    },
+
+    /**
+     * Writes the trigger's role/tabindex, id and ARIA state onto the
+     * resolved control. Idempotent, so a morph can call it again.
+     */
+    _applyTriggerAria: function () {
+        var cfg = this._triggerAria;
         var focusable = this._focusableTrigger();
+        if (!cfg || !focusable) return;
 
         // Non-native triggers need button semantics, but a role or
         // tabindex the consumer set (e.g. role="checkbox") is theirs.
@@ -143,36 +194,21 @@ export var dropdownTrigger = {
             focusable.setAttribute('id', cfg.containerId + '_trigger');
         }
 
-        var hasPopup = cfg.ariaHaspopup;
-        if (!hasPopup) {
-            // The panel is a later sibling, so its x-ref is not registered
-            // yet when this x-init runs; read the server-rendered list
-            // through the shared parent instead.
-            var list = el.parentElement && el.parentElement.querySelector('.tedi-dropdown__panel ul[role]');
-            var role = list ? list.getAttribute('role') : 'menu';
-            hasPopup = role === 'menu' || role === 'listbox' ? role : 'false';
-        }
-
-        if (hasPopup === 'false') {
+        if (cfg.hasPopup === 'false') {
             focusable.removeAttribute('aria-haspopup');
         } else {
-            focusable.setAttribute('aria-haspopup', hasPopup);
+            focusable.setAttribute('aria-haspopup', cfg.hasPopup);
         }
 
-        var sync = function (open) {
-            focusable.setAttribute('aria-expanded', open ? 'true' : 'false');
+        focusable.setAttribute('aria-expanded', this.open ? 'true' : 'false');
 
-            // The panel's list is only meaningful while open, so a
-            // permanent aria-controls would point at hidden content.
-            if (cfg.containerId && open) {
-                focusable.setAttribute('aria-controls', cfg.containerId);
-            } else {
-                focusable.removeAttribute('aria-controls');
-            }
-        };
-
-        sync(this.open);
-        this.$watch('open', sync);
+        // The panel's list is only meaningful while open, so a
+        // permanent aria-controls would point at hidden content.
+        if (cfg.containerId && this.open) {
+            focusable.setAttribute('aria-controls', cfg.containerId);
+        } else {
+            focusable.removeAttribute('aria-controls');
+        }
     },
 
     /**

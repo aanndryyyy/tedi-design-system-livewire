@@ -236,13 +236,29 @@ class TooltipComponentsTest extends TestCase
         // Angular sets it on the resolved focusable child, which only the
         // browser can reach; it is never put on the trigger element itself.
         $this->assertDoesNotMatchRegularExpression('/<tedi-tooltip-trigger[^>]*\saria-describedby=/s', $html);
-        $this->assertStringContainsString("setAttribute('aria-describedby', 'tip-1')", $html);
+        $this->assertStringContainsString("const id = 'tip-1';", $html);
+        $this->assertStringContainsString("setAttribute('aria-describedby', id)", $html);
 
         $html = $this->tooltip('', 'described-by="own"');
-        $this->assertStringContainsString("setAttribute('aria-describedby', 'own')", $html);
+        $this->assertStringContainsString("const id = 'own';", $html);
 
         $html = $this->tooltip('', ':interactive="false"');
         $this->assertStringNotContainsString('aria-describedby', $html);
+    }
+
+    public function test_element_trigger_reapplies_aria_describedby_after_a_livewire_morph(): void
+    {
+        $html = $this->tooltip('description-id="tip-1"');
+
+        // Livewire's morph strips the client-set attribute and x-init does not
+        // re-run, so the hook re-applies it; guarded when Livewire is absent,
+        // and unregistered through the tooltip scope's destroy().
+        $this->assertStringContainsString("window.Livewire?.hook?.('morph.updated'", $html);
+        $this->assertStringContainsString('destroy = function () { off();', $html);
+
+        // The text span needs no hook: its attribute is server-rendered.
+        $html = $this->tooltip('description-id="tip-1"', ':text="true"');
+        $this->assertStringNotContainsString('morph.updated', $html);
     }
 
     public function test_trigger_activates_on_enter_and_space_only_when_click_opens(): void

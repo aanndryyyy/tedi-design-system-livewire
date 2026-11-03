@@ -68,7 +68,7 @@
 
     $index = 0;
     $items = preg_replace_callback(
-        '/__TEDI_TOC_(NUMBER|PREFIX)__/',
+        \Tedi\Livewire\Tedi::tocMarkerPattern(),
         function ($match) use (&$index) {
             if ($match[1] === 'NUMBER') {
                 return (++$index).'.';

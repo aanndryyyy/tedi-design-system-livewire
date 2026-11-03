@@ -376,6 +376,9 @@ export function search(config) {
 
             switch (event.key) {
                 case 'Escape':
+                    // An open panel consumes Escape, so an enclosing modal or
+                    // sheet (document-level listeners) does not close with it.
+                    if (this.panelVisible) event.stopPropagation();
                     this.closePanel();
 
                     return;

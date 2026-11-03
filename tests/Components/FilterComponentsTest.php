@@ -352,7 +352,8 @@ class FilterComponentsTest extends TestCase
         $this->assertHasClass('tedi-filter-dropdown__search', $html, 'tedi-filter-dropdown__search');
         $this->assertStringContainsString('role="searchbox"', $html);
         $this->assertStringContainsString('x-model="searchTerm"', $html);
-        $this->assertStringContainsString('x-on:click="onSearchClear()"', $html);
+        // The clear button is form-field's own; its click clears and fires input.
+        $this->assertStringContainsString('x-on:click="clear()"', $html);
     }
 
     public function test_search_field_is_absent_by_default(): void

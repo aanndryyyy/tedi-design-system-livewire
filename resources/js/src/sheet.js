@@ -100,6 +100,7 @@ export function sheet(config) {
         _previousOverflow: '',
         _scrollLocked: false,
         _timer: null,
+        _offMorph: null,
 
         /** The collapse toggle's open state — the inverse of `collapsed`. */
         get expanded() {
@@ -142,9 +143,25 @@ export function sheet(config) {
                 self._syncTrigger();
                 if (self.open) self._activate(true);
             });
+
+            // The trigger is the consumer's element, so its ARIA cannot be
+            // server-rendered, and Livewire's morph strips attributes the
+            // server HTML lacks. Re-apply once morph has patched that element
+            // (not an ancestor: its children are patched after the hook).
+            var livewire = window.Livewire;
+            if (livewire && typeof livewire.hook === 'function') {
+                var off = livewire.hook('morph.updated', function (payload) {
+                    if (payload && payload.el && payload.el === self._triggerElement()) {
+                        self._syncTrigger();
+                    }
+                });
+                this._offMorph = typeof off === 'function' ? off : null;
+            }
         },
 
         destroy: function () {
+            if (this._offMorph) this._offMorph();
+            this._offMorph = null;
             document.removeEventListener('pointerdown', this._onPointerDownOutside, true);
             document.removeEventListener('keydown', this._onKeydown);
             window.removeEventListener('blur', this._onBlur);

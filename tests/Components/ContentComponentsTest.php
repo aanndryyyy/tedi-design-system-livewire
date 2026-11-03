@@ -485,6 +485,29 @@ BLADE);
         $this->assertHasClass('tedi-carousel__slide', $html, on: 'tedi-carousel__slide');
     }
 
+    public function test_carousel_content_keeps_links_in_slides_clickable(): void
+    {
+        $html = Blade::render('<tedi:carousel-content><tedi:carousel-slide><a href="#x">x</a></tedi:carousel-slide></tedi:carousel-content>');
+
+        // A swipe's release must not activate a link or button in a slide,
+        // and dragging a link or image must swipe, not start a native drag.
+        $this->assertStringContainsString('x-on:click.capture="clickCapture($event)"', $html);
+        $this->assertStringContainsString('x-on:dragstart.prevent', $html);
+        // A touch pointer's implicit capture on the slide content is released
+        // (and bubbles) when the viewport takes it over; that is not a cancel.
+        $this->assertStringContainsString('x-on:lostpointercapture.self="pointerCancel()"', $html);
+    }
+
+    public function test_carousel_captures_the_pointer_only_once_a_drag_starts(): void
+    {
+        $js = file_get_contents(__DIR__.'/../../resources/js/src/carousel.js');
+        $pointerDown = substr($js, strpos($js, 'pointerDown(ev) {'), strpos($js, 'pointerMove(ev) {') - strpos($js, 'pointerDown(ev) {'));
+
+        // Capturing on pointerdown retargets a plain click to the viewport in Chromium.
+        $this->assertStringNotContainsString('setPointerCapture(', $pointerDown);
+        $this->assertStringContainsString('setPointerCapture(', $js);
+    }
+
     public function test_carousel_content_fade_classes(): void
     {
         $fadeRight = Blade::render('<tedi:carousel-content fade :slides-per-view="2">x</tedi:carousel-content>');

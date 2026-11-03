@@ -31,6 +31,15 @@
     `tediCarousel`. The `role="presentation"` / `aria-hidden` swap upstream
     applies to off-screen slides, and the slide's `aria-label`, need the
     clone window's per-render indices and are not ported.
+
+    So that links and buttons inside slides keep working: the pointer is
+    captured only once a drag passes the minimum swipe distance (capturing on
+    pointerdown sends a plain click to the viewport in Chromium), the click a
+    swipe's release produces is swallowed in the capture phase, and
+    `dragstart` is prevented so dragging a link or image swipes rather than
+    starting a native drag. `lostpointercapture` is `.self`: a touch
+    pointer's implicit capture on the slide content is released when the
+    viewport takes it over, and that bubbling event is not a cancel.
 --}}
 @props([
     /** Slides visible at once (fractional allowed, e.g. 1.25 for peeking). */
@@ -82,10 +91,12 @@
         x-init="configure({ ...{{ \Illuminate\Support\Js::from($config) }}, viewport: $el })"
         x-on:keydown="keydown($event)"
         x-on:pointerdown="pointerDown($event)"
+        x-on:click.capture="clickCapture($event)"
+        x-on:dragstart.prevent
         x-on:pointermove="pointerMove($event)"
         x-on:pointerup="pointerUp($event)"
         x-on:pointercancel="pointerCancel()"
-        x-on:lostpointercapture="pointerCancel()"
+        x-on:lostpointercapture.self="pointerCancel()"
     >
         <div
             x-ref="track"

@@ -57,9 +57,6 @@
     the state itself, through the label component's `visuallyHidden` input —
     `labelVisuallyHidden()` maps `'keep-space'` to `'reserve-space'`, which
     the label renders as `tedi-label--reserve-space` (`true` stays `sr-only`).
-    `tedi:form.label` declares no `visuallyHidden` prop in this package, so the
-    class the label would compute is passed straight through `class`; the
-    rendered class list is identical to Angular's.
 --}}
 @props([
     /** Id for the range <input>, also the label's `for`. Auto-generated (Tedi::id()) when omitted. */
@@ -141,11 +138,8 @@
     // feedbackId()
     $feedbackId = $feedbackText ? $inputId.'-feedback' : null;
 
-    // labelVisuallyHidden() — 'keep-space' becomes the label's 'reserve-space',
-    // and the label's classes() turns that into the class below.
-    $labelClass = $hideLabel === true
-        ? 'sr-only'
-        : ($hideLabel === 'keep-space' ? 'tedi-label--reserve-space' : '');
+    // labelVisuallyHidden(): 'keep-space' becomes the label's 'reserve-space'.
+    $labelVisuallyHidden = $hideLabel === 'keep-space' ? 'reserve-space' : ($hideLabel === true);
 @endphp
 
 <div @class([
@@ -153,7 +147,7 @@
     'tedi-slider--disabled' => (bool) $disabled,
 ])>
     @if ($label)
-        <tedi:form.label :for="$inputId" :required="$required" :class="$labelClass">{{ $label }}</tedi:form.label>
+        <tedi:form.label :for="$inputId" :required="$required" :visually-hidden="$labelVisuallyHidden">{{ $label }}</tedi:form.label>
     @endif
 
     <div class="tedi-slider__container">

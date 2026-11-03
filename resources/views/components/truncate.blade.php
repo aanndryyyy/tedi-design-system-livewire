@@ -52,7 +52,9 @@
 ])
 
 @php
-    $text = (string) $text;
+    // Invalid UTF-8 would make \X match nothing and Js::from throw; replace
+    // the bad bytes rather than 500 the page.
+    $text = mb_scrub((string) $text, 'UTF-8');
     $maxLength = is_numeric($maxLength) ? max(0, (int) floor((float) $maxLength)) : 200;
 
     preg_match_all('/\X/u', $text, $matches);
@@ -67,7 +69,8 @@
 
     $textId = \Tedi\Livewire\Tedi::id('tedi-truncate-text');
 
-    $scope = \Illuminate\Support\Js::from([
+    // Only the expandable case needs the Alpine scope.
+    $scope = ! $exceedsMaxLength ? null : \Illuminate\Support\Js::from([
         'expanded' => $expanded,
         'truncated' => $truncatedText,
         'full' => $text,

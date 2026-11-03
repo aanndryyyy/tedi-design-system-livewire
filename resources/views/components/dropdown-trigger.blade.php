@@ -61,8 +61,8 @@
     x-on:keyup="triggerKeyup($event)"
     x-on:focusout="triggerFocusout($event)"
     x-init="initTrigger($el, {
-        ariaHaspopup: {!! $ariaHaspopup ? "'".e($ariaHaspopup)."'" : 'null' !!},
-        containerId: {!! $containerId ? "'".e($containerId)."'" : 'null' !!},
+        ariaHaspopup: {{ \Illuminate\Support\Js::from($ariaHaspopup ?: null) }},
+        containerId: {{ \Illuminate\Support\Js::from($containerId ?: null) }},
     })"
 >
     {{ $slot }}
