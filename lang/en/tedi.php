@@ -241,4 +241,5 @@ return [
     "stepper.open-steps" => "Open steps",
     "stepper.steps" => "Steps",
     "stepper.status" => "Step :current of :total",
+    "table-card.select-row" => "Select row",
 ];

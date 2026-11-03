@@ -50,6 +50,10 @@
 @use 'components/content/heading-with-icon/heading-with-icon.component';
 @use 'components/content/list/list.component';
 @use 'components/content/section/section.module';
+// React's text-group.module, loaded scoped under `.tedi-table-card` (CONVENTIONS.md
+// §13.7), plus the card separator. Must precede table-card.module: see the file.
+@use 'components/content/table-card/table-card.composition' as table-card-composition;
+@use 'components/content/table-card/table-card.module';
 @use 'components/content/table/table-columns-menu/table-columns-menu.component';
 @use 'components/content/table/table-header-button/table-header-button.component';
 @use 'components/content/table/table-toolbar/table-toolbar.component';

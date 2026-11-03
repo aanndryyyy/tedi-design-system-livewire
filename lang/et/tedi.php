@@ -241,4 +241,5 @@ return [
     "stepper.open-steps" => "Ava sammud",
     "stepper.steps" => "Sammud",
     "stepper.status" => "Samm :current / :total",
+    "table-card.select-row" => "Vali rida",
 ];

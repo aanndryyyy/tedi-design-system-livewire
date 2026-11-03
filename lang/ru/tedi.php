@@ -241,4 +241,5 @@ return [
     "stepper.open-steps" => "Открыть шаги",
     "stepper.steps" => "Шаги",
     "stepper.status" => "Шаг :current из :total",
+    "table-card.select-row" => "Выбрать строку",
 ];

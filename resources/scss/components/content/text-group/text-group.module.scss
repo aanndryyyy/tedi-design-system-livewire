@@ -1,0 +1,75 @@
+.tedi-text-group {
+  margin-bottom: var(--tedi-dimensions-03);
+
+  &--horizontal {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  &__label {
+    display: flex;
+    flex-shrink: 0;
+    width: var(--label-width, auto);
+  }
+
+  &__value {
+    display: flex;
+    gap: var(--text-group-value-inner-spacing);
+    align-items: center;
+
+    &--align-right {
+      flex: 1;
+      justify-content: flex-end;
+      text-align: right;
+    }
+
+    &--align-left {
+      justify-content: flex-start;
+    }
+  }
+
+  &--align-left {
+    justify-content: flex-start;
+  }
+
+  &--align-right {
+    justify-content: flex-end;
+  }
+
+  &--list {
+    --tedi-text-group-list-gap: var(--tedi-dimensions-03);
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--tedi-text-group-list-gap);
+    margin: 0;
+  }
+
+  &--columns {
+    --tedi-text-group-columns: 1;
+
+    display: grid;
+    grid-template-columns: repeat(var(--tedi-text-group-columns), minmax(0, 1fr));
+    column-gap: var(--layout-grid-gutters-16);
+  }
+
+  &__row {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &--list#{&}--horizontal > &__row {
+    flex-direction: row;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  &--list#{&}--horizontal#{&}--row-align-center > &__row {
+    align-items: center;
+  }
+
+  &__row:has(&__value--align-right) {
+    width: 100%;
+  }
+}
