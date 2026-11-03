@@ -437,15 +437,16 @@ class ReactComponentsTest extends TestCase
     }
 
     /**
-     * CONVENTIONS.md §4 — upstream emits these, the stylesheet defines none of
-     * them, so they are dropped. Pinned so a re-sync has to decide again.
+     * CONVENTIONS.md §4 — upstream emits `tedi-file-upload__label` /
+     * `__label-wrapper` with no stylesheet rules, so they stay dropped.
+     * `__container--{size}` gained rules upstream and is emitted.
      */
-    public function test_file_upload_drops_the_unstyled_upstream_classes(): void
+    public function test_file_upload_emits_container_size_modifiers(): void
     {
-        $html = Blade::render('<tedi:file-upload name="f" label="Manused" size="small" />');
+        $html = Blade::render('<tedi:file-upload name="f" label="Manuses" size="small" />');
 
         $this->assertStringNotContainsString('tedi-file-upload__label', $html);
-        $this->assertStringNotContainsString('tedi-file-upload__container--small', $html);
+        $this->assertHasClass('tedi-file-upload__container--small', $html, on: 'tedi-file-upload__container');
     }
 
     /**

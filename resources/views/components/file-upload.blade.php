@@ -40,10 +40,11 @@
     (CONVENTIONS.md §7 item 1). This always renders the `ClosingButton`, which
     is the desktop branch and the one the stylesheet is written around.
 
-    CLASSES DROPPED. Upstream emits `tedi-file-upload__label-wrapper`,
-    `tedi-file-upload__label` and `tedi-file-upload__container--{size}`; none of
-    the three has a rule in `file-upload.module.scss`, so per CONVENTIONS.md §4
-    they are not emitted. Restore them if TEDI ships the rules.
+    CLASSES DROPPED. Upstream emits `tedi-file-upload__label-wrapper` and
+    `tedi-file-upload__label`; neither has a rule in `file-upload.module.scss`,
+    so per CONVENTIONS.md §4 they are not emitted. Restore them if TEDI ships
+    the rules. `tedi-file-upload__container--{size}` gained rules upstream and
+    is emitted.
 
     THE CLEAR BUTTON CARRIES `data-name="closing-button"`. That is not
     decoration: the shared `_field-icon-button` partial keys on it
@@ -165,6 +166,7 @@
     @else
         <div @class([
             'tedi-file-upload__container',
+            'tedi-file-upload__container--'.$size => (bool) $size,
             'tedi-file-upload--disabled' => (bool) $disabled,
             'tedi-file-upload--error' => $helperType === 'error',
             'tedi-file-upload--valid' => $helperType === 'valid',
