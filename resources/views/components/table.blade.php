@@ -184,10 +184,9 @@
     'filterPlaceholder' => null,
 ])
 
+@use('Illuminate\Contracts\Support\Htmlable')
+@use('Illuminate\View\ComponentAttributeBag')
 @php
-    use Illuminate\Contracts\Support\Htmlable;
-    use Illuminate\View\ComponentAttributeBag;
-
     $CONTROL_COLUMN_WIDTH = 40;
     $DEFAULT_COLUMN_WIDTH = 150; // TanStack's default column size.
 

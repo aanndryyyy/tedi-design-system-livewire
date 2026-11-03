@@ -93,8 +93,10 @@
     // failing. Controls in the slot rendered before this, so they found no
     // context and registered nothing: such a field draws no clear button
     // until `php artisan view:clear`.
+    // TEMPORARY: remove in the next major release, once upgrading consumers
+    // have recompiled their views (the CHANGELOG tells them to).
     if (! isset($fieldContext)) {
-        $__tediFormField = new \Tedi\Livewire\View\Components\FormField(...array_intersect_key(
+        $__tediFormField = new \Tedi\Livewire\View\Components\FormField($__env, ...array_intersect_key(
             get_defined_vars(),
             array_flip(\Tedi\Livewire\View\Components\FormField::PROPS),
         ));

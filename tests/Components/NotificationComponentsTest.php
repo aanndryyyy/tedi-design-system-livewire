@@ -360,4 +360,16 @@ class NotificationComponentsTest extends TestCase
         $html = Blade::render('<tedi:tag loading>Silt</tedi:tag>');
         $this->assertStringContainsString('aria-atomic="true">'.__('tedi::tedi.loading').'</span>', $html);
     }
+
+    public function test_forwarded_button_attributes_are_html_escaped(): void
+    {
+        // A value forwarded through close-attributes must be escaped; the bag's
+        // __toString() does not escape, only merge() does.
+        $html = Blade::render('<tedi:alert :close-attributes="$attrs" :show-close="true">x</tedi:alert>', [
+            'attrs' => ['title' => '"><script>alert(1)</script>'],
+        ]);
+
+        $this->assertStringNotContainsString('<script>alert(1)</script>', $html);
+        $this->assertStringContainsString('&lt;script&gt;', $html);
+    }
 }

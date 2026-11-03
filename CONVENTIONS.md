@@ -387,6 +387,26 @@ default, matching how `class`/`style` already merge instead of duplicate:
 (matching Angular's `[attr.x]="null"` removing the attribute) rather than
 rendering `role=""`.
 
+### Forwarding an attribute array: `$attributes->only([])->merge($x)`
+
+Props such as `close-attributes`, `clear-attributes` and
+`increment-attributes` forward a consumer's array onto an inner element. They
+are spread with `{{ $attributes->only([])->merge($x) }}`: an empty bag, then
+`$x`. It reads like a trick, but both halves matter:
+
+- **It has to start with `$attributes`.** On a child *component* tag
+  (`<tedi:button {{ … }}>`), Blade's component-tag compiler recognises an
+  attribute spread only when the expression begins with `$attributes`.
+  `{{ (new ComponentAttributeBag)->merge($x) }}` there is left uncompiled and
+  breaks the PHP.
+- **It has to go through `merge()`.** `merge()` HTML-escapes the values;
+  `ComponentAttributeBag::__toString()` does not (it only swaps `"` for `\"`).
+  `new ComponentAttributeBag($x)` printed directly would emit a consumer's
+  value unescaped. `NotificationComponentsTest::test_forwarded_button_attributes_are_html_escaped`
+  pins this.
+
+Use the same idiom on plain HTML tags too, so there is one way to do it.
+
 ---
 
 ## 7. Known divergences from Angular (document, don't fake)

@@ -2,9 +2,9 @@
 
 namespace Tedi\Livewire\View\Components;
 
-use Illuminate\Container\Container;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
+use Illuminate\View\Factory;
 use Tedi\Livewire\View\FieldContext;
 
 /**
@@ -24,6 +24,11 @@ use Tedi\Livewire\View\FieldContext;
  * The multi-word props are constructor parameters too, because `@props` in a
  * class component's view cannot map a kebab-case attribute
  * (`character-limit`) to its camelCase variable.
+ *
+ * The view factory is injected, as `viewFactory`: Laravel resolves class
+ * components through the container and strips every constructor parameter
+ * name from the attribute bag, so the name is chosen not to collide with an
+ * attribute a consumer would write.
  */
 class FormField extends Component
 {
@@ -52,7 +57,11 @@ class FormField extends Component
     /** The context props the consumer wrote, for descendants' `@aware`. */
     private array $written;
 
+    /** Private, so it never becomes view data. */
+    private Factory $viewFactory;
+
     public function __construct(
+        Factory $viewFactory,
         /** default|small|large — the label, the control and the box row scale together. Default 'default'. */
         mixed $size = null,
         /** Material Symbols icon name, or an array: name/size/color/type/variant. */
@@ -80,9 +89,9 @@ class FormField extends Component
         // `@aware(['disabled' => false, 'invalid' => false])`: own value, else
         // the nearest enclosing component's (an input group), else false. This
         // frame is not on the stack yet, so the lookup starts at the parent.
-        $env = Container::getInstance()->make('view');
-        $disabled ??= $env->getConsumableComponentData('disabled', false);
-        $invalid ??= $env->getConsumableComponentData('invalid', false);
+        $this->viewFactory = $viewFactory;
+        $disabled ??= $viewFactory->getConsumableComponentData('disabled', false);
+        $invalid ??= $viewFactory->getConsumableComponentData('invalid', false);
 
         $this->fieldContext = FieldContext::formField(
             size: $size ?? 'default',
@@ -111,6 +120,6 @@ class FormField extends Component
 
     public function render(): View
     {
-        return Container::getInstance()->make('view')->make('tedi::components.form-field');
+        return $this->viewFactory->make('tedi::components.form-field');
     }
 }

@@ -12,11 +12,10 @@
             "dist": {
                 "type": "path",
                 "url": "..",
-                "reference": "18a3dae34ebae7fbab2364228128c782e24754be"
+                "reference": "68294d1804f3ffb009e8f973c66ef10dc712b968"
             },
             "require": {
-                "illuminate/support": "^11.0|^12.0|^13.0",
-                "illuminate/view": "^11.0|^12.0|^13.0",
+                "laravel/framework": "^11.0|^12.0|^13.0",
                 "php": "^8.2"
             },
             "require-dev": {

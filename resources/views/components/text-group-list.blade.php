@@ -19,7 +19,7 @@
     `items` is an array of ['label' => …, 'value' => …] with the optional
     per-row overrides `labelAlign`, `valueAlign`, `labelWidth` and `colSpan`.
     A string label is wrapped in a label (React's `<Label>`, here
-    `<tedi:form.label>`); a string value is escaped. Pass any Htmlable
+    `<tedi:form.label>`, sized by `label-size`); a string value is escaped. Pass any Htmlable
     (`new HtmlString(…)`, a rendered view) to emit markup as-is.
 
     Upstream quirks ported from the code, not the prop docs:
@@ -50,11 +50,12 @@
     'rowGap' => null,
     /** start|center — vertical alignment of label against value. Horizontal only. */
     'rowAlign' => 'start',
+    /** default|small — size of the label a string `label` is wrapped in. */
+    'labelSize' => 'default',
 ])
 
+@use('Illuminate\Contracts\Support\Htmlable')
 @php
-    use Illuminate\Contracts\Support\Htmlable;
-
     $resolveLabelWidth = fn ($width) => is_int($width) || is_float($width) ? $width.'%' : (string) $width;
     $render = fn ($value) => $value instanceof Htmlable ? $value->toHtml() : e((string) ($value ?? ''));
 
@@ -92,7 +93,7 @@
         <div class="tedi-text-group__row" @if ($rowStyle) style="{{ implode('; ', $rowStyle) }}" @endif>
             <dt class="tedi-text-group__label tedi-text-group--align-{{ $rowLabelAlign }}">
                 @if (is_string($label))
-                    <tedi:form.label>{{ $label }}</tedi:form.label>
+                    <tedi:form.label :size="$labelSize === 'small' ? 'small' : 'default'">{{ $label }}</tedi:form.label>
                 @else
                     {!! $render($label) !!}
                 @endif

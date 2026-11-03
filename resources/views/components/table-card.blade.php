@@ -125,12 +125,10 @@
     'rowGap' => null,
 ])
 
+@use('Illuminate\Contracts\Support\Htmlable')
+@use('Illuminate\Support\HtmlString')
+@use('Illuminate\View\ComponentSlot')
 @php
-    use Illuminate\Contracts\Support\Htmlable;
-    use Illuminate\Support\Facades\Blade;
-    use Illuminate\Support\HtmlString;
-    use Illuminate\View\ComponentSlot;
-
     $filledValue = fn ($value) => $value instanceof ComponentSlot ? $value->isNotEmpty() : filled($value);
     $render = fn ($value) => $value instanceof Htmlable ? $value->toHtml() : e((string) ($value ?? ''));
 
@@ -183,17 +181,12 @@
         $modifierClasses,
     ));
 
-    // renderRowLabel(): a string gets a (small or default) Label, anything else is as-is.
-    $rowLabel = fn ($label) => is_string($label)
-        ? new HtmlString(Blade::render(
-            '<tedi:form.label :size="$size">{{ $text }}</tedi:form.label>',
-            ['size' => $labelSize === 'small' ? 'small' : 'default', 'text' => $label]
-        ))
-        : $label;
+    // renderRowLabel(): text-group-list wraps a string label in a (small or
+    // default) label itself; see its `label-size`.
     $bold = fn ($value) => new HtmlString('<span class="text-bold">'.$render($value).'</span>');
 
     $items = array_map(fn ($row) => array_filter([
-        'label' => $rowLabel($row['label'] ?? ''),
+        'label' => $row['label'] ?? '',
         'value' => ($row['bold'] ?? false) ? $bold($row['value'] ?? '') : ($row['value'] ?? ''),
         'colSpan' => $row['colSpan'] ?? null,
     ], fn ($v) => $v !== null), $rows);
@@ -294,6 +287,7 @@
                     :value-align="$resolvedValueAlign"
                     :label-width="$resolvedLabelWidth"
                     :row-align="$rowAlign"
+                    :label-size="$labelSize"
                 />
             @else
                 <tedi:text-group-list
@@ -303,6 +297,7 @@
                     :row-gap="$resolvedRowGap"
                     label-align="left"
                     :label-width="$resolvedLabelWidth"
+                    :label-size="$labelSize"
                 />
             @endif
         </tedi:card-content>
@@ -316,7 +311,8 @@
                     :label-align="$resolvedLabelAlign"
                     value-align="right"
                     :label-width="$resolvedLabelWidth"
-                    :items="[['label' => $rowLabel($summary['label'] ?? ''), 'value' => $bold($summary['value'] ?? '')]]"
+                    :items="[['label' => $summary['label'] ?? '', 'value' => $bold($summary['value'] ?? '')]]"
+                    :label-size="$labelSize"
                 />
             </tedi:card-content>
         @endif
