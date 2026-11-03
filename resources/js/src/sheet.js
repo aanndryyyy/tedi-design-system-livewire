@@ -99,6 +99,7 @@ export function sheet(config) {
         _previouslyFocused: null,
         _previousOverflow: '',
         _scrollLocked: false,
+        _outsidePressTarget: null,
         _timer: null,
         _offMorph: null,
 
@@ -255,9 +256,28 @@ export function sheet(config) {
                 }
             }, CLOSE_DURATION);
 
-            if (this.content.returnFocus !== false && this._previouslyFocused && this._previouslyFocused.focus) {
-                this._previouslyFocused.focus({ preventScroll: true });
+            var returnTo = this._previouslyFocused;
+            var outsidePress = this._outsidePressTarget !== null;
+            this._outsidePressTarget = null;
+            if (this.content.returnFocus === false || !returnTo || !returnTo.focus) return;
+
+            if (outsidePress) {
+                // Closed by a press outside: the press's own mousedown moves
+                // focus after this runs (to <body> for the backdrop), so return
+                // focus once it has — unless the press gave focus to something
+                // else on the page (a button, a `<label for>`'s input), which
+                // keeps it, as Floating UI's focus manager does.
+                var panel = this.$refs.panel;
+                setTimeout(function () {
+                    var current = document.activeElement;
+                    if (self.open) return;
+                    if (current && current !== document.body && !(panel && panel.contains(current))) return;
+                    returnTo.focus({ preventScroll: true });
+                }, 0);
+                return;
             }
+
+            returnTo.focus({ preventScroll: true });
         },
 
         _lockScroll: function () {
@@ -285,6 +305,7 @@ export function sheet(config) {
             // The visually hidden dismiss buttons sit beside the panel.
             if (target.closest && target.closest('[data-tedi-sheet-dismiss]')) return;
 
+            this._outsidePressTarget = target;
             this.hide();
         },
 
@@ -376,6 +397,8 @@ export function sheet(config) {
             this._drag = null;
             this.dragging = false;
             this.dragOffset = 0;
+            document.removeEventListener('pointermove', drag.onDocMove, true);
+            document.removeEventListener('pointerup', drag.onDocUp, true);
             if (drag.target.hasPointerCapture && drag.target.hasPointerCapture(drag.pointerId)) {
                 drag.target.releasePointerCapture(drag.pointerId);
             }
@@ -389,13 +412,30 @@ export function sheet(config) {
             if (!(target instanceof Element) || !closestInside(target, DRAG_ZONE_SELECTOR, currentTarget)) return;
             if (closestInside(target, NO_DRAG_SELECTOR, currentTarget)) return;
 
-            this._drag = {
+            var self = this;
+            var drag = {
                 pointerId: event.pointerId,
                 startX: event.clientX,
                 startY: event.clientY,
                 target: currentTarget,
                 started: false,
             };
+            // Until the drag starts the pointer is not captured, so a mouse
+            // that leaves the panel within its first move — a quick flick up
+            // from the handle, which sits at the panel's top edge — would be
+            // lost, and its pointerup with it. Follow it at document level
+            // until capture takes over (captured events target the panel and
+            // are left to the panel's own listeners). Touch is implicitly
+            // captured already. Not upstream: sheet-content.tsx has the gap.
+            drag.onDocMove = function (e) {
+                if (!currentTarget.contains(e.target)) self.dragMove(e);
+            };
+            drag.onDocUp = function (e) {
+                if (!currentTarget.contains(e.target)) self.dragEnd(e);
+            };
+            document.addEventListener('pointermove', drag.onDocMove, true);
+            document.addEventListener('pointerup', drag.onDocUp, true);
+            this._drag = drag;
         },
 
         dragMove: function (event) {

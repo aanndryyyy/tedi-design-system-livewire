@@ -37,7 +37,7 @@
 ])
 
 <tedi:input-group :addons="(bool) $addons" :disabled="(bool) $disabled" :invalid="(bool) $invalid">
-    <tedi:form.label for="start-static">Aadress</tedi:form.label>
+    <x-slot:label><tedi:form.label for="start-static">Aadress</tedi:form.label></x-slot:label>
     <x-slot:prefix>Tänav</x-slot:prefix>
     <tedi:form-field>
         <tedi:text-field id="start-static" />

@@ -138,6 +138,9 @@
     ]));
 @endphp
 
+{{-- Angular's host element: label, field and feedback are ONE root (CONVENTIONS.md §6),
+     so a grid or flex parent lays them out as one item. --}}
+<tedi-number-field>
 @if ($label)
     <tedi:form.label :for="$inputId" :required="$required" :size="$size">
         {{ $label }}
@@ -214,3 +217,4 @@
         :position="$feedbackText['position'] ?? 'left'"
     />
 @endif
+</tedi-number-field>

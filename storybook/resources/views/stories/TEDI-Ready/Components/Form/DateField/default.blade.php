@@ -314,7 +314,7 @@
         :multi-row="(bool) $multiRow"
         :tag-ellipsis="$tagEllipsis"
         :is-tag-removable="(bool) $isTagRemovable"
-        :visible-tag-count="$visibleTagCount !== '' ? (int) $visibleTagCount : null"
+        :visible-tag-count="filled($visibleTagCount) ? (int) $visibleTagCount : null"
         :first-day-of-week="(int) $firstDayOfWeek"
         :open="(bool) $open"
     />

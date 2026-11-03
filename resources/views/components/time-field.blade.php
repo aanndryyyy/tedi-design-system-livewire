@@ -14,11 +14,12 @@
     Divergences:
     - **Popover positioning is dropped** (CONVENTIONS.md §7 item 3). Angular mounts
       the picker in a `<tedi-popover-content>` placed by the overlay engine. Here
-      `.tedi-time-field__popover-content` renders INLINE under an explicit `open`
-      prop. That is faithful to the class's own styling — its only vendored rule is
-      `padding: 0`, there is no positioning to lose — and it is what makes the
-      `open` / `__icon--open` states reachable at all. What is missing is placement
-      only. Likewise `popoverPosition` (`bottom-start` / `bottom-end`) is dropped.
+      `.tedi-time-field__popover-content` renders under an explicit `open` prop,
+      anchored with inline styles at upstream's `popoverPosition()`: below the
+      field, `bottom-start` for the input trigger and `bottom-end` for the button,
+      4px gap (`FIELD_OVERLAY_GAP`). It cannot stay in the flow: `__popover` is a
+      flex row, so an in-flow panel would sit beside the field. The overlay
+      engine's flip and re-parenting are not ported.
     - **The mobile-modal branch and the `modal` prop are NOT ported.** Angular's
       `modal` defaults to `"md"` (modal below the md breakpoint) and opens
       `<tedi-time-picker-modal>`, which composes four `tedi-modal*` components that
@@ -143,7 +144,7 @@
          bare field div otherwise, and `.tedi-time-field__popover` is a flex box
          that would change the layout if emitted unconditionally. --}}
     @if ($usePopover)
-    <div class="tedi-time-field__popover">
+    <div class="tedi-time-field__popover" @if ($open) style="position: relative" @endif>
     @endif
 
         <div @class($fieldClasses)>
@@ -203,7 +204,10 @@
         </div>
 
         @if ($usePopover && $open)
-            <div class="tedi-time-field__popover-content">
+            {{-- Angular portals the picker out with CDK, anchored below the field
+                 (FIELD_OVERLAY_GAP = 4px). Inline it would sit beside the field in
+                 the flex row, so it is taken out of the flow and anchored the same way. --}}
+            <div class="tedi-time-field__popover-content" style="position: absolute; top: calc(100% + 4px); {{ $inputIsTrigger ? 'left' : 'right' }}: 0; z-index: var(--z-index-dropdown)">
                 <tedi:time-picker
                     :value="$value"
                     :variant="$pickerVariant"

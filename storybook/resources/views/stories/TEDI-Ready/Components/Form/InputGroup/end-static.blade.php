@@ -36,7 +36,7 @@
 ])
 
 <tedi:input-group :addons="(bool) $addons" :disabled="(bool) $disabled" :invalid="(bool) $invalid">
-    <tedi:form.label for="end-static">Hind</tedi:form.label>
+    <x-slot:label><tedi:form.label for="end-static">Hind</tedi:form.label></x-slot:label>
     <tedi:form-field>
         <tedi:text-field id="end-static" />
     </tedi:form-field>

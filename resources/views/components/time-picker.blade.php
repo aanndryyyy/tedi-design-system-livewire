@@ -39,7 +39,10 @@
       rendered markup, ids and ARIA wiring are. That includes 9.0's item-height
       re-sync and the gesture / scroll-settle guards (`syncItemHeight`,
       `handleUserGesture`, `restoreColumnPosition`): all runtime scroll
-      handling, nothing in the markup.
+      handling, nothing in the markup. The one exception is the initial
+      `alignScroll("instant")`: an inline Alpine `x-init` parks each wheel on its
+      selected row, because without it the highlight band sits over row 0 while a
+      different row is selected.
     - The `slots` grid's inline style carries `display: grid` itself, as
       Angular's `gridStyle()` does since 8.1 (#609): the vendored
       `.tedi-time-picker__grid` rule no longer sets it.
@@ -124,6 +127,10 @@
         <div class="tedi-time-picker__columns" role="group">
             <div
                 class="tedi-time-picker__column"
+                {{-- alignScroll("instant"): park the wheel on the selected row.
+                     The column's snap padding centres row i at scrollTop = i × item height. --}}
+                x-data
+                x-init="$nextTick(() => { const i = [...$el.children].findIndex((c) => c.classList.contains('tedi-time-picker__item--selected')); if (i >= 0) $el.scrollTop = i * $el.children[i].offsetHeight; })"
                 role="listbox"
                 tabindex="{{ $disabled ? '-1' : '0' }}"
                 aria-label="{{ __('tedi::tedi.time-picker.hours') }}"
@@ -148,6 +155,10 @@
             <div class="tedi-time-picker__separator"></div>
             <div
                 class="tedi-time-picker__column"
+                {{-- alignScroll("instant"): park the wheel on the selected row.
+                     The column's snap padding centres row i at scrollTop = i × item height. --}}
+                x-data
+                x-init="$nextTick(() => { const i = [...$el.children].findIndex((c) => c.classList.contains('tedi-time-picker__item--selected')); if (i >= 0) $el.scrollTop = i * $el.children[i].offsetHeight; })"
                 role="listbox"
                 tabindex="{{ $disabled ? '-1' : '0' }}"
                 aria-label="{{ __('tedi::tedi.time-picker.minutes') }}"

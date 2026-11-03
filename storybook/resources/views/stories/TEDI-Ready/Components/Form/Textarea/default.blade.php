@@ -162,7 +162,7 @@
 --}}
 <tedi:form-field
     :size="$size"
-    :character-limit="$characterLimit !== '' ? (int) $characterLimit : null"
+    :character-limit="filled($characterLimit) ? (int) $characterLimit : null"
     :clearable="(bool) $clearable"
     :show-clear-on-interaction="(bool) $showClearOnInteraction"
 >
@@ -180,8 +180,8 @@
         :resizable="(bool) $resizable"
         :auto-grow="(bool) $autoGrow"
         :min-rows="$minRows"
-        :max-rows="$maxRows !== '' ? $maxRows : null"
-        :height="$height !== '' ? $height : null"
-        :max-height="$maxHeight !== '' ? $maxHeight : null"
+        :max-rows="filled($maxRows) ? $maxRows : null"
+        :height="filled($height) ? $height : null"
+        :max-height="filled($maxHeight) ? $maxHeight : null"
     />
 </tedi:form-field>

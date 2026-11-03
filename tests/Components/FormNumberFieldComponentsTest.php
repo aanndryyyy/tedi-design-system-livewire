@@ -395,4 +395,14 @@ class FormNumberFieldComponentsTest extends TestCase
         // The hooks must not leak onto the input.
         $this->assertSame(0, preg_match('/<input\b[^>]*wire:click/s', $html));
     }
+
+    public function test_number_field_renders_one_root_around_label_and_feedback(): void
+    {
+        $html = trim(Blade::render('<tedi:number-field label="Kogus" :feedback-text="[\'text\' => \'Vigane\', \'type\' => \'error\']" />'));
+
+        // Angular's host element wraps all three, so a grid parent sees one item.
+        $this->assertStringStartsWith('<tedi-number-field>', $html);
+        $this->assertStringEndsWith('</tedi-number-field>', $html);
+        $this->assertSame(1, substr_count($html, '<tedi-number-field>'));
+    }
 }

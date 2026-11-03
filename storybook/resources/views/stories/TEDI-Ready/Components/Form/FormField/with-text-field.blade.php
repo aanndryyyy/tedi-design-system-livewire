@@ -38,7 +38,7 @@
     :icon="$icon ?: null"
     :clearable="(bool) $clearable"
     :show-clear-on-interaction="(bool) $showClearOnInteraction"
-    :character-limit="$characterLimit !== '' ? (int) $characterLimit : null"
+    :character-limit="filled($characterLimit) ? (int) $characterLimit : null"
 >
     <x-slot:label>
         <tedi:form.label for="form-field-text-field">Label</tedi:form.label>
