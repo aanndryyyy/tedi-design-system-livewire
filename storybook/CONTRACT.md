@@ -127,7 +127,7 @@ Angular selectors verbatim:
 
 The reference implementations are
 `TEDI-Ready/Components/Buttons/Button/primary.blade.php` (default map) and
-`TEDI-Ready/Components/Form/Radio/radio-card-states.blade.php` (custom map).
+`TEDI-Ready/Components/Form/Radio/card-states-primary.blade.php` (custom map).
 
 Two things the addon does **not** cover, so they stay skips: rows that are
 `Selected`/`Disabled` are ordinary markup (`default-value`, `:disabled`), not

@@ -8,9 +8,9 @@
 
 {{--
     As with Default, the mobile sidenav menu (`<nav tedi-sidenav>`) is dropped
-    — layout/sidenav is not ported in this phase (README "Not in this
-    phase") — while the header's own mobile toggle button is kept via
-    tedi:header.toggle (see header/toggle.blade.php).
+    — `tedi:sidenav` is ported, but this story does not compose it — while the
+    header's own mobile toggle button is kept via tedi:header.toggle (see
+    header/toggle.blade.php).
 --}}
 <tedi:header>
     <x-slot:toggle>

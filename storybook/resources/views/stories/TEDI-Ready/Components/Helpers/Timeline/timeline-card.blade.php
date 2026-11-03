@@ -27,9 +27,9 @@
 ])
 
 {{--
-    Angular projects <tedi-collapse> for the "show more" body of each item;
-    the collapse component isn't ported (not in resources/views/components/),
-    so the extra info is rendered directly instead, mirroring how it's shown
+    Angular projects `tedi-collapse` for the "show more" body of each item.
+    `tedi:collapse` is ported, but this story has not been updated to compose
+    it: the extra info is rendered directly instead, mirroring how it's shown
     open by default in Angular's first item.
 --}}
 <tedi:timeline :active-index="$activeIndex" :variant="$variant" :card-padding="$cardPadding">

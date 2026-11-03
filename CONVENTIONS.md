@@ -14,11 +14,11 @@ the component.
 
 | Repo | Styling | Usable as port source? |
 |---|---|---|
-| `angular` | `ViewEncapsulation.None` on **all 144** components → plain global BEM classes (`tedi-button`, `tedi-button--primary`) | **Yes — this is the source** |
+| `angular` | `ViewEncapsulation.None` on the styled components → plain global BEM classes (`tedi-button`, `tedi-button--primary`) | **Yes — this is the source** |
 | `react` | CSS Modules (`*.module.scss`) → hashed class names **in the built dist**; the SCSS *source* is plain BEM | **Additive source** — see §13 |
 | `core` | Design tokens, base/reset, typography, fonts, icons, utilities. **No component styles.** | Yes — as the token/base layer only |
 
-The port therefore reads markup + class logic from `angular/tedi/components/**`,
+The port therefore reads markup + class logic from `angular/src/tedi/components/**`,
 and gets its tokens from `@tedi-design-system/core`. Use the React repo only as a
 secondary reference for prop documentation.
 
@@ -270,6 +270,41 @@ Blade renders once on the server and cannot inspect its own slot reliably.
 When `icon-start` / `icon-end` are given, the component renders the
 `<tedi:icon>` itself, so it also knows the padding modifiers without guessing.
 
+### The form-field context: `Tedi::fieldContext()`
+
+The form field is the one place where Angular's DI runs in both directions and
+an explicit prop would mean repeating every value on two components. A control
+injects `TEDI_FIELD_CONTEXT` from the enclosing `tedi-form-field` (size, whether
+the field box owns the surface, invalid, valid, disabled, clearable), and the
+form field reads the control back through
+`contentChild(TEDI_FORM_FIELD_CONTROL)` (value, disabled, read-only, invalid,
+reset).
+
+Both halves port through `Tedi::fieldContext()` in `src/Tedi.php`. A control
+calls it during its own render; it walks the view factory's component stack to
+the **nearest** `tedi:form-field` and returns that field's context, computed
+from what the consumer wrote on the form field plus form-field's own `@props`
+defaults (`Tedi::FIELD_DEFAULTS`, pinned against `form-field.blade.php` by
+`tests/AwareTest.php`). In the same call the first control registers itself in
+the form field's component-data frame; the form field's template renders after
+its slot, so it receives the registration as `$__tediFieldControl` and never in
+`$attributes`. Only `tedi:text-field` and `tedi:textarea` register `reset`, so
+only they earn the clear button.
+
+Three rules follow from this:
+
+- Like `@aware`, it sees only what the consumer explicitly wrote on the form
+  field, so the defaults are applied in `fieldContext()`. Unlike `@aware`, it
+  reads the nearest form field only, never a `size` from an unrelated ancestor.
+- It sees controls in the form field's **slot**. A component's own template
+  renders after its frame is popped, so a provider whose control sits in its
+  own template (the date field's text field, inside the date input) is found
+  through `Tedi::trackRender()` instead, which a `View::composer('*')` in
+  `TediServiceProvider` calls for every view.
+- Explicit props on the form field (`value`, `characterCount`, `disabled`,
+  `invalid`, `valid`) still win over what the control registers, for wrappers
+  that know better.
+
 ---
 
 ## 6. Attribute merging & the root element
@@ -367,9 +402,12 @@ JS, or the parity tests in §10 have nothing to assert against.
 
 **Where the behaviour lives.** Inline in the template by default. Move it into
 `resources/js/` as an `Alpine.data()` only when it is too large to read inline
-or is shared by several components — currently `tediCarousel`, `tediOverlay`
-and `tediDropdown` (§11), `tediFilter`, `tediMultiselect`, `tediModal`,
-`tediTableOfContents` and `tediBreakpoint`.
+or is shared by several components — currently `tediBreakpoint`,
+`tediCarousel`, `tediOverlay` and `tediDropdown` (§11), `tediFilter`,
+`tediFormField`, `tediProgressBar`, `tediMultiselect`, `tediSearch`,
+`tediModal`, `tediTableOfContents`, `tediTableOfContentsCollapsible`,
+`tediScrollVisibility`, `tediHashTrigger` and `tediSheet`. The header comment
+of `resources/js/tedi.js` lists them with one line each.
 
 **The JS layout.** `resources/js/tedi.js` is the entry point and holds nothing
 but imports and the `Alpine.data()` registrations. Each behaviour is a module
@@ -380,14 +418,18 @@ under `resources/js/src/`, exporting a factory of the same name:
 | `src/breakpoint.js` | `breakpoint` | Shared by `hide-at` and `show-at`; one `matchMedia` query off core's `$grid-breakpoints`, with `mode` choosing which side is visible |
 | `src/position.js` | placement maths | Pure functions over rectangles — no Alpine, no DOM writes |
 | `src/overlay.js` | `overlay` | Open/close, dismissal, and the DOM writes that apply `position.js` |
-| `src/dropdown.js` | `dropdown` | Composes `overlay` and adds the ARIA menu keyboard layer (§11) |
-| `src/filter.js` | `filter` | Composes `overlay` and adds the filter's selection state plus its `aria-activedescendant` listbox layer — deliberately **not** `dropdown`, whose roving-tabindex menu is a different ARIA pattern |
+| `src/dropdown.js` | `dropdown`, `dropdownTrigger` | `dropdown` composes `overlay` and adds the ARIA menu keyboard layer (§11). `dropdownTrigger` is the trigger directive's init/keys (`initTrigger`, `triggerActivationKeydown`, `triggerKeyup`, `triggerFocusout`), mixed into every x-data that renders `tedi:dropdown-trigger` |
+| `src/filter.js` | `filter` | Composes `overlay`, mixes in `dropdownTrigger`, and adds the filter's selection state plus its `aria-activedescendant` listbox layer — deliberately **not** `dropdown`, whose roving-tabindex menu is a different ARIA pattern |
+| `src/form-field.js` | `formField` | The clear button's live visibility and reset: follows typing, and `clear()` empties the control, fires `input` and `change` and focuses it. The scope sits on `.tedi-form-field__buttons`, beside the slotted control |
+| `src/progress-bar.js` | `progressBar` | Opt-in throttled live-region announcements for `progress-bar`; observes the `<progress>` attributes |
+| `src/search.js` | `search` | Composes `overlay` and adds the search autocomplete's `aria-activedescendant` combobox layer (wrapping arrow keys, as upstream does). Reads rows from the DOM so a Livewire morph is picked up; the panel state sits on a hidden child because Livewire does not patch attributes of an element `x-show` is showing |
 | `src/multiselect.js` | `multiselect` | Composes `overlay` and adds the community multiselect's selection state plus its `aria-activedescendant` listbox layer — the same ARIA pattern as `filter`, not `dropdown`'s menu |
 | `src/modal.js` | `modal` | |
-| `src/carousel.js` | `carousel` | |
-| `src/table-of-contents.js` | `tableOfContents` | |
+| `src/carousel.js` | `carousel` | Bounded or looping navigation, fractional `slidesPerView`, pointer drag with `swipeThreshold`, and the keyboard handler. The pointer is captured only once a drag passes `minSwipeDistance` (capturing on pointerdown retargets plain clicks on slide links to the viewport in Chromium); the click after a swipe is swallowed in the capture phase, and native `dragstart` is prevented |
+| `src/table-of-contents.js` | `tableOfContents`, `tableOfContentsCollapsible` | Controlled `activeId`, active-trail `isOpen`, `scrollActiveIntoView`; the collapsible's sheet and hide-on-scroll |
 | `src/scroll-visibility.js` | `scrollVisibility` | Scroll-threshold visibility for `scroll-visibility`; owns a `scroll` listener, so it is a module rather than inline |
 | `src/hash-trigger.js` | `hashTrigger` | `hashchange` + `scrollIntoView` for `hash-trigger` |
+| `src/sheet.js` | `sheet` | The React bottom sheet: open/close, focus, drag and snap points |
 
 A new behaviour is a new file in `src/` plus two lines in `tedi.js` (an import
 and an `Alpine.data()` call). Do not add a second `Alpine.data()` call site.
@@ -515,14 +557,42 @@ upstream's dropdown, spread across three files there:
 |---|---|
 | `dropdown.component.ts` — `activeIndex`, `updateTabindexes()`, `focusFirst/Last/Active/Next/PrevItem()`, `setActiveToSelectedOrFirst()` | yes |
 | `dropdown-item.component.ts` — `@HostListener('keydown')`: Arrow / Home / End / Enter / Space / Tab, and the disabled-`mousedown` guard | yes |
-| `dropdown-trigger.directive.ts` — ArrowDown/ArrowUp open-and-focus | yes |
+| `dropdown-trigger.directive.ts` — ArrowDown/ArrowUp open-and-focus, Enter/Space on a non-native trigger (#669), the role-derived `aria-haspopup` and open-only `aria-controls` | yes, as `dropdownTrigger` |
 | `tabOutOfDropdown` + `getFocusableElements` (`tedi/utils/elements.util.ts`) | yes, verbatim |
 | Focus **trap** inside the panel | no — and upstream has none either. Tab leaves the dropdown by design |
 
 Behaviours that are easy to "improve" by accident, and must not be: arrow keys
 do **not** wrap at the ends; disabled items keep their roving `tabindex` in a
 menu but lose it in a listbox; opening focuses the selected (or first enabled)
-item **even when opened by mouse**. All three are upstream's.
+item **even when opened by mouse**; focus moves first and the panel closes
+second, so focus is never left on a detached element. All four are upstream's.
+
+Angular 9 additions, also ported:
+
+- **`dropdown-role="list"` is not a widget.** No roving `tabindex`, no item key
+  handling and no trigger arrow keys; opening focuses the panel's first
+  focusable element. Tab is the browser's, Escape stays in `overlay()`.
+- **`interactive-content` items.** The `li` is `role="none"`, and the item's
+  role, ARIA state and roving `tabindex` live on its first `a[href], button`.
+  Every state read goes through that target, so `aria-disabled` and
+  `aria-selected` are read off the control, not the `li`.
+- **Trigger keys (#669).** A non-native trigger toggles on Enter, and on Space
+  at keyup for a press that began on it. A checkbox or radio trigger toggles on
+  Enter, which also keeps Enter from submitting its form; Space stays the
+  input's native click. Keys from other controls inside the trigger wrapper are
+  left alone.
+- **Trigger ARIA.** `aria-haspopup` follows the content's role (`menu` /
+  `listbox`, nothing for `list`) unless given; `aria-controls` is present only
+  while open; a non-native trigger gets `role="button"` / `tabindex="0"` only
+  when it has none of its own.
+- **Client-set attributes survive a Livewire morph.** The trigger is the
+  consumer's own markup, so these attributes are set from JS, and Livewire's
+  morph strips attributes the server HTML lacks while `x-init` never re-runs.
+  The behaviour re-applies them from `Livewire.hook('morph.updated')` for that
+  element only (an ancestor's `updated` fires before its children are patched),
+  and unregisters the hook in `destroy()`. `tediSheet`'s trigger and the
+  tooltip's `aria-describedby` follow the same rule. Any new JS that decorates
+  consumer markup must do the same.
 
 Two divergences, both because Blade has no component instances to query:
 
@@ -542,7 +612,10 @@ this port must not, because the item's behaviour lives in the click handlers —
 `x-on:click="hide(true)"` and whatever `wire:click` the consumer bound.
 Synthesising the click is what keeps keyboard activation and mouse activation
 on one path. Any future keyboard layer on a component whose actions are bound
-in the template should do the same.
+in the template should do the same. The exception is an `interactive-content`
+item: its `a[href]` / `button` activates itself on Enter, and preventing the
+default would swallow a link's navigation, so Enter is left to the control and
+the resulting click bubbles to the item. A disabled item swallows its clicks.
 
 **Escape stays in `overlay()`.** It is already a document-level listener there
 that closes and returns focus to the trigger, so neither the trigger's nor the
@@ -563,7 +636,10 @@ Every anchored component wires the same three refs, and nothing else:
 {{-- tediDropdown for the dropdown; tooltip and popover use tediOverlay directly. --}}
 <tedi-dropdown x-data="tediDropdown({ placement: 'bottom-start', offset: -4, matchTriggerWidth: true })">
     <tedi-dropdown-trigger x-ref="trigger" x-on:click="toggle()"
-                           x-on:keydown="triggerKeydown($event)" ...>…</tedi-dropdown-trigger>
+                           x-on:keydown="triggerKeydown($event)"
+                           x-on:keyup="triggerKeyup($event)"
+                           x-on:focusout="triggerFocusout($event)"
+                           x-init="initTrigger($el, { ariaHaspopup: null, containerId: … })">…</tedi-dropdown-trigger>
 
     <div class="tedi-dropdown__panel" x-ref="panel" x-show="open" x-cloak
          x-on:keydown="menuKeydown($event)"
@@ -599,8 +675,10 @@ Every anchored component wires the same three refs, and nothing else:
 - The engine's `offset` is *extra* px on top of the 8px base gap. Upstream
   dropdown replaces the base rather than adding to it (`Math.sign(offsetY) *
   offset`, default 4), so a dropdown passes `offset: -4` to land on the same 4px.
-  Tooltip passes its own `offset` (default 4) and popover passes
-  `withArrow ? 12 : 0` — both of which upstream adds on top, as here.
+  Tooltip passes its own `offset` (default 4), which upstream adds on top, as
+  here. Since Angular 9 (#802) the popover's gap is its own `offset` (default 8)
+  plus 12px with an arrow, and it *replaces* the 8px base, so the popover passes
+  `offset - 8 + (withArrow ? 12 : 0)` — 20px at the defaults, as before.
 
 Every `tediOverlay` config key is documented at the function in `src/overlay.js`. Do
 not add per-component positioning code to a template.
@@ -609,7 +687,7 @@ not add per-component positioning code to a template.
 
 ## 12. The `community/` namespace
 
-§1 names `angular/tedi/components/**` as the port source. `angular/community/**`
+§1 names `angular/src/tedi/components/**` as the port source. `angular/src/community/**`
 is a **second, additive source** and everything above applies to it unchanged:
 its components are `ViewEncapsulation.None` too, so their CSS is global and
 BEM-classed exactly like `tedi/`'s.
@@ -624,17 +702,21 @@ Three things differ, and only these three:
    verbatim from the community story's `title`, as `Community/Form/FormField`
    already does.
 3. **Path-only SCSS edits are allowed.** §2 forbids editing vendored SCSS, but a
-   community stylesheet may `@use` a `tedi/` one by relative path
-   (`floating-button.component.scss` reaches four levels up into
-   `tedi/components/buttons/button/button.component.scss`). That path does not
-   survive the move into `resources/scss/`. Rewrite **only the path**, leave
-   every declaration untouched, and note the rewrite in a comment at the top of
-   the vendored file so a re-sync knows what to redo.
+   community stylesheet may `@use` a `tedi/` one by relative path, and that path
+   does not survive the move into `resources/scss/`. Rewrite **only the path**,
+   leave every declaration untouched, and note the rewrite in a comment at the
+   top of the vendored file so a re-sync knows what to redo. No vendored file
+   needs this at present: `floating-button`, the one case, moved into
+   `tedi/components/buttons/` in Angular 9 and is vendored from there with its
+   `@use` intact.
 
-Not every community class is `tedi-`-prefixed — `table-of-contents` is not. That
-is upstream's naming, so it ports verbatim; note that the two class-existence
-guardrails in `tests/IntegrityTest.php` only harvest `tedi-*` tokens, so an
-unprefixed component's classes are covered by its parity test alone.
+Not every class this package emits is `tedi-`-prefixed: `print` (and every
+button, the header, footer and sidenav) emit core's `no-print` / `show-print`
+and `break-*` utilities. That is core's naming, so it ports verbatim; note that
+the two class-existence guardrails in `tests/IntegrityTest.php` only harvest
+`tedi-*` tokens, so unprefixed classes are covered by parity tests alone. (The
+community `table-of-contents` used unprefixed classes; the `tedi/` one that
+replaced it in Angular 9 does not.)
 
 Upstream's own `CLAUDE.md` warns that `community/` is "not a reference for TEDI
 patterns" — that is a warning about *their* code style, not about the rendered
@@ -649,12 +731,12 @@ Modules hash its class names. That reasoning holds for the **built dist** and
 only for it. In the source it does not:
 
 ```scss
-/* react/src/tedi/components/loaders/skeleton/skeleton.module.scss */
-.tedi-skeleton { … }
+/* react/src/tedi/components/content/section/section.module.scss */
+.tedi-section { … }
 ```
 
 ```tsx
-const SkeletonBEM = cn(styles['tedi-skeleton'], className);
+const SectionBEM = cn(styles['tedi-section'], className);
 ```
 
 The selectors are written as ordinary BEM, and the TSX looks them up by their
@@ -674,17 +756,18 @@ Six things differ, and only these six.
 Because these styles were never part of the Angular build this package compiles,
 nothing guarantees the installed `@tedi-design-system/core` defines the custom
 properties they reference. **Before porting, grep core for every `var(--…)` the
-stylesheet uses.** `skeleton.module.scss` wants `--loader-skeleton-radius` and
-`--loader-skeleton-color`; both are in core 6.5, so it ports. A component whose
-tokens are missing does not — and it fails silently, as an unstyled element
-rather than a build error.
+stylesheet uses.** `sheet.module.scss` wants the `--sheet-*` tokens
+(`--sheet-border`, `--sheet-header-background-brand`, …). Core 6.5 does not
+define them and core 6.12 does, so the sheet became portable only with the
+6.12 bump. A component whose tokens are missing does not port — and it fails
+silently, as an unstyled element rather than a build error.
 
 This replaces "are the class names stable" as the question to ask first.
 
 ### 13.2 Vendored filenames keep their `.module` suffix
 
-`skeleton.module.scss` is vendored as `skeleton.module.scss`, not
-`skeleton.component.scss`. §2's "never edit the copied SCSS" exists so a re-sync
+`section.module.scss` is vendored as `section.module.scss`, not
+`section.component.scss`. §2's "never edit the copied SCSS" exists so a re-sync
 is a plain file copy and a plain diff; renaming the file on the way in defeats
 that for no gain. The suffix also reads as the provenance marker it is — a
 `.module.scss` under `resources/scss/components/` came from React.
@@ -738,13 +821,14 @@ no server-side equivalent at all:
 
 | React pattern | Blade |
 |---|---|
-| `cloneElement(child, { className })` — `print`, `scroll-visibility`, `hash-trigger` | a **wrapper element** carrying the classes, as `choicegroup` already does for an Angular directive |
+| `cloneElement(child, { className })` — `scroll-visibility`, `hash-trigger` | a **wrapper element** carrying the classes, as `choicegroup` already does for an Angular directive |
 | `Children.map` over typed children — `top-nav` reading its items to build the mobile nav | an explicit prop or slot; where the derived structure cannot be reconstructed, a documented gap |
 | `ResizeObserver` / `useElementSize` measurement — `multi-value-field`'s `+N`, `affix`'s header offset | an explicit prop (`:visible-count`), documented as consumer-supplied |
 
 ### 13.6 Labels that Angular has no key for
 
-`lang/*/tedi.php` is generated from Angular's `services/translation/translations.ts`.
+`lang/*/tedi.php` is generated from Angular's
+`src/tedi/services/translation/translations.ts` by `node scripts/generate-lang.cjs`.
 React's `providers/label-provider/labels-map.ts` is a superset: it carries keys
 for React-only components, in all three languages.
 

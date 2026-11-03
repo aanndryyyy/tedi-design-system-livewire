@@ -19,8 +19,8 @@
     (see header/top.blade.php). Angular's `story-language-links` and
     `story-theme-toggle` are story-local helper components: the language
     links map directly to `tedi:link`, but the theme toggle needs
-    `form/toggle`, which is not ported (README "Not in this phase") — its row
-    is dropped.
+    `form/toggle`; `tedi:toggle` is ported, but this story does not compose
+    it, so its row is dropped.
 
     Same breakpoint-driven role/profile duplication drop as logged-in.blade.php.
 --}}
