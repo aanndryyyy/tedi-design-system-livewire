@@ -18,11 +18,12 @@
     SUBSET — the overlay:
     * **Popover positioning is dropped** (CONVENTIONS.md §7 item 3). Angular mounts
       the calendar through `CdkConnectedOverlay`. Here `.tedi-date-field__overlay`
-      renders INLINE under an explicit `open` prop. That is faithful to the class's
-      own styling — its only vendored rules are background / border-radius /
-      box-shadow, there is no positioning to lose — and it is what makes the open
-      state reachable at all. What is missing is placement only. `hideOnScroll` and
-      the overlay position list go with it.
+      renders under an explicit `open` prop, anchored with inline styles to its
+      first position: below the field, start-aligned for `calendar-trigger="input"`
+      and end-aligned otherwise, 4px gap (`FIELD_OVERLAY_GAP`).
+      It cannot stay in the flow: since 8.0 the root is the flex surface row, so an
+      in-flow panel would sit beside the input. CDK's fallback positions (flip
+      above, start-aligned), `hideOnScroll` and re-parenting are not ported.
     * **The modal branch and the `modal` prop are NOT ported.** Angular's
       `<tedi-date-field-modal>` composes four `tedi-modal*` components that do not
       exist in this package, and its styles were inline in the Angular decorator,
@@ -214,6 +215,16 @@
 
     // describedBy: the form-field's ids (its character counter), plus any
     // aria-describedby written on the field, go to the <input>.
+    // Angular's `childContext`, handed to the date input's text-field: the
+    // date field paints the surface, never the input inside it.
+    $childContext = \Tedi\Livewire\View\FieldContext::child(
+        size: $resolvedSize,
+        invalid: $isInvalid,
+        valid: $isValid,
+        disabled: $fieldDisabled,
+        clearable: $clearableResolved,
+    );
+
     $describedBy = trim(implode(' ', array_merge(
         $fieldContext['describedBy'] ?? [],
         [(string) $attributes->get('aria-describedby', '')],
@@ -228,6 +239,9 @@
     'tedi-field-surface--disabled' => $paintsSurface && $fieldDisabled,
     'tedi-date-field--small' => $resolvedSize === 'small',
     'tedi-date-field--large' => $resolvedSize === 'large',
+])->style([
+    // The open panel anchors to the field (see the overlay below).
+    'position: relative' => $open && $showCalendar,
 ]) }}>
     <tedi:date-input
         :input-id="$inputId"
@@ -249,10 +263,16 @@
         :icon-active="(bool) $open"
         :icon-disabled="! $showCalendar"
         :clearable="$canClear"
+        :field-context="$childContext"
     />
 
     @if ($open && $showCalendar)
-        <div class="tedi-date-field__overlay" role="dialog" aria-label="{{ __('tedi::tedi.date-field.calendar-dialog') }}">
+        {{-- Angular portals this panel out of the field with CDK, anchored below
+             it: start-aligned for the input trigger, end-aligned for the button
+             (overlayPositions()), FIELD_OVERLAY_GAP = 4px.
+             Rendered inline, it would be a flex item of the surface row, beside
+             the input; so it is taken out of the flow and anchored the same way. --}}
+        <div class="tedi-date-field__overlay" style="position: absolute; top: calc(100% + 4px); {{ $calendarTrigger === 'input' ? 'left' : 'right' }}: 0; z-index: var(--z-index-dropdown)" role="dialog" aria-label="{{ __('tedi::tedi.date-field.calendar-dialog') }}">
             <tedi:calendar
                 :bordered="false"
                 :value="$value"

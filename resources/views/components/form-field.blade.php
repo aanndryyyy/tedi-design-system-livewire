@@ -11,17 +11,26 @@
     instead, and the control inside drops its own; with neither, there is no
     box at all and the control renders bare inside the host.
 
-    The two halves of Angular's DI contract run through the component stack
-    (`Tedi::fieldContext()` in src/Tedi.php):
+    This is the library's one CLASS component (src/View/Components/FormField.php,
+    CONVENTIONS.md §5): its constructor runs before its slot renders, so it
+    builds the field context (src/View/FieldContext.php) up front and carries
+    it in its data frame as `$fieldContext`. The two halves of Angular's DI
+    contract run through that object (`Tedi::fieldContext()` in src/Tedi.php):
 
       Angular                                      Blade
       -------------------------------------------  ------------------------------------------
-      TEDI_FIELD_CONTEXT provided to the control   the control calls Tedi::fieldContext() and
-        (size, ownsSurface, invalid, valid,          reads what the consumer wrote here, with
-        disabled, clearable)                         this component's @props defaults applied
-      contentChild(TEDI_FORM_FIELD_CONTROL)        the control registers itself in this
-        (value, disabled, readOnly, invalid,         component's frame; it arrives here as
-        reset)                                       `$__tediFieldControl`
+      TEDI_FIELD_CONTEXT provided to the control   the control finds the nearest form-field's
+        (size, ownsSurface, invalid, valid,          `fieldContext` with the public lookup
+        disabled, clearable)                         `@aware` uses; this component's defaults
+                                                     are already applied
+      contentChild(TEDI_FORM_FIELD_CONTROL)        the first control registers itself on that
+        (value, disabled, readOnly, invalid,         object; this view renders after the slot
+        reset)                                       and reads `$fieldContext->control`
+
+    The props are the class's constructor parameters and are documented
+    there; only `value` is declared below. The ones the context reads are
+    resolved into `$fieldContext` and copied to plain variables at the top of
+    the PHP block below.
 
     So `tedi:text-field` and `tedi:textarea` drive the clear button and the
     character counter with no props repeated here. A plain `<input>`,
@@ -70,38 +79,55 @@
     * `inputClass` is kept (deprecated upstream too).
     * The `extra` slot is Angular's `[tediFormFieldExtra]` projection.
 --}}
+{{--
+    Only `value` is a view prop. Every other prop is a constructor parameter of
+    the class (src/View/Components/FormField.php, documented there): the ones
+    the field context reads are resolved into `$fieldContext`, and the rest
+    arrive as `$showClearOnInteraction`, `$inputClass` and `$clearAttributes`.
+--}}
+@php
+    // Rendered as an ANONYMOUS component: a parent template compiled before
+    // form-field became a class (Laravel picks class vs anonymous when it
+    // compiles the parent) reaches this view with no `$fieldContext`. Build it
+    // here the way the class would, so a stale view cache degrades instead of
+    // failing. Controls in the slot rendered before this, so they found no
+    // context and registered nothing: such a field draws no clear button
+    // until `php artisan view:clear`.
+    if (! isset($fieldContext)) {
+        $__tediFormField = new \Tedi\Livewire\View\Components\FormField(...array_intersect_key(
+            get_defined_vars(),
+            array_flip(\Tedi\Livewire\View\Components\FormField::PROPS),
+        ));
+        $fieldContext = $__tediFormField->fieldContext;
+        $showClearOnInteraction = $__tediFormField->showClearOnInteraction;
+        $inputClass = $__tediFormField->inputClass;
+        $clearAttributes = $__tediFormField->clearAttributes;
+        $attributes = ($attributes ?? new \Illuminate\View\ComponentAttributeBag)->except(array_merge(
+            \Tedi\Livewire\View\Components\FormField::PROPS,
+            array_map(\Illuminate\Support\Str::kebab(...), \Tedi\Livewire\View\Components\FormField::PROPS),
+        ));
+        unset($__tediFormField);
+    }
+@endphp
+
 @props([
-    /** default|small|large — the label, the control and the box row scale together. */
-    'size' => 'default',
-    /** Material Symbols icon name, or an array: name/size/color/type/variant. */
-    'icon' => null,
-    /** Shows a clear button once the control holds a value. Read by every control inside. */
-    'clearable' => true,
-    /** Show the clear button only while the filled field is hovered or focused. Requires `clearable`. */
-    'showClearOnInteraction' => false,
-    /** Deprecated upstream: extra class on the field box. Style the control directly instead. */
-    'inputClass' => null,
-    /** Maximum character count; shows a live counter and forces the error state past it. */
-    'characterLimit' => null,
-    /** Character count for the counter. Defaults to the length of the control's value. */
-    'characterCount' => null,
     /** The control's value, for the clear button and the counter. Defaults to what the control registered. */
     'value' => null,
-    'disabled' => false,
-    'invalid' => false,
-    'valid' => false,
-    /** Extra attributes forwarded to the clear button (e.g. wire:click). */
-    'clearAttributes' => [],
-])
-
-@aware([
-    'disabled' => false,
-    'invalid' => false,
 ])
 
 @php
-    // contentChild(TEDI_FORM_FIELD_CONTROL) — see Tedi::fieldContext().
-    $control = $__tediFieldControl ?? [];
+    // contentChild(TEDI_FORM_FIELD_CONTROL): what the first control in the
+    // slot registered on this field's context (see Tedi::fieldContext()).
+    $control = $fieldContext->control ?? [];
+
+    $size = $fieldContext->size;
+    $icon = $fieldContext->icon;
+    $clearable = $fieldContext->clearable;
+    $characterLimit = $fieldContext->characterLimit;
+    $characterCount = $fieldContext->characterCount;
+    $disabled = $fieldContext->disabled;
+    $invalid = $fieldContext->invalid;
+    $valid = $fieldContext->valid;
 
     $controlValue = $value ?? ($control['value'] ?? null);
     $hasValue = is_array($controlValue) ? $controlValue !== [] : ($controlValue !== null && (string) $controlValue !== '');
@@ -147,8 +173,7 @@
 
     $showFeedbackRow = (isset($feedback) && $feedback->isNotEmpty()) || $characterLimit !== null;
     // Shared with the control, which may already have put it in its aria-describedby.
-    $baseId = $__tediFieldId ?? \Tedi\Livewire\Tedi::id('tedi-form-field');
-    $characterCountId = $characterLimit !== null ? $baseId.'-character-count' : null;
+    $characterCountId = $characterLimit !== null ? $fieldContext->id().'-character-count' : null;
 @endphp
 
 <tedi-form-field {{ $attributes->class([

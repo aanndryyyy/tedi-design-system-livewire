@@ -60,6 +60,8 @@
     'disabled' => false,
     /** Native `readonly`. A wrapping form-field hides its clear button while it is set. */
     'readonly' => false,
+    /** Port-only: an explicit field context (Tedi\Livewire\View\FieldContext), which wins over the nearest form-field's; `tedi:date-input` passes its date field's here. */
+    'fieldContext' => null,
 ])
 
 @php

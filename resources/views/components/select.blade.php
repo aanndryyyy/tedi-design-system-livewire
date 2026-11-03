@@ -21,9 +21,13 @@
     Only classes that exist in the vendored SCSS are emitted: `tedi-select`
     (block) plus the shared `tedi-input`/`tedi-input--disabled|small|error|valid`
     modifiers select.component.scss defines directly, and `tedi-select--multiselect`
-    for the `multiple` attribute. None of Angular's `tedi-select__trigger`,
-    `__arrow`, `__options`, etc. are rendered — those style the custom combobox
-    this component does not build.
+    for the `multiple` attribute. The <select> also carries
+    `tedi-select__trigger`, the class of the element it stands in for: it is
+    what makes Angular's trigger a full-width block below the inline-flex
+    label row (`display: flex; width: 100%`); without it a native <select> is
+    inline-block, sits beside its label and shrinks to its widest option. The
+    rest of Angular's combobox classes (`__arrow`, `__options`, …) are not
+    rendered — they style parts this component does not build.
 
     Dropped entirely because they only make sense for the custom combobox and
     have no native-<select> equivalent: `searchable`, `groupBy`, virtual
@@ -148,6 +152,7 @@
             'aria-invalid' => $state === 'error' ? 'true' : null,
             'aria-describedby' => $feedbackId,
         ], fn ($v) => $v !== null))->class([
+            'tedi-select__trigger',
             'tedi-input',
             'tedi-input--disabled' => $disabled,
             'tedi-input--small' => $size === 'small',

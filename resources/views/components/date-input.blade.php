@@ -103,6 +103,8 @@
     'size' => null,
     /** Extra attributes for the calendar icon button (e.g. wire:click, aria-controls). Port-only, like form-field's clearAttributes. */
     'iconAttributes' => [],
+    /** Port-only: the date field's `childContext` (Tedi\Livewire\View\FieldContext::child()), handed to the inner text-field. Omitted, the text-field gets whatever field context this date input sits in. */
+    'fieldContext' => null,
 ])
 
 @php
@@ -127,6 +129,12 @@
     // takes part (Angular 9.0, #726).
     $showClear = $clearable && ! $disabled && ($stringValue !== '' || $hasTags);
     $tagsClosable = $removable && ! $disabled;
+
+    // The text-field renders in THIS template, where the stack no longer shows
+    // a date field around it, so its context is handed down explicitly: the
+    // date field's child context, else the one this date input sits in (a
+    // standalone date input inside a form-field), else none.
+    $innerFieldContext = $__env->getConsumableComponentData('fieldContext');
 @endphp
 
 <div @class([
@@ -157,6 +165,7 @@
             :disabled="(bool) $disabled"
             :invalid="(bool) $invalid"
             :size="$size"
+            :field-context="$innerFieldContext"
             :readonly="(bool) $readOnly"
             :required="(bool) $required"
             {{ $attributes->class(['tedi-date-input__input'])->merge(array_filter([

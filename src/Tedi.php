@@ -46,190 +46,52 @@ class Tedi
      * Angular's `inject(TEDI_FIELD_CONTEXT, { optional: true })`
      * (angular/src/tedi/components/form/form-field/field-context.token.ts).
      *
-     * Two providers exist, and the NEAREST one wins, as with Angular's
-     * injector:
+     * The context is a View\FieldContext. The nearest one is found with
+     * `$env->getConsumableComponentData('fieldContext')`, the public lookup
+     * `@aware` makes: the calling control's own `fieldContext` prop first,
+     * then the component frames on the stack, nearest first. The key is
+     * unique to the providers, so the nearest hit is the nearest provider:
      *
-     *   - `tedi:form-field` — its context is computed from what the consumer
-     *     wrote on it, with form-field's own `@props` defaults applied here
-     *     (`size` 'default', `clearable` true; FIELD_DEFAULTS below, pinned
-     *     against form-field.blade.php by tests/AwareTest.php).
-     *   - `tedi:date-field` (and `tedi:date-time-field`) — Angular's date field
-     *     provides its own `childContext` whose `ownsSurface` is always true:
-     *     the date field paints the surface, never the text field inside its
-     *     date input. That text field renders in the date field's own
-     *     TEMPLATE, where the component stack no longer shows the date field,
-     *     so it is found through trackRender() instead (RENDER_PROVIDERS).
+     *   - `tedi:form-field` (View\Components\FormField) builds its context in
+     *     its constructor, before its slot renders, from what the consumer
+     *     wrote on it plus its defaults (`size` 'default', `clearable` true;
+     *     `disabled` / `invalid` with `@aware` semantics), and carries it in
+     *     its data frame. A control in its SLOT finds it there. Unlike
+     *     `@aware`, the size comes from the nearest form-field only, never
+     *     from an unrelated ancestor (a modal, a button group).
+     *   - `tedi:date-field` / `tedi:date-time-field` build Angular's
+     *     `childContext` (FieldContext::child(), `ownsSurface` always true) and
+     *     pass it EXPLICITLY, as the `field-context` prop, through
+     *     `tedi:date-input` to its text field: a control in a component's own
+     *     template cannot find that component on the stack. A standalone
+     *     date input passes on whatever context it sits in itself.
      *
      * `$control` describes the calling control, for the half of the contract
      * Angular runs the other way (`contentChild(TEDI_FORM_FIELD_CONTROL)`):
      * whether it can be reset (`reset`, which is what earns it the field's
-     * clear button), its `value`, `disabled`, `readOnly` and `invalid`. When
-     * the provider is a form-field the first control to call registers itself
-     * in the form-field's component-data frame, under `__tediFieldControl`.
-     * The form-field's own template renders after its slot, and Laravel merges
-     * that frame into the template's data, so it arrives there as the
-     * variable `$__tediFieldControl` — never in `$attributes`. The shared
-     * character-counter id travels the same way, as `$__tediFieldId`.
+     * clear button), its `value`, `disabled`, `readOnly` and `invalid`. The
+     * first control to call registers itself on the context
+     * (FieldContext::register()); the form-field's view renders after its
+     * slot and reads it back. An empty `$control` registers nothing.
      *
-     * Returns null outside any provider. Otherwise:
-     *   provider     'form-field' | 'date-input'
-     *   size         'small' | 'default' | 'large'
-     *   ownsSurface  bool — the field's box paints the surface, not the control
-     *   invalid      bool — the form-field's `invalid`, an exceeded character
-     *                limit, or an enclosing input group's `invalid`
-     *   valid        bool — the form-field's `valid`
-     *   disabled     bool — the form-field's `disabled`, or an enclosing
-     *                input group's
-     *   clearable    bool
-     *   describedBy  string[] — ids the control adds to its aria-describedby
-     *
-     * The form-field is found on the view factory's component stack, so it is
-     * seen by a control rendered in the form-field's SLOT, which is where a
-     * form control sits; by the time a component's own template renders, it
-     * has already been popped from that stack. Like `@aware`, the form-field
-     * half only sees what the consumer explicitly wrote — never its `@props`
-     * defaults — so those are applied here from FIELD_DEFAULTS. Unlike
-     * `@aware`, it reads the NEAREST form-field only, never `size` from some
-     * unrelated ancestor (a modal, a button group).
+     * Returns null outside any provider, otherwise FieldContext::toArray():
+     * provider, size, ownsSurface, invalid, valid, disabled, clearable,
+     * describedBy (the character counter's id, for aria-describedby).
      *
      * @param  array{reset?: bool, value?: mixed, disabled?: bool, readOnly?: bool, invalid?: bool}  $control
      * @return array<string, mixed>|null
      */
     public static function fieldContext(\Illuminate\View\Factory $env, array $control = []): ?array
     {
-        // The nearest provider whose TEMPLATE is rendering right now (see
-        // trackRender()). Component frames pushed after it started belong to
-        // its own template and so sit nearer to the caller than it does.
-        // A provider's own template (renderCount equal to its depth) is not
-        // inside itself, so only shallower entries count.
-        $depth = (fn () => $this->renderCount)->call($env);
-        $ancestors = array_filter(static::$rendering, fn (array $entry) => $entry['depth'] < $depth);
-        $rendering = end($ancestors) ?: null;
+        $context = $env->getConsumableComponentData('fieldContext');
 
-        return (function () use ($control, $rendering): ?array {
-            $floor = $rendering['frames'] ?? 0;
-
-            for ($i = count($this->componentStack) - 1; $i >= $floor; $i--) {
-                $name = $this->componentStack[$i];
-
-                if ($name !== 'tedi::components.form-field') {
-                    continue;
-                }
-
-                // What `@aware` would see from this frame down: the first
-                // frame at or above $i that was written the key.
-                $aware = function (string $key, mixed $default) use ($i) {
-                    for ($j = $i; $j >= 0; $j--) {
-                        if (array_key_exists($key, $this->componentData[$j] ?? [])) {
-                            return $this->componentData[$j][$key];
-                        }
-                    }
-
-                    return $default;
-                };
-
-                $field = ($this->componentData[$i] ?? []) + Tedi::FIELD_DEFAULTS;
-
-                if ($control !== [] && ! isset($this->componentData[$i]['__tediFieldControl'])) {
-                    $this->componentData[$i]['__tediFieldControl'] = $control;
-                }
-
-                $registered = $this->componentData[$i]['__tediFieldControl'] ?? $control;
-
-                $characterLimit = $field['characterLimit'];
-                $registeredValue = $registered['value'] ?? '';
-                // Only a string value has a length to count; a date field in
-                // `multiple` / `range` mode registers an array.
-                $characterCount = $field['characterCount'] ?? (is_scalar($registeredValue) ? mb_strlen((string) $registeredValue) : 0);
-                $exceeded = $characterLimit !== null && $characterCount > $characterLimit;
-
-                $describedBy = [];
-                if ($characterLimit !== null) {
-                    $this->componentData[$i]['__tediFieldId'] ??= Tedi::id('tedi-form-field');
-                    $describedBy[] = $this->componentData[$i]['__tediFieldId'].'-character-count';
-                }
-
-                $clearable = (bool) $field['clearable'];
-
-                return [
-                    'provider' => 'form-field',
-                    'size' => Tedi::fieldSize($field['size']),
-                    // hasBox(): an icon, or a clear button for a control that
-                    // can be reset. The REGISTERED control decides, as it does
-                    // in form-field.blade.php: only the first control registers,
-                    // so a second control must agree with the box actually drawn.
-                    'ownsSurface' => ! empty($field['icon']) || ($clearable && ! empty($registered['reset'])),
-                    'invalid' => (bool) $aware('invalid', false) || $exceeded,
-                    'valid' => (bool) $field['valid'],
-                    'disabled' => (bool) $aware('disabled', false),
-                    'clearable' => $clearable,
-                    'describedBy' => $describedBy,
-                ];
-            }
-
-            return $rendering !== null ? Tedi::dateInputContext() : null;
-        })->call($env);
-    }
-
-    /**
-     * Angular's date field `childContext`: the date field paints the surface,
-     * never the input inside it, and nothing inside asks a form-field for a
-     * clear button (the date field owns its own).
-     *
-     * @internal
-     */
-    public static function dateInputContext(): array
-    {
-        return [
-            'provider' => 'date-input',
-            'size' => 'default',
-            'ownsSurface' => true,
-            'invalid' => false,
-            'valid' => false,
-            'disabled' => false,
-            'clearable' => true,
-            'describedBy' => [],
-        ];
-    }
-
-    /**
-     * Views that provide a field context to controls in their own template.
-     * The date field's text field sits in the date input's template, which
-     * sits in the date field's; keying on the date field rather than the date
-     * input leaves a standalone `tedi:date-input` with no context, so its text
-     * field paints its own surface as Angular's would. The React-sourced date
-     * time field composes the same date input and owns its surface too.
-     */
-    private const RENDER_PROVIDERS = ['tedi::components.date-field', 'tedi::components.date-time-field'];
-
-    /**
-     * Providers currently mid-render, outermost first:
-     * ['depth' => render depth, 'frames' => component-stack size when it began].
-     *
-     * @var list<array{depth: int, frames: int}>
-     */
-    private static array $rendering = [];
-
-    /**
-     * Called for every view as it is composed (TediServiceProvider). Views
-     * render depth-first, so a view starting at depth N proves that every
-     * provider recorded at depth N or deeper has finished; what remains is
-     * exactly the chain of providers the new view is rendering inside.
-     *
-     * @internal
-     */
-    public static function trackRender(\Illuminate\View\Factory $env, string $name): void
-    {
-        [$depth, $frames] = (fn () => [$this->renderCount, count($this->componentStack)])->call($env);
-
-        static::$rendering = array_values(array_filter(
-            static::$rendering,
-            fn (array $entry) => $entry['depth'] < $depth,
-        ));
-
-        if (in_array($name, self::RENDER_PROVIDERS, true)) {
-            static::$rendering[] = ['depth' => $depth, 'frames' => $frames];
+        if (! $context instanceof View\FieldContext) {
+            return null;
         }
+
+        $context->register($control);
+
+        return $context->toArray();
     }
 
     /** Per-process random part of the table-of-contents numbering markers. */
@@ -255,19 +117,6 @@ class Tedi
 
         return '/__TEDI_TOC_(NUMBER|PREFIX)_'.self::$tocToken.'__/';
     }
-
-    /**
-     * form-field's `@props` defaults for the props fieldContext() reads.
-     * tests/AwareTest.php pins these against form-field.blade.php.
-     */
-    public const FIELD_DEFAULTS = [
-        'size' => 'default',
-        'icon' => null,
-        'clearable' => true,
-        'characterLimit' => null,
-        'characterCount' => null,
-        'valid' => false,
-    ];
 
     /** A context size: anything but small/large (null included) is 'default'. */
     public static function fieldSize(mixed $size): string

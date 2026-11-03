@@ -142,6 +142,14 @@
     $isInvalid = (bool) ($fieldContext['invalid'] ?? false);
     $isValid = (bool) ($fieldContext['valid'] ?? false);
     $paintsSurface = ! ($fieldContext['ownsSurface'] ?? false);
+    // The date field's `childContext`, handed to the date input's text-field
+    // (see date-field.blade.php). This component has no `size`.
+    $childContext = \Tedi\Livewire\View\FieldContext::child(
+        invalid: $isInvalid,
+        valid: $isValid,
+        disabled: $disabled,
+        clearable: (bool) $clearable,
+    );
 
     $timeHeading = $timeHeading ?? __('tedi::tedi.dateTimeField.timeHeading');
 
@@ -175,6 +183,7 @@
             :required="(bool) $required"
             :icon-active="(bool) $open"
             :icon-disabled="$disabled"
+            :field-context="$childContext"
             :clearable="(bool) $clearable && filled($display) && ! $disabled && ! $readOnly"
             :icon-attributes="array_filter([
                 'aria-haspopup' => 'dialog',

@@ -19,7 +19,11 @@
       modifiers), so there is nothing to port a breakpoint value onto.
     - `tedi-select` (the custom dropdown form control) is a form component
       outside this port's scope; the page-size control is a plain native
-      `<select>` sharing the same wrapper classes.
+      `<select>` dressed as the small `tedi-select` Angular renders there: the
+      wrapper carries `tedi-pagination__page-size-select tedi-select` (so the
+      vendored `width: auto; min-width: 96px` rule applies) and the <select>
+      the trigger's `tedi-select__trigger tedi-input tedi-input--small`, which
+      paint the field surface.
     - The per-breakpoint layout overrides (`xs`…`xxl`, each a
       `PaginationBreakpointInputs` of `align` / `showArrowLabels` /
       `arrowVariant` / `dividerPosition` / `background`) are resolved by
@@ -276,15 +280,17 @@
             @php $pageSizeLabelId = \Tedi\Livewire\Tedi::id('tedi-pagination__page-size-label'); @endphp
             <div class="tedi-pagination__page-size">
                 <span class="tedi-pagination__page-size-label" id="{{ $pageSizeLabelId }}">{{ $mergedLabels['pageSize'] }}</span>
-                <select
-                    class="tedi-pagination__page-size-select"
-                    aria-labelledby="{{ $pageSizeLabelId }}"
-                    {{ (new \Illuminate\View\ComponentAttributeBag)->merge($pageSizeAttributes) }}
-                >
-                    @foreach ($pageSizeSelectOptions as $option)
-                        <option value="{{ $option['value'] }}" @selected($pageSize === $option['value'])>{{ $option['label'] }}</option>
-                    @endforeach
-                </select>
+                <div class="tedi-pagination__page-size-select tedi-select">
+                    <select
+                        class="tedi-select__trigger tedi-input tedi-input--small"
+                        aria-labelledby="{{ $pageSizeLabelId }}"
+                        {{ (new \Illuminate\View\ComponentAttributeBag)->merge($pageSizeAttributes) }}
+                    >
+                        @foreach ($pageSizeSelectOptions as $option)
+                            <option value="{{ $option['value'] }}" @selected($pageSize === $option['value'])>{{ $option['label'] }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
         @endif
     </div>
