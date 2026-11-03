@@ -1959,6 +1959,7 @@
       _previouslyFocused: null,
       _previousOverflow: "",
       _scrollLocked: false,
+      _outsidePressTarget: null,
       _timer: null,
       _offMorph: null,
       /** The collapse toggle's open state — the inverse of `collapsed`. */
@@ -2082,9 +2083,21 @@
             self.status = "unmounted";
           }
         }, CLOSE_DURATION);
-        if (this.content.returnFocus !== false && this._previouslyFocused && this._previouslyFocused.focus) {
-          this._previouslyFocused.focus({ preventScroll: true });
+        var returnTo = this._previouslyFocused;
+        var outsidePress = this._outsidePressTarget !== null;
+        this._outsidePressTarget = null;
+        if (this.content.returnFocus === false || !returnTo || !returnTo.focus) return;
+        if (outsidePress) {
+          var panel = this.$refs.panel;
+          setTimeout(function() {
+            var current = document.activeElement;
+            if (self.open) return;
+            if (current && current !== document.body && !(panel && panel.contains(current))) return;
+            returnTo.focus({ preventScroll: true });
+          }, 0);
+          return;
         }
+        returnTo.focus({ preventScroll: true });
       },
       _lockScroll: function() {
         if (this._scrollLocked) return;
@@ -2105,6 +2118,7 @@
         if (panel && panel.contains(target)) return;
         if (trigger && trigger.contains(target)) return;
         if (target.closest && target.closest("[data-tedi-sheet-dismiss]")) return;
+        this._outsidePressTarget = target;
         this.hide();
       },
       /** Tab cycling inside the panel — FloatingFocusManager's `modal`. */
@@ -2182,6 +2196,8 @@
         this._drag = null;
         this.dragging = false;
         this.dragOffset = 0;
+        document.removeEventListener("pointermove", drag.onDocMove, true);
+        document.removeEventListener("pointerup", drag.onDocUp, true);
         if (drag.target.hasPointerCapture && drag.target.hasPointerCapture(drag.pointerId)) {
           drag.target.releasePointerCapture(drag.pointerId);
         }
@@ -2192,13 +2208,23 @@
         var currentTarget = event.currentTarget;
         if (!(target instanceof Element) || !closestInside(target, DRAG_ZONE_SELECTOR, currentTarget)) return;
         if (closestInside(target, NO_DRAG_SELECTOR, currentTarget)) return;
-        this._drag = {
+        var self = this;
+        var drag = {
           pointerId: event.pointerId,
           startX: event.clientX,
           startY: event.clientY,
           target: currentTarget,
           started: false
         };
+        drag.onDocMove = function(e) {
+          if (!currentTarget.contains(e.target)) self.dragMove(e);
+        };
+        drag.onDocUp = function(e) {
+          if (!currentTarget.contains(e.target)) self.dragEnd(e);
+        };
+        document.addEventListener("pointermove", drag.onDocMove, true);
+        document.addEventListener("pointerup", drag.onDocUp, true);
+        this._drag = drag;
       },
       dragMove: function(event) {
         var drag = this._drag;

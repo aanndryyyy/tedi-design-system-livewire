@@ -35,7 +35,8 @@ resources/scss/components/<group>/<component>/*.scss       # copied verbatim fro
 `helpers`, `layout`, `loader`, `navigation`, `notifications`, `overlay`, `tags`.
 
 Usage is the Flux-style short syntax, registered via
-`Blade::anonymousComponentNamespace()`:
+`Blade::anonymousComponentNamespace()` (the one class component,
+`tedi:form-field`, is the exception explained in §5):
 
 ```blade
 <tedi:button variant="primary">Salvesta</tedi:button>
@@ -280,32 +281,75 @@ form field reads the control back through
 `contentChild(TEDI_FORM_FIELD_CONTROL)` (value, disabled, read-only, invalid,
 reset).
 
-Both halves port through `Tedi::fieldContext()` in `src/Tedi.php`. A control
-calls it during its own render; it walks the view factory's component stack to
-the **nearest** `tedi:form-field` and returns that field's context, computed
-from what the consumer wrote on the form field plus form-field's own `@props`
-defaults (`Tedi::FIELD_DEFAULTS`, pinned against `form-field.blade.php` by
-`tests/AwareTest.php`). In the same call the first control registers itself in
-the form field's component-data frame; the form field's template renders after
-its slot, so it receives the registration as `$__tediFieldControl` and never in
-`$attributes`. Only `tedi:text-field` and `tedi:textarea` register `reset`, so
-only they earn the clear button.
+Both halves go through one mutable object, `Tedi\Livewire\View\FieldContext`,
+using only public Blade API:
 
-Three rules follow from this:
+- `tedi:form-field` is a **class component**
+  (`src/View/Components/FormField.php`). Its constructor runs before its slot
+  renders and builds the context from what the consumer wrote, with the
+  defaults applied (`size` 'default', `clearable` true; `disabled` / `invalid`
+  read like `@aware`: its own, else an enclosing input group's). The context
+  goes into the component's data frame under the key `fieldContext`.
+- A control calls `Tedi::fieldContext($__env, $control)`. That runs
+  `$__env->getConsumableComponentData('fieldContext')`, the same lookup
+  `@aware` makes. Only providers use the key, so the first hit is the
+  **nearest** form field. The first control to call registers itself on the
+  object. The form field's view renders after its slot, so it reads the
+  registration from `$fieldContext->control` and the shared character-counter
+  id from `$fieldContext->id()`. Only `tedi:text-field` and `tedi:textarea`
+  register `reset`, so only they earn the clear button.
 
-- Like `@aware`, it sees only what the consumer explicitly wrote on the form
-  field, so the defaults are applied in `fieldContext()`. Unlike `@aware`, it
-  reads the nearest form field only, never a `size` from an unrelated ancestor.
-- It sees controls in the form field's **slot**. A component's own template
-  renders after its frame is popped, so a provider whose control sits in its
-  own template (the date field's text field, inside the date input) is found
-  through `Tedi::trackRender()` instead, which a `View::composer('*')` in
-  `TediServiceProvider` calls for every view.
+Four rules follow from this:
+
+- The context is built from the form field's own props, so its size comes from
+  the nearest form field or the default, never from an unrelated ancestor
+  (a modal, a button group). Its `@props`-style defaults are applied once, in
+  the class.
+- It reaches controls in the form field's **slot**. A component's own
+  template renders after its frame is popped, so a provider whose control sits
+  in its own template must pass the context down **explicitly**. The date field
+  and the date-time field build Angular's `childContext`
+  (`FieldContext::child()`, where `ownsSurface` is always true) and pass it as
+  the `field-context` prop through `tedi:date-input` to its `tedi:text-field`.
+  A standalone date input passes on whatever context it sits in, so it paints
+  its own surface.
 - Explicit props on the form field (`value`, `characterCount`, `disabled`,
   `invalid`, `valid`) still win over what the control registers, for wrappers
   that know better.
+- Never read the view factory's protected state (`componentStack`,
+  `componentData`, `renderCount`) and never use a `View::composer('*')`. Use
+  `getConsumableComponentData()` and explicit props only.
 
----
+#### Exception: `tedi:form-field` is the one class component
+
+Every other component is anonymous (§2). The form field is a class because
+only a constructor runs **before** the slot. An anonymous template runs after
+its slot, which is too late to provide a context to the controls inside it. It
+is registered by an explicit alias in `TediServiceProvider`
+(`Blade::component(FormField::class, 'tedi::form-field')`). That alias wins for
+both `<tedi:form-field>` and `<x-tedi::form-field>`; every other `tedi::*` tag
+still resolves through the anonymous namespace. Being a class changes three
+things:
+
+- **Props are constructor parameters** and are documented in the class. Only
+  `value` stays in the view's `@props`. The view gets a multi-word prop as a
+  constructor parameter, because `@props` in a class view cannot map
+  `character-limit` to `$characterLimit`. The class's `data()` adds only the
+  props the consumer **wrote** to the frame, as an anonymous component does.
+  So a descendant's `@aware(['disabled' => …])` (checkbox, radio, select) still
+  sees the same values as before.
+- **Laravel's class-component attribute forwarding applies.** Inside a
+  wrapper's template, a form field with an unwritten constructor parameter
+  takes it from the wrapper's `$attributes` (`size`, `disabled`, `icon`, …),
+  and Laravel strips those names from that bag for the tag body. A control
+  that forwards `{{ $attributes }}` gets `size` / `disabled` / `invalid` back
+  through the context, but a wrapper's stray `icon` lands on the field.
+- **Class vs anonymous is decided when the PARENT template compiles.** Views
+  compiled before the switch still render `form-field.blade.php` anonymously
+  until `php artisan view:clear`. The view handles this: with no
+  `$fieldContext` it builds one itself, so nothing fails. The controls inside
+  found no context, though, so such a field draws no clear button until the
+  cache is cleared.
 
 ## 6. Attribute merging & the root element
 
@@ -749,7 +793,7 @@ components that exist *only* there — where a component exists in Angular too,
 Angular remains the source, because that is what the two other trees were ported
 from and re-syncing against two upstreams is how a port drifts.
 
-Six things differ, and only these six.
+Seven things differ, and only these seven.
 
 ### 13.1 The token check is the real feasibility gate
 
@@ -839,3 +883,64 @@ of a count (`(count) => \`Veel ${count}\``) becomes a `:count` placeholder.
 
 Keep the Angular-generated block above untouched, so regenerating it stays a
 mechanical overwrite.
+
+### 13.7 Scoped vendoring
+
+Sometimes a React-only component is built on a React primitive whose stylesheet
+**collides** with the Angular one this package already ships under the same
+class names. `content/table-card` is the case: its rows are React's
+`TextGroupList`, styled by React's `text-group.module.scss`, which also styles
+`.tedi-text-group` and `.tedi-text-group--horizontal`, the classes Angular's
+`<tedi:text-group>` uses. A global `@use` would restyle every Angular text group
+(a `margin-bottom`, flex column lists, and so on).
+
+The answer is to vendor the React sheet verbatim, as usual, and load it **nested
+under the consuming component's root class** with `meta.load-css`, from a small
+non-vendored glue file:
+
+```scss
+/* resources/scss/components/content/table-card/table-card.composition.scss */
+@use 'sass:meta';
+
+.tedi-table-card {
+  @include meta.load-css('../text-group/text-group.module');
+}
+```
+
+Every selector in the module gains a `.tedi-table-card ` prefix. The vendored
+file stays byte-identical, and its rules apply only inside a table card. Pair it
+with a composed Blade component (`<tedi:text-group-list>`) that is documented as
+styled **only** inside that root.
+
+This is allowed only when all of the following hold. Check them and write the
+evidence into the glue file's header:
+
+1. **The collision is the only obstacle.** Every token passes §13.1, and the
+   component cannot just reuse the Angular primitive (its markup differs).
+2. **Nothing leaks out.** Compile the stylesheet with and without the glue file
+   and diff the two builds. The diff must be additions only, and every added
+   selector must contain the scoping class.
+3. **Nothing leaks in that changes the result.** Scoping stops React rules
+   leaking out. It does not stop the Angular sheet's unscoped rules from also
+   matching inside the root. List every class the composed markup shares with
+   the Angular CSS and diff the declarations per class. Any Angular property
+   that React does not override survives. For the table card, the only overlap
+   is `.tedi-text-group--horizontal`: React overrides its `display` and `gap`
+   and sets the same `align-items`. Angular's `.tedi-text-group > dt` does not
+   match, because React wraps each pair in a row `div`.
+4. **No top-level `:root`, `html`, `:global` or `@media print` block** in the
+   loaded module. Nested under a class, these turn dead or change meaning.
+5. **Specificity ties are resolved by order.** Every scoped selector gains one
+   class of specificity. That preserves the module's internal cascade, but it
+   can tie with a rule in another module that upstream meant to win. Table
+   card's `[class*=…--list][class*=…--horizontal] > [class*=…__row]` gap
+   override (0,4,0) now ties the scoped `--list.--horizontal > __row` (0,4,0).
+   So the glue file is `@use`d **before** `table-card.module` in `index.scss`.
+
+Do not load a whole React sheet to get one rule from it. The table card also
+needs React Card's `tedi-card__content--separator`, but React's
+`card.module.scss` styles `.tedi-card` itself, which Angular's card stylesheet
+already owns. The card is therefore rendered with Angular's `<tedi:card>` /
+`<tedi:card-content>`. The separator's one declaration is restated in the glue
+file, scoped to `.tedi-table-card`, under React's class name. That is a
+documented divergence in the §13.3 sense, recorded in the component's docblock.

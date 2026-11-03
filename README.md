@@ -13,7 +13,9 @@ in the spirit of [Flux](https://github.com/livewire/flux).
 
 TEDI publishes a React package and an Angular package. This one gives Laravel
 the same components as **anonymous Blade components**, so they work in plain
-Blade and in Livewire without a JS framework.
+Blade and in Livewire without a JS framework. One exception: `tedi:form-field`
+is a class component (`Tedi\Livewire\View\Components\FormField`), because it
+must build its field context before its slot renders.
 
 Styling is TEDI's own CSS — **not** a Tailwind reimplementation. You can use
 Tailwind on top if you want; nothing here depends on it.
@@ -152,10 +154,10 @@ summary:
 | `number-field` | Increment/decrement buttons are inert; attach handlers via `decrement-attributes` / `increment-attributes`. `LiveAnnouncer` and wrapper click-to-focus not ported |
 | `slider` | Thumb tooltip not ported — it needs `trackPosition`, the one `<tedi:tooltip>` prop that is itself unported. `tedi-slider--invalid` and `--dragging` dropped |
 | `textarea` | Slot content is a Blade extension used when `value` is empty; Angular has no `ng-content` here |
-| `form-field` | Both halves of Angular's DI — the field context the control injects and `contentChild(TEDI_FORM_FIELD_CONTROL)` — run through `Tedi::fieldContext()` over the view factory's component stack. Only `tedi:text-field` / `tedi:textarea` register a control, so only they earn the clear button. Its state is server-rendered, then kept live by the bundled `tediFormField` behaviour: it follows typing, and `clear()` empties the control, fires `input` and `change` (so `wire:model` follows) and focuses it. Without the bundle the button keeps its render-time state and only `clear-attributes` (e.g. `wire:click`) act on a click; an `x-on:click` in `clear-attributes` runs after `clear()` rather than replacing it. The feedback text's id is not added to the control's `aria-describedby` (pass it yourself). `--tedi-form-field-control-scrollbar` is always `0px`. Click-to-focus on the box padding is not ported. `tedi-form-field--valid` / `--invalid` / `--disabled` dropped — no rule |
+| `form-field` | Both halves of Angular's DI — the field context the control injects and `contentChild(TEDI_FORM_FIELD_CONTROL)` — run through a `FieldContext` object the form-field (a class component) builds before its slot renders; controls find the nearest one through Blade's public `@aware` lookup (`Tedi::fieldContext()`). Only `tedi:text-field` / `tedi:textarea` register a control, so only they earn the clear button. Its state is server-rendered, then kept live by the bundled `tediFormField` behaviour: it follows typing, and `clear()` empties the control, fires `input` and `change` (so `wire:model` follows) and focuses it. Without the bundle the button keeps its render-time state and only `clear-attributes` (e.g. `wire:click`) act on a click; an `x-on:click` in `clear-attributes` runs after `clear()` rather than replacing it. The feedback text's id is not added to the control's `aria-describedby` (pass it yourself). `--tedi-form-field-control-scrollbar` is always `0px`. Click-to-focus on the box padding is not ported. `tedi-form-field--valid` / `--invalid` / `--disabled` dropped — no rule |
 | `calendar-header`, `date-picker-header` | `monthYearSelectType` / `monthMode` / `yearMode` keep their `dropdown` default, but only the trigger renders. `<tedi:dropdown>` now exists; these two are simply not wired to it yet |
 | `calendar`, `date-picker`, `date-field` | Month/weekday names come from the `date-picker.*` translation keys, not `Intl` (`ext-intl` is not a declared dependency), so `localeCode` is dropped. No narrow weekday key exists, so narrow names fall back to `-short` |
-| `date-field`, `time-field` | Popover positioning dropped — the panel renders inline under an explicit `open` prop. The modal branch, `useNativePicker`, `fullscreen` and `modal` are not ported |
+| `date-field`, `time-field` | The panel renders under an explicit `open` prop, anchored with inline styles at upstream's first position — below the field, start-aligned for an input trigger and end-aligned for the button, 4px gap (`FIELD_OVERLAY_GAP`). CDK's flip and fallback positions, re-parenting and `hideOnScroll` are not ported. The modal branch, `useNativePicker`, `fullscreen` and `modal` are not ported |
 | `date-field` | Matcher machinery (`disabledMatchers`, `minDate`/`maxDate`, `disablePast`/`disableFuture`, …) collapses to a flat `disabledDays` array; `formatDate`/`parseDate` become the explicit `display` and `tags` props. `size`, `clearable`, `invalid`/`valid`/`disabled` fall back to the nearest `<tedi:form-field>`'s explicitly written props (`Tedi::fieldContext()`), not to Angular's injected field context. A feedback text's id is not added to `aria-describedby` automatically |
 | `date-input` | Port-only `size` (the date field's resolved size, handed to the inner text-field) and `iconAttributes` (extra attributes for the calendar icon button) |
 | `date-picker` | Deprecated upstream (9.0) in favour of `date-field`; still rendered unchanged |
@@ -211,6 +213,14 @@ block already *is* the primary appearance).
 
 ### Breaking changes in this sync
 
+**Run `php artisan view:clear` after upgrading.** `tedi:form-field` is now a
+class component. Views compiled before the upgrade still render it as an
+anonymous component: it renders, but controls inside it do not register, so the
+field shows no clear button until the views are recompiled. If you published
+`form-field`, `text-field`, `date-input`, `date-field` or `date-time-field`,
+re-publish them: `$__tediFieldControl` and `$__tediFieldId` no longer exist (use
+`$fieldContext->control` and `$fieldContext->id()`).
+
 The re-sync to Angular 9.0.1-rc.1, React 20.1.0-rc.1 and core 6.12 changes
 markup, class names and props. Check these before upgrading:
 
@@ -244,7 +254,14 @@ markup, class names and props. Check these before upgrading:
   gone.
 - **`label-row`**: the root is `<tedi-label-row>`.
 - **`feedback-text`**: renders an `id`.
-- **`select`**: takes `value` and `name` props.
+- **`select`**: takes `value` and `name` props. The native `<select>` carries
+  `tedi-select__trigger`, so it paints the field surface and fills the width
+  below its label. **`pagination`**: the page-size `<select>` is wrapped in
+  `tedi-pagination__page-size-select tedi-select`.
+- **`number-field`**: label, field and feedback are wrapped in one
+  `<tedi-number-field>` root (Angular's host), instead of three sibling roots.
+- **`date-field`**, **`time-field`**: an open panel is anchored below the field
+  (absolutely positioned) instead of sitting in the flow beside it.
 - **`date-field`**: `size` defaults to `null` and inherits from the form field;
   surface classes are on the field; `read-only` keeps the clear button; a
   disabled form field disables the input. **`date-input`**: `read-only` no
@@ -323,7 +340,7 @@ below), `filter`, the `tedi/directives/`, and the components that exist only in
 React. As of Angular 9.0.1-rc.1 that covers every directory under
 `src/tedi/components/<group>/` (73), plus `filter` and the four directives:
 **155 Blade components** once sub-components are counted. With 5 from
-`community/` and 22 from React, that is **182** in total.
+`community/` and 24 from React, that is **184** in total.
 
 | Angular component | Blade tag |
 |---|---|
@@ -428,7 +445,7 @@ back in through `:columns` / `:rows` (see the divergences table above).
 | `<tedi:table>` | The full markup: toolbar, sortable headers, control columns, expandable and clickable rows, column menu | The `@tanstack/angular-table` engine — sorting/filtering/selection/expansion state, virtualisation, drag reorder, column resizing, persistence, the filter popover |
 | `<tedi:calendar-header>`, `<tedi:date-picker-header>` | The month/year trigger buttons | The dropdown panel itself — `<tedi:dropdown>` exists but these are not wired to it yet |
 | `<tedi:time-picker>` | All three variants' markup | The variant host classes, which TEDI ships no rules for |
-| `<tedi:date-field>`, `<tedi:time-field>` | Input, tags, trigger, and the panel inline under an `open` prop | Popover placement, and the mobile modal branch |
+| `<tedi:date-field>`, `<tedi:time-field>` | Input, tags, trigger, and the panel under an `open` prop, anchored below the field | Open/close behaviour, CDK's flip/fallback placement, and the mobile modal branch |
 | `<tedi:number-field>` | Full markup with correct disabled states | Button behaviour — wire it via `increment-attributes` / `decrement-attributes` |
 | `<tedi:file-dropzone>` | Full markup, a native `<input type="file">` that `wire:model` binds, drag-and-drop into that input, and the file list / states rendered from `:files`, `state`, `has-error`, `error` | Angular's client-side file pipeline: `FileService` (append/replace, duplicate renaming), the `ControlValueAccessor`, and the `validators` / `validateIndividually` async validation that wrote `uploadState` |
 | `<tedi:multiselect>` | The full combobox: trigger, selected-value tags, clear button, and an anchored listbox panel with select-all and selectable groups | Per-option custom content, and pointing the panel's width at an arbitrary element (`dropdownWidthRef`) — it is the trigger's width or `auto` |
@@ -499,13 +516,13 @@ it out — CSS Modules hashing its class names — turns out to hold for the bui
 dist and not for the source: `section.module.scss` declares a literal
 `.tedi-section`, and the TSX looks it up by that name. So a `*.module.scss`
 vendors into `resources/scss/` exactly like an Angular `*.component.scss`, and
-everything in CONVENTIONS.md §§2–11 applies unchanged. §13 covers the six things
+everything in CONVENTIONS.md §§2–11 applies unchanged. §13 covers the seven things
 that differ, of which the important one is the new feasibility gate: because
 these styles were never part of the Angular build, **every `var(--…)` they use
 has to be checked against the installed `@tedi-design-system/core`** before the
 component can be ported at all.
 
-Eleven React-only components are ported:
+Twelve React-only components are ported:
 
 | React component | Blade tag |
 |---|---|
@@ -520,20 +537,22 @@ Eleven React-only components are ported:
 | `form/date-time-field` | `<tedi:date-time-field>` ⁸ |
 | `overlays/sheet` | `<tedi:sheet>`, `<tedi:sheet-trigger>`, `<tedi:sheet-content>`, `<tedi:sheet-header>`, `<tedi:sheet-body>`, `<tedi:sheet-footer>`, `<tedi:sheet-closer>` ⁸ |
 | `navigation/card-stepper` | `<tedi:card-stepper>` ⁸ |
+| `content/table-card` | `<tedi:table-card>`, `<tedi:text-group-list>` ⁸ ¹¹ |
 
 ⁸ Documented subsets — see the table below.
 ¹⁰ React ships no stories for it, so it has no Storybook entry — Blast derives
 components from story directories, and writing stories upstream does not have
 would be inventing documentation.
+¹¹ `<tedi:text-group-list>` (React's `TextGroupList`) exists for the table
+card's body and its child row-groups. Its stylesheet collides with the Angular
+text-group, so it is loaded scoped under `.tedi-table-card` (CONVENTIONS.md
+§13.7) and the list is styled only inside a table card. React's standalone
+`TextGroup` stories are not ported for that reason.
 
-Three React-only components are **not** ported. `buttons/button-content` is an
+Two React-only components are **not** ported. `buttons/button-content` is an
 internal primitive with no standalone export. `layout/mobile-nav` reuses
 `tedi-sidenav--mobile` and adds only `tedi-mobile-nav-toggle`, whose job
-`<tedi:sidenav.toggle>` already does. `content/table-card` is not ported: its
-body is React's `TextGroupList` and its dividers React Card's
-`tedi-card__content--separator`, neither of which exists in the Angular
-text-group / card this package ships, and React's text-group stylesheet cannot
-be vendored beside Angular's without restyling it. (React's `misc/option-content`
+`<tedi:sidenav.toggle>` already does. (React's `misc/option-content`
 now has an Angular counterpart, `helpers/option-content`, which is what
 `<tedi:option-content>` ports.) React's `community/` tree is skipped
 wholesale: it is the older generation Angular's `community/` also carries, and
@@ -549,6 +568,7 @@ system.
 | `<tedi:date-time-field>` | All four panel layouts (range, side-by-side, and both multi-step steps), composed from the existing calendar and time picker | Popup placement and the `datetime-local` native branch — it inherits `<tedi:date-field>`'s subset exactly. `clearable` ported; popup ARIA on the icon button; the date-input is wrapped in a `tedi-date-field tedi-field-surface` shell, the only vendored rule that draws its border. Not ported: `labelProps`, `minYear`/`maxYear` |
 | `<tedi:sheet>` | Open/close, dismissal, focus cycling and return, scroll lock, collapse, drag and snap points, header/footer layouts | Unmounting while closed (always behaves as `keepMounted`), the white closing-button variant (the brand header uses `neutral-inverted`), `initialFocus`, `closeButtonProps`, breakpoint `radius` |
 | `<tedi:card-stepper>` | The card, counter, progress, navigation and the step list (in `<tedi:sheet>`) | The `CardStepper.Step` children API (pass `:steps`); uncontrolled navigation — the active step is server state, changes arrive as `tedi:step-change` |
+| `<tedi:table-card>` | Every layout, alignment, column and colSpan option, the header (title, subtitle, end slot, selection checkbox), collapse (Alpine), summary row, actions footer and child row-groups. The card is Angular's `<tedi:card>`; React's separator is restated as one scoped rule | Breakpoint props (`md={{ columns: 2 }}`); `onOpenChange` / `onSelectedChange` (controlled `open` / `selected` only set the initial state); small labels keep the body line height (Angular's label has no small line height) |
 
 ### Not ported
 
@@ -697,6 +717,7 @@ These React stories have no Blade equivalent:
 | `FileUpload`: MultipleHandled, ControlledClearing | React state demos of `onChange` / `files` round-tripping |
 | `FileUpload`: SizeLimited, ExtensionAndSizeLimit | Exist to show the unported client-side validation rejecting a file |
 | `DateTimeField`: Native | The `datetime-local` branch, chosen at runtime by breakpoint |
+| `TableCard`: WithResponsiveLayout | Switches `columns` with the `md` breakpoint prop, which is not ported |
 | `DateTimeField`: Size, States, FieldOptions, PerDayTimeSlots, RangePredefinedTimeSlots, Controlled, YearGrid | Runtime selection state — each drives the picker through props this port hands to the consumer instead |
 | `Sheet`: OpenForVisualTest, OpenBrandForVisualTest, OpenSmallForVisualTest, OpenWithoutHandleForVisualTest, CollapsedForVisualTest, OpenSnapPointForVisualTest, OpenScrollableForVisualTest | Tagged `!dev`/`!autodocs` — Chromatic snapshot fixtures, not in upstream's Storybook sidebar |
 | `CardStepper`: Interactive | The `CardStepper.Step` children API driven by React state |
