@@ -3,6 +3,14 @@
 :root {
   --timeline-padding-y: 8px;
   --timeline-text-min-height: 24px;
+
+  // Centre the marker dot on the first line of text next to it.
+  --timeline-dot-offset-md: calc(
+    (var(--timeline-text-min-height) - var(--separator-dot-size-md)) / 2
+  );
+  --timeline-dot-offset-lg: calc(
+    (var(--timeline-text-min-height) - var(--separator-dot-size-lg)) / 2
+  );
 }
 
 tedi-timeline-item {
@@ -47,8 +55,8 @@ tedi-timeline-item {
       @include breakpoints.media-breakpoint-down(lg) {
         &::before {
           display: none;
-          width: 4px;
-          height: 4px;
+          width: var(--separator-dot-size-sm);
+          height: var(--separator-dot-size-sm);
           margin-inline: var(--layout-grid-gutters-04);
           content: "";
           background-color: currentcolor;
@@ -69,10 +77,10 @@ tedi-timeline-item {
     grid-column: 1;
     align-items: center;
     align-self: stretch;
-    padding-top: 6px;
+    padding-top: var(--timeline-dot-offset-md);
 
     &:not(:last-child) {
-      margin-bottom: -6px;
+      margin-bottom: calc(-1 * var(--timeline-dot-offset-md));
     }
 
     @include breakpoints.media-breakpoint-up(lg) {
@@ -81,7 +89,7 @@ tedi-timeline-item {
     }
 
     &--large {
-      padding-top: 3px;
+      padding-top: var(--timeline-dot-offset-lg);
     }
   }
 

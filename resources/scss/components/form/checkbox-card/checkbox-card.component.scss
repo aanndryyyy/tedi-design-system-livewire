@@ -1,12 +1,24 @@
+$focus-ring:
+  0 0 0 var(--tedi-borders-01)
+    var(--general-effect-colors-focus-outset-inner-shadow),
+  0 0 0 var(--tedi-borders-03)
+    var(--general-effect-colors-focus-outset-outer-shadow);
+$selected-border-inset: calc(
+  var(--general-border-width-selected) - var(--tedi-borders-01)
+);
+
 label[tedi-checkbox-card] {
+  --form-checkbox-radio-size-responsive: var(--form-checkbox-radio-size-fixed);
   --_card-bg: transparent;
   --_card-text: inherit;
   --_card-border: transparent;
+  --_card-inset: 0 0 0 0 transparent;
+  --_card-ring: 0 0 0 0 transparent;
 
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: var(--form-field-height);
   padding: calc(
       var(--form-checkbox-radio-card-checkbox-padding-y) - var(
@@ -20,8 +32,19 @@ label[tedi-checkbox-card] {
   color: var(--_card-text);
   cursor: pointer;
   background-color: var(--_card-bg);
-  border: 1px solid var(--_card-border);
+  border: var(--tedi-borders-01) solid var(--_card-border);
   border-radius: var(--form-checkbox-radio-card-radius);
+  box-shadow: var(--_card-inset), var(--_card-ring);
+
+  &::before,
+  &::after {
+    flex: 1 1 0;
+    max-height: calc(
+      (var(--form-field-height) - var(--body-regular-line-height)) /
+        2 - var(--form-checkbox-radio-card-checkbox-padding-y)
+    );
+    content: "";
+  }
 
   [tedi-text],
   tedi-icon {
@@ -31,6 +54,16 @@ label[tedi-checkbox-card] {
   input[tedi-checkbox],
   tedi-icon {
     flex-shrink: 0;
+  }
+
+  // The pointer always targets the card label, so the browser keeps forwarding
+  // hover and active to the input. If the input itself could be hovered, moving
+  // from the input back onto the card would drop the input's :hover and the
+  // card's hover styles with it.
+  input[tedi-checkbox] {
+    --_checkbox-icon-size: 1rem;
+
+    pointer-events: none;
   }
 
   .tedi-checkbox-card__content {
@@ -45,6 +78,15 @@ label[tedi-checkbox-card] {
         var(--form-checkbox-radio-card-inner-spacing)
     );
     color: inherit;
+  }
+
+  // An icon before the label pushes the label text right by the icon and one more
+  // gap, so the description lines up with the text instead of the icon
+  &:has(> .tedi-checkbox-card__content > tedi-icon) > .tedi-feedback-text {
+    padding-left: calc(
+      var(--form-checkbox-radio-size-responsive) + var(--icon-03) +
+        var(--form-checkbox-radio-card-inner-spacing) * 2
+    );
   }
 
   &.tedi-checkbox-card--hide-indicator {
@@ -63,20 +105,20 @@ label[tedi-checkbox-card] {
     > .tedi-feedback-text {
       padding-left: 0;
     }
-  }
 
-  input[tedi-checkbox] {
-    &:not(:disabled):hover {
-      box-shadow: none;
+    &:has(> .tedi-checkbox-card__content > tedi-icon) > .tedi-feedback-text {
+      padding-left: calc(
+        var(--icon-03) + var(--form-checkbox-radio-card-inner-spacing)
+      );
     }
   }
 
+  // The focus ring goes on the card, not on the indicator
   &:has(input:focus-visible) {
-    outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
-    outline-offset: var(--tedi-borders-01);
+    --_card-ring: #{$focus-ring};
 
-    input[tedi-checkbox]:focus-visible {
-      outline: none;
+    input[tedi-checkbox][type="checkbox"] {
+      --_checkbox-ring: 0 0 0 0 transparent;
     }
   }
 
@@ -85,108 +127,170 @@ label[tedi-checkbox-card] {
   }
 
   &.tedi-checkbox-card--primary {
-    --_card-bg: var(--form-checkbox-radio-card-primary-default-background);
-    --_card-text: var(--form-checkbox-radio-card-primary-default-text);
+    --_card-bg: var(--form-choice-card-primary-unselected-background-default);
+    --_card-text: var(--form-choice-card-primary-unselected-text-default);
     --_card-border: var(
-      --form-checkbox-radio-card-primary-default-border-separate
+      --form-choice-card-primary-unselected-border-borderless
     );
 
-    &:has(input:checked) {
-      --_card-bg: var(--form-checkbox-radio-card-primary-selected-background);
-      --_card-text: var(--form-checkbox-radio-card-primary-selected-text);
-      --_card-border: var(
-        --form-checkbox-radio-card-primary-selected-border-separate
-      );
+    &:has(input:hover:not(:disabled, :checked)) {
+      --_card-bg: var(--form-choice-card-primary-unselected-background-hover);
+      --_card-text: var(--form-choice-card-primary-unselected-text-hover);
+      --_card-border: var(--form-choice-card-primary-unselected-border-hover);
+    }
 
-      input[tedi-checkbox]:not(:disabled) {
-        background-color: transparent;
-        border-color: var(
-          --form-checkbox-radio-default-border-selected-inverted
+    &:has(input:active:not(:disabled, :checked)) {
+      --_card-bg: var(--form-choice-card-primary-unselected-background-active);
+      --_card-text: var(--form-choice-card-primary-unselected-text-active);
+      --_card-border: var(--form-choice-card-primary-unselected-border-active);
+    }
+
+    &:has(input:focus-visible:not(:hover, :active, :disabled, :checked)) {
+      --_card-bg: var(--form-choice-card-primary-unselected-background-focus);
+      --_card-text: var(--form-choice-card-primary-unselected-text-focus);
+    }
+
+    &:has(input:checked) {
+      --_card-bg: var(--form-choice-card-primary-selected-background-default);
+      --_card-text: var(--form-choice-card-primary-selected-text-default);
+      --_card-border: var(--_card-bg);
+
+      input[tedi-checkbox][type="checkbox"] {
+        --_checkbox-bg: var(--form-choice-inverted-indicator-default);
+        --_checkbox-border: var(
+          --form-choice-checkbox-selected-border-inverted
+        );
+        --_checkbox-icon: var(
+          --form-choice-checkbox-selected-indicator-default
         );
       }
     }
 
-    &:has(input:hover:not(:disabled)) {
-      --_card-bg: var(--form-checkbox-radio-card-primary-hover-background);
-      --_card-text: var(--form-checkbox-radio-card-primary-hover-text);
-      --_card-border: var(--form-checkbox-radio-card-primary-hover-border);
+    &:has(input:checked:hover:not(:disabled)) {
+      --_card-bg: var(--form-choice-card-primary-selected-background-hover);
+      --_card-text: var(--form-choice-card-primary-selected-text-hover);
+
+      input[tedi-checkbox][type="checkbox"] {
+        --_checkbox-bg: var(--form-choice-inverted-indicator-hover);
+      }
+    }
+
+    &:has(input:checked:active:not(:disabled)) {
+      --_card-bg: var(--form-choice-card-primary-selected-background-active);
+      --_card-text: var(--form-choice-card-primary-selected-text-active);
+
+      input[tedi-checkbox][type="checkbox"] {
+        --_checkbox-bg: var(--form-choice-inverted-indicator-active);
+      }
+    }
+
+    &:has(input:checked:focus-visible:not(:hover, :active, :disabled)) {
+      --_card-bg: var(--form-choice-card-primary-selected-background-focus);
+      --_card-text: var(--form-choice-card-primary-selected-text-focus);
+
+      input[tedi-checkbox][type="checkbox"] {
+        --_checkbox-bg: var(--form-choice-inverted-indicator-focus);
+      }
     }
 
     &:has(input:disabled:not(:checked)) {
       --_card-bg: var(
-        --form-checkbox-radio-card-primary-disabled-default-background
+        --form-choice-card-primary-unselected-background-disabled
       );
-      --_card-text: var(
-        --form-checkbox-radio-card-primary-disabled-default-text
-      );
+      --_card-text: var(--form-choice-card-primary-unselected-text-disabled);
       --_card-border: var(
-        --form-checkbox-radio-card-primary-disabled-default-background
+        --form-choice-card-primary-unselected-border-disabled
       );
     }
 
     &:has(input:disabled:checked) {
-      --_card-bg: var(
-        --form-checkbox-radio-card-primary-disabled-selected-background
-      );
-      --_card-text: var(
-        --form-checkbox-radio-card-primary-disabled-selected-text
-      );
-      --_card-border: var(
-        --form-checkbox-radio-card-primary-disabled-selected-background
-      );
+      --_card-bg: var(--form-choice-card-primary-selected-background-disabled);
+      --_card-text: var(--form-choice-card-primary-selected-text-disabled);
+      --_card-border: var(--_card-bg);
 
-      input[tedi-checkbox] {
-        background-color: transparent;
-        border-color: var(
-          --form-checkbox-radio-default-border-selected-inverted
+      input[tedi-checkbox][type="checkbox"] {
+        --_checkbox-bg: var(--form-choice-inverted-indicator-disabled);
+        --_checkbox-border: var(
+          --form-choice-checkbox-selected-border-inverted
+        );
+        --_checkbox-icon: var(
+          --form-choice-checkbox-selected-indicator-disabled
         );
       }
     }
   }
 
   &.tedi-checkbox-card--secondary {
-    --_card-bg: var(--form-checkbox-radio-card-secondary-default-background);
-    --_card-text: var(--form-checkbox-radio-card-secondary-default-text);
-    --_card-border: var(--form-checkbox-radio-card-secondary-default-border);
+    --_card-bg: var(--form-choice-card-secondary-unselected-background-default);
+    --_card-text: var(--form-choice-card-secondary-unselected-text-default);
+    --_card-border: var(--form-choice-card-secondary-unselected-border-default);
 
-    &:has(input:checked) {
-      --_card-bg: var(--form-checkbox-radio-card-secondary-selected-background);
-      --_card-text: var(--form-checkbox-radio-card-secondary-selected-text);
-      --_card-border: var(--form-checkbox-radio-card-secondary-selected-border);
-
-      box-shadow: inset 0 0 0 var(--tedi-borders-01) var(--_card-border);
+    &:has(input:hover:not(:disabled, :checked)) {
+      --_card-bg: var(--form-choice-card-secondary-unselected-background-hover);
+      --_card-text: var(--form-choice-card-secondary-unselected-text-hover);
+      --_card-border: var(--form-choice-card-secondary-unselected-border-hover);
     }
 
-    &:has(input:hover:not(:disabled)) {
-      --_card-bg: var(--form-checkbox-radio-card-secondary-hover-background);
-      --_card-text: var(--form-checkbox-radio-card-secondary-hover-text);
-      --_card-border: var(--form-checkbox-radio-card-secondary-hover-border);
+    &:has(input:active:not(:disabled, :checked)) {
+      --_card-bg: var(
+        --form-choice-card-secondary-unselected-background-active
+      );
+      --_card-text: var(--form-choice-card-secondary-unselected-text-active);
+      --_card-border: var(
+        --form-choice-card-secondary-unselected-border-active
+      );
+    }
+
+    &:has(input:focus-visible:not(:hover, :active, :disabled, :checked)) {
+      --_card-bg: var(--form-choice-card-secondary-unselected-background-focus);
+      --_card-text: var(--form-choice-card-secondary-unselected-text-focus);
+      --_card-border: var(--form-choice-card-secondary-unselected-border-focus);
+    }
+
+    &:has(input:checked) {
+      --_card-bg: var(--form-choice-card-secondary-selected-background-default);
+      --_card-text: var(--form-choice-card-secondary-selected-text-default);
+      --_card-border: var(--form-choice-card-secondary-selected-border-default);
+      --_card-inset: inset 0 0 0 #{$selected-border-inset} var(--_card-border);
+    }
+
+    &:has(input:checked:hover:not(:disabled)) {
+      --_card-bg: var(--form-choice-card-secondary-selected-background-hover);
+      --_card-text: var(--form-choice-card-secondary-selected-text-hover);
+      --_card-border: var(--form-choice-card-secondary-selected-border-hover);
+    }
+
+    &:has(input:checked:active:not(:disabled)) {
+      --_card-bg: var(--form-choice-card-secondary-selected-background-active);
+      --_card-text: var(--form-choice-card-secondary-selected-text-active);
+      --_card-border: var(--form-choice-card-secondary-selected-border-active);
+    }
+
+    &:has(input:checked:focus-visible:not(:hover, :active, :disabled)) {
+      --_card-bg: var(--form-choice-card-secondary-selected-background-focus);
+      --_card-text: var(--form-choice-card-secondary-selected-text-focus);
+      --_card-border: var(--form-choice-card-secondary-selected-border-focus);
     }
 
     &:has(input:disabled:not(:checked)) {
       --_card-bg: var(
-        --form-checkbox-radio-card-secondary-disabled-default-background
+        --form-choice-card-secondary-unselected-background-disabled
       );
-      --_card-text: var(
-        --form-checkbox-radio-card-secondary-disabled-default-text
-      );
+      --_card-text: var(--form-choice-card-secondary-unselected-text-disabled);
       --_card-border: var(
-        --form-checkbox-radio-card-secondary-disabled-default-border
+        --form-choice-card-secondary-unselected-border-disabled
       );
     }
 
     &:has(input:disabled:checked) {
       --_card-bg: var(
-        --form-checkbox-radio-card-secondary-disabled-selected-background
+        --form-choice-card-secondary-selected-background-disabled
       );
-      --_card-text: var(
-        --form-checkbox-radio-card-secondary-disabled-selected-text
-      );
+      --_card-text: var(--form-choice-card-secondary-selected-text-disabled);
       --_card-border: var(
-        --form-checkbox-radio-card-secondary-disabled-selected-border
+        --form-choice-card-secondary-selected-border-disabled
       );
-
-      box-shadow: inset 0 0 0 var(--tedi-borders-01) var(--_card-border);
+      --_card-inset: inset 0 0 0 #{$selected-border-inset} var(--_card-border);
     }
   }
 }

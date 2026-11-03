@@ -286,7 +286,7 @@
                         @if ($weekNumber !== null)
                             {{-- Parameterised key: the .false variant carries the literal
                                  placeholder word, substituted as in pagination.blade.php. --}}
-                            aria-label="{{ str_replace('false', (string) $weekNumber, __('tedi::tedi.date-picker.week-number.false')) }}"
+                            aria-label="{{ __('tedi::tedi.date-picker.week-number', ['n' => $weekNumber]) }}"
                         @endif
                     >{{ $weekNumber }}</th>
                 @endif

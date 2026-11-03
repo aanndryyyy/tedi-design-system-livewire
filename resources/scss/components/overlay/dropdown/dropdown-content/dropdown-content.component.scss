@@ -9,9 +9,12 @@
   border-radius: var(--form-select-area-radius);
   box-shadow: 0 1px 5px 0 rgb(0 0 0 / 20%);
 
-  ul {
+  &__list {
     padding: 0;
     margin: 0;
+
+    // Safari strips list semantics from a list with no marker, which is why
+    // `list` mode writes out role="list" rather than relying on the <ul>.
     list-style: none;
   }
 }

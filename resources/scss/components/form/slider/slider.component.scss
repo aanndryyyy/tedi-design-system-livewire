@@ -4,12 +4,6 @@
   width: 100%;
 }
 
-.tedi-slider__label--reserve-space {
-  min-height: var(--body-regular-line-height);
-  overflow: hidden;
-  clip-path: inset(50%);
-}
-
 .tedi-slider__container {
   display: flex;
   flex-wrap: wrap;

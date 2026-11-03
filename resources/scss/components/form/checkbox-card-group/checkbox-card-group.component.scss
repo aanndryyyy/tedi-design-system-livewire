@@ -1,5 +1,7 @@
+// Cards keep their own content height by default; stretch them where equal heights are needed
 .tedi-checkbox-card-group {
   display: flex;
   flex-wrap: wrap;
   gap: var(--form-checkbox-radio-card-gutter);
+  align-items: flex-start;
 }

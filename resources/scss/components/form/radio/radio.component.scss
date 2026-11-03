@@ -1,7 +1,19 @@
 @use "@tedi-design-system/core/bootstrap-utility/breakpoints";
 
+$focus-ring:
+  0 0 0 var(--tedi-borders-01)
+    var(--general-effect-colors-focus-outset-inner-shadow),
+  0 0 0 var(--tedi-borders-03)
+    var(--general-effect-colors-focus-outset-outer-shadow);
+$indicator-border-inset: calc(var(--tedi-borders-02) - var(--tedi-borders-01));
+
 input[tedi-radio][type="radio"] {
   --_radio-dot-size: calc(var(--form-checkbox-radio-size-responsive) * 0.67);
+  --_radio-bg: var(--form-choice-radio-unselected-background-default);
+  --_radio-border: var(--form-choice-radio-unselected-border-default);
+  --_radio-dot: transparent;
+  --_radio-inset: 0 0 0 0 transparent;
+  --_radio-ring: 0 0 0 0 transparent;
 
   position: relative;
   width: var(--form-checkbox-radio-size-responsive);
@@ -12,9 +24,10 @@ input[tedi-radio][type="radio"] {
   vertical-align: middle;
   appearance: none;
   cursor: pointer;
-  background-color: var(--form-checkbox-radio-default-background-default);
-  border: 1px solid var(--form-checkbox-radio-default-border-default);
+  background-color: var(--_radio-bg);
+  border: var(--tedi-borders-01) solid var(--_radio-border);
   border-radius: var(--form-checkbox-radio-indicator-radius-radio);
+  box-shadow: var(--_radio-inset), var(--_radio-ring);
 
   &::before {
     position: absolute;
@@ -23,63 +36,79 @@ input[tedi-radio][type="radio"] {
     width: var(--_radio-dot-size);
     height: var(--_radio-dot-size);
     content: "";
-    background: transparent;
+    background: var(--_radio-dot);
     border-radius: var(--form-checkbox-radio-indicator-radius-radio);
     transform: translate(-50%, -50%);
     transition: background-color 150ms ease;
   }
 
-  &:not(:disabled):hover {
-    border-color: var(--form-checkbox-radio-default-border-hover);
-    box-shadow: 0 0 0 1px var(--form-checkbox-radio-default-border-hover);
+  // Unselected
+  &:not(:disabled, :checked):hover {
+    --_radio-border: var(--form-choice-radio-unselected-border-hover);
+    --_radio-inset: inset 0 0 0 #{$indicator-border-inset} var(--_radio-border);
   }
 
-  &:not(:disabled):active {
-    border-color: var(--form-checkbox-radio-default-border-active);
-    box-shadow: none;
-
-    &::before {
-      background: var(--form-checkbox-radio-default-background-active);
-    }
+  &:not(:disabled, :checked):active {
+    --_radio-border: var(--form-choice-radio-unselected-border-active);
+    --_radio-inset: inset 0 0 0 #{$indicator-border-inset} var(--_radio-border);
   }
 
-  &:not(:checked):disabled {
+  &:focus-visible:not(:disabled) {
+    --_radio-ring: #{$focus-ring};
+
+    outline: none;
+  }
+
+  &:focus-visible:not(:disabled, :checked) {
+    --_radio-border: var(--form-choice-radio-unselected-border-focus);
+  }
+
+  &:disabled:not(:checked) {
+    --_radio-bg: var(--form-choice-radio-unselected-background-disabled);
+    --_radio-border: var(--form-choice-radio-unselected-border-disabled);
+
     cursor: not-allowed;
-    background-color: var(--form-general-background-disabled);
-    border-color: var(--form-general-border-disabled);
   }
 
+  // Selected
   &:checked {
-    border-color: var(--form-checkbox-radio-default-border-selected);
+    --_radio-bg: var(--form-choice-radio-selected-background-default);
+    --_radio-border: var(--form-choice-radio-selected-border-default);
+    --_radio-dot: var(--form-choice-radio-selected-indicator-default);
 
-    &::before {
-      background: var(--form-checkbox-radio-default-background-selected);
+    &:not(:disabled):hover {
+      --_radio-border: var(--form-choice-radio-selected-border-hover);
+      --_radio-dot: var(--form-choice-radio-selected-indicator-hover);
+    }
+
+    &:not(:disabled):active {
+      --_radio-border: var(--form-choice-radio-selected-border-active);
+      --_radio-dot: var(--form-choice-radio-selected-indicator-active);
+    }
+
+    &:focus-visible:not(:disabled, :hover, :active) {
+      --_radio-border: var(--form-choice-radio-selected-border-focus);
+      --_radio-dot: var(--form-choice-radio-selected-indicator-focus);
     }
 
     &:disabled {
-      cursor: not-allowed;
-      border-color: var(--form-checkbox-radio-default-border-selected-disabled);
+      --_radio-border: var(--form-choice-radio-selected-border-disabled);
+      --_radio-dot: var(--form-choice-radio-selected-indicator-disabled);
 
-      &::before {
-        background: var(--form-checkbox-radio-default-background-selected-disabled);
-      }
+      cursor: not-allowed;
     }
   }
 
-  &:focus-visible {
-    outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
-    outline-offset: var(--tedi-borders-01);
-  }
-
+  // Error (selected state keeps its regular colors)
   &:not(:checked, :disabled).tedi-radio--invalid,
   &:not(:checked, :disabled):user-invalid,
   &:not(:checked, :disabled).ng-invalid.ng-touched {
-    background-color: var(--form-checkbox-radio-default-background-error);
-    border-color: var(--form-general-feedback-error-border);
+    --_radio-border: var(--form-choice-radio-unselected-border-error);
 
-    &:hover {
-      border-color: var(--form-general-feedback-error-border);
-      box-shadow: 0 0 0 1px var(--form-general-feedback-error-border);
+    &:hover,
+    &:active {
+      --_radio-inset: inset 0 0 0 #{$indicator-border-inset}
+        var(--_radio-border);
     }
   }
 

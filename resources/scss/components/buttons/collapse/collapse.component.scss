@@ -31,3 +31,19 @@ $transition-duration: 300ms;
     }
   }
 }
+
+@media print {
+  .tedi-collapse__content,
+  .tedi-collapse__extender {
+    transition: none;
+  }
+
+  .tedi-collapse__content {
+    grid-template-rows: 1fr;
+    overflow: visible;
+  }
+
+  .tedi-collapse__extender {
+    visibility: visible;
+  }
+}

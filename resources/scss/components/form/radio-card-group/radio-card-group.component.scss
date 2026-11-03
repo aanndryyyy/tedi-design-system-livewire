@@ -1,11 +1,15 @@
+// Cards keep their own content height by default; stretch them where equal heights are needed
 .tedi-radio-card-group {
   display: flex;
   flex-wrap: wrap;
   gap: var(--form-checkbox-radio-card-gutter);
+  align-items: flex-start;
 
+  // Grouped cards share borders, so they always fill the row height
   &--grouped {
     display: inline-flex;
     flex-wrap: nowrap;
     gap: 0;
+    align-items: stretch;
   }
 }

@@ -1,7 +1,7 @@
 @use "@tedi-design-system/core/bootstrap-utility/breakpoints";
 
-@mixin alert-variant($background, $border) {
-  color: var(--general-text-primary);
+@mixin alert-variant($background, $border, $text) {
+  color: $text;
   background-color: $background;
   border-color: $border;
 }
@@ -19,8 +19,11 @@
   border: 1px solid;
   border-radius: var(--alert-radius);
 
-  @include alert-variant(var(--alert-default-background-info),
-    var(--alert-default-border-info));
+  @include alert-variant(
+    var(--alert-default-background-info),
+    var(--alert-default-border-info),
+    var(--alert-default-text-info)
+  );
 
   &__body {
     display: contents;
@@ -33,7 +36,10 @@
   }
 
   &:has(&__close):not(:has(&__action > *)) {
-    padding-right: calc(var(--layout-grid-gutters-04) + var(--_close-button-size) + var(--_padding-x));
+    padding-right: calc(
+      var(--layout-grid-gutters-04) + var(--_close-button-size) +
+        var(--_padding-x)
+    );
   }
 
   &__close {
@@ -112,23 +118,35 @@
   }
 
   &--info {
-    @include alert-variant(var(--alert-default-background-info),
-      var(--alert-default-border-info));
+    @include alert-variant(
+      var(--alert-default-background-info),
+      var(--alert-default-border-info),
+      var(--alert-default-text-info)
+    );
   }
 
   &--success {
-    @include alert-variant(var(--alert-default-background-success),
-      var(--alert-default-border-success));
+    @include alert-variant(
+      var(--alert-default-background-success),
+      var(--alert-default-border-success),
+      var(--alert-default-text-success)
+    );
   }
 
   &--warning {
-    @include alert-variant(var(--alert-default-background-warning),
-      var(--alert-default-border-warning));
+    @include alert-variant(
+      var(--alert-default-background-warning),
+      var(--alert-default-border-warning),
+      var(--alert-default-text-warning)
+    );
   }
 
   &--danger {
-    @include alert-variant(var(--alert-default-background-danger),
-      var(--alert-default-border-danger));
+    @include alert-variant(
+      var(--alert-default-background-danger),
+      var(--alert-default-border-danger),
+      var(--alert-default-text-danger)
+    );
   }
 
   &--global {
@@ -146,6 +164,10 @@
 
 @media print {
   .tedi-alert {
-    @include alert-variant(var(--tedi-neutral-100), var(--tedi-neutral-350));
+    @include alert-variant(
+      var(--tedi-neutral-100),
+      var(--tedi-neutral-350),
+      var(--general-text-primary)
+    );
   }
 }

@@ -1,7 +1,21 @@
 @use "@tedi-design-system/core/bootstrap-utility/breakpoints";
 
+$focus-ring:
+  0 0 0 var(--tedi-borders-01)
+    var(--general-effect-colors-focus-outset-inner-shadow),
+  0 0 0 var(--tedi-borders-03)
+    var(--general-effect-colors-focus-outset-outer-shadow);
+$selected-border-inset: calc(
+  var(--general-border-width-selected) - var(--tedi-borders-01)
+);
+
 input[tedi-checkbox][type="checkbox"] {
   --_checkbox-icon-size: 1.125rem;
+  --_checkbox-bg: var(--form-choice-checkbox-unselected-default);
+  --_checkbox-border: var(--form-choice-checkbox-unselected-border-default);
+  --_checkbox-icon: var(--form-choice-checkbox-selected-indicator-default);
+  --_checkbox-inset: 0 0 0 0 transparent;
+  --_checkbox-ring: 0 0 0 0 transparent;
 
   position: relative;
   width: var(--form-checkbox-radio-size-responsive);
@@ -12,40 +26,73 @@ input[tedi-checkbox][type="checkbox"] {
   vertical-align: middle;
   appearance: none;
   cursor: pointer;
-  background-color: var(--form-checkbox-radio-default-background-default);
-  border: 1px solid var(--form-checkbox-radio-default-border-default);
+  background-color: var(--_checkbox-bg);
+  border: var(--tedi-borders-01) solid var(--_checkbox-border);
   border-radius: var(--form-checkbox-radio-indicator-radius-checkbox);
+  box-shadow: var(--_checkbox-inset), var(--_checkbox-ring);
 
   @include breakpoints.media-breakpoint-up(sm) {
     --_checkbox-icon-size: 1rem;
   }
 
-  &:not(:disabled):hover {
-    border-color: var(--form-checkbox-radio-default-border-hover);
-    box-shadow: 0 0 0 1px var(--form-checkbox-radio-default-border-hover);
+  // Unselected
+  &:not(:disabled, :checked, :indeterminate):hover {
+    --_checkbox-border: var(--form-choice-checkbox-unselected-border-hover);
+    --_checkbox-inset: inset 0 0 0 #{$selected-border-inset}
+      var(--_checkbox-border);
   }
 
-  &:not(:disabled):active {
-    background-color: var(--form-checkbox-radio-default-background-active);
-    border-color: var(--form-checkbox-radio-default-border-active);
-    box-shadow: none;
+  &:not(:disabled, :checked, :indeterminate):active {
+    --_checkbox-border: var(--form-choice-checkbox-unselected-border-active);
+    --_checkbox-inset: inset 0 0 0 #{$selected-border-inset}
+      var(--_checkbox-border);
   }
 
-  &:not(:checked):disabled {
+  &:focus-visible:not(:disabled) {
+    --_checkbox-ring: #{$focus-ring};
+
+    outline: none;
+  }
+
+  &:focus-visible:not(:disabled, :checked, :indeterminate) {
+    --_checkbox-border: var(--form-choice-checkbox-unselected-border-focus);
+  }
+
+  &:disabled:not(:checked, :indeterminate) {
+    --_checkbox-bg: var(--form-choice-checkbox-unselected-disabled);
+    --_checkbox-border: var(--form-choice-checkbox-unselected-border-disabled);
+
     cursor: not-allowed;
-    background-color: var(--form-general-background-disabled);
-    border-color: var(--form-general-border-disabled);
   }
 
+  // Selected
   &:checked,
   &:indeterminate {
-    background-color: var(--form-checkbox-radio-default-background-selected);
-    border-color: var(--form-checkbox-radio-default-border-selected);
+    --_checkbox-bg: var(--form-choice-checkbox-selected-default);
+    --_checkbox-border: var(--form-choice-checkbox-selected-border-default);
+
+    &:not(:disabled):hover {
+      --_checkbox-bg: var(--form-choice-checkbox-selected-hover);
+      --_checkbox-border: var(--form-choice-checkbox-selected-border-hover);
+      --_checkbox-icon: var(--form-choice-checkbox-selected-indicator-hover);
+    }
+
+    &:not(:disabled):active {
+      --_checkbox-bg: var(--form-choice-checkbox-selected-active);
+      --_checkbox-border: var(--form-choice-checkbox-selected-border-active);
+      --_checkbox-icon: var(--form-choice-checkbox-selected-indicator-active);
+    }
+
+    &:focus-visible:not(:disabled, :hover, :active) {
+      --_checkbox-border: var(--form-choice-checkbox-selected-border-focus);
+    }
 
     &:disabled {
+      --_checkbox-bg: var(--form-choice-checkbox-selected-disabled);
+      --_checkbox-border: var(--form-choice-checkbox-selected-border-disabled);
+      --_checkbox-icon: var(--form-choice-checkbox-selected-indicator-disabled);
+
       cursor: not-allowed;
-      background-color: var(--form-checkbox-radio-default-background-selected-disabled);
-      border-color: var(--form-checkbox-radio-default-border-selected-disabled);
     }
 
     &::before {
@@ -55,7 +102,7 @@ input[tedi-checkbox][type="checkbox"] {
       font-family: "Material Symbols Outlined", sans-serif;
       font-size: var(--_checkbox-icon-size);
       line-height: 1;
-      color: var(--form-checkbox-radio-default-check-indicator-default);
+      color: var(--_checkbox-icon);
       content: "check";
       transform: translate(-50%, -50%);
       -webkit-font-smoothing: antialiased;
@@ -74,20 +121,16 @@ input[tedi-checkbox][type="checkbox"] {
     }
   }
 
-  &:focus-visible {
-    outline: var(--tedi-borders-02) solid var(--tedi-primary-500);
-    outline-offset: var(--tedi-borders-01);
-  }
+  // Error (selected state keeps its regular colors)
+  &:not(:checked, :indeterminate, :disabled).tedi-checkbox--invalid,
+  &:not(:checked, :indeterminate, :disabled):user-invalid,
+  &:not(:checked, :indeterminate, :disabled).ng-invalid.ng-touched {
+    --_checkbox-border: var(--form-choice-checkbox-unselected-border-error);
 
-  &:not(:checked, :disabled).tedi-checkbox--invalid,
-  &:not(:checked, :disabled):user-invalid,
-  &:not(:checked, :disabled).ng-invalid.ng-touched {
-    background-color: var(--form-checkbox-radio-default-background-error);
-    border-color: var(--form-general-feedback-error-border);
-
-    &:hover {
-      border-color: var(--form-general-feedback-error-border);
-      box-shadow: 0 0 0 1px var(--form-general-feedback-error-border);
+    &:hover,
+    &:active {
+      --_checkbox-inset: inset 0 0 0 #{$selected-border-inset}
+        var(--_checkbox-border);
     }
   }
 
@@ -107,7 +150,7 @@ label:has(input[tedi-checkbox]:disabled) {
   cursor: not-allowed;
 }
 
-label:has(input[tedi-checkbox])+tedi-feedback-text {
+label:has(input[tedi-checkbox]) + tedi-feedback-text {
   padding-left: var(--form-checkbox-radio-size-responsive);
   margin-left: var(--form-checkbox-radio-inner-spacing);
 }

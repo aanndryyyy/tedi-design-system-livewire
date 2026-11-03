@@ -125,11 +125,9 @@
     // feedbackId()
     $feedbackId = $feedbackText ? $inputId.'-feedback' : null;
 
-    // 'numberField.decrement' | tediTranslate: step() — the parameterised keys
-    // carry the argument as the literal "false" placeholder (pagination.blade.php
-    // substitutes into the same .true/.false convention).
-    $decrementLabel = str_replace('false', (string) $step, __('tedi::tedi.numberField.decrement.false'));
-    $incrementLabel = str_replace('false', (string) $step, __('tedi::tedi.numberField.increment.false'));
+    // 'numberField.decrement' | tediTranslate: step()
+    $decrementLabel = __('tedi::tedi.numberField.decrement', ['count' => $step]);
+    $incrementLabel = __('tedi::tedi.numberField.increment', ['count' => $step]);
 
     // <tedi:button> is a component tag, so its classes are passed as a plain
     // string attribute rather than through @class().

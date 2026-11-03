@@ -42,3 +42,72 @@ $card-colors: (
     flex: 0 0 auto;
   }
 }
+
+$card-corners: ("tl", "tr", "br", "bl");
+
+@mixin card-inner-radius($value) {
+  @each $corner in $card-corners {
+    --tedi-card-inner-radius-#{$corner}: #{$value};
+  }
+}
+
+/**
+ * Blocks the card rounds its corners on. Anything else a consumer projects —
+ * an absolutely positioned decoration such as a `tedi-status-indicator`, for
+ * instance — is left alone and does not shift which block sits at an edge.
+ */
+$card-blocks: ".tedi-card-header, .tedi-card-content, .tedi-card-icon, .tedi-card-row, .tedi-alert";
+
+/**
+ * Cards do not clip their content, so the blocks sitting at a card edge round
+ * their own outer corners. They sit inside the card border, so they use the
+ * card's inner radius — the four `--tedi-card-inner-radius-*` properties, which
+ * inherit down through rows and are zeroed corner by corner on every block that
+ * does not reach that corner of the card.
+ */
+@mixin card-corners($axis) {
+  $first: ":nth-child(1 of #{$card-blocks})";
+  $last: ":nth-last-child(1 of #{$card-blocks})";
+
+  @if $axis == "vertical" {
+    > :not(#{$first}) {
+      --tedi-card-inner-radius-tl: 0;
+      --tedi-card-inner-radius-tr: 0;
+    }
+
+    > :not(#{$last}) {
+      --tedi-card-inner-radius-br: 0;
+      --tedi-card-inner-radius-bl: 0;
+    }
+
+    > #{$first} {
+      border-top-left-radius: var(--tedi-card-inner-radius-tl);
+      border-top-right-radius: var(--tedi-card-inner-radius-tr);
+    }
+
+    > #{$last} {
+      border-bottom-right-radius: var(--tedi-card-inner-radius-br);
+      border-bottom-left-radius: var(--tedi-card-inner-radius-bl);
+    }
+  } @else {
+    > :not(#{$first}) {
+      --tedi-card-inner-radius-tl: 0;
+      --tedi-card-inner-radius-bl: 0;
+    }
+
+    > :not(#{$last}) {
+      --tedi-card-inner-radius-tr: 0;
+      --tedi-card-inner-radius-br: 0;
+    }
+
+    > #{$first} {
+      border-top-left-radius: var(--tedi-card-inner-radius-tl);
+      border-bottom-left-radius: var(--tedi-card-inner-radius-bl);
+    }
+
+    > #{$last} {
+      border-top-right-radius: var(--tedi-card-inner-radius-tr);
+      border-bottom-right-radius: var(--tedi-card-inner-radius-br);
+    }
+  }
+}

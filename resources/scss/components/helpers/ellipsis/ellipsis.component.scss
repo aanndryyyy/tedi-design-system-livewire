@@ -16,6 +16,9 @@
   hyphens: auto;
   /* stylelint-disable-next-line declaration-property-value-keyword-no-deprecated */
   word-break: break-word;
+
+  // Prevent an ancestor's nowrap from disabling line-clamp ellipsis in WebKit.
+  white-space: normal;
   -webkit-box-orient: vertical;
 
   &--start {

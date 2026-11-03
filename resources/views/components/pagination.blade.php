@@ -153,17 +153,16 @@
     $nextItem = $items[count($items) - 1] ?? $emptyNavItem;
     $pageItems = count($items) > 2 ? array_slice($items, 1, -1) : [];
 
-    // mergedLabels() — see the file header for why .true/.false keys are
-    // treated as interchangeable templates with a literal placeholder word.
+    // mergedLabels()
     $defaultLabels = [
         'ariaLabel' => __('tedi::tedi.pagination.title'),
         'previous' => __('tedi::tedi.pagination.prev-page'),
         'next' => __('tedi::tedi.pagination.next-page'),
-        'pageAriaLabel' => fn (int $p) => str_replace('false', (string) $p, __('tedi::tedi.pagination.page.false')),
-        'currentPageAriaLabel' => fn (int $p) => str_replace('true', (string) $p, __('tedi::tedi.pagination.page.true')),
-        'results' => fn (int $count) => str_replace('false', (string) $count, __('tedi::tedi.pagination.results.false')),
+        'pageAriaLabel' => fn (int $p) => __('tedi::tedi.pagination.page.false', ['page' => $p]),
+        'currentPageAriaLabel' => fn (int $p) => __('tedi::tedi.pagination.page.true', ['page' => $p]),
+        'results' => fn (int $count) => trans_choice('tedi::tedi.pagination.results', $count, ['count' => $count]),
         'pageSize' => __('tedi::tedi.pagination.page-size'),
-        'pageStatus' => fn (int $p, int $total) => strtr(__('tedi::tedi.pagination.page-status.true'), ['true' => (string) $p, '0' => (string) $total]),
+        'pageStatus' => fn (int $p, int $total) => __('tedi::tedi.pagination.page-status', ['page' => $p, 'total' => $total]),
     ];
     $mergedLabels = array_replace($defaultLabels, $labels);
 

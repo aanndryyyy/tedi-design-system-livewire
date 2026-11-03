@@ -1,9 +1,36 @@
+@use "../field-surface-mixins" as field-surface;
+
 .tedi-date-field {
+  @include field-surface.tokens;
+
   display: flex;
-  flex: 1;
   gap: var(--form-field-inner-spacing);
   align-items: center;
   min-width: 0;
+
+  &:not(.tedi-field-surface) {
+    flex: 1;
+  }
+
+  // `:where` keeps the paint at one class, so a neighbour reshaping the field's
+  // edges — an input group's addon — reaches it with two.
+  &:where(.tedi-field-surface) {
+    @include field-surface.surface;
+
+    width: 100%;
+  }
+
+  &.tedi-field-surface {
+    @include field-surface.surface-states(":focus-within", true);
+  }
+
+  &--small {
+    @include field-surface.size(small);
+  }
+
+  &--large {
+    @include field-surface.size(large);
+  }
 
   &__overlay {
     background: var(--card-background-primary);

@@ -1,4 +1,4 @@
-.tedi-dropdown-item-value {
+.tedi-option-content {
   display: flex;
   gap: var(--dropdown-item-inner-spacing);
   align-items: center;
@@ -9,7 +9,7 @@
     align-items: flex-start;
 
     >input[tedi-checkbox][type="checkbox"],
-    >input.tedi-dropdown-item-value__radio,
+    >input.tedi-option-content__radio,
     >.tedi-icon {
       margin-top: calc((var(--body-regular-line-height) - var(--form-checkbox-radio-size-responsive)) / 2);
     }
@@ -34,13 +34,14 @@
     vertical-align: middle;
     appearance: none;
     cursor: pointer;
-    background-color: var(--form-checkbox-radio-default-background-default);
-    border: var(--tedi-borders-01) solid var(--form-checkbox-radio-default-border-default);
+    background-color: var(--form-choice-radio-unselected-background-default);
+    border: var(--tedi-borders-01) solid
+      var(--form-choice-radio-unselected-border-default);
     border-radius: var(--form-checkbox-radio-indicator-radius-radio);
 
     &:checked {
-      background-color: var(--form-checkbox-radio-default-background-default);
-      border-color: var(--form-checkbox-radio-default-border-selected);
+      background-color: var(--form-choice-radio-selected-background-default);
+      border-color: var(--form-choice-radio-selected-border-default);
 
       &::before {
         position: absolute;
@@ -49,7 +50,7 @@
         width: calc(var(--form-checkbox-radio-size-responsive) * 0.625);
         height: calc(var(--form-checkbox-radio-size-responsive) * 0.625);
         content: "";
-        background: var(--form-checkbox-radio-default-border-selected);
+        background: var(--form-choice-radio-selected-indicator-default);
         border-radius: 50%;
         transform: translate(-50%, -50%);
       }
@@ -61,11 +62,11 @@
       border-color: var(--form-input-border-disabled);
 
       &:checked {
-        background-color: var(--form-checkbox-radio-default-background-default);
-        border-color: var(--form-checkbox-radio-default-border-selected-disabled);
+        background-color: var(--form-choice-radio-selected-background-default);
+        border-color: var(--form-choice-radio-selected-border-disabled);
 
         &::before {
-          background: var(--form-checkbox-radio-default-border-selected-disabled);
+          background: var(--form-choice-radio-selected-indicator-disabled);
         }
       }
     }
@@ -117,35 +118,30 @@
 
 li[tedi-dropdown-item],
 .tedi-dropdown-item {
-
   &[aria-selected="true"],
   &.tedi-dropdown-item--selected {
-
-    .tedi-dropdown-item-value__label,
-    .tedi-dropdown-item-value__meta {
+    .tedi-option-content__label,
+    .tedi-option-content__meta {
       color: inherit;
     }
   }
 
   &:hover:not(.tedi-dropdown-item--disabled, [aria-disabled="true"]) {
-
-    .tedi-dropdown-item-value__label,
-    .tedi-dropdown-item-value__meta {
+    .tedi-option-content__label,
+    .tedi-option-content__meta {
       color: inherit;
     }
   }
 
   &[aria-disabled="true"],
   &.tedi-dropdown-item--disabled {
-
-    .tedi-dropdown-item-value__label,
-    .tedi-dropdown-item-value__meta {
+    .tedi-option-content__label,
+    .tedi-option-content__meta {
       color: inherit;
     }
   }
 
-  &:has(.tedi-dropdown-item-value--checkbox, .tedi-dropdown-item-value--radio) {
-
+  &:has(.tedi-option-content--checkbox, .tedi-option-content--radio) {
     &[aria-selected="true"],
     &.tedi-dropdown-item--selected {
       color: var(--dropdown-item-default-text);
@@ -159,10 +155,23 @@ li[tedi-dropdown-item],
   }
 
   &:hover:not(.tedi-dropdown-item--disabled, [aria-disabled="true"]) {
-    .tedi-dropdown-item-value__radio {
-      background-color: var(--form-checkbox-radio-default-background-hover);
-      border-color: var(--form-checkbox-radio-default-border-hover);
+    .tedi-option-content__radio {
       border-width: var(--tedi-borders-02);
+
+      &:not(:checked) {
+        background-color: var(
+          --form-choice-radio-unselected-background-default
+        );
+        border-color: var(--form-choice-radio-unselected-border-hover);
+      }
+
+      &:checked {
+        border-color: var(--form-choice-radio-selected-border-hover);
+
+        &::before {
+          background: var(--form-choice-radio-selected-indicator-hover);
+        }
+      }
     }
   }
 }

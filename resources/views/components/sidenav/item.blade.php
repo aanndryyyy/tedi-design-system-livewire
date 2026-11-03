@@ -84,10 +84,8 @@
     $renderAsButton = ! $hasLink || ($hasDropdown && ($isCollapsed || $mobile));
     $ariaExpanded = $open ? 'true' : 'false';
 
-    // 'sidenav.toggleSubmenu' | tediTranslate: textContent(): open — the
-    // generated lang files carry the parameter as the literal "false"
-    // placeholder (the number-field / pagination convention).
-    $submenuLabel = str_replace('false', (string) $label, __('tedi::tedi.sidenav.toggleSubmenu.false'));
+    // 'sidenav.toggleSubmenu' | tediTranslate: textContent(): open
+    $submenuLabel = __('tedi::tedi.sidenav.toggleSubmenu.'.($open ? 'true' : 'false'), ['value' => $label]);
 
     $tooltipEnabled = $isCollapsed;
 

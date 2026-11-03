@@ -28,7 +28,7 @@
 
   .tedi-filter--secondary.tedi-filter--selected+.tedi-filter--secondary,
   .tedi-filter--secondary+.tedi-filter--secondary.tedi-filter--selected {
-    margin-left: calc(-1 * var(--general-selected-border-width));
+    margin-left: calc(-1 * var(--general-border-width-selected));
   }
 
   .tedi-filter:first-child {
