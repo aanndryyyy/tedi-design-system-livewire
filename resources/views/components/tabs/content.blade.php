@@ -1,6 +1,6 @@
 {{--
     TEDI Tabs Content.
-    Port of angular/tedi/components/navigation/tabs/tabs-content/tabs-content.component.{ts,html}
+    Port of angular/src/tedi/components/navigation/tabs/tabs-content/tabs-content.component.{ts,html}
 
     Angular both hides inactive panels (`[hidden]`) *and* skips rendering
     their `ng-content` entirely. Blade renders once on the server and Alpine

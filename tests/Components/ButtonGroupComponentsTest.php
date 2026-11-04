@@ -78,6 +78,8 @@ class ButtonGroupComponentsTest extends TestCase
         $this->assertStringContainsString('type="button"', $html);
         $this->assertHasClass('tedi-button', $html, 'tedi-button-group-button');
         $this->assertHasClass('tedi-button-group-button', $html, 'tedi-button-group-button');
+        // Angular 9 added `no-print` to the directive's class list, as tedi-button has.
+        $this->assertHasClass('no-print', $html, 'tedi-button-group-button');
     }
 
     public function test_item_label_is_wrapped_in_the_label_span(): void
@@ -468,5 +470,18 @@ class ButtonGroupComponentsTest extends TestCase
 
         $this->assertHasClass('tedi-button-group', $out, 'tedi-button-group');
         $this->assertHasClass('tedi-button-group-button', $out, 'tedi-button-group-button');
+    }
+
+    public function test_selected_slot_button_seeds_the_group_value(): void
+    {
+        $html = Blade::render('<tedi:button-group><tedi:button-group-button value="1" label="A" :selected="true" /><tedi:button-group-button value="2" label="B" /></tedi:button-group>');
+
+        // The selected slot button seeds the live value; the other does not.
+        $this->assertSame(1, substr_count($html, 'x-init="tediSeed('));
+        $this->assertStringContainsString('tediSeedable: true', $html);
+
+        // A group-level value wins: nothing may seed over it.
+        $withValue = Blade::render('<tedi:button-group value="2"><tedi:button-group-button value="1" label="A" :selected="true" /></tedi:button-group>');
+        $this->assertStringContainsString('tediSeedable: false', $withValue);
     }
 }

@@ -1,6 +1,6 @@
 {{--
     TEDI Card Button.
-    Port of angular/tedi/components/buttons/card-button/card-button.component.{ts,html}
+    Port of angular/src/tedi/components/buttons/card-button/card-button.component.{ts,html}
 
     Angular's selector is `a[tedi-card-button], button[tedi-card-button]` — the
     host directive has no inputs, it only adds interaction semantics on top of

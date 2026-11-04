@@ -332,10 +332,17 @@ class TableComponentsTest extends TestCase
     {
         $html = $this->fixture(':enable-row-selection="true"');
 
-        $this->assertHasClass('tedi-table__cell--align-center', $html, on: 'tedi-table__header-cell');
-        $this->assertHasClass('tedi-table__cell--valign-top', $html, on: 'tedi-table__header-cell');
-        $this->assertHasClass('tedi-table__sr-only', $html, on: 'tedi-table__sr-only');
+        // Upstream dropped `align: "center"` from the control columns and gives
+        // icon-only controls the reduced-padding `--control` class instead.
+        $this->assertMissingClass('tedi-table__cell--align-center', $html, on: 'tedi-table__cell--control');
+        $this->assertHasClass('tedi-table__cell--control', $html, on: 'tedi-table__header-cell');
+        $this->assertHasClass('tedi-table__cell--valign-top', $html, on: 'tedi-table__cell--control');
+        // `tedi-table__sr-only` became core's `sr-only` utility upstream.
+        $this->assertHasClass('sr-only', $html, on: 'sr-only');
+        $this->assertStringNotContainsString('tedi-table__sr-only', $html);
         $this->assertStringContainsString(__('tedi::tedi.table.select-column'), $html);
+        // CONTROL_COLUMN_WIDTH is 40.
+        $this->assertStringContainsString('width: 40px; min-width: 40px; max-width: 40px', $html);
     }
 
     public function test_table_select_attributes_reach_the_native_control(): void
@@ -399,6 +406,10 @@ class TableComponentsTest extends TestCase
         BLADE);
 
         $this->assertMissingClass('tedi-table__expand-toggle--icon-only', $html, on: 'tedi-table__expand-toggle');
+        // A labelled expand column hugs its content and carries no width.
+        $this->assertHasClass('tedi-table__cell--control-fit', $html, on: 'tedi-table__header-cell');
+        $this->assertMissingClass('tedi-table__cell--control', $html, on: 'tedi-table__cell--control-fit');
+        $this->assertDoesNotMatchRegularExpression('/tedi-table__cell--control-fit[^>]*style=/', $html);
         $this->assertMissingClass('tedi-collapse-button--icon-only', $html, on: 'tedi-collapse-button');
         $this->assertStringContainsString('Ava', $html);
     }
@@ -528,11 +539,123 @@ class TableComponentsTest extends TestCase
         $this->assertHasClass('tedi-table__cell--sticky-left-start', $html, on: 'tedi-table__cell--sticky-left-start');
         $this->assertHasClass('tedi-table__cell--sticky-left-edge', $html, on: 'tedi-table__cell--sticky-left-edge');
 
-        // Control column is 60px wide (upstream CONTROL_COLUMN_WIDTH), so the
-        // frozen content column starts at 60.
+        // Control column is 40px wide (upstream CONTROL_COLUMN_WIDTH), so the
+        // frozen content column starts at 40.
         $this->assertStringContainsString('left: 0px', $html);
-        $this->assertStringContainsString('left: 60px', $html);
-        $this->assertStringNotContainsString('left: 260px', $html, 'only the FIRST content column is frozen');
+        $this->assertStringContainsString('left: 40px', $html);
+        $this->assertStringNotContainsString('left: 240px', $html, 'only the FIRST content column is frozen');
+    }
+
+    // -- table: sticky last column (stickyLastColumn) ------------------------
+
+    public function test_table_sticky_last_column_classes_and_offsets(): void
+    {
+        $html = Blade::render(<<<'BLADE'
+        <tedi:table
+            :sticky-last-column="true"
+            :expandable="true"
+            :control-column-order="['content', 'expand']"
+            :columns="[['key' => 'a', 'header' => 'A'], ['key' => 'b', 'header' => 'B', 'width' => 120]]"
+            :rows="[['id' => 'r1', 'cells' => ['a' => '1', 'b' => '2'], 'expandable' => true, 'sub' => 'Detail']]"
+        />
+        BLADE);
+
+        $this->assertHasClass('tedi-table--sticky-last-column', $html, on: 'tedi-table');
+        // Trailing expand control is the block's right edge (start), the last
+        // content column its left edge (edge) at right: 40px.
+        $this->assertMatchesRegularExpression('/<th[^>]*tedi-table__cell--sticky-right-start[^>]*right: 0px/s', $html);
+        $this->assertMatchesRegularExpression('/<th[^>]*tedi-table__cell--sticky-right-edge[^>]*width: 120px; right: 40px/s', $html);
+        $this->assertStringNotContainsString('sticky-left', $html);
+        // Only the last content column is frozen: column `a` gets no `right`.
+        $this->assertStringNotContainsString('right: 120px', $html);
+    }
+
+    public function test_table_sticky_last_column_absent_without_the_flag(): void
+    {
+        $html = $this->fixture();
+
+        $this->assertMissingClass('tedi-table--sticky-last-column', $html, on: 'tedi-table');
+        $this->assertStringNotContainsString('sticky-right', $html);
+    }
+
+    // -- table: content sentinel in controlColumnOrder ------------------------
+
+    public function test_table_control_column_order_content_sentinel_trails_controls(): void
+    {
+        $html = Blade::render(<<<'BLADE'
+        <tedi:table
+            :enable-row-selection="true"
+            :expandable="true"
+            :control-column-order="['select', 'content', 'expand']"
+            :columns="[['key' => 'a', 'header' => 'Alpha']]"
+            :rows="[['id' => 'r1', 'cells' => ['a' => '1'], 'expandable' => true]]"
+        />
+        BLADE);
+
+        $select = strpos($html, __('tedi::tedi.table.select-column'));
+        $data = strpos($html, 'Alpha');
+        $expand = strpos($html, __('tedi::tedi.table.expand-column'));
+
+        $this->assertTrue($select < $data && $data < $expand, 'select leads, expand trails the data columns');
+    }
+
+    public function test_table_omitted_controls_stay_leading_with_content_sentinel(): void
+    {
+        $html = Blade::render(<<<'BLADE'
+        <tedi:table
+            :enable-row-selection="true"
+            :expandable="true"
+            :control-column-order="['content', 'expand']"
+            :columns="[['key' => 'a', 'header' => 'Alpha']]"
+            :rows="[['id' => 'r1', 'cells' => ['a' => '1']]]"
+        />
+        BLADE);
+
+        $this->assertTrue(strpos($html, __('tedi::tedi.table.select-column')) < strpos($html, 'Alpha'));
+        $this->assertTrue(strpos($html, 'Alpha') < strpos($html, __('tedi::tedi.table.expand-column')));
+    }
+
+    // -- table: accessible name (#656) and header alignment (#670) ------------
+
+    public function test_table_aria_label_and_labelledby_reach_the_table(): void
+    {
+        $html = Blade::render('<tedi:table aria-label="Broneeringud" aria-labelledby="heading-1" :columns="[[\'key\' => \'a\', \'header\' => \'A\']]" />');
+
+        $this->assertMatchesRegularExpression('/<table[^>]*aria-label="Broneeringud"/s', $html);
+        $this->assertMatchesRegularExpression('/<table[^>]*aria-labelledby="heading-1"/s', $html);
+        $this->assertDoesNotMatchRegularExpression('/<tedi-table[^>]*aria-label=/s', $html);
+
+        $none = $this->fixture();
+        $this->assertDoesNotMatchRegularExpression('/<table[^>]*aria-label(ledby)?=/s', $none);
+    }
+
+    public function test_table_header_align_overrides_align_on_the_header_only(): void
+    {
+        $html = Blade::render(<<<'BLADE'
+        <tedi:table
+            :columns="[['key' => 'a', 'header' => 'A', 'align' => 'right', 'headerAlign' => 'left', 'footer' => 'F']]"
+            :rows="[['id' => 'r1', 'cells' => ['a' => '1']]]"
+        />
+        BLADE);
+
+        $this->assertHasClass('tedi-table__cell--align-left', $html, on: 'tedi-table__header-cell');
+        $this->assertMissingClass('tedi-table__cell--align-right', $html, on: 'tedi-table__header-cell');
+        $this->assertMatchesRegularExpression('/<td[^>]*class="tedi-table__cell tedi-table__cell--align-right"/', $html);
+        $this->assertHasClass('tedi-table__cell--align-right', $html, on: 'tedi-table__cell--footer');
+
+        $fallback = Blade::render('<tedi:table :columns="[[\'key\' => \'a\', \'header\' => \'A\', \'align\' => \'center\']]" />');
+        $this->assertHasClass('tedi-table__cell--align-center', $fallback, on: 'tedi-table__header-cell');
+    }
+
+    public function test_table_scroll_container_binds_the_shadow_classes(): void
+    {
+        $html = $this->fixture();
+
+        // Toggled client-side only (measureScrollShadows); never in static HTML.
+        $this->assertMissingClass('tedi-table__scroll--shadow-start', $html, on: 'tedi-table__scroll');
+        $this->assertStringContainsString("'tedi-table__scroll--shadow-start': shadowStart", $html);
+        $this->assertStringContainsString("'tedi-table__scroll--shadow-end': shadowEnd", $html);
+        $this->assertStringContainsString("'tedi-table__scroll--shadow-header': shadowHeader", $html);
     }
 
     public function test_table_sticky_classes_absent_without_the_flag(): void
@@ -745,7 +868,7 @@ class TableComponentsTest extends TestCase
         $this->assertStringContainsString('<tedi-table-columns-menu', $html);
         $this->assertStringContainsString('data-name="tedi-table-columns-menu"', $html);
         $this->assertStringContainsString(__('tedi::tedi.table.columns'), $html);
-        $this->assertHasClass('tedi-dropdown-item-value--checkbox', $html, on: 'tedi-dropdown-item-value');
+        $this->assertHasClass('tedi-option-content--checkbox', $html, on: 'tedi-option-content');
     }
 
     /** Parity with Angular's template: `__option` is styled but never emitted. */

@@ -210,6 +210,43 @@ class FormChoiceComponentsTest extends TestCase
         $this->assertMissingClass('tedi-radio-card--grouped', $html, on: 'tedi-radio-card');
     }
 
+    public function test_radio_card_bordered_own_prop(): void
+    {
+        foreach (['primary', 'secondary'] as $variant) {
+            // Angular emits --bordered whatever the variant; only --primary styles it.
+            $html = Blade::render('<tedi:radio-card variant="'.$variant.'" :bordered="true">Text</tedi:radio-card>');
+            $this->assertHasClass('tedi-radio-card--bordered', $html, on: 'tedi-radio-card');
+        }
+
+        $html = Blade::render('<tedi:radio-card>Text</tedi:radio-card>');
+        $this->assertMissingClass('tedi-radio-card--bordered', $html, on: 'tedi-radio-card');
+    }
+
+    public function test_radio_card_bordered_is_emitted_alongside_grouped(): void
+    {
+        // isBordered() is independent of isGrouped() upstream; the SCSS ignores it there.
+        $html = Blade::render('<tedi:radio-card :grouped="true" :bordered="true">Text</tedi:radio-card>');
+
+        $this->assertHasClass('tedi-radio-card--grouped', $html, on: 'tedi-radio-card');
+        $this->assertHasClass('tedi-radio-card--bordered', $html, on: 'tedi-radio-card');
+    }
+
+    public function test_radio_card_bordered_does_not_leak_as_html_attribute(): void
+    {
+        $html = Blade::render('<tedi:radio-card-group :bordered="true"><tedi:radio-card :bordered="true">Text</tedi:radio-card></tedi:radio-card-group>');
+
+        $this->assertDoesNotMatchRegularExpression('/\sbordered[=\s>]/', $html);
+    }
+
+    public function test_radio_card_inherits_bordered_from_ancestor_group(): void
+    {
+        $html = Blade::render('<tedi:radio-card-group :bordered="true"><tedi:radio-card>Text</tedi:radio-card></tedi:radio-card-group>');
+        $this->assertHasClass('tedi-radio-card--bordered', $html, on: 'tedi-radio-card');
+
+        $html = Blade::render('<tedi:radio-card-group><tedi:radio-card>Text</tedi:radio-card></tedi:radio-card-group>');
+        $this->assertMissingClass('tedi-radio-card--bordered', $html, on: 'tedi-radio-card');
+    }
+
     // -- radio-card-group ------------------------------------------------------
 
     public function test_radio_card_group_base_class(): void
@@ -226,5 +263,13 @@ class FormChoiceComponentsTest extends TestCase
         $html = Blade::render('<tedi:radio-card-group :grouped="true">content</tedi:radio-card-group>');
 
         $this->assertHasClass('tedi-radio-card-group--grouped', $html, on: 'tedi-radio-card-group');
+    }
+
+    public function test_radio_card_group_bordered_emits_no_group_class(): void
+    {
+        // Angular's group host binds only --grouped; bordered is read by the cards.
+        $html = Blade::render('<tedi:radio-card-group :bordered="true">content</tedi:radio-card-group>');
+
+        $this->assertSame(['tedi-radio-card-group'], $this->classesOf($html, 'tedi-radio-card-group'));
     }
 }

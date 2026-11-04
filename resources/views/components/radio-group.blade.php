@@ -1,6 +1,6 @@
 {{--
     TEDI Radio Group.
-    Port of angular/tedi/components/form/radio-group/radio-group.component.{ts,html}
+    Port of angular/src/tedi/components/form/radio-group/radio-group.component.{ts,html}
 
     Angular's selector `tedi-radio-group` is an element selector, but the
     vendored SCSS contains no `tedi-radio-group { … }` element rule (only the

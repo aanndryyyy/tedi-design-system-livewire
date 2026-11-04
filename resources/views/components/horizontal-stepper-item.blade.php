@@ -1,6 +1,6 @@
 {{--
     TEDI Horizontal Stepper Item.
-    Port of angular/tedi/components/navigation/horizontal-stepper/horizontal-stepper-item/horizontal-stepper-item.component.{ts,html}
+    Port of angular/src/tedi/components/navigation/horizontal-stepper/horizontal-stepper-item/horizontal-stepper-item.component.{ts,html}
 
     Angular's selector is the element `tedi-horizontal-stepper-item`, so per
     CONVENTIONS.md §4's element-selector rule the root below is that literal

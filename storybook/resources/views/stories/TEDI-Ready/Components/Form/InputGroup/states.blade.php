@@ -34,18 +34,18 @@
             </tedi:col>
             <tedi:col :width="5">
                 <tedi:input-group>
-                    <tedi:form.label for="{{ $state }}-start">Silt</tedi:form.label>
+                    <x-slot:label><tedi:form.label for="{{ $state }}-start">Silt</tedi:form.label></x-slot:label>
                     <x-slot:prefix>Tänav</x-slot:prefix>
                     <tedi:form-field>
-                        <input type="text" id="{{ $state }}-start" />
+                        <tedi:text-field :id="$state.'-start'" />
                     </tedi:form-field>
                 </tedi:input-group>
             </tedi:col>
             <tedi:col :width="5">
                 <tedi:input-group>
-                    <tedi:form.label for="{{ $state }}-end">Silt</tedi:form.label>
+                    <x-slot:label><tedi:form.label for="{{ $state }}-end">Silt</tedi:form.label></x-slot:label>
                     <tedi:form-field>
-                        <input type="text" id="{{ $state }}-end" />
+                        <tedi:text-field :id="$state.'-end'" />
                     </tedi:form-field>
                     <x-slot:suffix>EUR</x-slot:suffix>
                 </tedi:input-group>
@@ -58,18 +58,18 @@
         </tedi:col>
         <tedi:col :width="5">
             <tedi:input-group :disabled="true">
-                <tedi:form.label for="disabled-start">Silt</tedi:form.label>
+                <x-slot:label><tedi:form.label for="disabled-start">Silt</tedi:form.label></x-slot:label>
                 <x-slot:prefix>Tänav</x-slot:prefix>
                 <tedi:form-field>
-                    <input type="text" id="disabled-start" />
+                    <tedi:text-field id="disabled-start" />
                 </tedi:form-field>
             </tedi:input-group>
         </tedi:col>
         <tedi:col :width="5">
             <tedi:input-group :disabled="true">
-                <tedi:form.label for="disabled-end">Silt</tedi:form.label>
+                <x-slot:label><tedi:form.label for="disabled-end">Silt</tedi:form.label></x-slot:label>
                 <tedi:form-field>
-                    <input type="text" id="disabled-end" />
+                    <tedi:text-field id="disabled-end" />
                 </tedi:form-field>
                 <x-slot:suffix>EUR</x-slot:suffix>
             </tedi:input-group>
@@ -81,10 +81,10 @@
         </tedi:col>
         <tedi:col :width="5">
             <tedi:input-group :invalid="true">
-                <tedi:form.label for="error-start">Silt</tedi:form.label>
+                <x-slot:label><tedi:form.label for="error-start">Silt</tedi:form.label></x-slot:label>
                 <x-slot:prefix>Tänav</x-slot:prefix>
                 <tedi:form-field>
-                    <input type="text" id="error-start" />
+                    <tedi:text-field id="error-start" />
                 </tedi:form-field>
                 <x-slot:feedback>
                     <tedi:feedback-text text="Tagasiside tekst" type="error" />
@@ -93,9 +93,9 @@
         </tedi:col>
         <tedi:col :width="5">
             <tedi:input-group :invalid="true">
-                <tedi:form.label for="error-end">Silt</tedi:form.label>
+                <x-slot:label><tedi:form.label for="error-end">Silt</tedi:form.label></x-slot:label>
                 <tedi:form-field>
-                    <input type="text" id="error-end" />
+                    <tedi:text-field id="error-end" />
                 </tedi:form-field>
                 <x-slot:suffix>EUR</x-slot:suffix>
                 <x-slot:feedback>

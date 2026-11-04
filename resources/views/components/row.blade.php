@@ -1,6 +1,6 @@
 {{--
     TEDI Row (grid helper).
-    Port of angular/tedi/components/helpers/grid/row/row.component.{ts,html}
+    Port of angular/src/tedi/components/helpers/grid/row/row.component.{ts,html}
 
     Angular's "grid" helper is actually two components — Row and Col, no
     single "grid" component exists (see index.ts). Ported here as separate

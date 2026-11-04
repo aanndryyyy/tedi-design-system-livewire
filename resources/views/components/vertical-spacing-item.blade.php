@@ -1,6 +1,6 @@
 {{--
     TEDI Vertical Spacing Item.
-    Port of angular/tedi/directives/vertical-spacing/vertical-spacing-item.directive.ts
+    Port of angular/src/tedi/directives/vertical-spacing/vertical-spacing-item.directive.ts
 
     The single-item counterpart to `tedi:vertical-spacing`: upstream's
     `[tediVerticalSpacingItem]` adds `.tedi-vertical-spacing__item` to its host

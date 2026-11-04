@@ -131,6 +131,15 @@ class NavigationComponentsTest extends TestCase
         $this->assertStringContainsString('role="tablist"', $html);
     }
 
+    public function test_tabs_list_print_visibility(): void
+    {
+        $html = Blade::render('<tedi:tabs.list></tedi:tabs.list>');
+        $this->assertMissingClass('no-print', $html, 'tedi-tabs-list');
+
+        $html = Blade::render('<tedi:tabs.list print-visibility="hide"></tedi:tabs.list>');
+        $this->assertHasClass('no-print', $html, 'tedi-tabs-list');
+    }
+
     public function test_tabs_list_overflow_mode_scroll_class(): void
     {
         $html = Blade::render('<tedi:tabs.list overflow-mode="scroll"></tedi:tabs.list>');
@@ -226,6 +235,31 @@ class NavigationComponentsTest extends TestCase
         }
     }
 
+    public function test_pagination_align_classes(): void
+    {
+        // PaginationAlign = "between" | "left" | "right"; `between` has no rule
+        // in the vendored SCSS and is dropped (§4).
+        foreach (['left', 'right'] as $align) {
+            $html = Blade::render('<tedi:pagination :page-count="3" align="'.$align.'" />');
+            $this->assertHasClass('tedi-pagination--align-'.$align, $html, 'tedi-pagination');
+        }
+
+        $between = Blade::render('<tedi:pagination :page-count="3" />');
+        $this->assertSame(
+            [],
+            array_values(array_filter($this->classesOf($between, 'tedi-pagination'), fn ($c) => str_starts_with($c, 'tedi-pagination--align-'))),
+        );
+    }
+
+    public function test_pagination_arrow_labels_class_follows_show_arrow_labels(): void
+    {
+        $on = Blade::render('<tedi:pagination :page-count="3" :show-arrow-labels="true" />');
+        $this->assertHasClass('tedi-pagination--arrow-labels', $on, 'tedi-pagination');
+
+        $off = Blade::render('<tedi:pagination :page-count="3" />');
+        $this->assertMissingClass('tedi-pagination--arrow-labels', $off, 'tedi-pagination');
+    }
+
     public function test_pagination_divider_none_emits_no_dead_class(): void
     {
         // Angular emits `tedi-pagination--divider-none` unconditionally too,
@@ -262,19 +296,6 @@ class NavigationComponentsTest extends TestCase
         $this->assertHasClass('tedi-pagination--no-pager', $html, 'tedi-pagination');
         $this->assertHasClass('tedi-pagination--no-results', $html, 'tedi-pagination');
         $this->assertHasClass('tedi-pagination--no-page-size', $html, 'tedi-pagination');
-    }
-
-    public function test_pagination_align_classes(): void
-    {
-        $between = Blade::render('<tedi:pagination :page-count="3" />');
-        $this->assertMissingClass('tedi-pagination--align-left', $between, 'tedi-pagination');
-        $this->assertMissingClass('tedi-pagination--align-right', $between, 'tedi-pagination');
-
-        $left = Blade::render('<tedi:pagination :page-count="3" align="left" />');
-        $this->assertHasClass('tedi-pagination--align-left', $left, 'tedi-pagination');
-
-        $right = Blade::render('<tedi:pagination :page-count="3" align="right" />');
-        $this->assertHasClass('tedi-pagination--align-right', $right, 'tedi-pagination');
     }
 
     public function test_pagination_results_label_when_total_items_set(): void

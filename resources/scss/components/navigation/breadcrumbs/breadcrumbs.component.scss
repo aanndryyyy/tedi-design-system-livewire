@@ -37,14 +37,4 @@
     min-height: 1.5rem;
     margin-inline: -0.25rem;
   }
-
-  // Collapsed crumbs live in the ellipsis dropdown and never show an underline,
-  // regardless of the projected link's [underline] setting. Overrides tedi-link's
-  // default and hover underline (both applied to the non-icon text span) with a
-  // higher-specificity selector; the dropdown content is teleported into a CDK
-  // overlay, so this targets the item class that travels with it.
-  &__dropdown-item .tedi-link:not(.tedi-link--no-underline) :not(tedi-icon),
-  &__dropdown-item .tedi-link:hover :not(tedi-icon) {
-    text-decoration: none;
-  }
 }

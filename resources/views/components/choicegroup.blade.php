@@ -1,6 +1,6 @@
 {{--
     TEDI Choicegroup (community).
-    Port of angular/community/components/form/choicegroup/choicegroup.directive.ts
+    Port of angular/src/community/components/form/choicegroup/choicegroup.directive.ts
 
     Ported from the `community/` tree — see CONVENTIONS.md §12.
 

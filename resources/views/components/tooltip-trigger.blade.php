@@ -16,31 +16,45 @@
     DOM introspection → explicit props (CONVENTIONS.md §5). Angular inspects its
     own first projected child in `ngAfterContentChecked`:
 
-      | Angular runtime detection                     | Blade prop            |
-      |-----------------------------------------------|-----------------------|
-      | first child is a text node → wrap in a span    | `:text="true"`        |
-      |   with `__text --focus tabindex=0`             |                       |
-      | child is not natively focusable → add          | consumer's own markup |
-      |   `--focus` + `tabindex=0` to it               |                       |
-      | set `aria-describedby` on the focusable child  | `described-by="…"`    |
+      | Angular runtime detection                     | Blade                  |
+      |-----------------------------------------------|------------------------|
+      | first child is a text node → wrap in a span    | `:text="true"`         |
+      |   with `__text --focus tabindex=0 role=button` |                        |
+      | child is not natively focusable → add          | consumer's own markup  |
+      |   `--focus`, `tabindex=0` and `role=button`    |                        |
+      | set `aria-describedby` on the resolved child   | Alpine `x-init`        |
 
-    Only the first branch is reachable from Blade: the other two mutate an
-    element the consumer wrote, which a server-rendered template cannot reach
-    into. For a non-focusable element trigger (`<span>Trigger</span>`) write the
-    class and tabindex yourself:
+    The first branch is server-rendered. The second mutates an element the
+    consumer wrote, and adding classes from JS would break CONVENTIONS.md §8's
+    "classes stay identical without JS", so for a non-focusable element trigger
+    write them yourself:
 
-        <tedi:tooltip-trigger>
-            <span class="tedi-tooltip-trigger--focus" tabindex="0">Trigger</span>
-        </tedi:tooltip-trigger>
+        <span class="tedi-tooltip-trigger--focus" tabindex="0" role="button">Trigger</span>
 
-    A natively focusable child (`<tedi:button>`, `<tedi:info-button>`) needs
-    nothing — Angular deliberately skips `--focus` there so the component's own
+    A natively focusable child (`tedi:button`, `tedi:info-button`) needs
+    nothing. Angular deliberately skips `--focus` there so the component's own
     `:focus-visible` ring is not overridden.
 
-    `described-by` mirrors the `aria-describedby` Angular puts on the resolved
-    focusable child. Here it lands on the synthesized text span when
-    `:text="true"`, and on this element otherwise; pass it the `<tedi:tooltip>`'s
-    `description-id`.
+    `aria-describedby` is only an attribute, so it is set from Alpine on the
+    same element Angular resolves: the first child when it is a `button` /
+    `a[href]`, else its first `button, a[href], [tabindex]` descendant, else the
+    child itself. It points at the content's `role="tooltip"` element: the
+    tooltip's `description-id` (via `@aware`) or Alpine's `$id('tedi-tooltip')`.
+    `described-by` overrides it. On the `:text="true"` span the attribute is
+    rendered directly (or bound, for the Alpine id).
+
+    Livewire's morph removes every attribute the server HTML lacks, and
+    `x-init` does not re-run, so the `x-init` also re-applies the attribute
+    from Livewire's `morph.updated` hook once morph has patched the resolved
+    element (guarded when Livewire is absent), and chains the unregister into
+    the tooltip scope's `destroy()`. The `:text="true"` span needs neither:
+    its attribute is in the server HTML, or `x-bind`, which morph re-evaluates.
+
+    Enter / Space on a non-native trigger (Angular 9, #585): the synthesized
+    span, or a consumer `role="button"` element, has no native click on those
+    keys, so a keydown handler toggles the tooltip for `click` / `both`. It
+    skips `button` / `a[href]` targets, which already turn the key into a
+    click; handling it twice would toggle twice.
 
     Touch handling (`touchstart`/`touchend`) is not ported — see
     tooltip.blade.php's header.
@@ -48,6 +62,8 @@
 @aware([
     /** Must equal the tooltip's own @props default — CONVENTIONS.md §3. */
     'openWith' => 'both',
+    /** The tooltip's `description-id`; null means Alpine's $id('tedi-tooltip'). */
+    'descriptionId' => null,
 ])
 @props([
     /**
@@ -61,7 +77,7 @@
      * synthesizes when its first projected child is a text node.
      */
     'text' => false,
-    /** id of the tooltip's sr-only description. */
+    /** Overrides the id aria-describedby points at (default: the tooltip content's id). */
     'describedBy' => null,
 ])
 
@@ -69,15 +85,29 @@
     $opensOnHover = $openWith === 'both' || $openWith === 'hover';
     $opensOnClick = $openWith === 'both' || $openWith === 'click';
     $wrapsText = $text && $interactive;
+    $targetId = $describedBy ?: $descriptionId;
+    // JS expression for the description id: a literal when known server-side,
+    // otherwise the id scoped by `x-id` on the parent `tedi-tooltip`.
+    $idExpression = $targetId ? \Illuminate\Support\Js::from($targetId) : "\$id('tedi-tooltip')";
 @endphp
 
 <tedi-tooltip-trigger
     {{ $attributes->class([
         'tedi-tooltip-trigger--clickable' => $openWith === 'click',
-    ])->merge(array_filter([
-        'aria-describedby' => $wrapsText ? null : ($interactive ? $describedBy : null),
-    ])) }}
+    ]) }}
     x-ref="trigger"
+    @if ($interactive && ! $wrapsText)
+        x-init="(() => {
+            const id = {!! $idExpression !!};
+            const target = () => { const c = $el.firstElementChild; return ! c ? null : (c.matches('button, a[href]') ? c : (c.querySelector('button, a[href], [tabindex]') ?? c)) };
+            const apply = () => target()?.setAttribute('aria-describedby', id);
+            apply();
+            const off = window.Livewire?.hook?.('morph.updated', ({ el }) => { if (el && el === target()) apply() });
+            if (typeof off !== 'function') return;
+            const hostDestroy = destroy;
+            destroy = function () { off(); if (typeof hostDestroy === 'function') hostDestroy.call(this) };
+        })()"
+    @endif
     @if ($opensOnHover)
         x-on:mouseenter="hoverOpen()"
         x-on:mouseleave="hoverClose()"
@@ -86,13 +116,16 @@
     @endif
     @if ($opensOnClick)
         x-on:click="toggle()"
+        x-on:keydown.enter="if (! $event.target.matches('button, a[href]')) { $event.preventDefault(); toggle() }"
+        x-on:keydown.space="if (! $event.target.matches('button, a[href]')) { $event.preventDefault(); toggle() }"
     @endif
 >
     @if ($wrapsText)
         <span
             class="tedi-tooltip-trigger__text tedi-tooltip-trigger--focus"
             tabindex="0"
-            @if ($describedBy) aria-describedby="{{ $describedBy }}" @endif
+            role="button"
+            @if ($targetId) aria-describedby="{{ $targetId }}" @else x-bind:aria-describedby="$id('tedi-tooltip')" @endif
         >{{ $slot }}</span>
     @else
         {{ $slot }}

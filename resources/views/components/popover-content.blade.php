@@ -16,6 +16,9 @@
 
     `maxWidth="none"` emits no modifier: Angular suppresses the class for that
     value and the vendored SCSS has no `.tedi-popover-content--none` rule.
+    Since Angular 9 any other non-preset value is a CSS length (`20rem`,
+    `min(90vw, 30rem)`): it emits no modifier and is applied as an inline
+    `width`, as upstream's `[style.width]` host binding does.
 
     `titleId` pairs the heading with the panel's `aria-labelledby`; it derives
     from `<tedi:popover>`'s `container-id` when that is set (see that
@@ -26,7 +29,7 @@
     'containerId' => null,
 ])
 @props([
-    /** none|small|medium|large */
+    /** none|small|medium|large, or any CSS length ('20rem'), applied inline. */
     'maxWidth' => 'small',
     /** Heading title of the content. */
     'title' => '',
@@ -39,14 +42,18 @@
 ])
 
 @php
+    // Angular 9: a width outside the preset scale is a CSS length, set inline
+    // with no preset class competing with it.
+    $isPresetWidth = in_array($maxWidth, ['none', 'small', 'medium', 'large'], true);
+    $rootAttributes = $attributes->class([
+        'tedi-popover-content',
+        'tedi-popover-content--'.$maxWidth => $isPresetWidth && $maxWidth !== 'none',
+    ]);
     $headingId = $titleId
         ?: ($containerId ? $containerId.'_title' : \Tedi\Livewire\Tedi::id('popover-title'));
 @endphp
 
-<tedi-popover-content {{ $attributes->class([
-    'tedi-popover-content',
-    'tedi-popover-content--'.$maxWidth => $maxWidth !== 'none',
-]) }}>
+<tedi-popover-content {{ $isPresetWidth ? $rootAttributes : $rootAttributes->style(['width: '.$maxWidth]) }}>
     @if ($title && $showClose)
         <div class="tedi-popover-content__head">
             <h4 class="tedi-popover-content__title" id="{{ $headingId }}">{{ $title }}</h4>

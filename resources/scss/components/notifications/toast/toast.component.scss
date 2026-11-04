@@ -8,7 +8,7 @@ tedi-toast {
 
 .tedi-toast__wrapper {
   position: relative;
-  padding: var(--toast-outer-spacing, 4px);
+  padding: var(--toast-outer-spacing);
 
   tedi-alert {
     box-shadow: 0 4px 10px 0 var(--tedi-alpha-14, rgb(0 0 0 / 14%));
@@ -17,10 +17,10 @@ tedi-toast {
 
 .tedi-toast__progress {
   position: absolute;
+  right: var(--toast-outer-spacing);
   bottom: var(--toast-outer-spacing);
   left: var(--toast-outer-spacing);
-  width: calc(100% - var(--toast-outer-spacing) * 2);
-  height: 4px;
+  height: var(--progress-bar-height-sm);
   background: var(--toast-progress-color);
   border-radius: 0 var(--alert-radius) 0 var(--alert-radius);
   transform-origin: left;
@@ -50,7 +50,7 @@ tedi-toast {
 .tedi-toast-container {
   position: fixed;
   inset: 0;
-  z-index: var(--z-index-toast, 1050);
+  z-index: var(--z-index-toast);
   pointer-events: none;
 
   &__position {
@@ -61,7 +61,7 @@ tedi-toast {
     max-height: calc(100vh - calc(var(--toast-margin-bottom) * 2));
     overflow: visible;
 
-    > * {
+    >* {
       pointer-events: auto;
     }
 
@@ -125,6 +125,7 @@ tedi-toast {
 
     // Mobile: center all positions and use full width with padding
     @include breakpoints.media-breakpoint-down(sm) {
+
       &--top-left,
       &--top-right,
       &--bottom-left,
@@ -144,6 +145,14 @@ tedi-toast {
         }
       }
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .tedi-toast-container__position tedi-toast,
+  .tedi-toast-container__position tedi-toast.tedi-toast--exiting {
+    animation: none;
   }
 }
 

@@ -6,15 +6,15 @@
 ])
 
 {{--
-    The counter is live in Angular (it reads the control's value). Blade renders
-    once, so `characterCount` is an explicit prop (CONVENTIONS.md §5) and shows
-    the count of the initial value.
+    The counter is live in Angular (it reads the control's value as you type).
+    Blade renders once: the textarea registers its value with the form field,
+    so the counter shows the count of the initial value (here empty, 0/400).
 --}}
-<tedi:form-field :textarea="true" :character-limit="400" :character-count="12">
+<tedi:form-field :character-limit="400">
     <x-slot:label>
         <tedi:form.label for="example-char-count">Label</tedi:form.label>
     </x-slot:label>
-    <tedi:textarea id="example-char-count" rows="5">Kaksteist tk</tedi:textarea>
+    <tedi:textarea id="example-char-count" :min-rows="5" />
     <x-slot:feedback>
         <tedi:feedback-text text="Vihjetekst" />
     </x-slot:feedback>

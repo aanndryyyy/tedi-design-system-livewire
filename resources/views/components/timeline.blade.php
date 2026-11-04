@@ -1,6 +1,6 @@
 {{--
     TEDI Timeline.
-    Port of angular/tedi/components/helpers/timeline/timeline.component.ts
+    Port of angular/src/tedi/components/helpers/timeline/timeline.component.ts
 
     Angular auto-registers <tedi-timeline-item> children (contentChildren) to
     compute each item's index/isLast. Blade can't introspect its own slot, so
@@ -16,7 +16,12 @@
     'activeIndex' => null,
     /** default|card */
     'variant' => 'default',
-    /** Item padding in rems, for the card variant. */
+    /**
+     * Vertical padding of each card-variant item, in rems (Card's scale). The
+     * gaps between items and the card's top/bottom edges resolve to twice this
+     * value; horizontal item padding is fixed at the card default. Unset uses
+     * the stylesheet default, 0.5 (`--card-padding-xs`).
+     */
     'cardPadding' => null,
 ])
 

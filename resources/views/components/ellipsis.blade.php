@@ -1,6 +1,6 @@
 {{--
     TEDI Ellipsis.
-    Port of angular/tedi/components/helpers/ellipsis/ellipsis.component.{ts,html}
+    Port of angular/src/tedi/components/helpers/ellipsis/ellipsis.component.{ts,html}
 
     Angular measures overflow with a ResizeObserver and, when the text is
     truncated, wraps it in a tooltip showing the full string. That measurement is

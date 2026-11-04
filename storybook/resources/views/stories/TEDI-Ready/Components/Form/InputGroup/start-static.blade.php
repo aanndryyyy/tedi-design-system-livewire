@@ -36,16 +36,10 @@
     ],
 ])
 
-{{--
-    Angular projects an `<input tedi-text-field>` inside the form-field; that
-    directive needs form-value binding (ControlValueAccessor) and isn't
-    ported in this phase (README "Not in this phase"). A plain <input> stands
-    in — it isn't a Blade component, just markup, so nothing is faked.
---}}
 <tedi:input-group :addons="(bool) $addons" :disabled="(bool) $disabled" :invalid="(bool) $invalid">
-    <tedi:form.label for="start-static">Aadress</tedi:form.label>
+    <x-slot:label><tedi:form.label for="start-static">Aadress</tedi:form.label></x-slot:label>
     <x-slot:prefix>Tänav</x-slot:prefix>
     <tedi:form-field>
-        <input type="text" id="start-static" />
+        <tedi:text-field id="start-static" />
     </tedi:form-field>
 </tedi:input-group>

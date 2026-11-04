@@ -1,6 +1,6 @@
 {{--
     TEDI Toggle (switch).
-    Port of angular/tedi/components/form/toggle/{toggle.component.ts,toggle.component.html}
+    Port of angular/src/tedi/components/form/toggle/{toggle.component.ts,toggle.component.html}
 
     Root element: Angular's selector is the ELEMENT `tedi-toggle`, but the
     vendored SCSS contains no `tedi-toggle { … }` element rule — every rule keys

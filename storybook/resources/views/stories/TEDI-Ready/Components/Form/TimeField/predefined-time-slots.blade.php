@@ -10,7 +10,7 @@
 
 <tedi:row :cols="3" :gap="3">
     <tedi:col>
-        <tedi:text as="p" modifiers="small bold">Input trigger (recommended)</tedi:text>
+        <tedi:text as="p">Input trigger (recommended)</tedi:text>
         <tedi:form-field>
             <x-slot:label>
                 <tedi:form.label for="slots-picker-input">Aeg</tedi:form.label>
@@ -27,7 +27,7 @@
         </tedi:form-field>
     </tedi:col>
     <tedi:col>
-        <tedi:text as="p" modifiers="small bold">Radio buttons (showSlotIndicator)</tedi:text>
+        <tedi:text as="p">Radio buttons (showSlotIndicator)</tedi:text>
         <tedi:form-field>
             <x-slot:label>
                 <tedi:form.label for="slots-picker-radio">Aeg</tedi:form.label>
@@ -45,7 +45,7 @@
         </tedi:form-field>
     </tedi:col>
     <tedi:col>
-        <tedi:text as="p" modifiers="small bold">Button trigger</tedi:text>
+        <tedi:text as="p">Button trigger</tedi:text>
         <tedi:form-field>
             <x-slot:label>
                 <tedi:form.label for="slots-picker-button">Aeg</tedi:form.label>

@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'Keep Open on Select (multi-select)',
-    'order' => 6,
+    'order' => 7,
     'status' => 'subset',
     'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.23.39?node-id=2319-64439&m=dev',
     'args' => [
@@ -38,8 +38,8 @@
         ],
         'dropdownRole' => [
             'control' => 'radio',
-            'options' => ['menu', 'listbox'],
-            'description' => 'Role for content, use listbox for list and menu for actions',
+            'options' => ['menu', 'listbox', 'list'],
+            'description' => 'How the panel is exposed to assistive technology: `menu` for actions, `listbox` for selectable options, `list` for a plain list of links. `menu` and `listbox` are composite widgets (one tab stop, arrow-key navigation, `menuitem` / `option` items); `list` adds no roles or key handling, so projected links stay links and stay in the tab order. Every role moves focus into the panel when it opens, so the panel is not read last because of where the overlay renders.',
             'table' => [
                 'category' => 'dropdown-content',
                 'type' => ['summary' => 'DropdownRole'],
@@ -48,12 +48,12 @@
         ],
         'ariaHaspopup' => [
             'control' => 'radio',
-            'options' => ['menu', 'listbox', 'true'],
-            'description' => 'Defines the aria-haspopup attribute for the trigger, informing assistive technologies whether it opens a menu or listbox. Improves accessibility by describing the type of popup.',
+            'options' => ['menu', 'listbox', 'dialog', 'true', 'false'],
+            'description' => 'The `aria-haspopup` value for the trigger. Defaults to the content\'s `dropdownRole`, and a plain `list` gets no attribute at all, since ARIA has no token for it. `false` also omits the attribute.',
             'table' => [
                 'category' => 'dropdown-trigger',
                 'type' => ['summary' => 'DropdownTriggerAriaHasPopup'],
-                'defaultValue' => ['summary' => 'menu'],
+                'defaultValue' => ['summary' => 'dropdownRole'],
             ],
         ],
         'closeOnSelect' => [
@@ -74,7 +74,8 @@
     story. What the story does demonstrate is `:close-on-select="false"`: those
     items do not close the dropdown when clicked, which is what makes a
     multi-select menu usable. A consumer wires the toggling with wire:click or
-    x-on:click on the item.
+    `@click` on the item (not `x-on:click`, which would collide with the item's
+    own close handler).
 --}}
 @php
     $filters = [
@@ -102,13 +103,13 @@
                 :close-on-select="(bool) $closeOnSelect"
             >
                 <x-slot:item-value>
-                    <tedi:dropdown-item-value
+                    <tedi:option-content
                         type="checkbox"
                         :selected="$filter['selected']"
                         :disabled="! empty($filter['disabled'])"
                     >
-                        <tedi:dropdown-item-value-label>{{ $filter['label'] }}</tedi:dropdown-item-value-label>
-                    </tedi:dropdown-item-value>
+                        <tedi:option-content-label>{{ $filter['label'] }}</tedi:option-content-label>
+                    </tedi:option-content>
                 </x-slot:item-value>
             </tedi:dropdown-item>
         @endforeach

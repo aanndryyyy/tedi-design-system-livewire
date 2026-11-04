@@ -1,6 +1,6 @@
 {{--
     TEDI Vertical Spacing.
-    Port of angular/tedi/directives/vertical-spacing/vertical-spacing.directive.ts
+    Port of angular/src/tedi/directives/vertical-spacing/vertical-spacing.directive.ts
 
     Upstream is an attribute DIRECTIVE with no template: `[tediVerticalSpacing]`
     goes on whatever element already contains the items, adds

@@ -1,0 +1,1 @@
+Set `align="left"` (or `"right"`) to group the results / page-size slots at the start / end instead of spreading them across the full width. Useful for a strip above a table where the bottom pager stays `align="between"`.

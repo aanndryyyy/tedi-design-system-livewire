@@ -62,9 +62,9 @@
     :min-col-width="$minColWidth"
     :justify-items="$justifyItems ?: null"
     :align-items="$alignItems ?: null"
-    :gap="$gap !== '' ? $gap : null"
-    :gap-x="$gapX !== '' ? $gapX : null"
-    :gap-y="$gapY !== '' ? $gapY : null"
+    :gap="filled($gap) ? $gap : null"
+    :gap-x="filled($gapX) ? $gapX : null"
+    :gap-y="filled($gapY) ? $gapY : null"
 >
     <tedi:col class="example-col">Col 1</tedi:col>
     <tedi:col class="example-col">Col 2</tedi:col>

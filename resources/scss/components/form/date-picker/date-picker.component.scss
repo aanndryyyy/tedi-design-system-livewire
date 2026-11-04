@@ -50,6 +50,9 @@ tedi-date-picker {
     padding-left: var(--form-field-padding-x-md-default);
     font-size: var(--body-regular-size);
     color: var(--form-input-text-filled);
+
+    // The wrapper draws the focus ring; core's global one would double it.
+    outline: none;
     background: transparent;
     border: 0;
     border-radius: var(--form-field-radius);
@@ -305,16 +308,16 @@ tedi-date-picker {
     padding: var(--form-checkbox-radio-card-radio-padding-y)
       var(--form-checkbox-radio-card-radio-padding-x);
     font-size: var(--body-regular-size);
-    color: var(--form-checkbox-radio-card-primary-default-text);
-    background: var(--form-checkbox-radio-card-secondary-default-background);
+    color: var(--form-choice-card-primary-unselected-text-default);
+    background: var(--form-choice-card-secondary-unselected-background-default);
     border: var(--tedi-borders-01) solid
-      var(--form-checkbox-radio-card-secondary-default-border);
+      var(--form-choice-card-secondary-unselected-border-default);
     border-radius: var(--form-checkbox-radio-card-radius);
 
     &:hover {
-      color: var(--form-checkbox-radio-card-secondary-hover-text);
-      background: var(--form-checkbox-radio-card-secondary-hover-background);
-      border-color: var(--form-checkbox-radio-card-secondary-hover-border);
+      color: var(--form-choice-card-secondary-unselected-text-hover);
+      background: var(--form-choice-card-secondary-unselected-background-hover);
+      border-color: var(--form-choice-card-secondary-unselected-border-hover);
     }
 
     &:focus-visible {
@@ -323,34 +326,34 @@ tedi-date-picker {
     }
 
     &:disabled {
-      color: var(--form-checkbox-radio-card-secondary-disabled-default-text);
+      color: var(--form-choice-card-secondary-unselected-text-disabled);
       cursor: not-allowed;
       background: var(
-        --form-checkbox-radio-card-secondary-disabled-default-background
+        --form-choice-card-secondary-unselected-background-disabled
       );
       border-color: var(
-        --form-checkbox-radio-card-secondary-disabled-default-border
+        --form-choice-card-secondary-unselected-border-disabled
       );
     }
 
     &--selected {
-      color: var(--form-checkbox-radio-card-secondary-selected-text);
-      background: var(--form-checkbox-radio-card-secondary-selected-background);
-      border-color: var(--form-checkbox-radio-card-secondary-selected-border);
+      color: var(--form-choice-card-secondary-selected-text-default);
+      background: var(--form-choice-card-secondary-selected-background-default);
+      border-color: var(--form-choice-card-secondary-selected-border-default);
       box-shadow: 0 0 0 1px
-        var(--form-checkbox-radio-card-secondary-selected-border);
+        var(--form-choice-card-secondary-selected-border-default);
 
       &:disabled {
-        color: var(--form-checkbox-radio-card-secondary-disabled-selected-text);
+        color: var(--form-choice-card-secondary-selected-text-disabled);
         cursor: not-allowed;
         background: var(
-          --form-checkbox-radio-card-secondary-disabled-selected-background
+          --form-choice-card-secondary-selected-background-disabled
         );
         border-color: var(
-          --form-checkbox-radio-card-secondary-disabled-selected-border
+          --form-choice-card-secondary-selected-border-disabled
         );
         box-shadow: 0 0 0 1px
-          var(--form-checkbox-radio-card-secondary-disabled-selected-border);
+          var(--form-choice-card-secondary-selected-border-disabled);
       }
     }
   }

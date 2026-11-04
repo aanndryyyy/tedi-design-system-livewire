@@ -205,6 +205,65 @@ class OverlayModalComponentsTest extends TestCase
         $this->assertStringContainsString('justify-content: space-between', $html);
     }
 
+    public function test_modal_footer_start_attribute_passes_through_to_the_child(): void
+    {
+        // #668: the vendored SCSS keys on [tedi-modal-footer-start] on the
+        // footer's own children, so the bare attribute must survive tedi:button.
+        $html = Blade::render(
+            '<tedi:modal-footer><tedi:button tedi-modal-footer-start variant="secondary">Tagasi</tedi:button>'
+            .'<tedi:button>Jätka</tedi:button></tedi:modal-footer>'
+        );
+
+        $this->assertMatchesRegularExpression('/<button\b[^>]*\btedi-modal-footer-start\b[^>]*>\s*Tagasi/', $html);
+        $this->assertSame(1, preg_match_all('/\btedi-modal-footer-start(=|\s|>)/', $html));
+    }
+
+    public function test_modal_aria_label_lands_on_the_dialog(): void
+    {
+        $html = Blade::render('<tedi:modal aria-label="Muuda kontakti">x</tedi:modal>');
+
+        $this->assertMatchesRegularExpression('/role="dialog"[^>]*aria-label="Muuda kontakti"/s', $html);
+        $this->assertStringNotContainsString('aria-labelledby', $html);
+        $this->assertStringContainsString('labelled: true', $html);
+    }
+
+    public function test_modal_aria_labelledby_lands_on_the_dialog(): void
+    {
+        $html = Blade::render('<tedi:modal aria-labelledby="outside-title">x</tedi:modal>');
+
+        $this->assertMatchesRegularExpression('/role="dialog"[^>]*aria-labelledby="outside-title"/s', $html);
+        $this->assertDoesNotMatchRegularExpression('/<tedi-modal\b[^>]*aria-labelledby/', $html);
+        $this->assertStringContainsString('labelled: true', $html);
+    }
+
+    public function test_modal_aria_label_wins_over_aria_labelledby(): void
+    {
+        $html = Blade::render('<tedi:modal aria-label="Nimi" aria-labelledby="outside-title">x</tedi:modal>');
+
+        $this->assertStringContainsString('aria-label="Nimi"', $html);
+        $this->assertStringNotContainsString('outside-title', $html);
+    }
+
+    public function test_modal_without_a_label_leaves_naming_to_the_header_heading(): void
+    {
+        // #680: with neither prop, tediModal names the dialog from the header
+        // heading on open, so nothing is emitted server-side.
+        $html = Blade::render('<tedi:modal><tedi:modal-header><h1>Pealkiri</h1></tedi:modal-header></tedi:modal>');
+
+        $this->assertStringNotContainsString('aria-label=', preg_replace('/<button.*?<\/button>/s', '', $html));
+        $this->assertStringNotContainsString('aria-labelledby', $html);
+        $this->assertStringContainsString('labelled: false', $html);
+    }
+
+    public function test_modal_header_close_button_requests_a_guarded_close(): void
+    {
+        // #674: the close button goes through requestClose('close-button'),
+        // which dispatches the cancelable tedi-modal-close event.
+        $html = Blade::render('<tedi:modal-header><h1>T</h1></tedi:modal-header>');
+
+        $this->assertStringContainsString("x-on:click=\"requestClose('close-button')\"", $html);
+    }
+
     /**
      * CONVENTIONS §4's element-selector rule: the Angular selectors are element
      * selectors, so the Blade roots must be the literal custom elements.

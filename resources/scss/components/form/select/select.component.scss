@@ -64,6 +64,26 @@
   display: block;
   width: 100%;
 
+  &--clear-on-interaction &__clear {
+    visibility: hidden;
+  }
+
+  &--clear-on-interaction &__clear + &__arrow {
+    border-left-color: transparent;
+  }
+
+  &--clear-on-interaction &__trigger:hover &__clear,
+  &--clear-on-interaction &__trigger:active &__clear,
+  &--clear-on-interaction &__trigger:focus-within &__clear {
+    visibility: visible;
+  }
+
+  &--clear-on-interaction &__trigger:hover &__clear + &__arrow,
+  &--clear-on-interaction &__trigger:active &__clear + &__arrow,
+  &--clear-on-interaction &__trigger:focus-within &__clear + &__arrow {
+    border-left-color: var(--general-border-primary);
+  }
+
   .tedi-feedback-text {
     margin-top: var(--form-field-outer-spacing);
   }
@@ -73,6 +93,9 @@
     justify-content: space-between;
     width: 100%;
     cursor: pointer;
+
+    // The trigger draws its own focus ring; core's global one would double it.
+    outline: none;
   }
 
   &__label {
@@ -96,7 +119,7 @@
     background: none;
     border: none;
 
-    &+.tedi-select__arrow {
+    & + .tedi-select__arrow {
       border-left: 1px solid var(--general-border-primary);
     }
   }
@@ -229,14 +252,15 @@
       display: none;
     }
 
-    &--custom-content:empty+&--label {
+    &--custom-content:empty + &--label {
       display: block;
     }
   }
 
   &__group-name {
     display: block;
-    padding: var(--dropdown-group-label-padding-y) var(--dropdown-group-label-padding-x) var(--layout-grid-gutters-04);
+    padding: var(--dropdown-group-label-padding-y)
+      var(--dropdown-group-label-padding-x) var(--layout-grid-gutters-04);
     font-size: var(--heading-subtitle-small-size);
     font-weight: var(--heading-subtitle-small-weight);
     line-height: var(--heading-subtitle-small-line-height);
@@ -251,7 +275,7 @@
       text-transform: none;
       letter-spacing: inherit;
 
-      &~.tedi-dropdown-item:not(.tedi-select__group-name) {
+      & ~ .tedi-dropdown-item:not(.tedi-select__group-name) {
         padding-left: var(--form-checkbox-radio-subitem-padding-left);
       }
     }
@@ -301,7 +325,8 @@
       // against a wrapper that is allowed to shrink. Without it the wrapper stays
       // as wide as its content and the row overflows, cutting the tag — and its
       // remove button — off instead.
-      &.tedi-select__multiselect-container--ellipsis .tedi-select__multiselect-tags {
+      &.tedi-select__multiselect-container--ellipsis
+        .tedi-select__multiselect-tags {
         flex: 0 1 auto;
       }
     }
@@ -329,7 +354,10 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, var(--tedi-swatch-size));
     gap: var(--tedi-swatch-gap);
-    max-width: calc(var(--tedi-swatch-columns) * (var(--tedi-swatch-size) + var(--tedi-swatch-gap)));
+    max-width: calc(
+      var(--tedi-swatch-columns) *
+        (var(--tedi-swatch-size) + var(--tedi-swatch-gap))
+    );
     padding: var(--dropdown-body-padding-y) var(--dropdown-body-padding-x);
 
     .tedi-dropdown-item {

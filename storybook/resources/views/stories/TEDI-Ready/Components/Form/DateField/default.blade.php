@@ -5,14 +5,18 @@
     'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.65.83?node-id=4620-82915&m=dev',
     'args' => [
         'inputId' => 'date-default',
+        'name' => '',
         'label' => 'Kuupäev',
         'feedback' => 'Vali kuupäev',
         'display' => '',
         'mode' => 'single',
-        'size' => 'default',
+        'formFieldSize' => 'default',
+        'size' => '',
         'selectionLevel' => 'days',
         'monthYearSelectType' => 'dropdown',
         'placeholder' => '',
+        'formFieldClearable' => true,
+        'clearable' => '',
         'inputDisabled' => false,
         'readOnly' => false,
         'required' => false,
@@ -33,7 +37,15 @@
             'description' => 'Unique ID for label association and accessibility. Bind the sibling `tedi:form.label` `:for` to the same value.',
             'control' => ['type' => 'text'],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
+                'type' => ['summary' => 'string'],
+            ],
+        ],
+        'name' => [
+            'description' => '`name` attribute of the underlying text input, used by native form submission. Omitted from the DOM when not set.',
+            'control' => ['type' => 'text'],
+            'table' => [
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => 'string'],
             ],
         ],
@@ -47,7 +59,7 @@
             'description' => "Formatted text shown in the input. Stands in for Angular's `displayValue()`, which was derived from `formatDate`/`localeCode` — neither is ported, so the consumer formats the value and passes the result.",
             'control' => ['type' => 'text'],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => 'string'],
                 'defaultValue' => ['summary' => '""'],
             ],
@@ -57,7 +69,7 @@
             'control' => ['type' => 'radio'],
             'options' => ['single', 'multiple', 'range'],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => 'DateFieldMode'],
                 'defaultValue' => ['summary' => 'single'],
             ],
@@ -66,7 +78,7 @@
             'description' => '`multiple` mode tag layout. `true` wraps tags across rows and grows the field height; `false` keeps a single row and collapses overflow into a `+N` counter.',
             'control' => ['type' => 'boolean'],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => 'boolean'],
                 'defaultValue' => ['summary' => 'true'],
             ],
@@ -76,7 +88,7 @@
             'control' => ['type' => 'radio'],
             'options' => [false, 'start', 'end'],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => 'TagEllipsis'],
                 'defaultValue' => ['summary' => 'false'],
             ],
@@ -85,7 +97,7 @@
             'description' => 'In `multiple` mode, whether tags show a remove button. `false` renders them as read-only chips.',
             'control' => ['type' => 'boolean'],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => 'boolean'],
                 'defaultValue' => ['summary' => 'true'],
             ],
@@ -94,18 +106,29 @@
             'description' => "How many `multiple`-mode tags fit on one row when `multiRow` is `false`. Stands in for Angular's `visibleTagsCount`, which was a live width measurement of the rendered tags. Leave empty for \"not measured\" — every tag renders and the field carries `tedi-date-input--tags-measuring`, matching Angular's first paint.",
             'control' => ['type' => 'number'],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => 'number | null'],
                 'defaultValue' => ['summary' => 'null'],
             ],
         ],
         'size' => [
-            'description' => "Field size — should match the surrounding `tedi-form-field`'s `size`. Declared for API parity only: it emits no class of its own, so set it on `tedi:form-field` too.",
+            'description' => "Overrides the wrapping `tedi-form-field`'s `size` for this field. Leave unset to inherit it — set `size` on the form field instead, so the label scales too. Use it for a standalone date field, where it defaults to `default`.",
+            'control' => ['type' => 'radio'],
+            'options' => ['', 'default', 'small'],
+            'table' => [
+                'category' => 'Date Field inputs',
+                'type' => ['summary' => 'DateFieldSize | undefined'],
+                'defaultValue' => ['summary' => 'undefined'],
+            ],
+        ],
+        'formFieldSize' => [
+            'name' => 'size',
+            'description' => 'Set on the wrapping `tedi-form-field` — the label and the date field scale together. The date field reads it unless its own `size` is set.',
             'control' => ['type' => 'radio'],
             'options' => ['default', 'small'],
             'table' => [
-                'category' => 'inputs',
-                'type' => ['summary' => 'DateFieldSize'],
+                'category' => 'Form Field inputs',
+                'type' => ['summary' => 'InputSize'],
                 'defaultValue' => ['summary' => 'default'],
             ],
         ],
@@ -114,7 +137,7 @@
             'control' => ['type' => 'radio'],
             'options' => ['days', 'months', 'years'],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => 'CalendarView'],
                 'defaultValue' => ['summary' => 'days'],
             ],
@@ -124,7 +147,7 @@
             'control' => ['type' => 'radio'],
             'options' => ['dropdown', 'grid'],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => '"dropdown" | "grid"'],
                 'defaultValue' => ['summary' => 'dropdown'],
             ],
@@ -133,34 +156,53 @@
             'description' => 'Placeholder rendered in the input when there is no value.',
             'control' => ['type' => 'text'],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => 'string'],
                 'defaultValue' => ['summary' => '""'],
+            ],
+        ],
+        'clearable' => [
+            'description' => "Overrides the wrapping `tedi-form-field`'s `clearable` for this field. Leave unset to inherit it — set `clearable` on the form field instead. Use it for a standalone date field, where it defaults to `true`.",
+            'control' => ['type' => 'boolean'],
+            'table' => [
+                'category' => 'Date Field inputs',
+                'type' => ['summary' => 'boolean | undefined'],
+                'defaultValue' => ['summary' => 'undefined'],
+            ],
+        ],
+        'formFieldClearable' => [
+            'name' => 'clearable',
+            'description' => 'Set on the wrapping `tedi-form-field`. Shows a clear button once the field has a value; set `false` to opt out. The date field reads it unless its own `clearable` is set.',
+            'control' => ['type' => 'boolean'],
+            'table' => [
+                'category' => 'Form Field inputs',
+                'type' => ['summary' => 'boolean'],
+                'defaultValue' => ['summary' => 'true'],
             ],
         ],
         'inputDisabled' => [
             'description' => 'Disables the field entirely — input, icon button, and calendar.',
             'control' => ['type' => 'boolean'],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => 'boolean'],
                 'defaultValue' => ['summary' => 'false'],
             ],
         ],
         'readOnly' => [
-            'description' => 'Blocks typing into the input but leaves the calendar interactive — useful for guided picking.',
+            'description' => 'Blocks typing into the input but leaves the calendar interactive — useful for guided picking. The value stays clearable while the calendar is available.',
             'control' => ['type' => 'boolean'],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => 'boolean'],
                 'defaultValue' => ['summary' => 'false'],
             ],
         ],
         'required' => [
-            'description' => 'Marks the input as required (sets the native `required` attribute for validation). The asterisk indicator lives on the sibling `tedi:form.label` `:required` — bind it there too, since DateField owns no label.',
+            'description' => 'Marks the input as required (sets the native `required` attribute for validation). In `multiple` mode it also prevents clearing the last selected date. The asterisk indicator lives on the sibling `tedi:form.label` `:required` — bind it there too, since DateField owns no label.',
             'control' => ['type' => 'boolean'],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => 'boolean'],
                 'defaultValue' => ['summary' => 'false'],
             ],
@@ -169,7 +211,7 @@
             'description' => "Render the trailing/leading days from the adjacent month inside the current month's grid.",
             'control' => ['type' => 'boolean'],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => 'boolean'],
                 'defaultValue' => ['summary' => 'true'],
             ],
@@ -178,7 +220,7 @@
             'description' => 'Render an ISO week-number column on the left of the day grid.',
             'control' => ['type' => 'boolean'],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => 'boolean'],
                 'defaultValue' => ['summary' => 'false'],
             ],
@@ -187,7 +229,7 @@
             'description' => 'Enables the calendar picker UI. When `false`, hides the icon button and disables the popover — the user can only type a date.',
             'control' => ['type' => 'boolean'],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => 'boolean'],
                 'defaultValue' => ['summary' => 'true'],
             ],
@@ -196,7 +238,7 @@
             'description' => 'Number of month grids shown side by side. Angular accepts a per-breakpoint object; this port takes the plain base (`xs`) number, since breakpoint props are not ported.',
             'control' => ['type' => 'number', 'min' => 1, 'max' => 4],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => 'number'],
                 'defaultValue' => ['summary' => '1'],
             ],
@@ -206,7 +248,7 @@
             'control' => ['type' => 'radio'],
             'options' => ['button', 'input'],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => '"input" | "button"'],
                 'defaultValue' => ['summary' => 'button'],
             ],
@@ -215,7 +257,7 @@
             'description' => "First column of the calendar's day grid: 0 = Sunday … 6 = Saturday. Replaces Angular's locale-derived first day of week, which needed `Intl`.",
             'control' => ['type' => 'number', 'min' => 0, 'max' => 6],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => 'number'],
                 'defaultValue' => ['summary' => '1'],
             ],
@@ -224,7 +266,7 @@
             'description' => "Whether the calendar panel is shown. Stands in for Angular's runtime overlay open state, which a server render cannot hold.",
             'control' => ['type' => 'boolean'],
             'table' => [
-                'category' => 'inputs',
+                'category' => 'Date Field inputs',
                 'type' => ['summary' => 'boolean'],
                 'defaultValue' => ['summary' => 'false'],
             ],
@@ -245,17 +287,19 @@
     `display`, `visibleTagCount` and `open` are added instead: they stand in for
     Angular signals a server render cannot hold (CONVENTIONS.md §5).
 --}}
-<tedi:form-field :size="$size">
+<tedi:form-field :size="$formFieldSize" :clearable="(bool) $formFieldClearable">
     <x-slot:label>
-        <tedi:form.label :for="$inputId" :size="$size" :required="(bool) $required">{{ $label }}</tedi:form.label>
+        <tedi:form.label :for="$inputId" :size="$formFieldSize" :required="(bool) $required">{{ $label }}</tedi:form.label>
     </x-slot:label>
 
     <tedi:date-field
         :input-id="$inputId"
+        :name="$name ?: null"
         :display="$display"
         :value="$display ?: null"
         :mode="$mode"
-        :size="$size"
+        :size="$size ?: null"
+        :clearable="$clearable === '' ? null : (bool) $clearable"
         :selection-level="$selectionLevel"
         :month-year-select-type="$monthYearSelectType"
         :placeholder="$placeholder"
@@ -270,7 +314,7 @@
         :multi-row="(bool) $multiRow"
         :tag-ellipsis="$tagEllipsis"
         :is-tag-removable="(bool) $isTagRemovable"
-        :visible-tag-count="$visibleTagCount !== '' ? (int) $visibleTagCount : null"
+        :visible-tag-count="filled($visibleTagCount) ? (int) $visibleTagCount : null"
         :first-day-of-week="(int) $firstDayOfWeek"
         :open="(bool) $open"
     />

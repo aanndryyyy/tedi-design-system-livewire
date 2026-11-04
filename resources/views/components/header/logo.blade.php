@@ -1,6 +1,6 @@
 {{--
     TEDI Header Logo.
-    Port of angular/tedi/components/layout/header/header-logo/header-logo.component.{ts,html}
+    Port of angular/src/tedi/components/layout/header/header-logo/header-logo.component.{ts,html}
 
     Angular's `useDark` is computed from `ThemeService.theme()` (a runtime
     signal) plus whether a `[tedi-header-logo-dark]` child was projected. Theme

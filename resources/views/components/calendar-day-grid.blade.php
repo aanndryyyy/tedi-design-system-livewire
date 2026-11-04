@@ -1,6 +1,6 @@
 {{--
     TEDI Calendar day grid.
-    Port of angular/tedi/components/content/calendar/calendar-day-grid/{calendar-day-grid.component.ts,calendar-day-grid.component.html}
+    Port of angular/src/tedi/components/content/calendar/calendar-day-grid/{calendar-day-grid.component.ts,calendar-day-grid.component.html}
 
     Root element: the Angular template's own <table class="tedi-calendar-day-grid">.
     The vendored SCSS has no `tedi-calendar-day-grid` ELEMENT selector (only the
@@ -76,6 +76,11 @@
         if (is_int($value)) {
             return date('Y-m-d', $value);
         }
+        // Anything that is not a date-ish scalar (an array, an object) is not
+        // a day — Angular 9's runtime shape guards (asRange / isSelected).
+        if (! is_string($value) && ! is_float($value)) {
+            return null;
+        }
         $ts = strtotime((string) $value);
 
         return $ts === false ? null : date('Y-m-d', $ts);
@@ -148,8 +153,10 @@
     } elseif ($mode === 'multiple') {
         $selectedKeys = $keyList($value);
     } elseif ($mode === 'range' && is_array($value)) {
+        // asRange(): a range whose `from` is not a date is no range at all;
+        // one whose `to` is not a date keeps only its `from` (Angular 9.0).
         $rangeFrom = $toKey($value['from'] ?? null);
-        $rangeTo = $toKey($value['to'] ?? null);
+        $rangeTo = $rangeFrom === null ? null : $toKey($value['to'] ?? null);
         $selectedKeys = array_values(array_filter([$rangeFrom, $rangeTo]));
     }
 
@@ -284,9 +291,8 @@
                         role="rowheader"
                         scope="row"
                         @if ($weekNumber !== null)
-                            {{-- Parameterised key: the .false variant carries the literal
-                                 placeholder word, substituted as in pagination.blade.php. --}}
-                            aria-label="{{ str_replace('false', (string) $weekNumber, __('tedi::tedi.date-picker.week-number.false')) }}"
+                            {{-- Parameterised key: `:n` is the ISO week number. --}}
+                            aria-label="{{ __('tedi::tedi.date-picker.week-number', ['n' => $weekNumber]) }}"
                         @endif
                     >{{ $weekNumber }}</th>
                 @endif

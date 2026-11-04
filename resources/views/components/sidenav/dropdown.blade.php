@@ -1,6 +1,6 @@
 {{--
     TEDI SideNav Dropdown.
-    Port of angular/tedi/components/layout/sidenav/sidenav-dropdown/sidenav-dropdown.component.{ts,html}
+    Port of angular/src/tedi/components/layout/sidenav/sidenav-dropdown/sidenav-dropdown.component.{ts,html}
 
     This is NOT the overlay `<tedi:dropdown>`. Angular's `SideNavDropdownComponent`
     imports nothing from `overlay/dropdown`: it is a `<ul class="tedi-sidenav-dropdown">`

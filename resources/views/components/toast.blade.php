@@ -1,6 +1,6 @@
 {{--
     TEDI Toast.
-    Port of angular/tedi/components/notifications/toast/toast.component.{ts,html}
+    Port of angular/src/tedi/components/notifications/toast/toast.component.{ts,html}
 
     Angular's toast is placed by a service into a `tedi-toast-container` that
     CDK Overlay positions (top-left/top-right/bottom-left/bottom-right) and
@@ -21,6 +21,20 @@
     as are the container's slide-in animations. `.tedi-toast__wrapper` sits
     inside, matching Angular's own template nesting, so the alert's drop shadow
     (`.tedi-toast__wrapper tedi-alert`) resolves too.
+
+    A11y (Angular 8+). The visible toast is never a live region: the inner alert
+    always renders `role="none"`, because announcing from both the toast and
+    upstream's `ToastAnnouncerService` made screen readers read every toast two
+    or three times. `role` now only picks the politeness of that service's
+    announcement — and `ToastService` / `ToastAnnouncerService` are not ported,
+    so here `role` is accepted for API parity but INERT. A consumer who needs
+    the announcement must make it from a live region that already exists on the
+    page (as upstream's announcer does), not from the toast markup.
+    The close button is named after the toast — the `toast.close` translation
+    with the title, or the generic "close" when there is no title.
+    Upstream also pauses the auto-close timer while the toast holds keyboard
+    focus (`focusIn` / `focusOut` outputs); like `pauseOnHover`, that belongs to
+    the unported timer.
 --}}
 @props([
     'title' => null,
@@ -28,7 +42,7 @@
     'type' => 'info',
     /** Material Symbols icon name. */
     'icon' => '',
-    /** status|alert|none */
+    /** status|alert|none — politeness of the ToastService announcement; inert here (see header). */
     'role' => 'status',
     /** Duration in milliseconds for auto-close; 0 disables the progress bar. */
     'duration' => 6000,
@@ -42,6 +56,12 @@
     'closeAttributes' => [],
 ])
 
+@php
+    $closeLabel = $title
+        ? __('tedi::tedi.toast.close', ['title' => $title])
+        : __('tedi::tedi.close');
+@endphp
+
 <tedi-toast {{ $attributes }}>
     <div class="tedi-toast__wrapper">
         <tedi:alert
@@ -49,8 +69,9 @@
             :type="$type"
             :icon="$icon"
             :show-close="true"
+            :close-aria-label="$closeLabel"
             :close-delay="300"
-            :role="$role"
+            role="none"
             :close-attributes="$closeAttributes"
         >
             {{ $slot }}

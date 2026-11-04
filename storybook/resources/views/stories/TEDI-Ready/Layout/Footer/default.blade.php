@@ -33,7 +33,7 @@
         <tedi:footer.side placement="end" position="center">
             <picture>
                 <source srcset="SF-horizontal.png" media="(max-width: 576px)">
-                <img src="SF-vertical.png" alt="Logo">
+                <img src="/SF-vertical.png" alt="Logo">
             </picture>
         </tedi:footer.side>
     </x-slot:end>

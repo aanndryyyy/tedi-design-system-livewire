@@ -2,4 +2,18 @@ tedi-carousel-navigation {
   display: flex;
   gap: var(--layout-grid-gutters-08);
   align-items: center;
+
+  &.tedi-carousel-navigation--overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    box-sizing: border-box;
+    justify-content: space-between;
+    padding: var(--layout-grid-gutters-08);
+    pointer-events: none;
+
+    > * {
+      pointer-events: auto;
+    }
+  }
 }

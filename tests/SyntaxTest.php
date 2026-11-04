@@ -63,4 +63,14 @@ class SyntaxTest extends TestCase
         $out = Blade::render('<tedi:button icon-only icon-start="close" aria-label="Sulge" />');
         $this->assertHasClass('tedi-button--icon-only', $out, 'tedi-button');
     }
+
+    public function test_button_family_is_left_out_of_print(): void
+    {
+        // Angular 8+: BaseButtonDirective, ClosingButton, CollapseButton and
+        // InfoButton all add core's `no-print` utility to their host.
+        $this->assertHasClass('no-print', Blade::render('<tedi:button>Hi</tedi:button>'), 'tedi-button');
+        $this->assertHasClass('no-print', Blade::render('<tedi:closing-button />'), 'tedi-closing-button');
+        $this->assertHasClass('no-print', Blade::render('<tedi:collapse-button />'), 'tedi-collapse-button');
+        $this->assertHasClass('no-print', Blade::render('<tedi:info-button />'), 'tedi-info-button');
+    }
 }

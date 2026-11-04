@@ -35,10 +35,10 @@
     // The sort itself is the consumer's (CONVENTIONS.md §7.2): pass the current
     // direction per column and bind your own wire:click through sortAttributes.
     $sortableColumns = [
-        ['key' => 'name', 'header' => 'Name', 'sortable' => true, 'sort' => 'asc'],
-        ['key' => 'email', 'header' => 'Email', 'sortable' => true, 'sort' => 'none'],
-        ['key' => 'role', 'header' => 'Role', 'sortable' => true, 'sort' => 'desc'],
-        ['key' => 'location', 'header' => 'Location'],
+        ['key' => 'name', 'header' => 'Nimi', 'sortable' => true, 'sort' => 'asc'],
+        ['key' => 'email', 'header' => 'E-post', 'sortable' => true, 'sort' => 'none'],
+        ['key' => 'role', 'header' => 'Roll', 'sortable' => true, 'sort' => 'desc'],
+        ['key' => 'location', 'header' => 'Asukoht'],
     ];
 @endphp
 

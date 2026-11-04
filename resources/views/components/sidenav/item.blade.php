@@ -1,6 +1,6 @@
 {{--
     TEDI SideNav Item.
-    Port of angular/tedi/components/layout/sidenav/sidenav-item/sidenav-item.component.{ts,html}
+    Port of angular/src/tedi/components/layout/sidenav/sidenav-item/sidenav-item.component.{ts,html}
 
     Angular's host is the custom element `<tedi-sidenav-item role="presentation"
     style="display: contents">` and the class list lives on an inner `<li>`.
@@ -84,10 +84,8 @@
     $renderAsButton = ! $hasLink || ($hasDropdown && ($isCollapsed || $mobile));
     $ariaExpanded = $open ? 'true' : 'false';
 
-    // 'sidenav.toggleSubmenu' | tediTranslate: textContent(): open — the
-    // generated lang files carry the parameter as the literal "false"
-    // placeholder (the number-field / pagination convention).
-    $submenuLabel = str_replace('false', (string) $label, __('tedi::tedi.sidenav.toggleSubmenu.false'));
+    // 'sidenav.toggleSubmenu' | tediTranslate: textContent(): open
+    $submenuLabel = __('tedi::tedi.sidenav.toggleSubmenu.'.($open ? 'true' : 'false'), ['value' => $label]);
 
     $tooltipEnabled = $isCollapsed;
 

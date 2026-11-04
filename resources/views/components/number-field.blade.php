@@ -1,6 +1,6 @@
 {{--
     TEDI Number field.
-    Port of angular/tedi/components/form/number-field/{number-field.component.ts,number-field.component.html}
+    Port of angular/src/tedi/components/form/number-field/{number-field.component.ts,number-field.component.html}
 
     ROOT ELEMENT. Angular's selector is the element `tedi-number-field`, but the
     vendored SCSS has no element rule for that tag — every rule keys on the
@@ -125,11 +125,9 @@
     // feedbackId()
     $feedbackId = $feedbackText ? $inputId.'-feedback' : null;
 
-    // 'numberField.decrement' | tediTranslate: step() — the parameterised keys
-    // carry the argument as the literal "false" placeholder (pagination.blade.php
-    // substitutes into the same .true/.false convention).
-    $decrementLabel = str_replace('false', (string) $step, __('tedi::tedi.numberField.decrement.false'));
-    $incrementLabel = str_replace('false', (string) $step, __('tedi::tedi.numberField.increment.false'));
+    // 'numberField.decrement' | tediTranslate: step()
+    $decrementLabel = __('tedi::tedi.numberField.decrement', ['count' => $step]);
+    $incrementLabel = __('tedi::tedi.numberField.increment', ['count' => $step]);
 
     // <tedi:button> is a component tag, so its classes are passed as a plain
     // string attribute rather than through @class().
@@ -140,6 +138,9 @@
     ]));
 @endphp
 
+{{-- Angular's host element: label, field and feedback are ONE root (CONVENTIONS.md §6),
+     so a grid or flex parent lays them out as one item. --}}
+<tedi-number-field>
 @if ($label)
     <tedi:form.label :for="$inputId" :required="$required" :size="$size">
         {{ $label }}
@@ -216,3 +217,4 @@
         :position="$feedbackText['position'] ?? 'left'"
     />
 @endif
+</tedi-number-field>

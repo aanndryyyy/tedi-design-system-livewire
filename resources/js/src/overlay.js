@@ -96,12 +96,16 @@ export function overlay(config) {
 
         hide: function (focusTrigger) {
             clearTimeout(this._hideTimer);
-            this.open = false;
 
+            // Focus first, close second (upstream dropdown, Angular 9): closing
+            // while the panel holds focus drops it to `body` until the trigger
+            // takes it, which a screen reader announces as a step out.
             if (focusTrigger && this.$refs.trigger) {
                 var focusable = this._focusableTrigger();
                 if (focusable) focusable.focus({ preventScroll: true });
             }
+
+            this.open = false;
         },
 
         toggle: function () {

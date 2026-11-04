@@ -1,50 +1,57 @@
-@use "@tedi-design-system/core/mixins";
-@use "@tedi-design-system/core/bootstrap-utility/breakpoints";
-// PATH REWRITE (CONVENTIONS.md §12.3): upstream reaches out of `community/`
-// into the sibling `tedi/` tree with
-//   @use "../../../../tedi/components/buttons/button/button.component.scss"
-// That path does not exist here — both trees are vendored side by side under
-// resources/scss/components — so only the path below was changed. Every
-// declaration in this file is verbatim.
-@use "../button/button.component.scss" as buttonMixins;
+@use "../button/button-mixins" as button;
 
+.tedi-floating-button {
+  @include button.button-main-styles;
 
-button.tedi-floating-button {
-  box-shadow: 0 4px 10px 0 var(--tedi-alpha-14);
+  z-index: var(--z-index-feedback);
+  box-sizing: border-box;
 
-  @include buttonMixins.button-main-styles();
+  // Allow horizontal labels to wrap even when an ancestor sets white-space: nowrap.
+  text-wrap: wrap;
+  box-shadow: 0 4px 10px 0
+    var(--general-effect-colors-elevation-general-secondary);
 
   &--vertical {
-    min-width: max-content;
+    flex-shrink: 0;
     white-space: nowrap;
-    border-radius: 0;
-    transform: rotate(-90deg);
+    border-radius: var(--button-radius-sm) var(--button-radius-sm) 0 0;
+
+    // The rotation turns the shadow with the element, so the offset is
+    // pre-rotated: rotate(-90deg) maps (-4, 0) back onto (0, 4) on screen.
+    box-shadow: -4px 0 10px 0
+      var(--general-effect-colors-elevation-general-secondary);
     transform-origin: center;
-    border-top-right-radius: var(--button-radius-sm);
-    border-top-left-radius: var(--button-radius-sm);
+    rotate: -90deg;
   }
 
-  &.tedi-floating-button--primary {
-    @include buttonMixins.button-variant-color-vars(
-      "primary",
-      false,
-      "floating"
-    );
+  &--primary {
+    @include button.button-variant-color-vars("primary", false, "floating");
   }
 
-  &.tedi-floating-button--secondary {
-    @include buttonMixins.button-variant-color-vars(
-      "secondary",
-      false,
-      "floating"
-    );
+  &--secondary {
+    @include button.button-variant-color-vars("secondary", false, "floating");
   }
 
   &--default {
-    @include buttonMixins.button-size("md");
+    @include button.button-size("md");
   }
 
   &--large {
-    @include buttonMixins.button-size("lg");
+    @include button.button-size("xl");
+
+    &.tedi-floating-button--icon-only {
+      @include button.button-icon-size("xl");
+    }
+  }
+
+  &:not(.tedi-floating-button--icon-only) {
+    min-width: var(--button-width-min);
+    max-width: var(--button-width-max);
+  }
+
+  &--vertical:not(.tedi-floating-button--icon-only) {
+    // Size the button to its label so a narrow container does not compress it before rotation.
+    // An icon-only button keeps the fixed size it gets from button-icon-size.
+    width: max-content;
   }
 }

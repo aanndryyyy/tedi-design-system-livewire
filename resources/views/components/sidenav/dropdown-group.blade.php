@@ -1,6 +1,6 @@
 {{--
     TEDI SideNav Dropdown Group.
-    Port of angular/tedi/components/layout/sidenav/sidenav-dropdown-group/sidenav-dropdown-group.component.{ts,html}
+    Port of angular/src/tedi/components/layout/sidenav/sidenav-dropdown-group/sidenav-dropdown-group.component.{ts,html}
 
     Angular collects its projected `<tedi-sidenav-dropdown-item>` children with
     `@ContentChildren`, hides them in a `display: none` container, and RE-RENDERS

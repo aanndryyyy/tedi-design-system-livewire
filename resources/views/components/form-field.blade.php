@@ -1,87 +1,161 @@
 {{--
     TEDI Form field.
-    Port of angular/tedi/components/form/form-field/{form-field.component.ts,form-field.component.html}
+    Port of angular/src/tedi/components/form/form-field/{form-field.component.ts,form-field.component.html,
+    field-context.token.ts,form-field-control.ts,form-field-extra.directive.ts}
 
-    From Angular 8 the wrapper is optional. `hasBox()` / `ownsSurface()` is
-    `icon || clearable`: only then is the bordered `tedi-form-field__box`
-    rendered and the nested control told (via `@aware ownsSurface`) not to
-    paint `tedi-field-surface` itself. Without additions the control paints
-    its own surface.
+    Since Angular 8.0 (#612) a control no longer needs this wrapper: text
+    field, textarea, date and time fields paint their own field surface. The
+    form-field adds a label, feedback text, a character counter, an icon or a
+    clear button. When it has an icon or a clear button it renders a box
+    (`tedi-form-field__box tedi-field-surface`) that paints the surface
+    instead, and the control inside drops its own; with neither, there is no
+    box at all and the control renders bare inside the host.
 
-    Angular's FormFieldComponent leans heavily on runtime DOM introspection
-    (contentChild queries for the projected control/feedback, a live NgControl
-    subscription for validation state, and manual aria-describedby wiring).
-    None of that is available on the server, so per CONVENTIONS.md §5 every
-    such case becomes an explicit prop:
+    This is the library's one CLASS component (src/View/Components/FormField.php,
+    CONVENTIONS.md §5): its constructor runs before its slot renders, so it
+    builds the field context (src/View/FieldContext.php) up front and carries
+    it in its data frame as `$fieldContext`. The two halves of Angular's DI
+    contract run through that object (`Tedi::fieldContext()` in src/Tedi.php):
 
-      Angular runtime detection                  Blade prop
-      -----------------------------------------  ------------------------
-      ngControl invalid && (touched || dirty)     invalid
-      feedback?.type() === 'valid'                valid
-      control()?.value() (for the clear button    value
-        and the character counter)                  + characterCount
+      Angular                                      Blade
+      -------------------------------------------  ------------------------------------------
+      TEDI_FIELD_CONTEXT provided to the control   the control finds the nearest form-field's
+        (size, ownsSurface, invalid, valid,          `fieldContext` with the public lookup
+        disabled, clearable)                         `@aware` uses; this component's defaults
+                                                     are already applied
+      contentChild(TEDI_FORM_FIELD_CONTROL)        the first control registers itself on that
+        (value, disabled, readOnly, invalid,         object; this view renders after the slot
+        reset)                                       and reads `$fieldContext->control`
+
+    The props are the class's constructor parameters and are documented
+    there; only `value` is declared below. The ones the context reads are
+    resolved into `$fieldContext` and copied to plain variables at the top of
+    the PHP block below.
+
+    So `tedi:text-field` and `tedi:textarea` drive the clear button and the
+    character counter with no props repeated here. A plain `<input>`,
+    `tedi:select` or `tedi:number-field` registers nothing — like
+    Angular's, which do not implement FormFieldControl — and so never gets a
+    clear button. Date and time fields own their clear button
+    (`ownsClearButton`) and register nothing either.
+
+    Explicit props still win over what the control registers, for wrappers
+    that know better (search passes all of them):
+
+      Angular runtime detection                    Blade prop
+      -------------------------------------------  ------------------------
+      control()?.value()                           value
+      control.characterCount ?? value length       characterCount
       control()?.disabled() / inputGroup.disabled  disabled (+ @aware)
-      inputGroup.invalid()                         invalid (+ @aware)
+      control()?.invalid() / feedback 'error'      invalid (+ @aware)
+        / inputGroup.invalid()
+      feedback()?.type() === 'valid'               valid
 
-    `handleBoxMouseDown` (click-to-focus on the box padding) and the live
-    aria-describedby sync are DOM-runtime behaviour with no static
-    equivalent; per CONVENTIONS.md §7 they are not ported.
+    Divergences:
 
-    `disabled` / `invalid` are also @aware so nesting inside <tedi:input-group>
-    (CONVENTIONS.md §3, mirroring Angular's `inject(TEDI_INPUT_GROUP, {optional:true})`)
-    merges the group's state in without the consumer repeating it, while a
-    value set directly on <tedi:form-field> still wins.
-
-    `ownsSurface` for nested controls is derived from this component's `icon`
-    / `clearable` tag attributes (see `Tedi::fieldOwnsSurface`) — Angular's
-    `TEDI_FIELD_CONTEXT`. Host `--valid` / `--invalid` / `--disabled`
-    modifiers were dropped in Angular 8; those states live on `tedi-field-surface`.
-
-    `inputClass` is deprecated upstream (style the control; it owns its surface).
-    It is still applied to the box when a box is rendered.
-
-    `textarea` is kept for API compatibility with the 7.x port; Angular 8 no
-    longer sniffs the projected tag, so it does not suppress icon/clear.
+    * Dropped: `tedi-form-field--valid`, `--invalid` and `--disabled`. Angular
+      still emits them on the host, but TEDI ships no rule for any of them
+      since 8.0 moved the state onto `tedi-field-surface--*` (CONVENTIONS.md §4,
+      "classes Angular emits but TEDI never styles"). The state is still
+      rendered: on the box's `tedi-field-surface--invalid|valid|disabled`
+      modifiers, or on the control itself when there is no box.
+    * `aria-describedby`: the character counter's id reaches the control
+      (Angular's `setDescribedBy`). The feedback text's id cannot — the feedback
+      slot renders after the control — so pass it yourself:
+      an `aria-describedby` on `tedi:text-field` naming the `id` of `tedi:feedback-text`.
+    * The clear button's state is server-rendered from the registered value,
+      then kept live by the bundled `tediFormField` behaviour
+      (resources/js/src/form-field.js): it follows typing, and `clear()` empties
+      the control, fires `input` and `change` (so `wire:model` follows) and focuses
+      it, which is Angular's `reset()` + `focus()`. Without the bundle the button
+      keeps its render-time state and only `clearAttributes` (e.g. `wire:click`)
+      act on a click. An `x-on:click` / `@click` in `clearAttributes` runs after
+      `clear()` rather than replacing it. The `clear` output is not re-emitted (CONVENTIONS.md §7 item 2).
+    * `handleBoxMouseDown` (click-to-focus on the box padding) is not ported.
+    * `--tedi-form-field-control-scrollbar` is always `0px`: Angular measures
+      the textarea's classic scrollbar with a ResizeObserver; nothing measures
+      it here, so on platforms with classic scrollbars a scrolling textarea's
+      scrollbar sits under the clear button and icon.
+    * `inputClass` is kept (deprecated upstream too).
+    * The `extra` slot is Angular's `[tediFormFieldExtra]` projection.
 --}}
-@props([
-    /** default|small|large */
-    'size' => 'default',
-    /** Material Symbols icon name, or an array: name/size/color/type/variant. */
-    'icon' => null,
-    /** Shows a clear button when `value` is non-empty. */
-    'clearable' => false,
-    /** Extra class added to the field box. Deprecated upstream. */
-    'inputClass' => null,
-    /** Maximum character count; shows a live counter and forces invalid past it. */
-    'characterLimit' => null,
-    /** Current character count, for the counter and the limit check. */
-    'characterCount' => 0,
-    /** The wrapped control's current value — only used to decide clear-button visibility. */
-    'value' => null,
-    /** Kept for API compatibility with the 7.x port; no longer changes markup. */
-    'textarea' => false,
-    'disabled' => false,
-    'invalid' => false,
-    'valid' => false,
-    /** Extra attributes forwarded to the clear button (e.g. wire:click). */
-    'clearAttributes' => [],
-])
+{{--
+    Only `value` is a view prop. Every other prop is a constructor parameter of
+    the class (src/View/Components/FormField.php, documented there): the ones
+    the field context reads are resolved into `$fieldContext`, and the rest
+    arrive as `$showClearOnInteraction`, `$inputClass` and `$clearAttributes`.
+--}}
+@php
+    // Rendered as an ANONYMOUS component: a parent template compiled before
+    // form-field became a class (Laravel picks class vs anonymous when it
+    // compiles the parent) reaches this view with no `$fieldContext`. Build it
+    // here the way the class would, so a stale view cache degrades instead of
+    // failing. Controls in the slot rendered before this, so they found no
+    // context and registered nothing: such a field draws no clear button
+    // until `php artisan view:clear`.
+    // TEMPORARY: remove in the next major release, once upgrading consumers
+    // have recompiled their views (the CHANGELOG tells them to).
+    if (! isset($fieldContext)) {
+        $__tediFormField = new \Tedi\Livewire\View\Components\FormField($__env, ...array_intersect_key(
+            get_defined_vars(),
+            array_flip(\Tedi\Livewire\View\Components\FormField::PROPS),
+        ));
+        $fieldContext = $__tediFormField->fieldContext;
+        $showClearOnInteraction = $__tediFormField->showClearOnInteraction;
+        $inputClass = $__tediFormField->inputClass;
+        $clearAttributes = $__tediFormField->clearAttributes;
+        $attributes = ($attributes ?? new \Illuminate\View\ComponentAttributeBag)->except(array_merge(
+            \Tedi\Livewire\View\Components\FormField::PROPS,
+            array_map(\Illuminate\Support\Str::kebab(...), \Tedi\Livewire\View\Components\FormField::PROPS),
+        ));
+        unset($__tediFormField);
+    }
+@endphp
 
-@aware([
-    'disabled' => false,
-    'invalid' => false,
+@props([
+    /** The control's value, for the clear button and the counter. Defaults to what the control registered. */
+    'value' => null,
 ])
 
 @php
+    // contentChild(TEDI_FORM_FIELD_CONTROL): what the first control in the
+    // slot registered on this field's context (see Tedi::fieldContext()).
+    $control = $fieldContext->control ?? [];
+
+    $size = $fieldContext->size;
+    $icon = $fieldContext->icon;
+    $clearable = $fieldContext->clearable;
+    $characterLimit = $fieldContext->characterLimit;
+    $characterCount = $fieldContext->characterCount;
+    $disabled = $fieldContext->disabled;
+    $invalid = $fieldContext->invalid;
+    $valid = $fieldContext->valid;
+
+    $controlValue = $value ?? ($control['value'] ?? null);
+    $hasValue = is_array($controlValue) ? $controlValue !== [] : ($controlValue !== null && (string) $controlValue !== '');
+
+    // renderClearButton(): only a control that can be reset gets one.
+    $renderClearButton = $clearable && ! empty($control['reset']);
+    // hasBox()
+    $hasBox = ! empty($icon) || $renderClearButton;
+
+    $isDisabled = (bool) $disabled || ! empty($control['disabled']);
+
+    $characterCount = $characterCount ?? mb_strlen(is_array($controlValue) ? '' : (string) $controlValue);
     $characterCountExceeded = $characterLimit !== null && $characterCount > $characterLimit;
-    $isInvalid = $invalid || $characterCountExceeded;
-    $isValid = $valid && ! $isInvalid;
-    $ownsSurface = (bool) $icon || (bool) $clearable;
-    $showClearButton = $clearable && (bool) $value;
+
+    // validationState()
+    $validationState = ($invalid || ! empty($control['invalid']) || $characterCountExceeded)
+        ? 'invalid'
+        : ($valid ? 'valid' : 'neutral');
+
+    // showClearButton()
+    $showClearButton = $renderClearButton && ! $isDisabled && $hasValue && empty($control['readOnly']);
 
     $resolvedIcon = $icon ? (is_array($icon) ? $icon : ['name' => $icon]) : null;
     if ($resolvedIcon) {
         $resolvedIcon += [
+            // iconSize()
             'size' => $size === 'small' ? 16 : ($size === 'large' ? 24 : 18),
             'color' => 'inherit',
             'type' => 'outlined',
@@ -89,38 +163,56 @@
         ];
     }
 
+    // A consumer click handler in clearAttributes runs after clear(); merging
+    // it as-is would replace clear() (an attribute bag keeps one value per key).
+    $clearAttributesRest = $clearAttributes instanceof \Illuminate\View\ComponentAttributeBag ? $clearAttributes->getAttributes() : (array) $clearAttributes;
+    $consumerClicks = array_values(array_filter([
+        $clearAttributesRest['x-on:click'] ?? null,
+        $clearAttributesRest['@click'] ?? null,
+    ]));
+    unset($clearAttributesRest['x-on:click'], $clearAttributesRest['@click']);
+    $clearClick = implode('; ', array_merge(['clear()'], $consumerClicks));
+
     $showFeedbackRow = (isset($feedback) && $feedback->isNotEmpty()) || $characterLimit !== null;
-    $baseId = \Tedi\Livewire\Tedi::id('tedi-form-field');
-    $characterCountId = $characterLimit !== null ? $baseId.'-character-count' : null;
+    // Shared with the control, which may already have put it in its aria-describedby.
+    $characterCountId = $characterLimit !== null ? $fieldContext->id().'-character-count' : null;
 @endphp
 
-@if (isset($label) && $label->isNotEmpty())
-    {{ $label }}
-@endif
-
-<div {{ $attributes->class([
+<tedi-form-field {{ $attributes->class([
     'tedi-form-field',
+    'tedi-form-field--clear-on-interaction' => $showClearOnInteraction && $showClearButton,
     'tedi-form-field--small' => $size === 'small',
     'tedi-form-field--large' => $size === 'large',
 ]) }}>
-    @if ($ownsSurface)
-        <div @class([
-            'tedi-form-field__box',
-            'tedi-field-surface',
-            'tedi-field-surface--invalid' => $isInvalid,
-            'tedi-field-surface--valid' => $isValid,
-            'tedi-field-surface--disabled' => $disabled,
-            $inputClass => $inputClass,
-        ])>
+    @if (isset($label) && $label->isNotEmpty())
+        {{ $label }}
+    @endif
+
+    @if ($hasBox)
+        <div
+            @class([
+                'tedi-form-field__box',
+                'tedi-field-surface',
+                'tedi-field-surface--invalid' => $validationState === 'invalid',
+                'tedi-field-surface--valid' => $validationState === 'valid',
+                'tedi-field-surface--disabled' => $isDisabled,
+                $inputClass => (bool) $inputClass,
+            ])
+            style="--tedi-form-field-control-scrollbar: 0px"
+        >
             {{ $slot }}
 
-            @if ($clearable)
+            @if ($renderClearButton)
                 <div
                     @class([
                         'tedi-form-field__buttons',
                         'tedi-form-field__buttons--hidden' => ! $showClearButton,
                     ])
                     @if (! $showClearButton) aria-hidden="true" @endif
+                    x-data="tediFormField({ clearOnInteraction: @js((bool) $showClearOnInteraction) })"
+                    x-effect="syncRoot()"
+                    x-bind:class="{ 'tedi-form-field__buttons--hidden': ! showClear }"
+                    x-bind:aria-hidden="showClear ? null : 'true'"
                 >
                     <tedi:closing-button
                         class="tedi-form-field__clear"
@@ -130,13 +222,15 @@
                         :aria-label="__('tedi::tedi.clear')"
                         :show-title="false"
                         tabindex="{{ $showClearButton ? 0 : -1 }}"
-                        :disabled="$disabled || ! $showClearButton"
-                        {{ $attributes->only([])->merge($clearAttributes) }}
+                        :disabled="! $showClearButton"
+                        x-bind:tabindex="showClear ? 0 : -1"
+                        x-bind:disabled="! showClear"
+                        x-on:click="{{ $clearClick }}"
+                        {{ $attributes->only([])->merge($clearAttributesRest) }}
                     />
 
                     @if ($icon)
-                        {{-- Mirrors <tedi-separator axis="vertical" size="1rem" /> (not yet ported as its own component). --}}
-                        <span class="tedi-separator tedi-separator--primary tedi-separator--vertical tedi-separator--thickness-1" style="width: 0px; height: 1rem"></span>
+                        <tedi:separator axis="vertical" size="1rem" />
                     @endif
                 </div>
             @endif
@@ -166,18 +260,17 @@
 
             @if ($characterLimit !== null)
                 <span
-                    class="tedi-form-field__character-count"
-                    @class(['tedi-form-field__character-count--error' => $characterCountExceeded])
+                    @class([
+                        'tedi-form-field__character-count',
+                        'tedi-form-field__character-count--error' => $characterCountExceeded,
+                    ])
                     id="{{ $characterCountId }}"
-                    aria-live="{{ $characterCountExceeded ? 'assertive' : 'polite' }}"
+                    aria-live="polite"
                 >{{ $characterCount }}/{{ $characterLimit }}</span>
             @endif
         </div>
     @endif
 
-    @isset($extra)
-        <div class="tedi-form-field__extra">
-            {{ $extra }}
-        </div>
-    @endisset
-</div>
+    {{-- Always rendered, like Angular's; `.tedi-form-field__extra:empty` hides it, so no whitespace inside. --}}
+    <div class="tedi-form-field__extra">@isset($extra){{ $extra }}@endisset</div>
+</tedi-form-field>

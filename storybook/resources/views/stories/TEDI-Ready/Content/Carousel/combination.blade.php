@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'Combination',
-    'order' => 12,
+    'order' => 13,
     'status' => 'subset',
     'args' => [],
     'argTypes' => [],

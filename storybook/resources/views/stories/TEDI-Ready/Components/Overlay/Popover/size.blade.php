@@ -8,7 +8,7 @@
 ])
 
 @php
-    $widths = ['none', 'small', 'medium', 'large'];
+    $widths = ['none', 'small', 'medium', 'large', '20rem'];
     $polarBear = 'Jääkaru (Ursus maritimus) on suur karu, kes elab Arktikas ja selle lähialadel.';
 @endphp
 

@@ -21,7 +21,7 @@
     <tedi:card :padding="['vertical' => 0.75, 'horizontal' => 1.25]">
         <tedi:card-content
             background="brand-tertiary"
-            background-image="card-background-example.svg"
+            background-image="/card-background-example.svg"
             background-size="75px"
             background-position="right center"
             background-repeat="no-repeat"

@@ -1,6 +1,6 @@
 {{--
     TEDI Header Content.
-    Port of angular/tedi/components/layout/header/header-content/header-content.component.ts
+    Port of angular/src/tedi/components/layout/header/header-content/header-content.component.ts
 --}}
 @props([
     /** flex-start|center|flex-end|space-between|space-around|space-evenly */

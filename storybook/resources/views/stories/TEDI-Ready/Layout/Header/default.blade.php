@@ -60,8 +60,8 @@
 {{--
     Angular's Default story wraps the header in a mobile sidenav (a
     `tedi-sidenav-toggle` button in the header plus a `<nav tedi-sidenav>`
-    below it). `layout/sidenav` is not in this port's phase (README "Not in
-    this phase"), so the actual `<nav tedi-sidenav>` menu is dropped here.
+    below it). `tedi:sidenav` is ported, but this story does not compose it,
+    so the actual `<nav tedi-sidenav>` menu is dropped here.
     The mobile toggle button itself is kept via `tedi:header.toggle`, which
     is a self-contained replacement documented in header/toggle.blade.php's
     header comment — it renders the same classes but has no sidenav to open.
@@ -72,9 +72,9 @@
     </x-slot:toggle>
 
     <tedi:header.logo :href="$logoHref ?: null" :show-logo="(bool) $showLogo">
-        <img src="header-logo.svg" alt="Logo">
+        <img src="/header-logo.svg" alt="Logo">
         <x-slot:darkLogo>
-            <img src="header-logo-white.svg" alt="Logo (Dark Mode)">
+            <img src="/header-logo-white.svg" alt="Logo (Dark Mode)">
         </x-slot:darkLogo>
     </tedi:header.logo>
 

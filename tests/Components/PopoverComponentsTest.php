@@ -106,6 +106,22 @@ class PopoverComponentsTest extends TestCase
         )['offset']);
     }
 
+    /**
+     * Angular 9 (#802): `offset` (default 8) + the arrow's 12px replaces the
+     * position map's base gap. tediOverlay always adds its own 8px base, so
+     * the engine receives `offset - 8 (+ 12)`.
+     */
+    public function test_popover_offset_input_replaces_the_base_gap(): void
+    {
+        $this->assertSame(16, $this->overlayConfig(
+            Blade::render('<tedi:popover :offset="12">x</tedi:popover>')
+        )['offset']);
+
+        $this->assertSame(-8, $this->overlayConfig(
+            Blade::render('<tedi:popover :offset="0" :with-arrow="false">x</tedi:popover>')
+        )['offset']);
+    }
+
     /** preventOverflow defaults to false here, unlike dropdown/tooltip. */
     public function test_popover_prevent_overflow_defaults_to_false(): void
     {
@@ -344,6 +360,19 @@ class PopoverComponentsTest extends TestCase
         $this->assertHasClass('tedi-popover-content', $html, 'tedi-popover-content');
         $this->assertMissingClass('tedi-popover-content--none', $html, 'tedi-popover-content');
         $this->assertMissingClass('tedi-popover-content--small', $html, 'tedi-popover-content');
+    }
+
+    /** Angular 9: any non-preset width is a CSS length, applied inline with no preset class. */
+    public function test_content_custom_css_length_width_is_inline(): void
+    {
+        $html = Blade::render('<tedi:popover-content max-width="20rem">x</tedi:popover-content>');
+
+        $this->assertHasClass('tedi-popover-content', $html, 'tedi-popover-content');
+        $this->assertMissingClass('tedi-popover-content--20rem', $html, 'tedi-popover-content');
+        $this->assertStringContainsString('style="width: 20rem;"', $html);
+
+        $html = Blade::render('<tedi:popover-content max-width="medium">x</tedi:popover-content>');
+        $this->assertStringNotContainsString('style=', $html);
     }
 
     public function test_content_defaults_to_small(): void

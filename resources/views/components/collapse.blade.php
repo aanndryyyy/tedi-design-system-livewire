@@ -1,6 +1,6 @@
 {{--
     TEDI Collapse.
-    Port of angular/tedi/components/buttons/collapse/collapse.component.{ts,html}
+    Port of angular/src/tedi/components/content/collapse/collapse.component.{ts,html}
 
     ROOT ELEMENT. Angular's selector is `tedi-collapse` (an element selector), so
     per CONVENTIONS.md §4 the root is the literal `<tedi-collapse>` element. The

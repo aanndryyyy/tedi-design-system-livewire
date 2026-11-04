@@ -1,6 +1,10 @@
 {{--
     TEDI Print.
-    Port of react/src/tedi/components/misc/print/print.tsx (CONVENTIONS.md §13).
+    Port of angular/src/tedi/directives/print/print.directive.ts
+
+    Previously ported from React's `misc/print` (CONVENTIONS.md §13); Angular
+    now ships it as the `tediPrint` attribute directive, which is the source
+    from here on (§1). The class logic is identical in both.
 
     Controls how its content behaves on paper: whether it prints at all, and
     where page/column/region breaks may fall around it.
@@ -12,25 +16,31 @@
     nothing at all changes on screen.
 
     Note the class names are NOT `tedi-`-prefixed. That is upstream's naming
-    (they are core utilities, like `sr-only`), so they port verbatim — the same
-    situation `table-of-contents` is in. The `tedi-*` guardrails in
-    tests/IntegrityTest.php do not harvest them, so the parity test is their
-    only cover.
+    (they are core utilities, like `sr-only`), so they port verbatim. The
+    `tedi-*` guardrails in tests/IntegrityTest.php do not harvest them, so the
+    parity test is their only cover.
 
-    Upstream clones each child and merges the classes onto it, which also means
-    it accepts an array of children and tags each one. Blade cannot introspect a
-    slot (CONVENTIONS.md §5/§13.5), so this ports as a wrapper element carrying
-    the classes — the shape `tedi:choicegroup` already uses. The break
-    properties then apply to the wrapper rather than to each child; where you
-    need per-child breaks, wrap each child in its own `tedi:print`.
+    DIVERGENCE — a wrapper element, not a directive. Angular adds the classes to
+    the element the attribute sits on (`<p tediPrint="hide">`). Blade cannot
+    attach behaviour to a consumer's element, so this ports as a wrapper `<div>`
+    carrying the classes — the shape `tedi:choicegroup` and
+    `tedi:vertical-spacing` already use for directives. The break properties
+    then apply to the wrapper rather than to the element inside it. The one
+    case a wrapper cannot reproduce is `tediPrint="show"` cancelling a
+    `no-print` on the SAME element (a button that hides itself when printing):
+    core's rule is `.no-print:not(.show-print)`, so `show-print` on a wrapper
+    does nothing for the button inside. Put `class="show-print"` on that
+    component directly instead.
 
-    `visibility` has no default: upstream emits neither `no-print` nor
-    `show-print` unless you ask for one, and `show-print` exists specifically to
-    override an inherited `no-print`, so defaulting either way would be wrong.
+    `visibility` is Angular's `tediPrint` input under a name that says what it
+    does — the directive's own name is not usable as a Blade prop, the same
+    rename `hide-at` (`breakpoint`) and `vertical-spacing` (`size`) make. Its
+    default is Angular's `""`: neither `no-print` nor `show-print` is emitted
+    unless you ask for one. `null` and `""` both mean "neither".
 --}}
 @props([
-    /** hide: omitted from print. show: forced into print, overriding an inherited hide. Null: neither. */
-    'visibility' => null,
+    /** show|hide — Angular's `tediPrint`. hide: not printed. show: cancels a `no-print` on the same element. Empty: neither. */
+    'visibility' => '',
     /** auto|avoid|avoid-column|avoid-page|avoid-region — break-before. */
     'breakBefore' => null,
     /** auto|avoid|avoid-column|avoid-page|avoid-region — break-after. */

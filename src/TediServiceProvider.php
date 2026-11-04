@@ -21,6 +21,11 @@ class TediServiceProvider extends ServiceProvider
         // resources/views/components/button.blade.php
         Blade::anonymousComponentNamespace(__DIR__.'/../resources/views/components', 'tedi');
 
+        // The one class component (CONVENTIONS.md §5): an explicit alias, so it
+        // wins for tedi::form-field (and so <tedi:form-field>) while every other
+        // tedi::* tag still resolves through the anonymous namespace above.
+        Blade::component(View\Components\FormField::class, 'tedi::form-field');
+
         $this->registerShortSyntax();
         $this->registerDirectives();
         $this->registerPublishing();

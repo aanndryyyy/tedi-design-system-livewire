@@ -1,1 +1,3 @@
-Set `showArrowLabels=true` to render the `previous` / `next` translation labels as visible text next to the icon. Use the `labels` input to override the wording (e.g. "Previous" instead of "Previous page") when shorter button text is preferred.
+Set `showArrowLabels=true` to render the `previous` / `next` translation labels as visible text next to the icon. Labels widen the buttons, so hide them on narrow screens with a breakpoint override: here `showArrowLabels` is `false` by default and `[md]="{ showArrowLabels: true }"` turns them on from `md` up. Resize below 768px to see the arrows fall back to icon-only. Use the `labels` input to override the wording.
+
+**Blade port:** the `xs`–`xxl` breakpoint overrides are not ported (see the README's divergences), so this story sets `showArrowLabels` to `true` and shows the `md`-and-up appearance at every width.

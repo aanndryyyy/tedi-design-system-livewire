@@ -90,6 +90,11 @@
     justify-content: flex-end;
     padding: var(--_tedi-modal-footer-padding-y) var(--_tedi-modal-footer-padding-x);
     border-top: var(--tedi-borders-01) solid var(--modal-border-inner);
+
+    // Only the last start element takes the free space, so several stay grouped on the left.
+    [tedi-modal-footer-start]:not(:has(~ [tedi-modal-footer-start])) {
+      margin-inline-end: auto;
+    }
   }
 }
 

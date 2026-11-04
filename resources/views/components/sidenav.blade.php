@@ -1,6 +1,6 @@
 {{--
     TEDI SideNav (root).
-    Port of angular/tedi/components/layout/sidenav/sidenav.component.{ts,html}
+    Port of angular/src/tedi/components/layout/sidenav/sidenav.component.{ts,html}
 
     Angular's selector is the attribute form `nav[tedi-sidenav]`, so the root is
     a literal `<nav tedi-sidenav>` (CONVENTIONS.md §4's element/attribute
@@ -45,6 +45,19 @@
     Items ARE descendants, so they read/write this scope directly through
     Alpine's merged data stack (`$data.tediSidenavItemToggled`, …).
 
+    MOBILE DRAWER (Angular 8+): the mobile nav now overlays the page instead of
+    squishing it — `.tedi-sidenav--mobile` is `position: fixed`, and upstream
+    binds `style.top` to `SideNavService.drawerTop()`, the bottom edge of the
+    `<header>` that holds the toggle (or of the toggle itself). Here
+    `tedi:sidenav.toggle` measures that edge and sends it as `top` on the
+    `tedi-sidenav:toggle` event; this nav and the overlay bind it as an inline
+    `top` while the drawer is open. Upstream re-measures with a
+    `ResizeObserver` on the header; the toggle re-measures on window resize
+    instead, so a header that changes height without the window resizing keeps
+    the old offset until the next toggle or resize. While the drawer is open the
+    page behind it is scroll-locked (`body { overflow: hidden }`), restoring the
+    previous value on close or teardown, as upstream's effect does.
+
     NOT PORTED: `handleBackToMainMenu()`'s focus restoration to the previously
     open item, and the item-registry itself — the same focus-management
     exclusion the overlay components make (CONVENTIONS.md §11).
@@ -79,6 +92,7 @@
     tedi-sidenav
     {{ $attributes->class([
         'tedi-sidenav',
+        'no-print',
         'tedi-sidenav--'.$size,
         'tedi-sidenav--dividers' => $dividers,
         'tedi-sidenav--collapsed' => $isCollapsed,
@@ -89,6 +103,23 @@
     x-data="{
         tediSidenavCollapsed: {{ $isCollapsed ? 'true' : 'false' }},
         tediSidenavMobileOpen: {{ $mobileOpen ? 'true' : 'false' }},
+        tediSidenavDrawerTop: null,
+        tediSidenavPreviousOverflow: null,
+        get tediSidenavDrawerOpen() {
+            return {{ $mobile ? 'true' : 'false' }} && this.tediSidenavMobileOpen;
+        },
+        tediSidenavLockScroll(lock) {
+            if (lock && this.tediSidenavPreviousOverflow === null) {
+                this.tediSidenavPreviousOverflow = document.body.style.overflow;
+                document.body.style.overflow = 'hidden';
+            } else if (! lock && this.tediSidenavPreviousOverflow !== null) {
+                document.body.style.overflow = this.tediSidenavPreviousOverflow;
+                this.tediSidenavPreviousOverflow = null;
+            }
+        },
+        destroy() {
+            this.tediSidenavLockScroll(false);
+        },
         tediSidenavOpenCount: {{ $mobileItemOpen ? 1 : 0 }},
         get tediSidenavMobileItemOpen() {
             return {{ $mobile ? 'true' : 'false' }} && this.tediSidenavOpenCount > 0;
@@ -101,12 +132,14 @@
             this.$dispatch('tedi-sidenav:close-all');
         },
     }"
-    x-on:tedi-sidenav:toggle.window="tediSidenavMobileOpen = $event.detail.open"
+    x-on:tedi-sidenav:toggle.window="tediSidenavMobileOpen = $event.detail.open; tediSidenavDrawerTop = $event.detail.top ?? null"
+    x-effect="tediSidenavLockScroll(tediSidenavDrawerOpen)"
+    x-bind:style="{ top: tediSidenavDrawerOpen && tediSidenavDrawerTop !== null ? tediSidenavDrawerTop + 'px' : '' }"
     x-on:tedi-sidenav:close-all.window="tediSidenavOpenCount = 0"
     x-bind:class="{
         'tedi-sidenav--collapsed': {{ $mobile ? 'false' : 'true' }} && tediSidenavCollapsed,
         'tedi-sidenav--mobile-item-open': tediSidenavMobileItemOpen,
-        'tedi-sidenav--hidden': {{ $mobile ? 'true' : 'false' }} && ! tediSidenavMobileOpen,
+        'tedi-sidenav--hidden': {{ $mobile ? 'true' : 'false' }} && ! tediSidenavDrawerOpen,
     }"
 >
     @if (! $mobile && $collapsible)

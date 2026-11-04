@@ -61,7 +61,8 @@
             <tedi:modal :open="true" :close-on-backdrop-click="false">
                 <tedi:modal-header close-button-size="small"><h1>Tausta klikk ei sulge</h1></tedi:modal-header>
                 <tedi:modal-content>Sisu</tedi:modal-content>
-                <tedi:modal-footer style="justify-content: space-between">
+                <tedi:modal-footer>
+                    <tedi:button tedi-modal-footer-start variant="neutral" icon-start="arrow_back">Tagasi</tedi:button>
                     <tedi:button variant="secondary">Katkesta</tedi:button>
                     <tedi:button>Jätka</tedi:button>
                 </tedi:modal-footer>

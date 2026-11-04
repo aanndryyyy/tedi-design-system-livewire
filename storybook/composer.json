@@ -5,10 +5,10 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "aanndryyyy/tedi-design-system-livewire": "@dev",
         "area17/blast": "^1.11",
         "laravel/framework": "^12.0",
-        "livewire/livewire": "^4.3",
-        "aanndryyyy/tedi-design-system-livewire": "@dev"
+        "livewire/livewire": "^4.4"
     },
     "repositories": [
         {

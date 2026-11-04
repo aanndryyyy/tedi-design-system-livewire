@@ -16,8 +16,8 @@
     `$attributes->class()` per CONVENTIONS.md §4.
 
     ARIA follows the branch, exactly as upstream: a toggle gets
-    `aria-haspopup` / `aria-expanded` / `aria-controls` and the native
-    `disabled`; a link gets `aria-current="page"` when active, `aria-disabled`
+    `aria-expanded` / `aria-controls` and the native `disabled` (upstream
+    dropped `aria-haspopup` in 20.x — the panel is a disclosure, not a menu); a link gets `aria-current="page"` when active, `aria-disabled`
     when disabled, and loses its `href` entirely when disabled.
 
     `icon` takes a Material Symbols name. Upstream also accepts a full icon
@@ -78,7 +78,6 @@
     @if ($isToggle)
         <button
             type="button"
-            aria-haspopup="true"
             aria-controls="{{ $panelKey }}"
             aria-expanded="{{ $submenuOpen ? 'true' : 'false' }}"
             @disabled($disabled)

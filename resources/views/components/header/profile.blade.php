@@ -1,6 +1,6 @@
 {{--
     TEDI Header Profile.
-    Port of angular/tedi/components/layout/header/header-profile/header-profile.component.{ts,html}
+    Port of angular/src/tedi/components/layout/header/header-profile/header-profile.component.{ts,html}
 
     Angular renders one of two UI patterns around the `showPopover` breakpoint:
     a `<tedi-popover>` from that breakpoint up, or a trigger button plus a

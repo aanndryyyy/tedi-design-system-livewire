@@ -1,6 +1,6 @@
 {{--
     TEDI Header Search.
-    Port of angular/tedi/components/layout/header/header-search/header-search.component.{ts,html}
+    Port of angular/src/tedi/components/layout/header/header-search/header-search.component.{ts,html}
 
     Angular's mobile/modal branch is gated on `isMobile()` (BreakpointService),
     not ported per CONVENTIONS.md §7. It becomes the explicit prop `mobile`

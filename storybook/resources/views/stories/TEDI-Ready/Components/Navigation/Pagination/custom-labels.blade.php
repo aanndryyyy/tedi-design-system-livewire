@@ -7,7 +7,7 @@
 --}}
 @storybook([
     'name' => 'Custom Labels',
-    'order' => 22,
+    'order' => 24,
     'status' => 'subset',
     'args' => [
         'pageCount' => 10,

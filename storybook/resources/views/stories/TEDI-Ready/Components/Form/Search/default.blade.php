@@ -10,11 +10,22 @@
         'placeholder' => 'Otsi nime või märksõna järgi',
         'size' => 'default',
         'clearable' => true,
+        'showClearOnInteraction' => false,
         'searchIcon' => 'search',
         'disabled' => false,
         'button' => '',
         'feedbackText' => '',
         'ariaLabel' => '',
+        'suggestions' => '',
+        'bindLabel' => 'label',
+        'bindDescription' => '',
+        'bindDisabled' => 'disabled',
+        'noResultsText' => '',
+        'loadingText' => '',
+        'minQueryLength' => 0,
+        'loading' => false,
+        'panelOpen' => false,
+        'hideOnScroll' => false,
     ],
     'argTypes' => [
         'inputId' => [
@@ -60,6 +71,15 @@
                 'defaultValue' => ['summary' => 'true'],
             ],
         ],
+        'showClearOnInteraction' => [
+            'description' => 'Show the clear button only on hover or focus when the search field has a value. Requires clearable.',
+            'control' => ['type' => 'boolean'],
+            'table' => [
+                'category' => 'inputs',
+                'type' => ['summary' => 'boolean'],
+                'defaultValue' => ['summary' => 'false'],
+            ],
+        ],
         'searchIcon' => [
             'description' => 'Icon shown inside the input. Ignored when `button` is set.',
             'control' => ['type' => 'object'],
@@ -89,16 +109,96 @@
             'control' => ['type' => 'text'],
             'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
         ],
+        'suggestions' => [
+            'description' => 'Suggestions to show in the panel, already filtered by the consumer. Bind an empty array to keep combobox behaviour while nothing matches; leave unbound for a plain search field.',
+            'control' => ['type' => 'object'],
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'array | null']],
+        ],
+        'bindLabel' => [
+            'description' => 'Property holding the display label when suggestions are objects.',
+            'control' => ['type' => 'text'],
+            'table' => [
+                'category' => 'inputs',
+                'type' => ['summary' => 'string'],
+                'defaultValue' => ['summary' => 'label'],
+            ],
+        ],
+        'bindDescription' => [
+            'description' => 'Property holding a secondary line shown under the label. Unset by default, so rows are a single line.',
+            'control' => ['type' => 'text'],
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
+        ],
+        'bindDisabled' => [
+            'description' => 'Property marking a suggestion as unselectable. Disabled rows are greyed out and skipped by keyboard navigation.',
+            'control' => ['type' => 'text'],
+            'table' => [
+                'category' => 'inputs',
+                'type' => ['summary' => 'string'],
+                'defaultValue' => ['summary' => 'disabled'],
+            ],
+        ],
+        'noResultsText' => [
+            'description' => 'Overrides the translated "no results" row.',
+            'control' => ['type' => 'text'],
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
+        ],
+        'loadingText' => [
+            'description' => 'Overrides the translated loading row.',
+            'control' => ['type' => 'text'],
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
+        ],
+        'resultsCountText' => [
+            'description' => 'Overrides the translated screen-reader result count: a Closure taking the count, or a string with a :count placeholder.',
+            'control' => false,
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'Closure | string']],
+        ],
+        'minQueryLength' => [
+            'description' => 'Characters required before the panel opens. Below it nothing is shown, not even the no-results row.',
+            'control' => ['type' => 'number'],
+            'table' => [
+                'category' => 'inputs',
+                'type' => ['summary' => 'number'],
+                'defaultValue' => ['summary' => '0'],
+            ],
+        ],
+        'loading' => [
+            'description' => 'Shows a loading row instead of results.',
+            'control' => ['type' => 'boolean'],
+            'table' => [
+                'category' => 'inputs',
+                'type' => ['summary' => 'boolean'],
+                'defaultValue' => ['summary' => 'false'],
+            ],
+        ],
+        'panelOpen' => [
+            'description' => 'Whether the suggestion panel is open. The initial state only: afterwards it lives in the browser.',
+            'control' => ['type' => 'boolean'],
+            'table' => [
+                'category' => 'inputs',
+                'type' => ['summary' => 'boolean'],
+                'defaultValue' => ['summary' => 'false'],
+            ],
+        ],
+        'hideOnScroll' => [
+            'description' => 'Closes the suggestion panel when the page (or a scrollable ancestor) scrolls. Scrolling the option list itself keeps the panel open.',
+            'control' => ['type' => 'boolean'],
+            'table' => [
+                'category' => 'inputs',
+                'type' => ['summary' => 'boolean'],
+                'defaultValue' => ['summary' => 'false'],
+            ],
+        ],
     ],
 ])
 
 {{--
-    Angular's argTypes also expose the `searchEvent` and `clear` output()s.
-    output()s are not re-emitted by this port (CONVENTIONS.md §7 item 2,
-    CONTRACT.md §5), so they are dropped rather than faked as actions — a
-    consumer binds `wire:keydown.enter` on the input via $attributes,
-    `buttonAttributes` on the search button and `clearAttributes` on the clear
-    button instead.
+    Angular's argTypes also expose the `searchEvent`, `suggestionSelect` and
+    `clear` output()s. They are not Storybook actions here (CONVENTIONS.md §7
+    item 2, CONTRACT.md §5): `clear` is wired through `clearAttributes`; in
+    autocomplete mode `searchEvent` and `suggestionSelect` arrive as the DOM
+    events `tedi-search:search` and `tedi-search:select` on the input (see
+    search.blade.php). `resultsCountText` takes a Closure, which a Storybook
+    control cannot supply, so it is documented but has no control.
 --}}
 <tedi:search
     :input-id="$inputId"
@@ -107,9 +207,20 @@
     :placeholder="$placeholder"
     :size="$size"
     :clearable="(bool) $clearable"
+    :show-clear-on-interaction="(bool) $showClearOnInteraction"
     :search-icon="$searchIcon"
     :disabled="(bool) $disabled"
     :button="is_array($button) ? $button : ($button ?: null)"
     :feedback-text="$feedbackText ?: null"
     :aria-label="$ariaLabel ?: null"
+    :suggestions="is_array($suggestions) ? $suggestions : null"
+    :bind-label="$bindLabel ?: 'label'"
+    :bind-description="$bindDescription ?: null"
+    :bind-disabled="$bindDisabled ?: 'disabled'"
+    :no-results-text="$noResultsText ?: null"
+    :loading-text="$loadingText ?: null"
+    :min-query-length="(int) $minQueryLength"
+    :loading="(bool) $loading"
+    :panel-open="(bool) $panelOpen"
+    :hide-on-scroll="(bool) $hideOnScroll"
 />

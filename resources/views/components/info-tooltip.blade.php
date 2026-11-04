@@ -9,13 +9,11 @@
     (CONVENTIONS.md §4's element-selector rule), carrying the
     `.tedi-info-tooltip` host class.
 
-    `description` is the one addition to Angular's five inputs, and it is the
-    §5 translation of behaviour Angular *does* have here: `tedi-tooltip` reads
-    its projected content's `textContent` at runtime to build the sr-only
-    description that the info button's `aria-describedby` points at. Blade
-    cannot read its own slot, so the text is spelled out. Unlike the standalone
-    `<tedi:tooltip-trigger>`, the wiring closes here — this component renders
-    the button, so it can set `aria-describedby` on it exactly as Angular does.
+    The tooltip-content id is generated here and passed down as the tooltip's
+    `description-id`, so the info button's `aria-describedby` points at the
+    `role="tooltip"` content server-side, as Angular 9 wires it (#45 / #585).
+    The former `description` prop (sr-only text mirroring the content) is
+    removed along with upstream's sr-only mirror: BREAKING.
 
     The tooltip's `preventOverflow`, `timeoutDelay` and `offset` keep their
     defaults, matching Angular's template, which forwards only `position` and
@@ -32,19 +30,16 @@
     'color' => 'primary',
     /** Accessible name for the info button; falls back to the translated label. */
     'ariaLabel' => null,
-    /** sr-only description text for the info button (CONVENTIONS.md §5). */
-    'description' => null,
 ])
 
 @php
-    $descriptionId = $description ? \Tedi\Livewire\Tedi::id('tedi-tooltip') : null;
+    $descriptionId = \Tedi\Livewire\Tedi::id('tedi-tooltip');
 @endphp
 
 <tedi-info-tooltip {{ $attributes->class(['tedi-info-tooltip']) }}>
     <tedi:tooltip
         :position="$position"
         :open-with="$openWith"
-        :description="$description"
         :description-id="$descriptionId"
     >
         <tedi:tooltip-trigger>

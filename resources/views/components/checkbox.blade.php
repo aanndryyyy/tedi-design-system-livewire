@@ -1,6 +1,6 @@
 {{--
     TEDI Checkbox.
-    Port of angular/tedi/components/form/checkbox/checkbox.component.ts
+    Port of angular/src/tedi/components/form/checkbox/checkbox.component.ts
 
     Angular's selector is the attribute-based `input[type=checkbox][tedi-checkbox]`
     (not an element/class selector), so the vendored SCSS targets the literal
@@ -28,8 +28,9 @@
 @props([
     /** default|large */
     'size' => 'default',
-    /** Is checkbox invalid? */
+    /** Show the checkbox in an invalid state. */
     'invalid' => false,
+    /** Disable this checkbox. Also inherited from an enclosing `tedi:checkbox-group :disabled`. */
     'disabled' => false,
     'name' => null,
     'value' => null,

@@ -15,7 +15,7 @@
     pseudo-class.
 --}}
 @php
-    $states = ['Default', 'Hover', 'Active', 'Disabled', 'Focus'];
+    $states = ['Default', 'Hover', 'Focus', 'Active', 'Disabled'];
 @endphp
 
 <tedi:row :cols="1" :gap-y="3">
@@ -41,23 +41,6 @@
 
     <tedi:row :cols="6" align-items="center">
         <tedi:col :width="1">
-            <tedi:text as="p" modifiers="bold">Error</tedi:text>
-        </tedi:col>
-        <tedi:col :width="5">
-            <tedi:form-field :invalid="true">
-                <x-slot:label>
-                    <tedi:form.label for="state-error">Aeg</tedi:form.label>
-                </x-slot:label>
-                <tedi:time-field input-id="state-error" :invalid="true" value="12:00" />
-                <x-slot:feedback>
-                    <tedi:feedback-text text="Tagasiside tekst" type="error" />
-                </x-slot:feedback>
-            </tedi:form-field>
-        </tedi:col>
-    </tedi:row>
-
-    <tedi:row :cols="6" align-items="center">
-        <tedi:col :width="1">
             <tedi:text as="p" modifiers="bold">Success</tedi:text>
         </tedi:col>
         <tedi:col :width="5">
@@ -68,6 +51,23 @@
                 <tedi:time-field input-id="state-success" value="12:00" />
                 <x-slot:feedback>
                     <tedi:feedback-text text="Tagasiside tekst" type="valid" />
+                </x-slot:feedback>
+            </tedi:form-field>
+        </tedi:col>
+    </tedi:row>
+
+    <tedi:row :cols="6" align-items="center">
+        <tedi:col :width="1">
+            <tedi:text as="p" modifiers="bold">Error</tedi:text>
+        </tedi:col>
+        <tedi:col :width="5">
+            <tedi:form-field :invalid="true">
+                <x-slot:label>
+                    <tedi:form.label for="state-error">Aeg</tedi:form.label>
+                </x-slot:label>
+                <tedi:time-field input-id="state-error" :invalid="true" value="12:00" />
+                <x-slot:feedback>
+                    <tedi:feedback-text text="Tagasiside tekst" type="error" />
                 </x-slot:feedback>
             </tedi:form-field>
         </tedi:col>

@@ -71,6 +71,9 @@
     font-family: inherit;
     font-size: var(--body-regular-size);
     color: var(--form-input-text-filled);
+
+    // The field surface draws the focus ring; core's global one would double it.
+    outline: none;
     background: transparent;
     border: 0;
     border-radius: var(--form-field-radius);

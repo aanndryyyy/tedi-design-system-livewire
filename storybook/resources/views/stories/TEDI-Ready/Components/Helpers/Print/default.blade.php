@@ -3,54 +3,50 @@
     'order' => 1,
     'status' => 'stable',
     'args' => [
-        'visibility' => 'hide',
+        'tediPrint' => '',
         'breakBefore' => '',
         'breakAfter' => '',
         'breakInside' => '',
     ],
     'argTypes' => [
-        'visibility' => [
-            'control' => 'radio',
+        'tediPrint' => [
+            'description' => 'Controls the visibility of the element when printing.',
+            'control' => ['type' => 'radio', 'labels' => ['' => 'none']],
             'options' => ['', 'show', 'hide'],
-            'description' => 'Controls the visibility of the content when printing. show keeps the content visible during printing, hide removes it. Empty emits neither class.',
+            'table' => [
+                'type' => ['summary' => "PrintVisibility | ''"],
+                'defaultValue' => ['summary' => "''"],
+            ],
         ],
         'breakBefore' => [
+            'description' => 'Sets `break-before` on the element when printing.',
             'control' => 'select',
-            'options' => ['', 'auto', 'avoid', 'avoid-column', 'avoid-page', 'avoid-region'],
-            'description' => 'Determines how page, column, or region breaks behave before the element. Uses CSS break-before values.',
+            'options' => ['auto', 'avoid', 'avoid-column', 'avoid-page', 'avoid-region'],
+            'table' => ['type' => ['summary' => 'PrintBreak']],
         ],
         'breakAfter' => [
+            'description' => 'Sets `break-after` on the element when printing.',
             'control' => 'select',
-            'options' => ['', 'auto', 'avoid', 'avoid-column', 'avoid-page', 'avoid-region'],
-            'description' => 'Determines how page, column, or region breaks behave after the element. Uses CSS break-after values.',
+            'options' => ['auto', 'avoid', 'avoid-column', 'avoid-page', 'avoid-region'],
+            'table' => ['type' => ['summary' => 'PrintBreak']],
         ],
         'breakInside' => [
+            'description' => 'Sets `break-inside` on the element when printing.',
             'control' => 'select',
-            'options' => ['', 'auto', 'avoid', 'avoid-column', 'avoid-page', 'avoid-region'],
-            'description' => 'Determines how page, column, or region breaks behave inside the element. Uses CSS break-inside values.',
+            'options' => ['auto', 'avoid', 'avoid-column', 'avoid-page', 'avoid-region'],
+            'table' => ['type' => ['summary' => 'PrintBreak']],
         ],
     ],
 ])
 
 {{-- Nothing here changes on screen — open the browser's print preview to see
-     the effect. Blade cannot clone a child the way React does, so each Print
-     is a wrapper element carrying the classes. --}}
-<tedi:vertical-spacing>
-    <tedi:print
-        :visibility="$visibility ?: null"
-        :break-before="$breakBefore ?: null"
-        :break-after="$breakAfter ?: null"
-        :break-inside="$breakInside ?: null"
-    >
-        <p>Demo paragraph</p>
-    </tedi:print>
-
-    <tedi:print
-        :visibility="$visibility ?: null"
-        :break-before="$breakBefore ?: null"
-        :break-after="$breakAfter ?: null"
-        :break-inside="$breakInside ?: null"
-    >
-        <tedi:button>Buttons are not printed by default</tedi:button>
-    </tedi:print>
-</tedi:vertical-spacing>
+     the effect. The directive ports as a wrapper element carrying the classes. --}}
+<tedi:print
+    :visibility="$tediPrint"
+    :break-before="$breakBefore ?: null"
+    :break-after="$breakAfter ?: null"
+    :break-inside="$breakInside ?: null"
+>
+    <p>This section is controlled by the tediPrint directive.</p>
+</tedi:print>
+<p>This section is always printed.</p>

@@ -1,6 +1,6 @@
 {{--
     TEDI Scroll Fade.
-    Port of angular/tedi/components/helpers/scroll-fade/scroll-fade.component.{ts,html}
+    Port of angular/src/tedi/components/helpers/scroll-fade/scroll-fade.component.{ts,html}
 
     Angular toggles the top/bottom fade classes from a ResizeObserver + scroll
     listener. That's genuinely runtime-measured (not a pure CSS media query),

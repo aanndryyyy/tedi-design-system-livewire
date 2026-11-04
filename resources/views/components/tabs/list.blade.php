@@ -1,6 +1,6 @@
 {{--
     TEDI Tabs List.
-    Port of angular/tedi/components/navigation/tabs/tabs-list/tabs-list.component.{ts,html}
+    Port of angular/src/tedi/components/navigation/tabs/tabs-list/tabs-list.component.{ts,html}
 
     Divergence (CONVENTIONS.md §7 style — runtime DOM measurement, not a
     breakpoint prop, but the same "no viewport/layout pass on the server"
@@ -28,13 +28,18 @@
     'overflowMode' => 'dropdown',
     /** Label for the overflow dropdown trigger. Kept for API parity — inert since the "More" menu isn't ported. */
     'dropdownLabel' => null,
+    /** show|hide — whether the tablist is printed. `hide` adds core's `no-print` utility. */
+    'printVisibility' => 'show',
 ])
 
 @php
     $itemsClass = 'tedi-tabs-list__items'.($overflowMode === 'scroll' ? ' tedi-tabs-list__items--scroll' : '');
 @endphp
 
-<div {{ $attributes->class(['tedi-tabs-list']) }}>
+<div {{ $attributes->class([
+    'tedi-tabs-list',
+    'no-print' => $printVisibility === 'hide',
+]) }}>
     <div
         role="tablist"
         data-name="tabs-list"

@@ -50,7 +50,7 @@
 
 <div class="gx-sec">
     <h2>Empty State</h2>
-    <p>Port of <code>helpers/empty-state</code>. Description is the default slot; actions go in the named <code>actions</code> slot.</p>
+    <p>Port of <code>content/empty-state</code>. Description is the default slot; actions go in the named <code>actions</code> slot.</p>
 
     <div class="gx-case">
         <div class="gx-case__label">type: separate | attached | inside</div>

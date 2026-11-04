@@ -1,4 +1,5 @@
 import { overlay } from './overlay.js';
+import { dropdownTrigger } from './dropdown.js';
 
 // =========================================================================
 // Filter — selection state + the listbox keyboard layer
@@ -63,11 +64,14 @@ var TAB_STOP_SELECTOR = 'input:not([disabled]):not([tabindex="-1"]), button:not(
  * Markup contract, on top of tediOverlay's trigger/panel refs:
  *   x-ref="optionsList"  the [role="listbox"] element
  *   options are          .tedi-filter-dropdown__item, in `options` order
- *   x-ref="searchClear"  optional; the form-field clear button (see syncSearchClear)
+ *   [role="searchbox"]   optional; the search field (see clearSearch)
  */
 export function filter(config) {
     var cfg = config || {};
-    var base = overlay(cfg);
+    // The trigger is the shared `tedi:dropdown-trigger` template, which calls
+    // into dropdownTrigger (initTrigger, triggerKeyup, …) — mixed in first so
+    // this component's own triggerKeydown below still wins.
+    var base = Object.assign(overlay(cfg), dropdownTrigger);
     var baseOnOpen = base._onOpen;
 
     // defineProperties over the descriptors, not Object.assign: assign *reads*
@@ -229,7 +233,7 @@ export function filter(config) {
         selectOption: function (value) {
             this.value = this.singleValue === value ? '' : value;
 
-            if (cfg.clearSearchOnSelect) this.searchTerm = '';
+            if (cfg.clearSearchOnSelect) this.clearSearch();
 
             this.hide(true);
         },
@@ -241,7 +245,7 @@ export function filter(config) {
                 ? current.filter(function (v) { return v !== value; })
                 : current.concat([value]);
 
-            if (cfg.clearSearchOnSelect) this.searchTerm = '';
+            if (cfg.clearSearchOnSelect) this.clearSearch();
         },
 
         toggleSelectAll: function () {
@@ -273,48 +277,24 @@ export function filter(config) {
             this.value = '';
         },
 
-        onSearchClear: function () {
-            this.searchTerm = '';
-        },
-
         /**
-         * form-field decides its clear button's visibility from the `value` it
-         * was given at render time, and there is no way to re-render it from
-         * here. The button itself is always in the DOM when `clearable`, so this
-         * reproduces form-field's own hidden/disabled bookkeeping on it as
-         * `searchTerm` changes.
-         *
-         * Bound with x-effect on the BUTTON, through form-field's
-         * `clear-attributes`, not on the search wrapper: Alpine initialises a
-         * parent's directives before its children's, so an effect on the
-         * wrapper would run before `x-ref="searchClear"` existed, bail out at
-         * the guard below, and — having read no reactive state — never run
-         * again. Reading `searchTerm` before the guard makes the dependency
-         * register even on a bail-out.
+         * clearSearchOnSelect: empty the search programmatically. x-model writes
+         * the input's value without an event, so the form-field's clear button
+         * (tediFormField, which re-syncs on input/change) is told with a
+         * `change`. x-model listens to `input`, so this does not loop.
          */
-        syncSearchClear: function () {
-            var show = this.searchTerm !== '';
-            var button = this.$refs.searchClear;
-            if (!button) return;
+        clearSearch: function () {
+            this.searchTerm = '';
 
-            var wrapper = button.closest('.tedi-form-field__buttons');
-
-            button.disabled = !show;
-            button.setAttribute('tabindex', show ? '0' : '-1');
-
-            if (wrapper) {
-                wrapper.classList.toggle('tedi-form-field__buttons--hidden', !show);
-
-                if (show) {
-                    wrapper.removeAttribute('aria-hidden');
-                } else {
-                    wrapper.setAttribute('aria-hidden', 'true');
-                }
-            }
+            var root = this.$root;
+            this.$nextTick(function () {
+                var input = root.querySelector('[role="searchbox"]');
+                if (input) input.dispatchEvent(new Event('change', { bubbles: true }));
+            });
         },
 
         /**
-         * `tedi:dropdown-item-value` renders its checkbox/radio itself and puts
+         * `tedi:option-content` renders its checkbox/radio itself and puts
          * the attribute bag on its own root, so the indicator cannot be bound
          * from the template. These two keep it in step with the live selection,
          * bound with x-effect from the row. Server-side both are already correct
@@ -324,13 +304,13 @@ export function filter(config) {
             var option = this.options[index];
             if (!option) return;
 
-            var input = row.querySelector('.tedi-dropdown-item-value__checkbox, .tedi-dropdown-item-value__radio');
+            var input = row.querySelector('.tedi-option-content__checkbox, .tedi-option-content__radio');
 
             if (input) input.checked = this.isOptionSelected(option.value);
         },
 
         syncSelectAllIndicator: function (row) {
-            var input = row.querySelector('.tedi-dropdown-item-value__checkbox');
+            var input = row.querySelector('.tedi-option-content__checkbox');
             if (!input) return;
 
             input.checked = this.allFilteredSelected;
@@ -373,6 +353,8 @@ export function filter(config) {
          * (CONVENTIONS.md §11).
          */
         triggerKeydown: function (event) {
+            // #669: Enter / Space are the shared trigger directive's.
+            if (this.triggerActivationKeydown(event)) return;
             if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
 
             event.preventDefault();

@@ -173,7 +173,7 @@ class FilterComponentsTest extends TestCase
         $html = $this->withOptions();
 
         $this->assertStringContainsString('<tedi-dropdown', $html);
-        $this->assertStringContainsString('aria-haspopup', $html);
+        $this->assertStringContainsString("ariaHaspopup: 'dialog'", $html);
         $this->assertStringContainsString('arrow_drop_down', $html);
         $this->assertStringNotContainsString('>check</tedi-icon>', $html);
     }
@@ -274,7 +274,7 @@ class FilterComponentsTest extends TestCase
         $html = $this->multi();
 
         $this->assertHasClass(
-            'tedi-dropdown-item-value--checkbox', $html, 'tedi-dropdown-item-value--checkbox'
+            'tedi-option-content--checkbox', $html, 'tedi-option-content--checkbox'
         );
     }
 
@@ -352,7 +352,8 @@ class FilterComponentsTest extends TestCase
         $this->assertHasClass('tedi-filter-dropdown__search', $html, 'tedi-filter-dropdown__search');
         $this->assertStringContainsString('role="searchbox"', $html);
         $this->assertStringContainsString('x-model="searchTerm"', $html);
-        $this->assertStringContainsString('x-on:click="onSearchClear()"', $html);
+        // The clear button is form-field's own; its click clears and fires input.
+        $this->assertStringContainsString('x-on:click="clear()"', $html);
     }
 
     public function test_search_field_is_absent_by_default(): void

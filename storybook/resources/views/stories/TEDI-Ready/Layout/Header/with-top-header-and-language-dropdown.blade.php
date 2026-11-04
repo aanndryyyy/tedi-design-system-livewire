@@ -17,7 +17,7 @@
 {{--
     Same as with-top-header.blade.php, but the top bar's language switcher is
     `header.language` (dropdown) instead of plain links. The story-local
-    theme toggle is dropped for the same reason (form/toggle not ported).
+    theme toggle is dropped for the same reason (not composed here).
     Same breakpoint-driven role/profile duplication drop as
     logged-in.blade.php.
 --}}
@@ -35,9 +35,9 @@
     </x-slot:top>
 
     <tedi:header.logo href="/">
-        <img src="header-logo.svg" alt="Logo">
+        <img src="/header-logo.svg" alt="Logo">
         <x-slot:darkLogo>
-            <img src="header-logo-white.svg" alt="Logo (Dark Mode)">
+            <img src="/header-logo-white.svg" alt="Logo (Dark Mode)">
         </x-slot:darkLogo>
     </tedi:header.logo>
 

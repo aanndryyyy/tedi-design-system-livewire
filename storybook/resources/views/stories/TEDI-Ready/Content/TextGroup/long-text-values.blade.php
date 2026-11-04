@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'Long Text Values',
-    'order' => 6,
+    'order' => 7,
     'status' => 'stable',
     'args' => [],
     'argTypes' => [],

@@ -1,6 +1,6 @@
 {{--
     TEDI Tabs (root).
-    Port of angular/tedi/components/navigation/tabs/tabs.component.ts
+    Port of angular/src/tedi/components/navigation/tabs/tabs.component.ts
 
     Angular owns `activeTab` as a signal read by `tedi-tabs-list`,
     `tedi-tabs-trigger` and `tedi-tabs-content` via `inject(TabsComponent)`.

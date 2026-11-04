@@ -23,13 +23,15 @@
     ];
 @endphp
 
-{{-- validateIndividually is upstream's client-side flag; the equivalent here is
-     the is_valid key each file carries, decided on the server. --}}
+{{-- keepRejectedFiles (20.x's name for validateIndividually, #889) is upstream's
+     client-side flag; the equivalent here is the is_valid key each file
+     carries, decided on the server. max-size is in bytes since 20.x. --}}
 <tedi:file-upload
     id="file-upload-multiple-individual-validation"
     name="file-multiple-individual-validation"
     :label="$label"
     accept=".pdf,.txt"
+    :max-size="10 * 1024"
     multiple
     :files="$files"
     :helper="['type' => 'error', 'text' => $helperText]"

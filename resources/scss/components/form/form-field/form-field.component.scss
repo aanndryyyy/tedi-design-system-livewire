@@ -74,6 +74,16 @@
     }
   }
 
+  &--clear-on-interaction &__buttons {
+    visibility: hidden;
+  }
+
+  &--clear-on-interaction &__box:hover &__buttons,
+  &--clear-on-interaction &__box:active &__buttons,
+  &--clear-on-interaction &__box:focus-within &__buttons {
+    visibility: visible;
+  }
+
   &__clear:disabled {
     cursor: not-allowed;
   }

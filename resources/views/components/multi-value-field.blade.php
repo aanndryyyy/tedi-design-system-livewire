@@ -9,11 +9,24 @@
     and it submits through a hidden input carrying the values as JSON.
 
     THE ROOT CLASS IS DROPPED. Upstream's outer div is
-    `styles['tedi-multi-value-field']`, but the stylesheet defines no such rule
-    (only `__inner`, `__tags`, `__right-area`, `__icon-wrapper`,
-    `__overflow-tag` and the two `--row` modifiers). Per CONVENTIONS.md §4 a
-    class with no rule is not emitted; the same goes for upstream's
-    `__clear-button`. Restore them if TEDI ships the rules.
+    `styles['tedi-multi-value-field']`, but the stylesheet defines no rule for
+    it on its own (only `__inner`, `__tags`, `__right-area`, `__icon-wrapper`,
+    `__overflow-tag`, the two `--row` modifiers, and — since 20.x —
+    `--clear-on-interaction`). Per CONVENTIONS.md §4 a class with no rule is not
+    emitted. Restore it if TEDI ships the rule.
+
+    `__clear-button` used to be dropped for the same reason. 20.x's
+    `--clear-on-interaction` rules key on it, so it is emitted now.
+
+    `show-clear-on-interaction` (upstream's `showClearOnInteraction`) adds
+    `--clear-on-interaction` to the root whenever the clear control is shown,
+    which hides it until the field is hovered or focused — pure CSS, no JS.
+
+    `label-modifiers` is upstream's `labelProps.modifiers`: one or a list of
+    `nowrap`, `break-all`, `break-word`, `break-spaces`, `italic`, `uppercase`,
+    `lowercase`, `capitalize`, emitted on the label as core's `text-<modifier>`
+    utilities — what React's `Label` does with them. The breakpoint-keyed form
+    (`{ sm: { modifiers } }`) is not ported (CONVENTIONS.md §7 item 1).
 
     NOT PORTED — the row-overflow measurement. In `tags-direction="row"`
     upstream measures each rendered tag with a ResizeObserver, works out how
@@ -41,6 +54,8 @@
     'id' => null,
     /** Label rendered above the field. */
     'label' => null,
+    /** nowrap|break-all|break-word|break-spaces|italic|uppercase|lowercase|capitalize, or a list — label text modifiers. */
+    'labelModifiers' => null,
     /** Name of the hidden input. Omit to render no input at all. */
     'name' => null,
     /** The values, as strings. */
@@ -57,6 +72,8 @@
     'iconButtonAttributes' => [],
     /** Show the clear control when there are values. */
     'isClearable' => true,
+    /** Show the clear control only while the field is hovered or focused. Requires `is-clearable`. */
+    'showClearOnInteraction' => false,
     /** Marks the label required and the hidden input required. */
     'required' => false,
     /** Disables removal and the clear control. */
@@ -79,11 +96,16 @@
         : 0;
 
     $showClear = ! $disabled && $isClearable && count($values) > 0;
+
+    // labelProps.modifiers — React's Label emits each as core's `text-*` utility.
+    $labelModifierList = is_array($labelModifiers) ? $labelModifiers : (filled($labelModifiers) ? [$labelModifiers] : []);
+    $labelClasses = array_map(fn ($modifier) => 'text-'.$modifier, $labelModifierList);
 @endphp
 
-<div {{ $attributes }}>
+{{-- ->class([]) with nothing true would print an empty class="". --}}
+<div {{ $showClear && $showClearOnInteraction ? $attributes->class(['tedi-multi-value-field--clear-on-interaction']) : $attributes }}>
     @if (filled($label))
-        <tedi:form.label for="{{ $id }}" :required="(bool) $required">{{ $label }}</tedi:form.label>
+        <tedi:form.label for="{{ $id }}" :required="(bool) $required" :class="implode(' ', $labelClasses)">{{ $label }}</tedi:form.label>
     @endif
 
     <div @class([
@@ -119,6 +141,7 @@
                     <tedi:closing-button
                         :icon-size="18"
                         :aria-label="__('tedi::tedi.clear')"
+                        class="tedi-multi-value-field__clear-button"
                         data-name="closing-button"
                     />
                 @endif

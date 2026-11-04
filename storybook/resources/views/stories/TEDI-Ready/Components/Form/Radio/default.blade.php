@@ -2,7 +2,7 @@
     'name' => 'Default',
     'order' => 1,
     'status' => 'stable',
-    'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.41.64?node-id=6149-138013&m=dev',
+    'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.102.102?node-id=65724-11106&m=dev',
     'args' => [
         'size' => 'default',
         'invalid' => false,
@@ -21,7 +21,7 @@
         ],
         'invalid' => [
             'control' => 'boolean',
-            'description' => 'Is radio invalid?',
+            'description' => 'Show the radio in an invalid state.',
             'table' => [
                 'category' => 'Radio',
                 'type' => ['summary' => 'boolean'],
@@ -30,7 +30,7 @@
         ],
         'disabled' => [
             'control' => 'boolean',
-            'description' => 'Is radio disabled?',
+            'description' => 'Disable the radio.',
             'table' => [
                 'category' => 'Radio',
                 'type' => ['summary' => 'boolean'],
@@ -41,5 +41,5 @@
 
 <tedi:form.label color="primary" class="flex align-items-center gap-2">
     <tedi:radio :size="$size" :invalid="(bool) $invalid" :disabled="(bool) $disabled" />
-    Text
+    Tekst
 </tedi:form.label>

@@ -39,3 +39,20 @@ li[tedi-dropdown-item],
 .tedi-dropdown-item {
   @include dropdown-item-base;
 }
+
+// A plain `list` row has no activation behaviour of its own: only the projected
+// control navigates. The row is styled as one target (hover background, pointer
+// cursor), so the control's activation area is stretched over it, otherwise a
+// click that lands beside the text would only close the panel. The overlay is
+// transparent and belongs to the control, so a real link click still carries
+// modifier keys, middle-click and the link context menu.
+.tedi-dropdown-content__list--plain > li[tedi-dropdown-item] {
+  position: relative;
+
+  a[href]::after,
+  button::after {
+    position: absolute;
+    inset: 0;
+    content: "";
+  }
+}

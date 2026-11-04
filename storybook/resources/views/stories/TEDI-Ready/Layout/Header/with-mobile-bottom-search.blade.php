@@ -22,14 +22,14 @@
     false, which already gives that inline rendering here.
 
     Same breakpoint-driven role duplication drop as logged-in.blade.php, and
-    the profile menu's theme toggle is dropped (form/toggle is not ported —
-    see logged-in.blade.php's sibling stories).
+    the profile menu's theme toggle is dropped (`tedi:toggle` is ported, but
+    these header stories do not compose it).
 --}}
 <tedi:header>
     <tedi:header.logo href="/">
-        <img src="header-logo.svg" alt="Logo">
+        <img src="/header-logo.svg" alt="Logo">
         <x-slot:darkLogo>
-            <img src="header-logo-white.svg" alt="Logo (Dark Mode)">
+            <img src="/header-logo-white.svg" alt="Logo (Dark Mode)">
         </x-slot:darkLogo>
     </tedi:header.logo>
 

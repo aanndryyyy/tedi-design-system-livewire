@@ -8,6 +8,7 @@
         'type' => 'info',
         'icon' => '',
         'showClose' => false,
+        'closeAriaLabel' => '',
         'role' => 'alert',
         'titleElement' => 'h2',
         'size' => 'default',
@@ -35,6 +36,10 @@
         'showClose' => [
             'control' => 'boolean',
             'description' => 'If true, a close button will be displayed.',
+        ],
+        'closeAriaLabel' => [
+            'control' => 'text',
+            'description' => 'Accessible name for the close button, replacing the generic default when several alerts can be on screen at once.',
         ],
         'role' => [
             'control' => 'select',
@@ -66,6 +71,7 @@
     :type="$type"
     :icon="$icon ?: null"
     :show-close="(bool) $showClose"
+    :close-aria-label="$closeAriaLabel ?: null"
     :role="$role"
     :title-element="$titleElement"
     :size="$size"

@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'Template-based (deprecated)',
-    'order' => 13,
+    'order' => 14,
     'status' => 'subset',
     'args' => [
         'open' => true,

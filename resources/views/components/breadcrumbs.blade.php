@@ -1,6 +1,6 @@
 {{--
     TEDI Breadcrumbs.
-    Port of angular/tedi/components/navigation/breadcrumbs/breadcrumbs.component.{ts,html}
+    Port of angular/src/tedi/components/navigation/breadcrumbs/breadcrumbs.component.{ts,html}
 
     Angular's selector is the element `tedi-breadcrumbs`, so per CONVENTIONS.md
     §4's element-selector rule the root is that literal custom element.
@@ -47,9 +47,25 @@
     classes for breadcrumbs, so the base props are resolved directly and the
     breakpoint inputs are omitted entirely rather than declared inert.
 
-    The ellipsis menu composes the real <tedi:dropdown> stack, so every
+    The ellipsis dropdown composes the real `tedi:dropdown` stack, so every
     divergence documented on dropdown.blade.php applies here too — notably that
     the panel is not re-parented into an overlay container (CONVENTIONS.md §11).
+
+    WCAG (Angular 8.x, #541): the ellipsis dropdown is a plain list
+    (`dropdown-role="list"`), not a menu, so the collapsed crumbs stay links —
+    announced as links, each its own tab stop. Its panel renders inside the
+    crumb it belongs to (true of every panel in this port), so the collapsed
+    crumbs sit between the ellipsis button and the next crumb in tab and DOM
+    order. Opening it focuses the first collapsed crumb; Escape closes it and
+    returns focus to the button. The trigger gets no `aria-haspopup`, as ARIA
+    has no token for a list.
+
+    A collapsed crumb now keeps its own `underline` setting: upstream deleted
+    the SCSS rule that forced collapsed crumbs to be non-underlined. It still
+    emits `tedi-breadcrumbs__dropdown-item` on each collapsed row and documents
+    it as the hook for restyling them, so the class is kept although the
+    vendored SCSS no longer has a rule for it (an audited `$deadUpstream`
+    entry in tests/IntegrityTest.php, CONVENTIONS.md §4).
 --}}
 @props([
     /** The crumbs, root first. See the shape documented above. */
@@ -154,7 +170,7 @@
                                         ><span aria-hidden="true">…</span></tedi:link>
                                     </tedi:dropdown-trigger>
 
-                                    <tedi:dropdown-content dropdown-role="menu">
+                                    <tedi:dropdown-content dropdown-role="list">
                                         @foreach ($token['hidden'] as $hidden)
                                             <tedi:dropdown-item :clip-content="false" class="tedi-breadcrumbs__dropdown-item">
                                                 <tedi:link

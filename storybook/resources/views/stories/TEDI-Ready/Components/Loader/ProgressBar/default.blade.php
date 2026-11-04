@@ -14,11 +14,13 @@
         'valuePosition' => 'horizontal',
         'valueLabel' => '',
         'ariaLabel' => 'Edenemisriba pealkiri',
+        'announce' => 'off',
+        'announceInterval' => 1000,
     ],
     'argTypes' => [
         'progressId' => [
             'control' => 'text',
-            'description' => 'Optional id for the underlying `<progress>` element. Useful when an external `<label for>` should bind to it.',
+            'description' => 'Optional id for the underlying `<progress>` element. Useful when an external `<label for>` should bind to it. Falls back to a generated id.',
             'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
         ],
         'value' => [
@@ -69,6 +71,17 @@
             'description' => 'Accessible label for the progress bar. Falls back to `label()` when omitted.',
             'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
         ],
+        'announce' => [
+            'control' => ['type' => 'radio'],
+            'options' => ['off', 'polite', 'assertive'],
+            'description' => 'Publishes changes to the formatted value (`valueLabel`, or the percentage) in a visually hidden live region, independently of `showValue`. The current value is skipped when announcements are enabled. Use `polite` for routine updates and `assertive` for urgent updates that may interrupt speech.',
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'ProgressBarAnnounce'], 'defaultValue' => ['summary' => 'off']],
+        ],
+        'announceInterval' => [
+            'control' => ['type' => 'number'],
+            'description' => 'Minimum time in milliseconds between live-region updates. The first change is published immediately; changes during the interval are combined into one update with the latest value. Changing the interval reschedules pending updates. Zero disables throttling. Negative values become zero; non-finite values use 1000ms. Ignored when `announce` is `off`.',
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'number'], 'defaultValue' => ['summary' => '1000']],
+        ],
     ],
 ])
 
@@ -83,4 +96,6 @@
     :value-position="$valuePosition"
     :value-label="$valueLabel ?: null"
     :aria-label="$ariaLabel ?: null"
+    :announce="$announce"
+    :announce-interval="(int) $announceInterval"
 />

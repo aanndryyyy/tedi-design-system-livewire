@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'Centered - has dots',
-    'order' => 8,
+    'order' => 9,
     'status' => 'subset',
     'args' => [],
     'argTypes' => [],

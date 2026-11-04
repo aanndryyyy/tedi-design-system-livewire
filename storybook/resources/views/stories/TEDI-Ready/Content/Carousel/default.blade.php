@@ -2,11 +2,13 @@
     'name' => 'Default',
     'order' => 1,
     'status' => 'subset',
-    'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.20.28?node-id=26296-151359&m=dev',
+    'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.76.92?node-id=27896-171684&m=dev',
     'args' => [
         'slidesPerView' => 3,
         'gap' => 16,
         'fade' => false,
+        'transitionMs' => 400,
+        'swipeThreshold' => 0.3,
         'withArrows' => false,
         'variant' => 'dots',
     ],
@@ -25,6 +27,26 @@
             'control' => 'boolean',
             'description' => 'Should carousel have fade? In mobile both left and right, in desktop only right.',
             'table' => ['category' => 'Carousel Content', 'type' => ['summary' => 'boolean'], 'defaultValue' => ['summary' => 'false']],
+        ],
+        'transitionMs' => [
+            'control' => 'number',
+            'description' => 'Transition duration in ms',
+            'table' => ['category' => 'Carousel Content', 'type' => ['summary' => 'number'], 'defaultValue' => ['summary' => '400']],
+        ],
+        'swipeThreshold' => [
+            'control' => ['type' => 'number', 'min' => 0, 'max' => 1, 'step' => 0.05],
+            'description' => 'How far a drag must go to move on, as a fraction (0–1) of the distance to the next position, which is one slide except for a shorter final step when not looping. Each position fully dragged past counts; a quick flick moves one position.',
+            'table' => ['category' => 'Carousel Content', 'type' => ['summary' => 'number'], 'defaultValue' => ['summary' => '0.3']],
+        ],
+        'loop' => [
+            'control' => 'boolean',
+            'description' => 'Whether navigation wraps around at the ends. When `false`, it stops at the first and last reachable positions and disables the corresponding arrow.',
+            'table' => ['category' => 'Carousel Content', 'type' => ['summary' => 'boolean'], 'defaultValue' => ['summary' => 'true']],
+        ],
+        'overlay' => [
+            'description' => 'Shows floating navigation buttons over the slides. Place navigation directly inside `tedi-carousel`, outside the header and footer. In this port it goes in the `navigation` slot of `tedi:carousel-content`, which renders the slide body it floats over.',
+            'control' => false,
+            'table' => ['category' => 'Carousel Navigation', 'type' => ['summary' => 'boolean'], 'defaultValue' => ['summary' => 'false']],
         ],
         'withArrows' => [
             'control' => 'boolean',
@@ -54,7 +76,7 @@
         </div>
         <tedi:carousel-navigation />
     </tedi:carousel-header>
-    <tedi:carousel-content :slides-per-view="(float) $slidesPerView" :gap="(int) $gap" :fade="(bool) $fade">
+    <tedi:carousel-content :slides-per-view="(float) $slidesPerView" :gap="(int) $gap" :fade="(bool) $fade" :transition-ms="(int) $transitionMs" :swipe-threshold="(float) $swipeThreshold">
         @for ($i = 0; $i < 5; $i++)
             <tedi:carousel-slide>
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--general-border-primary); border-radius: 4px; height: 10rem; padding: 1rem; flex: 1;">

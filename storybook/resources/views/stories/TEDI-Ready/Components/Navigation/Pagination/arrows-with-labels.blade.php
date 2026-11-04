@@ -4,7 +4,7 @@
 --}}
 @storybook([
     'name' => 'Arrows With Labels',
-    'order' => 17,
+    'order' => 19,
     'status' => 'subset',
     'args' => [
         'pageCount' => 10,

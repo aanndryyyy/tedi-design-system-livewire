@@ -5,7 +5,7 @@
     'args' => [
         'activeIndex' => 1,
         'variant' => 'card',
-        'cardPadding' => 1,
+        'cardPadding' => 0.5,
     ],
     'argTypes' => [
         'activeIndex' => [
@@ -20,15 +20,16 @@
         'cardPadding' => [
             'control' => 'select',
             'options' => [0, 0.5, 0.75, 1, 1.5, 2, 2.5, 3],
-            'description' => 'Item padding in rems for the card variant. Same values as the Card component.',
+            'description' => "Vertical padding of each item in the card variant, in rems (same scale as the Card component). Both the gaps between items and the card's top/bottom edges resolve to twice this value. Horizontal item padding is fixed at the card default.",
+            'table' => ['category' => 'timeline', 'type' => ['summary' => 'TimelineCardPadding'], 'defaultValue' => ['summary' => '0.5']],
         ],
     ],
 ])
 
 {{--
-    Angular projects <tedi-collapse> for the "show more" body of each item;
-    the collapse component isn't ported (not in resources/views/components/),
-    so the extra info is rendered directly instead, mirroring how it's shown
+    Angular projects `tedi-collapse` for the "show more" body of each item.
+    `tedi:collapse` is ported, but this story has not been updated to compose
+    it: the extra info is rendered directly instead, mirroring how it's shown
     open by default in Angular's first item.
 --}}
 <tedi:timeline :active-index="$activeIndex" :variant="$variant" :card-padding="$cardPadding">

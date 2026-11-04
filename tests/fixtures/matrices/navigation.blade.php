@@ -136,6 +136,24 @@
         </div>
     </div>
 
+    @foreach (['left', 'right'] as $align)
+        <div class="gx-case">
+            <div class="gx-case__label">align: {{ $align }}, pager hidden, divider: bottom</div>
+            <div class="gx-case__demo">
+                <tedi:pagination
+                    :page-count="10"
+                    :page="3"
+                    :total-items="97"
+                    :page-size="10"
+                    :page-size-options="[10, 25, 50, 100]"
+                    :align="$align"
+                    :hide-pager="true"
+                    divider-position="bottom"
+                />
+            </div>
+        </div>
+    @endforeach
+
     <div class="gx-case">
         <div class="gx-case__label">single page — pager hidden (tedi-pagination--no-pager)</div>
         <div class="gx-case__demo">

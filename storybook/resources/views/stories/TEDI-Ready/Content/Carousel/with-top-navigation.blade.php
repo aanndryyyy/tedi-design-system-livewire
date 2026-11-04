@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'With top navigation',
-    'order' => 14,
+    'order' => 15,
     'status' => 'subset',
     'args' => [],
     'argTypes' => [],

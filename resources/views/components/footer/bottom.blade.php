@@ -1,6 +1,6 @@
 {{--
     TEDI Footer Bottom.
-    Port of angular/tedi/components/layout/footer/footer-bottom/footer-bottom.component.{ts,html}
+    Port of angular/src/tedi/components/layout/footer/footer-bottom/footer-bottom.component.{ts,html}
 
     Divergences (document, don't fake — CONVENTIONS.md §7):
     - `mobileLayout` (BreakpointService) is not ported, so `tedi-footer-bottom--mobile`

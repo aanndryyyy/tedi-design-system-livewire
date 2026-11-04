@@ -1,6 +1,6 @@
 {{--
     TEDI Accordion Item.
-    Port of angular/tedi/components/content/accordion/accordion-item/accordion-item.component.{ts,html}
+    Port of angular/src/tedi/components/content/accordion/accordion-item/accordion-item.component.{ts,html}
 
     Owns the expanded state via Alpine (`x-data`) — descendant
     tedi-accordion-item-header / tedi-accordion-item-content components read

@@ -11,7 +11,8 @@
     What you get is the full markup and a real `<input type="file">` that
     `wire:model` binds. What is not ported is `useFileUpload`, upstream's
     client-side pipeline: the internal file list, `maxSize` / `accept`
-    validation, `validateIndividually`, the rejected-file messages, and the
+    *enforcement*, `keepRejectedFiles` (20.x's rename of `validateIndividually`,
+    #889), duplicate skipping, the rejected-file messages, and the
     `announcement` string derived from them. In Livewire that work belongs on
     the server — a validation rule, and the resulting list rendered back in
     through `:files`.
@@ -20,18 +21,30 @@
     |---|---|
     | `defaultFiles` + internal state | the `files` prop, rendered server-side |
     | `onChange` / `onDelete` | bind `wire:model` / your own handler (CONVENTIONS.md §7 item 2) |
-    | `maxSize`, `validateIndividually`, `uploadErrorHelper` | `maxSize` + `showRestrictions` build the hint; validate server-side |
+    | `keepRejectedFiles`, the rejection `errorHelper` | the `helper` prop plus `is_valid => false` on a file; validate server-side |
     | `announcement` | the live region is still rendered — put your own message in `announcement` |
+
+    THE RESTRICTIONS HINT IS PORTED. `accept` and `max-size` generate upstream's
+    `getDefaultHelpers` line ("Allowed file extensions: .pdf, .txt. Maximum
+    size: 1 KB") under the field, exactly as `useFileUpload` does when nothing
+    has been rejected. `max-size` is in **bytes** since 20.x (#889 — it used to
+    be megabytes), formatted with upstream's 1024-based `formatFileSize`
+    (`512 B`, `1 KB`, `2.5 MB`). `show-restrictions="false"` suppresses the
+    hint (upstream's `showRestrictions`, #786). A `helper` you pass wins over
+    the hint, as upstream's `errorHelper ?? restrictionsHint` does.
+    `max-size` is not enforced client-side; `accept` still lands on the native
+    input.
 
     THE BREAKPOINT SWAP IS NOT PORTED. Upstream renders the clear control as a
     full `<Button icon="close">` below `md` and as a `ClosingButton` above it
     (CONVENTIONS.md §7 item 1). This always renders the `ClosingButton`, which
     is the desktop branch and the one the stylesheet is written around.
 
-    CLASSES DROPPED. Upstream emits `tedi-file-upload__label-wrapper`,
-    `tedi-file-upload__label` and `tedi-file-upload__container--{size}`; none of
-    the three has a rule in `file-upload.module.scss`, so per CONVENTIONS.md §4
-    they are not emitted. Restore them if TEDI ships the rules.
+    CLASSES DROPPED. Upstream emits `tedi-file-upload__label-wrapper` and
+    `tedi-file-upload__label`; neither has a rule in `file-upload.module.scss`,
+    so per CONVENTIONS.md §4 they are not emitted. Restore them if TEDI ships
+    the rules. `tedi-file-upload__container--{size}` gained rules upstream and
+    is emitted.
 
     THE CLEAR BUTTON CARRIES `data-name="closing-button"`. That is not
     decoration: the shared `_field-icon-button` partial keys on it
@@ -58,6 +71,10 @@
     'label' => null,
     /** Comma-separated accepted types, e.g. ".pdf,.docx" or "image/*". */
     'accept' => null,
+    /** Maximum file size in bytes (e.g. 5 * 1024 ** 2 for 5 MB). Shown in the hint; not enforced client-side. */
+    'maxSize' => null,
+    /** Show the auto-generated accept / max-size hint below the field. */
+    'showRestrictions' => true,
     /** Allow picking several files. */
     'multiple' => false,
     /** Chosen files: [['name' => …, 'is_loading' => false, 'is_valid' => true], …]. */
@@ -72,10 +89,6 @@
     'size' => 'default',
     /** ['text' => …, 'type' => 'hint'|'error'|'valid'] rendered under the field. */
     'helper' => null,
-    /** Max size in MB, used with `showRestrictions` to build the default hint. */
-    'maxSize' => null,
-    /** Show the auto-generated accept/max-size hint when `helper` is omitted. */
-    'showRestrictions' => true,
     /** Text for the polite live region. */
     'announcement' => null,
     /** Marks the label required. */
@@ -86,14 +99,37 @@
     $id = $id ?? \Tedi\Livewire\Tedi::id('tedi-file-upload');
     $files = array_values($files);
 
-    if ($helper === null && $showRestrictions && ($accept || $maxSize)) {
-        $parts = array_values(array_filter([
-            $accept ? __('tedi::tedi.file-upload.accept').' '.str_replace(',', ', ', $accept) : null,
-            $maxSize ? __('tedi::tedi.file-upload.max-size').' '.$maxSize.'MB' : null,
-        ]));
-        $helper = $parts ? ['text' => implode('. ', $parts), 'type' => 'hint'] : null;
-    }
+    // use-file-upload.ts — formatFileSize(): 1024-based, one decimal, sub-unit
+    // values rolled down (0.5 MB reads as 512 KB).
+    $formatFileSize = function ($bytes) {
+        if ($bytes < 1024) {
+            return $bytes.' B';
+        }
 
+        $units = ['KB', 'MB', 'GB', 'TB'];
+        $value = $bytes / 1024;
+        $unit = 0;
+
+        while ($value >= 1024 && $unit < count($units) - 1) {
+            $value /= 1024;
+            $unit++;
+        }
+
+        // Math.round(value * 10) / 10 — JS prints no trailing ".0".
+        $rounded = round($value * 10) / 10;
+
+        return (floor($rounded) == $rounded ? (string) (int) $rounded : (string) $rounded).' '.$units[$unit];
+    };
+
+    // getDefaultHelpers(), gated by showRestrictions — the restrictionsHint.
+    $restrictionsText = implode('. ', array_filter([
+        $accept ? __('tedi::tedi.file-upload.accept').' '.str_replace(',', ', ', $accept) : null,
+        $maxSize ? __('tedi::tedi.file-upload.max-size').' '.$formatFileSize($maxSize) : null,
+    ]));
+    $restrictionsHint = $showRestrictions && $restrictionsText !== '' ? ['type' => 'hint', 'text' => $restrictionsText] : null;
+
+    // uploadErrorHelper = errorHelper ?? restrictionsHint
+    $helper = $helper ?: $restrictionsHint;
     $helperType = $helper['type'] ?? null;
     $helperId = $helper ? $id.'-helper' : null;
     $failedLabel = __('tedi::tedi.file-upload.failed');
@@ -130,14 +166,14 @@
     @else
         <div @class([
             'tedi-file-upload__container',
-            'tedi-file-upload__container--'.$size,
+            'tedi-file-upload__container--'.$size => (bool) $size,
             'tedi-file-upload--disabled' => (bool) $disabled,
             'tedi-file-upload--error' => $helperType === 'error',
             'tedi-file-upload--valid' => $helperType === 'valid',
         ])>
             <div class="tedi-file-upload__content">
                 <tedi:row>
-                    <tedi:col class="display-flex">
+                    <tedi:col class="flex">
                         @if (count($files) === 1)
                             <span class="tedi-file-upload__items tedi-file-upload__items--truncate">{{ $files[0]['name'] ?? '' }}@if (($files[0]['is_valid'] ?? true) === false)<span class="sr-only"> ({{ $failedLabel }})</span>@endif</span>
                         @elseif (count($files) > 1)

@@ -1,6 +1,6 @@
 {{--
     TEDI Pagination.
-    Port of angular/tedi/components/navigation/pagination/{pagination.component.ts,html,pagination.utils.ts}
+    Port of angular/src/tedi/components/navigation/pagination/{pagination.component.ts,html,pagination.utils.ts}
 
     Divergences (documented per CONVENTIONS.md §7):
     - `useCompactPicker` (`isBelowBreakpoint('md')`) swaps the pager for a
@@ -19,7 +19,21 @@
       modifiers), so there is nothing to port a breakpoint value onto.
     - `tedi-select` (the custom dropdown form control) is a form component
       outside this port's scope; the page-size control is a plain native
-      `<select>` sharing the same wrapper classes.
+      `<select>` dressed as the small `tedi-select` Angular renders there: the
+      wrapper carries `tedi-pagination__page-size-select tedi-select` (so the
+      vendored `width: auto; min-width: 96px` rule applies) and the <select>
+      the trigger's `tedi-select__trigger tedi-input tedi-input--small`, which
+      paint the field surface.
+    - The per-breakpoint layout overrides (`xs`…`xxl`, each a
+      `PaginationBreakpointInputs` of `align` / `showArrowLabels` /
+      `arrowVariant` / `dividerPosition` / `background`) are resolved by
+      `BreakpointService` at runtime and are not ported (CONVENTIONS.md §7.1):
+      the base inputs are the only ones read.
+    - `align="between"` (the default) is not emitted as
+      `tedi-pagination--align-between`: Angular's `hostClasses()` always
+      emits `--align-${align}`, but the vendored SCSS only styles `--align-left`
+      and `--align-right` — `between` is the unmodified flex layout, so
+      dropping the class is behaviourally identical (§4).
     - `pageChange` / `pageSizeChange` are not re-emitted (CONVENTIONS.md §3).
       Per this repo's hard rule for pagination, page links render as real
       `<a href>`s via the `page-url` closure prop so paging works without JS;
@@ -61,7 +75,7 @@
     'background' => 'white',
     /** top|bottom|none */
     'dividerPosition' => 'top',
-    /** between|left|right — left/right group the slots; between is the default spread. */
+    /** between|left|right — `left` / `right` group the slots at the start / end instead of spreading them across the full width. */
     'align' => 'between',
     /** Hide the "X results" label even when totalItems/results slot is set. */
     'hideResults' => false,
@@ -155,17 +169,16 @@
     $nextItem = $items[count($items) - 1] ?? $emptyNavItem;
     $pageItems = count($items) > 2 ? array_slice($items, 1, -1) : [];
 
-    // mergedLabels() — see the file header for why .true/.false keys are
-    // treated as interchangeable templates with a literal placeholder word.
+    // mergedLabels()
     $defaultLabels = [
         'ariaLabel' => __('tedi::tedi.pagination.title'),
         'previous' => __('tedi::tedi.pagination.prev-page'),
         'next' => __('tedi::tedi.pagination.next-page'),
-        'pageAriaLabel' => fn (int $p) => str_replace('false', (string) $p, __('tedi::tedi.pagination.page.false')),
-        'currentPageAriaLabel' => fn (int $p) => str_replace('true', (string) $p, __('tedi::tedi.pagination.page.true')),
-        'results' => fn (int $count) => str_replace('false', (string) $count, __('tedi::tedi.pagination.results.false')),
+        'pageAriaLabel' => fn (int $p) => __('tedi::tedi.pagination.page.false', ['page' => $p]),
+        'currentPageAriaLabel' => fn (int $p) => __('tedi::tedi.pagination.page.true', ['page' => $p]),
+        'results' => fn (int $count) => trans_choice('tedi::tedi.pagination.results', $count, ['count' => $count]),
         'pageSize' => __('tedi::tedi.pagination.page-size'),
-        'pageStatus' => fn (int $p, int $total) => strtr(__('tedi::tedi.pagination.page-status.true'), ['true' => (string) $p, '0' => (string) $total]),
+        'pageStatus' => fn (int $p, int $total) => __('tedi::tedi.pagination.page-status', ['page' => $p, 'total' => $total]),
     ];
     $mergedLabels = array_replace($defaultLabels, $labels);
 
@@ -192,11 +205,11 @@
         'tedi-pagination',
         'tedi-pagination--bg-'.$background,
         'tedi-pagination--divider-'.$dividerPosition => $dividerPosition !== 'none',
-        'tedi-pagination--align-left' => $align === 'left',
-        'tedi-pagination--align-right' => $align === 'right',
+        'tedi-pagination--align-'.$align => $align !== 'between',
         'tedi-pagination--no-pager' => ! $showPager,
         'tedi-pagination--no-results' => ! $showResults,
         'tedi-pagination--no-page-size' => ! $showPageSizeSelect,
+        'tedi-pagination--arrow-labels' => (bool) $showArrowLabels,
     ]) }}
 >
     <span class="tedi-pagination__status" role="status" aria-live="polite" aria-atomic="true">
@@ -267,15 +280,17 @@
             @php $pageSizeLabelId = \Tedi\Livewire\Tedi::id('tedi-pagination__page-size-label'); @endphp
             <div class="tedi-pagination__page-size">
                 <span class="tedi-pagination__page-size-label" id="{{ $pageSizeLabelId }}">{{ $mergedLabels['pageSize'] }}</span>
-                <select
-                    class="tedi-pagination__page-size-select"
-                    aria-labelledby="{{ $pageSizeLabelId }}"
-                    {{ (new \Illuminate\View\ComponentAttributeBag)->merge($pageSizeAttributes) }}
-                >
-                    @foreach ($pageSizeSelectOptions as $option)
-                        <option value="{{ $option['value'] }}" @selected($pageSize === $option['value'])>{{ $option['label'] }}</option>
-                    @endforeach
-                </select>
+                <div class="tedi-pagination__page-size-select tedi-select">
+                    <select
+                        class="tedi-select__trigger tedi-input tedi-input--small"
+                        aria-labelledby="{{ $pageSizeLabelId }}"
+                        {{ (new \Illuminate\View\ComponentAttributeBag)->merge($pageSizeAttributes) }}
+                    >
+                        @foreach ($pageSizeSelectOptions as $option)
+                            <option value="{{ $option['value'] }}" @selected($pageSize === $option['value'])>{{ $option['label'] }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
         @endif
     </div>

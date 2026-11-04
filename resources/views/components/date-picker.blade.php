@@ -1,6 +1,13 @@
 {{--
-    TEDI Date picker — DOCUMENTED SUBSET.
-    Port of angular/tedi/components/form/date-picker/{date-picker.component.ts,date-picker.component.html}
+    TEDI Date picker — DOCUMENTED SUBSET. DEPRECATED.
+    Port of angular/src/tedi/components/form/date-picker/{date-picker.component.ts,date-picker.component.html}
+
+    DEPRECATED upstream (Angular 9.0): `tedi-date-picker` is marked
+    `@deprecated Use tedi-date-field instead` and logs a `warnDeprecated` notice
+    on construction. This port keeps rendering it unchanged; use
+    `tedi:date-field` for new work. Nothing is logged here — a server-side
+    warning per render would be noise, and the deprecation is the docblock's
+    job.
 
     Root element. The Angular selector is the element `tedi-date-picker`, and the
     vendored SCSS styles it as an ELEMENT selector
@@ -44,6 +51,17 @@
     * `output()` events (`selected`/`month` two-way binding, day selection, calendar
       open/close) are not re-emitted — consumers bind Livewire/Alpine listeners
       through the attribute bag (CONVENTIONS.md §7 item 2).
+    * Two Angular 8.x fixes are runtime-only and have nothing to port:
+      - #610: a manually TYPED date that is disabled is rejected on blur
+        (`parsed && !isDisabled(parsed)`). Upstream validates typed input only,
+        never a bound value, so a disabled `selected` passed here still renders
+        selected — exactly as Angular's `writeValue` does. Validating it is the
+        consumer's (Livewire's) job.
+      - #635: month/year switching built its anchor with `setMonth()` on the
+        current day, overflowing into the next month on the 29th–31st. This port
+        never does month arithmetic on a day: every month it renders is built
+        from day 1 (`mktime(0, 0, 0, $m, 1, $y)`), which is what the fix
+        (`monthAnchor()`) makes Angular do.
 --}}
 @props([
     /** Selected date (any strtotime-parsable string or timestamp). */

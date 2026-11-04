@@ -1,6 +1,6 @@
 {{--
     TEDI Calendar header — DOCUMENTED SUBSET.
-    Port of angular/tedi/components/content/calendar/calendar-header/{calendar-header.component.ts,calendar-header.component.html}
+    Port of angular/src/tedi/components/content/calendar/calendar-header/{calendar-header.component.ts,calendar-header.component.html}
 
     Root element: the Angular template's own <div class="tedi-calendar-header">.
     `tedi-calendar-header` has no ELEMENT selector in the vendored SCSS, so no

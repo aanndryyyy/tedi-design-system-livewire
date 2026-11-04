@@ -5,7 +5,7 @@
 --}}
 @storybook([
     'name' => 'Disabled Boundary Arrows',
-    'order' => 16,
+    'order' => 18,
     'status' => 'subset',
     'args' => [
         'pageCount' => 10,

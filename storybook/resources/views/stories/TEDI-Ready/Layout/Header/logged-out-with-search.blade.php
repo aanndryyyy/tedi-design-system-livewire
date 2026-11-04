@@ -7,7 +7,7 @@
 ])
 
 {{--
-    Drops the mobile sidenav (`<nav tedi-sidenav>`, unported — see
+    Drops the mobile sidenav (`<nav tedi-sidenav>`, not composed here — see
     default.blade.php's comment). Angular's `[showLogo]` on this story is
     bound to a custom `storyResponsive` directive that watches a 420px media
     query client-side; that behaviour has no static Blade equivalent, so the
@@ -24,9 +24,9 @@
     </x-slot:toggle>
 
     <tedi:header.logo href="/">
-        <img src="header-logo.svg" alt="Logo">
+        <img src="/header-logo.svg" alt="Logo">
         <x-slot:darkLogo>
-            <img src="header-logo-white.svg" alt="Logo (Dark Mode)">
+            <img src="/header-logo-white.svg" alt="Logo (Dark Mode)">
         </x-slot:darkLogo>
     </tedi:header.logo>
 

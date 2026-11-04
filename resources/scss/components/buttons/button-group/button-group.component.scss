@@ -1,4 +1,6 @@
 @use "@tedi-design-system/core/bootstrap-utility/breakpoints";
+
+// Items are a directive, not tedi-button, so the button styles must ship with the group.
 @use "../button/button.component";
 
 .tedi-button-group {

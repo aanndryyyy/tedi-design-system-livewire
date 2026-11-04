@@ -136,7 +136,7 @@
       --_filter-bg: var(--filter-secondary-selected-background);
       --_filter-text: var(--filter-secondary-selected-text);
       --_filter-border: var(--filter-secondary-selected-border);
-      --_filter-border-width: var(--general-selected-border-width);
+      --_filter-border-width: var(--general-border-width-selected);
     }
 
     &.tedi-filter--disabled {
@@ -207,8 +207,8 @@
       color: var(--dropdown-item-active-text);
       background: var(--dropdown-item-active-background);
 
-      .tedi-dropdown-item-value__label,
-      .tedi-dropdown-item-value__meta {
+      .tedi-option-content__label,
+      .tedi-option-content__meta {
         color: inherit;
       }
 

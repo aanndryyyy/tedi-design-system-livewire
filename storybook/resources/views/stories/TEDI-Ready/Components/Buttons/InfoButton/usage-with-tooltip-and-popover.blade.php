@@ -31,7 +31,6 @@
             <span class="flex align-items-center gap-1">
                 Veregrupp
                 <tedi:tooltip
-                    description="Veregrupp määratakse vereanalüüsiga ning see ei muutu elu jooksul."
                     description-id="info-button-veregrupp"
                 >
                     <tedi:tooltip-trigger described-by="info-button-veregrupp">

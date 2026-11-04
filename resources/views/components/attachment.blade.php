@@ -1,6 +1,6 @@
 {{--
     TEDI Attachment.
-    Port of angular/tedi/components/helpers/attachment/attachment.component.{ts,html}
+    Port of angular/src/tedi/components/helpers/attachment/attachment.component.{ts,html}
 
     Angular projects content by selector: `<ng-content select="tedi-progress-bar" />`
     and `<ng-content select="tedi-attachment-actions" />`. Per CONVENTIONS.md §3

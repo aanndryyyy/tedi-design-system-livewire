@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'Clearable with button',
-    'order' => 6,
+    'order' => 7,
     'status' => 'stable',
     'args' => [],
 ])

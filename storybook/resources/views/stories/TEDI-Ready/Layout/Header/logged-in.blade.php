@@ -30,9 +30,9 @@
 --}}
 <tedi:header>
     <tedi:header.logo href="/">
-        <img src="header-logo.svg" alt="Logo">
+        <img src="/header-logo.svg" alt="Logo">
         <x-slot:darkLogo>
-            <img src="header-logo-white.svg" alt="Logo (Dark Mode)">
+            <img src="/header-logo-white.svg" alt="Logo (Dark Mode)">
         </x-slot:darkLogo>
     </tedi:header.logo>
 

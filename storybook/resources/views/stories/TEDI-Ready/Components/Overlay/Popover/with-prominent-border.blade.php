@@ -34,29 +34,29 @@
             <tedi:popover-content max-width="small" class="story-popover-content--menu">
                 <div style="display: flex; flex-direction: column;">
                     <div style="{{ $menuRow }}">
-                        <tedi:dropdown-item-value>
-                            <tedi:dropdown-item-value-label>Minu profiil</tedi:dropdown-item-value-label>
-                        </tedi:dropdown-item-value>
+                        <tedi:option-content>
+                            <tedi:option-content-label>Minu profiil</tedi:option-content-label>
+                        </tedi:option-content>
                     </div>
                     <div style="{{ $menuRow }}">
-                        <tedi:dropdown-item-value>
-                            <tedi:dropdown-item-value-label>Esindatavad</tedi:dropdown-item-value-label>
-                        </tedi:dropdown-item-value>
+                        <tedi:option-content>
+                            <tedi:option-content-label>Esindatavad</tedi:option-content-label>
+                        </tedi:option-content>
                     </div>
                     <div style="{{ $menuRow }}">
-                        <tedi:dropdown-item-value>
-                            <tedi:dropdown-item-value-label>Kontaktid</tedi:dropdown-item-value-label>
-                        </tedi:dropdown-item-value>
+                        <tedi:option-content>
+                            <tedi:option-content-label>Kontaktid</tedi:option-content-label>
+                        </tedi:option-content>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px; {{ $menuRow }}">
                         <tedi:form.label for="header-popover-dark-mode">Tume režiim</tedi:form.label>
                         <tedi:toggle input-id="header-popover-dark-mode" />
                     </div>
                     <div style="padding: var(--dropdown-item-padding-y) var(--dropdown-item-padding-x);">
-                        <tedi:dropdown-item-value>
+                        <tedi:option-content>
                             <tedi:icon name="logout" :size="18" color="secondary" />
-                            <tedi:dropdown-item-value-label>Logi välja</tedi:dropdown-item-value-label>
-                        </tedi:dropdown-item-value>
+                            <tedi:option-content-label>Logi välja</tedi:option-content-label>
+                        </tedi:option-content>
                     </div>
                 </div>
             </tedi:popover-content>

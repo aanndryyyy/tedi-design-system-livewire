@@ -1,6 +1,6 @@
 {{--
     TEDI Alert.
-    Port of angular/tedi/components/notifications/alert/alert.component.{ts,html}
+    Port of angular/src/tedi/components/notifications/alert/alert.component.{ts,html}
 
     Angular emits a `closeClick` output and drives `open` as a two-way model
     that gets flipped to false (optionally after `closeDelay`) on close. Per
@@ -14,6 +14,12 @@
     ("action slot wins") is implemented purely in CSS via :has() selectors
     (see alert.component.scss), so both are simply rendered here whenever
     applicable and the stylesheet decides what's visible.
+
+    A11y (Angular 8+): the host no longer carries `aria-live` or the generated
+    `aria-label` ("info alert: …"). `role="alert"` / `role="status"` carry their
+    own live-region semantics, so only `role` is emitted. `closeAriaLabel` names
+    the close button; without it the closing button falls back to the generic
+    translated "close".
 --}}
 @props([
     'title' => null,
@@ -23,6 +29,8 @@
     'icon' => '',
     /** Shows a close button. */
     'showClose' => false,
+    /** Accessible name for the close button. Override the generic "Close" when several alerts can be on screen at once. */
+    'closeAriaLabel' => null,
     /** alert|status|none */
     'role' => 'alert',
     /** default|global|noSideBorders */
@@ -40,14 +48,6 @@
 ])
 
 @php
-    $ariaLive = match ($role) {
-        'alert' => 'assertive',
-        'status' => 'polite',
-        default => 'off',
-    };
-
-    $ariaLabel = $title ? "{$type} alert: {$title}" : "{$type} alert";
-
     $titleTag = in_array($titleElement, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], true)
         ? $titleElement
         : 'div';
@@ -66,8 +66,6 @@
         'tedi-alert--no-side-borders' => $variant === 'noSideBorders',
     ])->merge(array_filter([
         'role' => $role !== 'none' ? $role : null,
-        'aria-live' => $ariaLive,
-        'aria-label' => $ariaLabel,
     ]))->style([
         'display: '.($open ? 'flex' : 'none'),
     ]) }}
@@ -104,6 +102,7 @@
             class="tedi-alert__close"
             size="small"
             :icon-size="18"
+            :aria-label="$closeAriaLabel"
             {{ $attributes->only([])->merge($closeAttributes) }}
         />
     @endif

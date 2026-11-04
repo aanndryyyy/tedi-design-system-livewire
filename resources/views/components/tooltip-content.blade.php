@@ -37,10 +37,20 @@
     `x-ref="panel"` and `x-ref="arrow"` are the two refs `tediOverlay` writes
     inline `position`/`top`/`left` to — TEDI ships no placement CSS at all (§11).
 
+    ARIA follows Angular 9 (#45 / #585): `aria-hidden` is gone from the container
+    and the content, which now carries `role="tooltip"` and the id the trigger's
+    `aria-describedby` points at (the tooltip's `description-id` through
+    `@aware`, otherwise Alpine's `$id('tedi-tooltip')`). Only the decorative
+    arrow stays `aria-hidden`.
+
     Angular's mouseleave on the content host calls `hideTooltip()` immediately;
     here it goes through `tediOverlay`'s `contentLeave()`, which honours the
     tooltip's `timeoutDelay` the same way leaving the trigger does.
 --}}
+@aware([
+    /** The tooltip's `description-id`; null means Alpine's $id('tedi-tooltip'). */
+    'descriptionId' => null,
+])
 @props([
     /** none|small|medium|large */
     'maxWidth' => 'medium',
@@ -48,16 +58,16 @@
 
 <span
     class="tedi-tooltip__container"
-    aria-hidden="true"
     x-ref="panel"
     x-show="open"
     x-cloak
     x-bind:data-placement="side"
     x-on:mouseenter="contentEnter()"
     x-on:mouseleave="contentLeave()"
-><span class="tedi-tooltip__arrow" x-ref="arrow"></span><tedi-tooltip-content {{ $attributes->class([
+><span class="tedi-tooltip__arrow" aria-hidden="true" x-ref="arrow"></span><tedi-tooltip-content {{ $attributes->class([
         'tedi-tooltip-content',
         'tedi-tooltip-content--'.$maxWidth,
-    ])->merge([
-        'aria-hidden' => 'true',
-    ]) }}>{{ $slot }}</tedi-tooltip-content></span>
+    ])->merge(array_filter([
+        'id' => $descriptionId,
+        'role' => 'tooltip',
+    ])) }}@unless ($descriptionId) x-bind:id="$id('tedi-tooltip')"@endunless>{{ $slot }}</tedi-tooltip-content></span>

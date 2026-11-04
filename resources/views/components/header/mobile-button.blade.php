@@ -1,6 +1,6 @@
 {{--
     TEDI Header Mobile Button.
-    Port of angular/tedi/components/layout/header/header-mobile-button/header-mobile-button.component.{ts,html}
+    Port of angular/src/tedi/components/layout/header/header-mobile-button/header-mobile-button.component.{ts,html}
 
     `classes()` has no `host:` binding in Angular — it is applied to the
     rendered `<a>`/`<button>` in the template, so (unlike most sub-components

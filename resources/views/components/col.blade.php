@@ -1,6 +1,6 @@
 {{--
     TEDI Col (grid helper).
-    Port of angular/tedi/components/helpers/grid/col/col.component.{ts,html}
+    Port of angular/src/tedi/components/helpers/grid/col/col.component.{ts,html}
 
     See row.blade.php for why "grid" ports as two components. Per
     CONVENTIONS.md §7 the xs/sm/md/lg/xl/xxl breakpoint inputs are not

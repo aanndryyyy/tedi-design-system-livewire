@@ -1,42 +1,9 @@
 <div class="gx-sec">
     <h2>Community components</h2>
-    <p>The six components that exist only in Angular's <code>community/</code> entry point
-        (CONVENTIONS.md §12): <code>floating-button</code>, <code>choicegroup</code>,
-        <code>file-dropzone</code>, <code>table-of-contents</code>, <code>vertical-stepper</code>
-        and <code>multiselect</code>. This matrix exists to harvest every interpolated
+    <p>The components that exist only in Angular's <code>community/</code> entry point
+        (CONVENTIONS.md §12): <code>choicegroup</code>, <code>file-dropzone</code>,
+        <code>vertical-stepper</code> and <code>multiselect</code>. This matrix exists to harvest every interpolated
         modifier class they emit — see <code>tests/IntegrityTest.php</code>.</p>
-
-    <h3>Floating button</h3>
-
-    <div class="gx-case">
-        <div class="gx-case__label">variant × size</div>
-        <div class="gx-case__demo">
-            @foreach (['primary', 'secondary'] as $variant)
-                @foreach (['default', 'large'] as $size)
-                    <tedi:floating-button :variant="$variant" :size="$size">Tagasiside</tedi:floating-button>
-                @endforeach
-            @endforeach
-        </div>
-    </div>
-
-    <div class="gx-case">
-        <div class="gx-case__label">axis (horizontal emits no class — see the Blade comment)</div>
-        <div class="gx-case__demo">
-            @foreach (['horizontal', 'vertical'] as $axis)
-                <tedi:floating-button :axis="$axis">Tagasiside</tedi:floating-button>
-            @endforeach
-        </div>
-    </div>
-
-    <div class="gx-case">
-        <div class="gx-case__label">icon padding modifiers</div>
-        <div class="gx-case__demo">
-            <tedi:floating-button icon-start="add">Lisa</tedi:floating-button>
-            <tedi:floating-button icon-end="arrow_forward">Edasi</tedi:floating-button>
-            <tedi:floating-button icon-only icon-start="add" aria-label="Lisa" />
-            <tedi:floating-button disabled>Tagasiside</tedi:floating-button>
-        </div>
-    </div>
 
     <h3>Choicegroup</h3>
 
@@ -81,27 +48,6 @@
                     ['name' => 'lisa.docx', 'size' => 1200, 'error' => 'Vale laiend'],
                 ]"
             />
-        </div>
-    </div>
-
-    <h3>Table of contents</h3>
-
-    <div class="gx-case">
-        <div class="gx-case__label">position × modal breakpoint</div>
-        <div class="gx-case__demo">
-            @foreach (['default', 'fixed', 'sticky'] as $position)
-                @foreach (['mobile', 'tablet', 'desktop', 'never'] as $breakpoint)
-                    <tedi:table-of-contents heading="Sisukord" :position="$position" :modal-breakpoint="$breakpoint">
-                        <tedi:table-of-contents-item id-to="ptk-1" :selected="true">Üldsätted</tedi:table-of-contents-item>
-                        <tedi:table-of-contents-item id-to="ptk-2">
-                            Rakendusala
-                            <x-slot:sub-items>
-                                <tedi:table-of-contents-item id-to="ptk-2-1">Erisused</tedi:table-of-contents-item>
-                            </x-slot:sub-items>
-                        </tedi:table-of-contents-item>
-                    </tedi:table-of-contents>
-                @endforeach
-            @endforeach
         </div>
     </div>
 

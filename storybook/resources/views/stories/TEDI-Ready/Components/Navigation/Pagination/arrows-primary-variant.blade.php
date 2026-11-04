@@ -4,7 +4,7 @@
 --}}
 @storybook([
     'name' => 'Arrows Primary Variant',
-    'order' => 19,
+    'order' => 21,
     'status' => 'subset',
     'args' => [
         'pageCount' => 10,

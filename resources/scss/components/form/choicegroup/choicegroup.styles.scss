@@ -3,7 +3,7 @@
 
 @mixin choicegroup-card-error-variables {
   :is(.tedi-radio--error, .tedi-checkbox--error) {
-    --_choicegroup-card-bg: var(--form-checkbox-radio-default-background-error);
+    --_choicegroup-card-bg: var(--form-general-background-default);
     --_choicegroup-card-border: var(--form-general-feedback-error-border);
   }
 }
@@ -35,18 +35,12 @@
     :is(.tedi-radio, .tedi-checkbox):has(input:checked) {
       --_radio-bg: transparent;
       --_checkbox-bg: transparent;
-      --_radio-border: var(
-        --form-checkbox-radio-default-border-selected-inverted
-      );
-      --_checkbox-border: var(
-        --form-checkbox-radio-default-border-selected-inverted
-      );
+      --_radio-border: var(--form-choice-checkbox-selected-border-inverted);
+      --_checkbox-border: var(--form-choice-checkbox-selected-border-inverted);
     }
 
     .tedi-checkbox:has(input:active) {
-      --_checkbox-border: var(
-        --form-checkbox-radio-default-border-selected-inverted
-      );
+      --_checkbox-border: var(--form-choice-checkbox-selected-border-inverted);
     }
 
     &.tedi-choicegroup--stacked {

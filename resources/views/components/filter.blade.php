@@ -72,7 +72,7 @@
       assumes a single-select group, matching filter-group's own default.
 
     * The clear button is written out rather than delegated to `tedi:button`,
-      the way dropdown-item-value writes out its checkbox: `tedi:button` renders
+      the way option-content writes out its checkbox: `tedi:button` renders
       an icon-start icon with `color="inherit"`, and Angular's is
       `color="brand"`. Writing it out keeps both the exact class list
       (`--neutral --small --pr`, no `--pl`) and the exact icon.
@@ -274,17 +274,12 @@
                         @else
                             @if ($showSearch)
                                 <div class="tedi-filter-dropdown__search">
-                                    {{-- x-effect rides along with x-ref on the clear button itself:
-                                         on the wrapper it would run before the ref existed and,
-                                         having read nothing reactive, never run again. --}}
+                                    {{-- The clear button is form-field's own (tediFormField): it
+                                         fires input on the field, which x-model turns into
+                                         searchTerm = ''. --}}
                                     <tedi:form-field
                                         icon="search"
                                         :clearable="$searchClearable"
-                                        :clear-attributes="[
-                                            'x-ref' => 'searchClear',
-                                            'x-effect' => 'syncSearchClear()',
-                                            'x-on:click' => 'onSearchClear()',
-                                        ]"
                                     >
                                         <tedi:text-field
                                             type="text"
@@ -310,13 +305,13 @@
                                     x-on:keydown.space.prevent="toggleSelectAll()"
                                     x-bind:aria-checked="allFilteredSelected ? 'true' : (someFilteredSelected ? 'mixed' : 'false')"
                                 >
-                                    <tedi:dropdown-item-value
+                                    <tedi:option-content
                                         type="checkbox"
                                         :selected="$allFilteredSelected"
                                         :indeterminate="$someFilteredSelected"
                                     >
-                                        <tedi:dropdown-item-value-label>{{ $resolvedSelectAllLabel }}</tedi:dropdown-item-value-label>
-                                    </tedi:dropdown-item-value>
+                                        <tedi:option-content-label>{{ $resolvedSelectAllLabel }}</tedi:option-content-label>
+                                    </tedi:option-content>
                                 </div>
                                 <tedi:separator x-show="filteredOptions.length > 0" />
                             @endif
@@ -362,13 +357,13 @@
                                         }"
                                         x-bind:aria-selected="isOptionSelected({{ $optionJs }}) ? 'true' : 'false'"
                                     >
-                                        <tedi:dropdown-item-value
+                                        <tedi:option-content
                                             :type="$isMultiSelect ? 'checkbox' : 'default'"
                                             :selected="$optionSelected"
                                             :disabled="$option['disabled']"
                                         >
-                                            <tedi:dropdown-item-value-label>{{ $option['label'] }}</tedi:dropdown-item-value-label>
-                                        </tedi:dropdown-item-value>
+                                            <tedi:option-content-label>{{ $option['label'] }}</tedi:option-content-label>
+                                        </tedi:option-content>
                                     </div>
                                 @endforeach
                             </div>
@@ -384,6 +379,8 @@
                                         'tedi-button--neutral',
                                         'tedi-button--small',
                                         'tedi-button--pr',
+                                        // BaseButtonDirective adds it to every tedi-button (Angular 9).
+                                        'no-print',
                                     ])
                                     @if (! $hasCustomContent)
                                         x-on:click="{{ $isSingleSelect ? 'clearSingleSelection()' : 'clearSelection()' }}"

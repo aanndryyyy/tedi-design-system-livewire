@@ -7,7 +7,7 @@
 <div style="max-width: 22rem;">
     <tedi:form-field>
         <x-slot:label>
-            <tedi:form.label for="scroll-picker-step">Time with 15-min steps</tedi:form.label>
+            <tedi:form.label for="scroll-picker-step">Aeg</tedi:form.label>
         </x-slot:label>
         <tedi:time-field
             input-id="scroll-picker-step"

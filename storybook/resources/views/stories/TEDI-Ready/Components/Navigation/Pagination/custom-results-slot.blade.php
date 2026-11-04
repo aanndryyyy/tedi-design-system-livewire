@@ -5,7 +5,7 @@
 --}}
 @storybook([
     'name' => 'Custom Results Slot',
-    'order' => 20,
+    'order' => 22,
     'status' => 'subset',
     'args' => [
         'pageCount' => 10,

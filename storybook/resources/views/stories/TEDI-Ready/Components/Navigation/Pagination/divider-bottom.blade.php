@@ -4,7 +4,7 @@
 --}}
 @storybook([
     'name' => 'Divider Bottom',
-    'order' => 15,
+    'order' => 17,
     'status' => 'subset',
     'args' => [
         'pageCount' => 10,

@@ -1,6 +1,6 @@
 {{--
     TEDI Collapse Button.
-    Port of angular/tedi/components/buttons/collapse-button/collapse-button.component.{ts,html}
+    Port of angular/src/tedi/components/buttons/collapse-button/collapse-button.component.{ts,html}
 
     Angular's selector is `button[tedi-collapse-button]` — an ATTRIBUTE selector
     — so per CONVENTIONS.md §4 the root carries the literal `tedi-collapse-button`
@@ -72,6 +72,7 @@
     x-on:click="{{ $openExpr }} = ! {{ $openExpr }}"
     {{ $attributes->class([
         'tedi-collapse-button',
+        'no-print',
         'tedi-collapse-button--open' => (bool) $open,
         'tedi-collapse-button--small' => $size === 'small',
         'tedi-collapse-button--inverted' => $inverted && $arrowType !== 'secondary',

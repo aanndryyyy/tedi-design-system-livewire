@@ -8,6 +8,8 @@
         'name' => 'file',
         'label' => 'Laadi fail üles',
         'accept' => '',
+        'maxSize' => 0,
+        'showRestrictions' => true,
         'multiple' => false,
         'disabled' => false,
         'readOnly' => false,
@@ -30,6 +32,15 @@
         'accept' => [
             'control' => 'text',
             'description' => 'Specifies the allowed file types, e.g. "image/png, image/jpeg". Sets the native accept attribute.',
+        ],
+        'maxSize' => [
+            'control' => 'number',
+            'description' => 'Maximum allowed file size in bytes (e.g. `5 * 1024 ** 2` for 5 MB). Shown in the restrictions hint; validate it on the server. 0 means not set.',
+        ],
+        'showRestrictions' => [
+            'control' => 'boolean',
+            'description' => 'Whether to show the auto-generated restrictions hint (allowed types / max size) below the field. Turn it off when the same info is shown elsewhere to avoid a duplicate.',
+            'table' => ['defaultValue' => ['summary' => 'true']],
         ],
         'multiple' => [
             'control' => 'boolean',
@@ -65,6 +76,8 @@
     :name="$name"
     :label="$label"
     :accept="$accept ?: null"
+    :max-size="(int) $maxSize ?: null"
+    :show-restrictions="(bool) $showRestrictions"
     :multiple="(bool) $multiple"
     :disabled="(bool) $disabled"
     :read-only="(bool) $readOnly"

@@ -21,7 +21,7 @@
     <tedi:vertical-spacing :size="0.5">
         @foreach ($states as $state)
             <tedi:row>
-                <tedi:col :width="2" class="display-flex align-items-center">
+                <tedi:col :width="2" class="flex align-items-center">
                     <tedi:text modifiers="bold" color="white">{{ $state }}</tedi:text>
                 </tedi:col>
                 <tedi:col>

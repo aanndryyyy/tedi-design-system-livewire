@@ -14,9 +14,9 @@
 ])
 
 {{--
-    Angular's third item uses <tedi-collapse> for a "show more" toggle; the
-    collapse component isn't ported (not in resources/views/components/), so
-    that item is omitted here — the first two items still demonstrate the
+    Angular's third item uses `tedi-collapse` for a "show more" toggle. That
+    item is omitted here (`tedi:collapse` is ported, but this story has not
+    been updated to compose it) — the first two items still demonstrate the
     action-button composition this story exists for.
 --}}
 <tedi:timeline :active-index="$activeIndex">

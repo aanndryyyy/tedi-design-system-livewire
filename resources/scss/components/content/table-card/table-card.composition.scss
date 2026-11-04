@@ -1,0 +1,43 @@
+// NOT vendored — this package's own glue for <tedi:table-card> (CONVENTIONS.md §13.7, "Scoped vendoring").
+//
+// React's `TableCard` renders its rows with React's `TextGroupList`, styled by
+// react/src/tedi/components/content/text-group/text-group.module.scss. That
+// sheet is vendored verbatim beside Angular's text-group.component.scss, but it
+// cannot be `@use`d globally: both stylesheets style `.tedi-text-group` and
+// `.tedi-text-group--horizontal`, and React's `margin-bottom` /
+// `--list` / `--columns` rules would restyle every Angular `<tedi:text-group>`.
+//
+// So it is loaded here, nested under `.tedi-table-card`, with `meta.load-css`:
+// every selector in it gains a `.tedi-table-card ` prefix and applies only
+// inside a table card. The vendored file stays byte-identical to upstream.
+//
+// Two things this relies on, both checked when the port was made:
+//
+//  1. The module has no top-level `:root`, `html`, `:global` or `@media print`
+//     block, which nesting would turn dead or change the meaning of.
+//  2. Every scoped selector gains exactly one class of specificity. Inside the
+//     module that preserves upstream's cascade, but against table-card.module
+//     it creates a TIE: table-card's
+//     `[class*='tedi-text-group--list'][class*='tedi-text-group--horizontal'] > [class*='tedi-text-group__row']`
+//     (0,4,0) was meant to beat text-group's `--list--horizontal > __row`
+//     (0,3,0 upstream, 0,4,0 here) for `gap`. The tie is broken by source
+//     order, so index.scss must `@use` this file BEFORE table-card.module.
+@use 'sass:meta';
+
+// THE SEPARATOR. React's `Card.Content hasSeparator` emits
+// `tedi-card__content--separator`, styled in React's card.module.scss as
+// `border-bottom: 1px solid var(--card-border-primary)`. This package renders
+// the card with Angular's `<tedi:card>` / `<tedi:card-content>`, whose
+// stylesheet has no separator, and React's card.module.scss is not loaded: it
+// styles `.tedi-card` itself, which Angular's card.component.scss already owns.
+// So the one declaration is restated here, scoped to the table card, under
+// React's own class name — the class the component emits stays upstream's.
+// This is the only rule in this file that TEDI does not ship verbatim
+// (a §13.3-style divergence, documented in table-card.blade.php).
+.tedi-table-card {
+  @include meta.load-css('../text-group/text-group.module');
+
+  .tedi-card__content--separator {
+    border-bottom: 1px solid var(--card-border-primary);
+  }
+}

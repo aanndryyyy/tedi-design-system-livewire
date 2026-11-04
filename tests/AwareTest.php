@@ -51,6 +51,30 @@ class AwareTest extends TestCase
         $this->assertMissingClass('tedi-radio-card--grouped', $html, 'tedi-radio-card');
     }
 
+    // -- radio-card-group -> radio-card @aware(['bordered']) ----------------
+
+    public function test_radio_card_reads_explicit_group_bordered(): void
+    {
+        $html = Blade::render(
+            '<tedi:radio-card-group :bordered="true">'
+            .'<tedi:radio-card name="g" value="a">A</tedi:radio-card>'
+            .'</tedi:radio-card-group>'
+        );
+
+        $this->assertHasClass('tedi-radio-card--bordered', $html, 'tedi-radio-card');
+    }
+
+    public function test_radio_card_bordered_fallback_matches_group_default_when_omitted(): void
+    {
+        // radio-card-group's own default is bordered=false, matching the card's
+        // @aware fallback, so an omitted and an explicit false render alike.
+        foreach (['<tedi:radio-card-group>', '<tedi:radio-card-group :bordered="false">'] as $open) {
+            $html = Blade::render($open.'<tedi:radio-card name="g" value="a">A</tedi:radio-card></tedi:radio-card-group>');
+
+            $this->assertMissingClass('tedi-radio-card--bordered', $html, 'tedi-radio-card');
+        }
+    }
+
     // -- tabs.trigger / tabs.content @aware(['value', 'defaultValue']) ------
 
     public function test_tabs_trigger_reads_default_value_through_the_intermediate_list(): void
@@ -484,7 +508,7 @@ class AwareTest extends TestCase
     {
         $html = Blade::render(sprintf(self::DROPDOWN, ' container-id="d1"', ''));
 
-        $this->assertStringContainsString("setAttribute('id', 'd1_trigger')", $html);
+        $this->assertStringContainsString("containerId: 'd1'", $html);
         $this->assertStringContainsString('aria-labelledby="d1_trigger"', $html);
         $this->assertStringContainsString('id="d1"', $html);
     }
@@ -505,7 +529,7 @@ class AwareTest extends TestCase
     {
         $listbox = Blade::render(sprintf(self::DROPDOWN, '', ' dropdown-role="listbox"'));
 
-        $this->assertStringContainsString('<ul role="listbox">', $listbox);
+        $this->assertMatchesRegularExpression('/<ul\b[^>]*\brole="listbox"/', $listbox);
         $this->assertStringContainsString('role="option"', $listbox);
     }
 
@@ -514,7 +538,7 @@ class AwareTest extends TestCase
         $omitted = Blade::render(sprintf(self::DROPDOWN, '', ''));
         $explicit = Blade::render(sprintf(self::DROPDOWN, '', ' dropdown-role="menu"'));
 
-        $this->assertStringContainsString('<ul role="menu">', $omitted);
+        $this->assertMatchesRegularExpression('/<ul\b[^>]*\brole="menu"/', $omitted);
         $this->assertStringContainsString('role="menuitem"', $omitted);
         $this->assertSame($explicit, $omitted,
             'Omitting dropdown-role must render identically to passing its default.');
@@ -729,5 +753,241 @@ class AwareTest extends TestCase
         $this->assertHasClass('tedi-top-nav__submenu', $panel, 'tedi-top-nav__submenu');
         $this->assertStringContainsString('id="top-nav-submenu-a"', $panel);
         $this->assertStringContainsString('max-width: 87.5rem', $panel);
+    }
+
+    // -- form-field -> text-field / textarea / form.label, via Tedi::fieldContext()
+    // Not @aware: the form-field (a class component, CONVENTIONS.md §5) builds
+    // its context before its slot renders and controls find the NEAREST one
+    // through the public getConsumableComponentData('fieldContext') lookup.
+
+    public function test_field_context_defaults_match_form_field_defaults(): void
+    {
+        $controls = '<x-slot:label><tedi:form.label for="a">A</tedi:form.label></x-slot:label>'
+            .'<tedi:text-field id="a" value="abc" /><tedi:textarea value="abc" />';
+
+        $omitted = Blade::render('<tedi:form-field>'.$controls.'</tedi:form-field>');
+        $explicit = Blade::render(
+            '<tedi:form-field size="default" :clearable="true" :valid="false">'.$controls.'</tedi:form-field>'
+        );
+
+        $this->assertSame($explicit, $omitted,
+            "Omitting form-field's props must render identically to passing their defaults.");
+    }
+
+    public function test_form_field_resolves_to_its_class_in_both_syntaxes(): void
+    {
+        $compiler = new \Illuminate\View\Compilers\ComponentTagCompiler(
+            Blade::getClassComponentAliases(), Blade::getClassComponentNamespaces(), app('blade.compiler')
+        );
+
+        $this->assertSame(\Tedi\Livewire\View\Components\FormField::class, $compiler->componentClass('tedi::form-field'));
+        // Every other tag stays an anonymous component.
+        $this->assertSame('tedi::components.text-field', $compiler->componentClass('tedi::text-field'));
+        $this->assertSame('tedi::components.form.label', $compiler->componentClass('tedi::form.label'));
+
+        $short = Blade::render('<tedi:form-field size="small" icon="search"><tedi:text-field value="a" /></tedi:form-field>');
+        $long = Blade::render('<x-tedi::form-field size="small" icon="search"><x-tedi::text-field value="a" /></x-tedi::form-field>');
+
+        $this->assertSame($short, $long);
+        $this->assertHasClass('tedi-form-field--small', $long, 'tedi-form-field');
+        $this->assertHasClass('tedi-text-field--small', $long, 'tedi-text-field');
+        $this->assertMissingClass('tedi-field-surface', $long, 'tedi-text-field');
+    }
+
+    /**
+     * A parent template compiled before form-field became a class still
+     * renders it as an ANONYMOUS component until the view cache is cleared.
+     * That path must degrade, not fail: the view builds its own context, and
+     * the class's props never leak onto the root as attributes.
+     */
+    public function test_form_field_view_survives_the_anonymous_path(): void
+    {
+        // A second anonymous path onto the same directory resolves
+        // form-field.blade.php without the class, exactly as a stale view does.
+        Blade::anonymousComponentPath(__DIR__.'/../resources/views/components', 'stale');
+
+        $html = Blade::render(
+            '<x-stale::form-field size="small" icon="search" character-limit="3" input-class="extra" data-x="1">'
+            .'<tedi:text-field value="abcd" /></x-stale::form-field>'
+        );
+
+        $this->assertHasClass('tedi-form-field--small', $html, 'tedi-form-field');
+        $this->assertHasClass('extra', $html, 'tedi-form-field__box');
+        $this->assertStringContainsString('tedi-form-field__icon', $html);
+        $this->assertStringContainsString('tedi-form-field__character-count', $html);
+        $this->assertStringContainsString('data-x="1"', $html);
+        $this->assertStringNotContainsString('character-limit=', $html);
+        $this->assertStringNotContainsString('input-class=', $html);
+        $this->assertDoesNotMatchRegularExpression('/<tedi-form-field[^>]*\ssize=/', $html);
+
+        // Rendered as a bare view too, with no attribute bag at all.
+        $bare = view('tedi::components.form-field', ['slot' => new \Illuminate\Support\HtmlString('x')])->render();
+        $this->assertHasClass('tedi-form-field', $bare, 'tedi-form-field');
+    }
+
+    public function test_nested_form_fields_the_inner_one_wins(): void
+    {
+        $html = Blade::render(
+            '<tedi:form-field size="large" icon="search">'
+            .'<tedi:form-field size="small" :clearable="false"><tedi:text-field value="a" /></tedi:form-field>'
+            .'</tedi:form-field>'
+        );
+
+        $this->assertHasClass('tedi-text-field--small', $html, 'tedi-text-field');
+        // The inner field draws no box, so the text field paints its own surface…
+        $this->assertHasClass('tedi-field-surface', $html, 'tedi-text-field');
+        // …and the control registered with the inner field only: no clear button
+        // anywhere, the outer field's box holds just its icon.
+        $this->assertStringNotContainsString('tedi-form-field__clear', $html);
+    }
+
+    public function test_field_size_comes_from_the_form_field_not_an_enclosing_component(): void
+    {
+        $inModal = Blade::render(
+            '<tedi:modal size="small"><tedi:form-field><tedi:text-field /></tedi:form-field></tedi:modal>'
+        );
+        $this->assertMissingClass('tedi-text-field--small', $inModal, 'tedi-text-field');
+        $this->assertMissingClass('tedi-form-field--small', $inModal, 'tedi-form-field');
+
+        $inGroup = Blade::render(
+            '<tedi:button-group size="small"><tedi:form-field size="large"><tedi:text-field /></tedi:form-field></tedi:button-group>'
+        );
+        $this->assertHasClass('tedi-text-field--large', $inGroup, 'tedi-text-field');
+        $this->assertHasClass('tedi-form-field--large', $inGroup, 'tedi-form-field');
+    }
+
+    public function test_a_control_outside_any_field_has_no_context(): void
+    {
+        $html = Blade::render('<tedi:modal size="small"><tedi:text-field /><tedi:textarea /></tedi:modal>');
+
+        $this->assertHasClass('tedi-field-surface', $html, 'tedi-text-field');
+        $this->assertMissingClass('tedi-text-field--small', $html, 'tedi-text-field');
+        $this->assertHasClass('tedi-field-surface', $html, 'tedi-textarea');
+
+        // A form-field rendered earlier leaves nothing behind.
+        Blade::render('<tedi:form-field size="large" icon="search"><tedi:text-field /></tedi:form-field>');
+        $after = Blade::render('<tedi:text-field />');
+        $this->assertHasClass('tedi-field-surface', $after, 'tedi-text-field');
+        $this->assertMissingClass('tedi-text-field--large', $after, 'tedi-text-field');
+    }
+
+    public function test_a_date_field_inside_a_form_field(): void
+    {
+        $html = Blade::render(
+            '<tedi:form-field size="small" invalid><tedi:date-field value="2026-11-03" /></tedi:form-field>'
+        );
+
+        // The date field paints the surface (no box: it registers no `reset`)…
+        $this->assertHasClass('tedi-field-surface', $html, 'tedi-date-field');
+        $this->assertHasClass('tedi-field-surface--invalid', $html, 'tedi-date-field');
+        $this->assertHasClass('tedi-date-field--small', $html, 'tedi-date-field');
+        $this->assertStringNotContainsString('tedi-form-field__box', $html);
+        $this->assertStringNotContainsString('tedi-form-field__clear', $html);
+        // …and its text field, handed the date field's child context, never does.
+        $this->assertMissingClass('tedi-field-surface', $html, 'tedi-text-field');
+        $this->assertHasClass('tedi-text-field--small', $html, 'tedi-text-field');
+
+        $dateTime = Blade::render('<tedi:form-field><tedi:date-time-field /></tedi:form-field>');
+        $this->assertMissingClass('tedi-field-surface', $dateTime, 'tedi-text-field');
+    }
+
+    public function test_a_standalone_date_input_paints_its_own_surface(): void
+    {
+        $html = Blade::render('<tedi:date-input value="03.11.2026" />');
+
+        $this->assertHasClass('tedi-field-surface', $html, 'tedi-text-field');
+    }
+
+    public function test_two_controls_in_one_field_agree_with_the_box_drawn(): void
+    {
+        // The first control registers `reset`, so the field draws a box for the
+        // clear button and the second control must not paint a surface inside it.
+        $boxed = Blade::render('<tedi:form-field><tedi:text-field value="a" /><tedi:textarea value="b" /></tedi:form-field>');
+        $this->assertStringContainsString('tedi-form-field__box', $boxed);
+        $this->assertMissingClass('tedi-field-surface', $boxed, 'tedi-text-field');
+        $this->assertMissingClass('tedi-field-surface', $boxed, 'tedi-textarea');
+
+        // A first control without `reset` earns no box, so both paint their own.
+        $bare = Blade::render('<tedi:form-field><tedi:time-field /><tedi:text-field value="a" /></tedi:form-field>');
+        $this->assertStringNotContainsString('tedi-form-field__box', $bare);
+        $this->assertHasClass('tedi-field-surface', $bare, 'tedi-text-field');
+    }
+
+    public function test_form_field_clear_button_markup_is_unchanged(): void
+    {
+        $html = Blade::render(
+            '<tedi:form-field show-clear-on-interaction :clear-attributes="[\'wire:click\' => \'reset\', \'x-on:click\' => \'done()\']">'
+            .'<tedi:text-field value="abc" /></tedi:form-field>'
+        );
+
+        $this->assertStringContainsString('x-data="tediFormField({ clearOnInteraction: true })"', $html);
+        $this->assertStringContainsString('x-effect="syncRoot()"', $html);
+        $this->assertStringContainsString('x-on:click="clear(); done()"', $html);
+        $this->assertStringContainsString('wire:click="reset"', $html);
+        $this->assertStringContainsString('tabindex="0"', $html);
+        $this->assertHasClass('tedi-form-field--clear-on-interaction', $html, 'tedi-form-field');
+        $this->assertHasClass('tedi-form-field__buttons', $html, 'tedi-form-field__buttons');
+        $this->assertMissingClass('tedi-form-field__buttons--hidden', $html, 'tedi-form-field__buttons');
+    }
+
+    public function test_character_counter_id_reaches_the_control(): void
+    {
+        $html = Blade::render(
+            '<tedi:form-field :character-limit="2"><tedi:text-field value="abc" aria-describedby="own" /></tedi:form-field>'
+        );
+
+        preg_match('/id="([^"]+-character-count)"/', $html, $m);
+        $this->assertNotEmpty($m);
+        $this->assertStringContainsString('aria-describedby="own '.$m[1].'"', $html);
+        $this->assertStringContainsString('aria-invalid="true"', $html);
+        $this->assertHasClass('tedi-form-field__character-count--error', $html, 'tedi-form-field__character-count');
+    }
+
+    public function test_form_field_disabled_and_invalid_follow_aware_semantics(): void
+    {
+        // From an enclosing input group…
+        $html = Blade::render('<tedi:input-group disabled invalid><tedi:form-field><tedi:text-field /></tedi:form-field></tedi:input-group>');
+        $this->assertStringContainsString('disabled', $html);
+        $this->assertStringContainsString('aria-invalid="true"', $html);
+
+        // …and the form-field's own written props still reach @aware children.
+        $checkbox = Blade::render('<tedi:form-field disabled><tedi:checkbox label="a" /></tedi:form-field>');
+        $this->assertMatchesRegularExpression('/type="checkbox"[^>]*\sdisabled/', $checkbox);
+    }
+
+    // -- sheet -> sheet-content @aware(['open', 'collapsed', 'role']) --------
+    //    sheet -> sheet-header / sheet-body / sheet-footer @aware(['collapsed'])
+    //    (CONVENTIONS.md §13 — the React-sourced components.)
+
+    public function test_sheet_state_reaches_its_parts(): void
+    {
+        $html = Blade::render(
+            '<tedi:sheet open collapsed role="alertdialog"><tedi:sheet-content>'
+            .'<tedi:sheet-header title="T" collapsible /><tedi:sheet-body>b</tedi:sheet-body>'
+            .'<tedi:sheet-footer>f</tedi:sheet-footer></tedi:sheet-content></tedi:sheet>'
+        );
+
+        $this->assertStringContainsString('role="alertdialog"', $html);
+        $this->assertStringContainsString('data-status="open"', $html);
+        $this->assertMatchesRegularExpression('/<div\s+hidden\s+class="tedi-sheet__body"/', $html);
+        $this->assertMatchesRegularExpression('/<div\s+hidden\s+class="tedi-sheet__footer/', $html);
+        // The collapse toggle renders closed (collapsed = not expanded).
+        $this->assertStringContainsString('aria-expanded="false"', $html);
+    }
+
+    public function test_sheet_part_fallbacks_match_the_sheet_defaults_when_omitted(): void
+    {
+        $parts = '<tedi:sheet-content id="p"><tedi:sheet-header title="T" collapsible /><tedi:sheet-body>b</tedi:sheet-body>'
+            .'<tedi:sheet-footer>f</tedi:sheet-footer></tedi:sheet-content>';
+
+        $strip = fn (string $html) => preg_replace('/tedi-sheet-title-[0-9a-f]+/', 'ID', $html);
+
+        $omitted = $strip(Blade::render('<tedi:sheet>'.$parts.'</tedi:sheet>'));
+        $explicit = $strip(Blade::render('<tedi:sheet :open="false" :collapsed="false" role="dialog">'.$parts.'</tedi:sheet>'));
+
+        // Only the root's own x-data config may differ; everything inside must not.
+        $inner = fn (string $html) => substr($html, strpos($html, '>') + 1);
+        $this->assertSame($inner($explicit), $inner($omitted),
+            'Omitting open/collapsed/role must render the parts identically to passing their defaults.');
     }
 }

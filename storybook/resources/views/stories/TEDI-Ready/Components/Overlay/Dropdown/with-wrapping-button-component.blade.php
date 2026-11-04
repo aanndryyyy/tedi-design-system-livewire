@@ -37,8 +37,8 @@
         ],
         'dropdownRole' => [
             'control' => 'radio',
-            'options' => ['menu', 'listbox'],
-            'description' => 'Role for content, use listbox for list and menu for actions',
+            'options' => ['menu', 'listbox', 'list'],
+            'description' => 'How the panel is exposed to assistive technology: `menu` for actions, `listbox` for selectable options, `list` for a plain list of links. `menu` and `listbox` are composite widgets (one tab stop, arrow-key navigation, `menuitem` / `option` items); `list` adds no roles or key handling, so projected links stay links and stay in the tab order. Every role moves focus into the panel when it opens, so the panel is not read last because of where the overlay renders.',
             'table' => [
                 'category' => 'dropdown-content',
                 'type' => ['summary' => 'DropdownRole'],
@@ -47,25 +47,25 @@
         ],
         'ariaHaspopup' => [
             'control' => 'radio',
-            'options' => ['menu', 'listbox', 'true'],
-            'description' => 'Defines the aria-haspopup attribute for the trigger, informing assistive technologies whether it opens a menu or listbox. Improves accessibility by describing the type of popup.',
+            'options' => ['menu', 'listbox', 'dialog', 'true', 'false'],
+            'description' => 'The `aria-haspopup` value for the trigger. Defaults to the content\'s `dropdownRole`, and a plain `list` gets no attribute at all, since ARIA has no token for it. `false` also omits the attribute.',
             'table' => [
                 'category' => 'dropdown-trigger',
                 'type' => ['summary' => 'DropdownTriggerAriaHasPopup'],
-                'defaultValue' => ['summary' => 'menu'],
+                'defaultValue' => ['summary' => 'dropdownRole'],
             ],
         ],
     ],
 ])
 
 {{--
-    Angular's demo wraps the trigger directive around an <app-demo-button> that
-    renders its own native <button>. In this port <tedi:dropdown-trigger> is
+    Angular's demo wraps the trigger directive around an `app-demo-button` that
+    renders its own native button. In this port `tedi:dropdown-trigger` is
     always such a wrapper (its selector is styled as an element, see
     dropdown-trigger.blade.php), so the interesting case is a button nested
-    deeper than one level — the extra <span> here stands in for the demo
-    component. The trigger's x-init resolves the inner <button> with upstream's
-    own FOCUSABLE_SELECTOR and puts the aria state on it, so there is still a
+    deeper than one level — the extra span here stands in for the demo
+    component. `tediDropdown.initTrigger` resolves the inner button with
+    upstream's own selector and puts the aria state on it, so there is still a
     single tab stop with the right announcements.
 --}}
 <tedi:dropdown

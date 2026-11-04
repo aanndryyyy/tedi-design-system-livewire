@@ -32,3 +32,53 @@
     border-bottom-right-radius: 0;
   }
 }
+
+.tedi-search__panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: var(--form-select-area-max-height);
+  overflow: hidden;
+  background: var(--dropdown-item-default-background);
+  border: 1px solid var(--card-border-primary);
+  border-radius: var(--form-select-area-radius);
+  box-shadow: 0 1px 5px 0
+    var(--general-effect-colors-elevation-dropdown-area-drop-shadow);
+
+  // The list scrolls, not the panel, so its scrollport ends where the footer
+  // begins. Scrolling the panel instead would let `scrollIntoView` leave the
+  // active option underneath the footer, which it cannot detect.
+  &-list {
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+    list-style: none;
+  }
+}
+
+.tedi-search__footer {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: var(--dropdown-item-inner-spacing);
+  align-items: center;
+  padding: var(--card-padding-md-default);
+  background: var(--dropdown-item-default-background);
+  border-top: 1px solid var(--card-border-primary);
+}
+
+.tedi-search-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--button-gutter-x);
+  justify-content: center;
+}
+
+.tedi-search__panel-status {
+  display: flex;
+  gap: var(--dropdown-item-inner-spacing);
+  align-items: center;
+  justify-content: center;
+  padding: var(--dropdown-item-padding-y) var(--dropdown-item-padding-x);
+}

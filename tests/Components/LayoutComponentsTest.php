@@ -63,7 +63,44 @@ class LayoutComponentsTest extends TestCase
         $this->assertMissingClass('tedi-progress-bar__value', $html, on: 'tedi-progress-bar');
     }
 
+    public function test_progress_bar_generates_an_id_the_label_binds_to(): void
+    {
+        // Angular 8+: resolvedId() = progressId() || generated fallback.
+        $html = Blade::render('<tedi:progress-bar :value="20" label="Upload" />');
+        $this->assertMatchesRegularExpression('/<progress[^>]*id="(tedi-progress-bar-[0-9a-f]+)"/', $html);
+        preg_match('/<progress[^>]*id="([^"]+)"/', $html, $m);
+        $this->assertStringContainsString('for="'.$m[1].'"', $html);
+
+        $html = Blade::render('<tedi:progress-bar :value="20" label="Upload" progress-id="mine" />');
+        $this->assertStringContainsString('id="mine"', $html);
+        $this->assertStringContainsString('for="mine"', $html);
+    }
+
+    public function test_progress_bar_announcements_are_opt_in(): void
+    {
+        $html = Blade::render('<tedi:progress-bar :value="20" />');
+        $this->assertStringNotContainsString('aria-live=', $html);
+        $this->assertStringNotContainsString('tediProgressBar', $html);
+
+        $html = Blade::render('<tedi:progress-bar :value="20" announce="polite" />');
+        $this->assertStringContainsString('x-data="tediProgressBar({ interval: 1000 })"', $html);
+        $this->assertStringContainsString('role="status"', $html);
+        $this->assertStringContainsString('aria-live="polite"', $html);
+        $this->assertStringContainsString('x-ref="bar"', $html);
+
+        $html = Blade::render('<tedi:progress-bar :value="20" announce="assertive" :announce-interval="-5" />');
+        $this->assertStringContainsString('role="alert"', $html);
+        $this->assertStringContainsString('aria-live="assertive"', $html);
+        $this->assertStringContainsString('interval: 0 ', $html);
+    }
+
     // -- footer -----------------------------------------------------------------
+
+    public function test_header_and_footer_are_left_out_of_print(): void
+    {
+        $this->assertHasClass('no-print', Blade::render('<tedi:header>x</tedi:header>'), 'tedi-header');
+        $this->assertHasClass('no-print', Blade::render('<tedi:footer>x</tedi:footer>'), 'tedi-footer');
+    }
 
     public function test_footer_renders_container_and_center(): void
     {

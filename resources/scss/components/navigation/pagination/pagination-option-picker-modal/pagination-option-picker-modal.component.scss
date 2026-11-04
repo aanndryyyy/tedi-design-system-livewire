@@ -65,8 +65,9 @@
     flex-shrink: 0;
     width: var(--form-checkbox-radio-size-responsive);
     height: var(--form-checkbox-radio-size-responsive);
-    background: var(--form-checkbox-radio-default-background-default);
-    border: var(--tedi-borders-01) solid var(--form-checkbox-radio-default-border-default);
+    background: var(--form-choice-radio-unselected-background-default);
+    border: var(--tedi-borders-01) solid
+      var(--form-choice-radio-unselected-border-default);
     border-radius: var(--form-checkbox-radio-indicator-radius-radio);
 
     &--selected {

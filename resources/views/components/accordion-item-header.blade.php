@@ -1,6 +1,6 @@
 {{--
     TEDI Accordion Item Header.
-    Port of angular/tedi/components/content/accordion/accordion-item-header/accordion-item-header.component.{ts,html}
+    Port of angular/src/tedi/components/content/accordion/accordion-item-header/accordion-item-header.component.{ts,html}
 
     Slots mirror Angular's attribute selectors: start-action, before-title,
     title, start-description, after-title, end-description, end-action.

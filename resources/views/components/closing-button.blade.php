@@ -1,6 +1,6 @@
 {{--
     TEDI Closing button.
-    Port of angular/tedi/components/buttons/closing-button/closing-button.component.{ts,html}
+    Port of angular/src/tedi/components/buttons/closing-button/closing-button.component.{ts,html}
 --}}
 @props([
     /** default|small */
@@ -24,6 +24,7 @@
     aria-label="{{ $label }}"
     @if ($showTitle) title="{{ $label }}" @endif
     {{ $attributes->class([
+        'no-print',
         'tedi-closing-button',
         'tedi-closing-button--small' => $size === 'small',
     ]) }}

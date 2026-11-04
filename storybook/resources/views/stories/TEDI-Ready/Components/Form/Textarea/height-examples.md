@@ -1,1 +1,1 @@
-Examples showing different height configurations for Textarea.
+`minRows` is the field's resting height — it sizes the textarea whether or not `autoGrow` is on, and is the floor a resize drag stops at. `maxRows` is the ceiling, for the drag and for `autoGrow` alike; leave it unset for no row limit. `height` is the escape hatch for a field that has to match an exact measurement.

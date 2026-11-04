@@ -1,0 +1,48 @@
+.tedi-search-suggestion {
+  display: block;
+  padding: var(--dropdown-item-padding-y) var(--dropdown-item-padding-x);
+  color: inherit;
+  cursor: pointer;
+  background: transparent;
+
+  &:hover,
+  &--active {
+    color: var(--dropdown-item-hover-text);
+    background: var(--dropdown-item-hover-background);
+  }
+
+  // Label segments and the description are `tedi-text`, whose colour modifier
+  // class would otherwise outrank the row's hover colour.
+  &:hover &__label [class*="tedi-text--"],
+  &--active &__label [class*="tedi-text--"],
+  &:hover &__description,
+  &--active &__description {
+    color: inherit;
+  }
+
+  // Only projected rows get a gap. The default row is a run of highlighted and
+  // unhighlighted label segments, which must stay visually joined.
+  &--custom {
+    display: flex;
+    gap: var(--dropdown-item-inner-spacing);
+    align-items: center;
+  }
+
+  &--disabled,
+  &--disabled:hover {
+    color: var(--general-text-disabled);
+    cursor: not-allowed;
+    background: var(--dropdown-item-disabled-background);
+  }
+
+  // The label segments and the description are `tedi-text`, whose colour
+  // modifier class would otherwise outrank the row's disabled colour.
+  &--disabled [class*="tedi-text--"] {
+    color: inherit;
+  }
+
+  &__label,
+  &__description {
+    display: block;
+  }
+}

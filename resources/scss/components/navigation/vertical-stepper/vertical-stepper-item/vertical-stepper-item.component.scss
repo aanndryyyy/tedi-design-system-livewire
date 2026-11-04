@@ -248,7 +248,7 @@
   }
 
   &--disabled {
-    --_step-indicator-background: var(--stepper-step-disabled-bg, #d2d3d8);
+    --_step-indicator-background: var(--stepper-step-disabled-background, #d2d3d8);
     --_step-indicator-color: var(
       --stepper-item-vertical-text-disabled,
       #9293a4
@@ -261,7 +261,7 @@
   }
 
   &--informative {
-    --_step-indicator-background: var(--stepper-step-disabled-bg, #d2d3d8);
+    --_step-indicator-background: var(--stepper-step-disabled-background, #d2d3d8);
     --_step-indicator-border: var(--stepper-step-disabled-border, #9293a4);
     --_step-title-color: var(--general-text-tertiary, #5d6071);
     #{$host-class}__title {

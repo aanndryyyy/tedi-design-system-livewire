@@ -15,8 +15,11 @@
         </tedi:popover>
 
     Positioning is `tediOverlay` (CONVENTIONS.md §11), a port of upstream's
-    overlay-position.util.ts. `withArrow` adds 12px on top of the engine's 8px
-    base gap, exactly as Angular's `arrowOffset` computed does. Unlike dropdown
+    overlay-position.util.ts. Since Angular 9 (#802) the gap is `offset`
+    (default 8) plus 12px when `withArrow`, and it *replaces* the position map's
+    8px base rather than adding to it. The engine always adds its own 8px base,
+    so the config passes `offset - 8 (+ 12)`: at the defaults that is the same
+    20px the popover had before `offset` existed. Unlike dropdown
     and tooltip, `preventOverflow` defaults to FALSE here, matching Angular.
     The panel stays where it is written rather than being re-parented into a
     `.cdk-overlay-container`, so a popover inside a `transform`ed ancestor is
@@ -81,6 +84,8 @@
     'lockScroll' => false,
     /** Delay (ms) before a hover-closed overlay hides. */
     'timeoutDelay' => 100,
+    /** Gap in px between trigger and popover; the arrow's 12px is added on top when `withArrow`. */
+    'offset' => 8,
     /** Stable id shared with the trigger and content for ARIA pairing. Generated when omitted. */
     'containerId' => null,
     /** Overrides the computed aria-labelledby. */
@@ -100,7 +105,8 @@
 
     $overlayConfig = [
         'placement' => $position,
-        'offset' => $withArrow ? 12 : 0,
+        // Upstream's gap replaces the engine's 8px base gap; see the header.
+        'offset' => (int) $offset - 8 + ($withArrow ? 12 : 0),
         'preventOverflow' => (bool) $preventOverflow,
         'dismissible' => (bool) $dismissible,
         'hideOnScroll' => (bool) $hideOnScroll,

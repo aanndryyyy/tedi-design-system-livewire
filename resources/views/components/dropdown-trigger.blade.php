@@ -1,9 +1,9 @@
 {{--
     TEDI Dropdown Trigger.
-    Port of angular/tedi/components/overlay/dropdown/dropdown-trigger/dropdown-trigger.directive.ts
+    Port of angular/src/tedi/components/overlay/dropdown/dropdown-trigger/dropdown-trigger.directive.ts
 
     Angular's selector is the attribute directive `[tedi-dropdown-trigger]`,
-    placed directly on the consumer's button. The vendored SCSS, however,
+    placed directly on the consumer's control. The vendored SCSS, however,
     styles the *element* (`tedi-dropdown-trigger { display: inline-flex }`), so
     per CONVENTIONS.md §4 this renders as that literal element and wraps the
     consumer's trigger — the same shape upstream supports through its
@@ -11,27 +11,46 @@
 
     That branch is also why the ARIA state is not written on this element: the
     wrapper is not focusable, so `aria-haspopup` / `aria-expanded` on it would
-    be announced on the wrong node. `x-init` resolves the real focusable
-    element with upstream's FOCUSABLE_SELECTOR ("button, a[href], [tabindex]")
-    and decorates that, exactly as the directive's effect() does — including
-    the role="button" / tabindex="0" fallback when nothing focusable is found.
+    be announced on the wrong node. `tediDropdown.initTrigger` resolves the real
+    element exactly as the directive does — a natively interactive control
+    (`button, a[href], input:not([type="hidden"]), select, textarea`), else the
+    first such control or `[tabindex]` inside — and decorates that.
+
+    Angular 9 changes ported here (#669 and the breadcrumbs WCAG work):
+
+    - `aria-haspopup` has no fixed default any more. Omitted, it follows the
+      content's `dropdown-role`: `menu` / `listbox`, and no attribute for a
+      plain `list`. `false` also omits it. The content is a sibling, out of
+      `@aware`'s reach, so the role is read from the rendered `ul[role]` at
+      init — the same DOM registry `tediDropdown` already uses.
+    - `aria-controls` is present only while the panel is open.
+    - A non-native trigger gets `role="button"` / `tabindex="0"` only when it
+      has no role / tabindex of its own, so a consumer's `role="checkbox"`
+      survives.
+    - Keys: Enter and Space toggle a non-native trigger (Space on keyup, and only
+      for a press that began on it); a checkbox or radio trigger toggles on
+      Enter, which also keeps Enter from submitting its form, while Space stays
+      the input's own native click. ArrowDown/ArrowUp open-and-focus only for
+      `menu` / `listbox` content. Keys from other controls inside the wrapper
+      are left alone.
 
     `id` and `aria-controls` are emitted only when the dropdown was given a
     `container-id` (see dropdown.blade.php); without one there is no shared id
     to point at, and a dangling reference is worse than none.
 
-    ArrowDown/ArrowUp ("open and focus the first/last item", or move to that end
-    when already open) go through `tediDropdown.triggerKeydown`. The directive's
-    Escape branch is deliberately NOT re-bound here: tediOverlay already closes
-    on Escape at the document level and returns focus to this trigger, so a
-    second handler would only fire `hide` twice.
+    The directive's Escape branch is deliberately NOT re-bound here:
+    tediOverlay already closes on Escape at the document level and returns
+    focus to this trigger, so a second handler would only fire `hide` twice.
 --}}
 @aware([
     'containerId' => null,
 ])
 @props([
-    /** Defines the aria-haspopup attribute for the trigger: menu | listbox | dialog | true. */
-    'ariaHaspopup' => 'menu',
+    /**
+     * The aria-haspopup value for the trigger: menu | listbox | dialog | true | false.
+     * Omitted, it follows the content's dropdown-role (none for `list`).
+     */
+    'ariaHaspopup' => null,
 ])
 
 <tedi-dropdown-trigger
@@ -39,26 +58,12 @@
     x-ref="trigger"
     x-on:click="toggle()"
     x-on:keydown="triggerKeydown($event)"
-    x-init="(() => {
-        const focusable = $el.matches('button, a[href]')
-            ? $el
-            : ($el.querySelector('button, a[href], [tabindex]') || $el);
-
-        focusable.setAttribute('aria-haspopup', '{{ $ariaHaspopup }}');
-        focusable.setAttribute('aria-expanded', 'false');
-
-        @if ($containerId)
-            focusable.setAttribute('id', '{{ $containerId }}_trigger');
-            focusable.setAttribute('aria-controls', '{{ $containerId }}');
-        @endif
-
-        if (! focusable.matches('button, a[href]')) {
-            focusable.setAttribute('role', 'button');
-            focusable.setAttribute('tabindex', '0');
-        }
-
-        $watch('open', (value) => focusable.setAttribute('aria-expanded', value ? 'true' : 'false'));
-    })()"
+    x-on:keyup="triggerKeyup($event)"
+    x-on:focusout="triggerFocusout($event)"
+    x-init="initTrigger($el, {
+        ariaHaspopup: {{ \Illuminate\Support\Js::from($ariaHaspopup ?: null) }},
+        containerId: {{ \Illuminate\Support\Js::from($containerId ?: null) }},
+    })"
 >
     {{ $slot }}
 </tedi-dropdown-trigger>

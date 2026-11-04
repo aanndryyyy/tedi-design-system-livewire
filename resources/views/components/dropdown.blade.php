@@ -1,6 +1,6 @@
 {{--
     TEDI Dropdown (root).
-    Port of angular/tedi/components/overlay/dropdown/dropdown.component.{ts,html}
+    Port of angular/src/tedi/components/overlay/dropdown/dropdown.component.{ts,html}
 
     Angular's host has no class bindings — `tedi-dropdown` is styled purely via
     the vendored SCSS's element selector (`tedi-dropdown { display: inline-flex }`),
@@ -40,10 +40,10 @@
       what a consumer echoes back into `:selected`.
     - `container-id` replaces Angular's generated `containerId`: Blade siblings
       have no shared instance to generate an id into (same situation as
-      accordion-item's `item-id`). Given, it wires
-      trigger `id`/`aria-controls` to the panel's `id` and the content's
-      `aria-labelledby`; omitted, those attributes are left off entirely rather
-      than emitted dangling.
+      accordion-item's `item-id`). Given, it wires the trigger's `id` and its
+      open-only `aria-controls` to the content list's `id` and
+      `aria-labelledby`, as Angular 9 does; omitted, those attributes are left
+      off entirely rather than emitted dangling.
     - Focus management IS ported, via `tediDropdown` — `tediOverlay` plus the
       keyboard layer from dropdown.component.ts / dropdown-item.component.ts /
       dropdown-trigger.directive.ts (roving tabindex, Arrow/Home/End, Enter and
@@ -53,7 +53,9 @@
       One divergence: Angular reads items and their disabled/selected state from
       `contentChildren` signals; Blade has no instances to query, so the engine
       reads the DOM the templates already emit (`li[tedi-dropdown-item]`,
-      `aria-disabled`, `aria-selected`).
+      `aria-disabled`, `aria-selected` — on the projected control for an
+      `interactive-content` item). The Angular 9 `list` role and #669 trigger
+      keys are ported too; see dropdown-content / dropdown-trigger.
     - The panel stays in the document instead of being re-parented into a CDK
       overlay container, so a dropdown inside a `transform`ed ancestor is
       positioned relative to that ancestor (CONVENTIONS.md §11).

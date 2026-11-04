@@ -42,6 +42,89 @@ class Tedi
     }
 
     /**
+     * The field context a form control sits in — the Blade stand-in for
+     * Angular's `inject(TEDI_FIELD_CONTEXT, { optional: true })`
+     * (angular/src/tedi/components/form/form-field/field-context.token.ts).
+     *
+     * The context is a View\FieldContext. The nearest one is found with
+     * `$env->getConsumableComponentData('fieldContext')`, the public lookup
+     * `@aware` makes: the calling control's own `fieldContext` prop first,
+     * then the component frames on the stack, nearest first. The key is
+     * unique to the providers, so the nearest hit is the nearest provider:
+     *
+     *   - `tedi:form-field` (View\Components\FormField) builds its context in
+     *     its constructor, before its slot renders, from what the consumer
+     *     wrote on it plus its defaults (`size` 'default', `clearable` true;
+     *     `disabled` / `invalid` with `@aware` semantics), and carries it in
+     *     its data frame. A control in its SLOT finds it there. Unlike
+     *     `@aware`, the size comes from the nearest form-field only, never
+     *     from an unrelated ancestor (a modal, a button group).
+     *   - `tedi:date-field` / `tedi:date-time-field` build Angular's
+     *     `childContext` (FieldContext::child(), `ownsSurface` always true) and
+     *     pass it EXPLICITLY, as the `field-context` prop, through
+     *     `tedi:date-input` to its text field: a control in a component's own
+     *     template cannot find that component on the stack. A standalone
+     *     date input passes on whatever context it sits in itself.
+     *
+     * `$control` describes the calling control, for the half of the contract
+     * Angular runs the other way (`contentChild(TEDI_FORM_FIELD_CONTROL)`):
+     * whether it can be reset (`reset`, which is what earns it the field's
+     * clear button), its `value`, `disabled`, `readOnly` and `invalid`. The
+     * first control to call registers itself on the context
+     * (FieldContext::register()); the form-field's view renders after its
+     * slot and reads it back. An empty `$control` registers nothing.
+     *
+     * Returns null outside any provider, otherwise FieldContext::toArray():
+     * provider, size, ownsSurface, invalid, valid, disabled, clearable,
+     * describedBy (the character counter's id, for aria-describedby).
+     *
+     * @param  array{reset?: bool, value?: mixed, disabled?: bool, readOnly?: bool, invalid?: bool}  $control
+     * @return array<string, mixed>|null
+     */
+    public static function fieldContext(\Illuminate\View\Factory $env, array $control = []): ?array
+    {
+        $context = $env->getConsumableComponentData('fieldContext');
+
+        if (! $context instanceof View\FieldContext) {
+            return null;
+        }
+
+        $context->register($control);
+
+        return $context->toArray();
+    }
+
+    /** Per-process random part of the table-of-contents numbering markers. */
+    private static ?string $tocToken = null;
+
+    /**
+     * A placeholder table-of-contents items emit for their number, rewritten
+     * by the enclosing item or root once the order is known. The random part
+     * keeps consumer text that happens to contain the marker's fixed prefix
+     * from being rewritten.
+     */
+    public static function tocMarker(string $kind): string
+    {
+        self::$tocToken ??= bin2hex(random_bytes(6));
+
+        return '__TEDI_TOC_'.$kind.'_'.self::$tocToken.'__';
+    }
+
+    /** Matches both markers; group 1 is NUMBER or PREFIX. */
+    public static function tocMarkerPattern(): string
+    {
+        self::$tocToken ??= bin2hex(random_bytes(6));
+
+        return '/__TEDI_TOC_(NUMBER|PREFIX)_'.self::$tocToken.'__/';
+    }
+
+    /** A context size: anything but small/large (null included) is 'default'. */
+    public static function fieldSize(mixed $size): string
+    {
+        return in_array($size, ['small', 'large'], true) ? $size : 'default';
+    }
+
+    /**
      * Resolve a TEDI max-width value to a CSS length.
      *
      * Port of resolveMaxWidth() in react/src/tedi/components/layout/top-nav/top-nav.tsx,
@@ -76,25 +159,5 @@ class Tedi
         }
 
         return (string) $value;
-    }
-
-    /**
-     * Whether a nested field should skip painting `tedi-field-surface`.
-     *
-     * Angular's TEDI_FIELD_CONTEXT. Blade `@aware` cannot see values assigned
-     * later in the parent view — the nested control renders while the parent's
-     * slot is captured, so only the parent's *tag* attributes are visible.
-     * Form-field's box is `icon || clearable`, both of which are those tags.
-     */
-    public static function fieldOwnsSurface(bool $explicit = false): bool
-    {
-        if ($explicit) {
-            return true;
-        }
-
-        $view = app('view');
-
-        return (bool) $view->getConsumableComponentData('icon', null)
-            || (bool) $view->getConsumableComponentData('clearable', false);
     }
 }

@@ -1,26 +1,26 @@
 @mixin toggle-style($variant, $type) {
   @if $type == "filled" {
-    background-color: var(--form-toggle-#{$variant}-inactive-default);
+    background-color: var(--form-toggle-#{$variant}-unselected-default);
 
     &:hover {
-      background-color: var(--form-toggle-#{$variant}-inactive-hover);
+      background-color: var(--form-toggle-#{$variant}-unselected-hover);
     }
 
     &:active {
-      background-color: var(--form-toggle-#{$variant}-inactive-active);
+      background-color: var(--form-toggle-#{$variant}-unselected-active);
     }
 
     &:focus-visible {
       outline: calc(2 * var(--tedi-borders-01))
         solid
-        var(--form-toggle-primary-active-default);
+        var(--form-toggle-primary-selected-default);
       outline-offset: var(--tedi-borders-01);
-      background-color: var(--form-toggle-#{$variant}-inactive-default);
+      background-color: var(--form-toggle-#{$variant}-unselected-default);
     }
 
     &:disabled {
       cursor: not-allowed;
-      background-color: var(--form-toggle-#{$variant}-inactive-default);
+      background-color: var(--form-toggle-#{$variant}-unselected-default);
       opacity: 0.5;
 
       + .tedi-toggle__slider .tedi-toggle__icon {
@@ -29,31 +29,31 @@
     }
 
     + .tedi-toggle__slider {
-      background-color: var(--form-toggle-#{$variant}-inactive-indicator);
+      background-color: var(--form-toggle-#{$variant}-unselected-indicator);
     }
 
     &:checked {
-      background-color: var(--form-toggle-#{$variant}-active-default);
+      background-color: var(--form-toggle-#{$variant}-selected-default);
 
       &:hover {
-        background-color: var(--form-toggle-#{$variant}-active-hover);
+        background-color: var(--form-toggle-#{$variant}-selected-hover);
       }
 
       &:active {
-        background-color: var(--form-toggle-#{$variant}-active-active);
+        background-color: var(--form-toggle-#{$variant}-selected-active);
       }
 
       &:focus-visible {
         outline: calc(2 * var(--tedi-borders-01))
           solid
-          var(--form-toggle-primary-active-default);
+          var(--form-toggle-primary-selected-default);
         outline-offset: var(--tedi-borders-01);
-        background-color: var(--form-toggle-#{$variant}-active-default);
+        background-color: var(--form-toggle-#{$variant}-selected-default);
       }
 
       &:disabled {
         cursor: not-allowed;
-        background-color: var(--form-toggle-#{$variant}-active-default);
+        background-color: var(--form-toggle-#{$variant}-selected-default);
         opacity: 0.5;
 
         + .tedi-toggle__slider .tedi-toggle__icon {
@@ -62,7 +62,7 @@
       }
 
       + .tedi-toggle__slider {
-        background-color: var(--form-toggle-#{$variant}-active-indicator);
+        background-color: var(--form-toggle-#{$variant}-selected-indicator);
       }
     }
   }
@@ -70,43 +70,43 @@
   @if $type == "outlined" {
     border: var(--tedi-borders-01)
       solid
-      var(--form-toggle-#{$variant}-inactive-default);
+      var(--form-toggle-#{$variant}-unselected-default);
 
     + .tedi-toggle__slider {
-      background-color: var(--form-toggle-#{$variant}-inactive-default);
+      background-color: var(--form-toggle-#{$variant}-unselected-default);
     }
 
     &:hover {
       border: var(--tedi-borders-01)
         solid
-        var(--form-toggle-#{$variant}-inactive-hover);
+        var(--form-toggle-#{$variant}-unselected-hover);
 
       + .tedi-toggle__slider {
-        background-color: var(--form-toggle-#{$variant}-inactive-hover);
+        background-color: var(--form-toggle-#{$variant}-unselected-hover);
       }
     }
 
     &:active {
       border: var(--tedi-borders-01)
         solid
-        var(--form-toggle-#{$variant}-inactive-active);
+        var(--form-toggle-#{$variant}-unselected-active);
 
       + .tedi-toggle__slider {
-        background-color: var(--form-toggle-#{$variant}-inactive-active);
+        background-color: var(--form-toggle-#{$variant}-unselected-active);
       }
     }
 
     &:focus-visible {
       outline: calc(2 * var(--tedi-borders-01))
         solid
-        var(--form-toggle-primary-active-default);
+        var(--form-toggle-primary-selected-default);
       outline-offset: var(--tedi-borders-01);
       border: var(--tedi-borders-01)
         solid
-        var(--form-toggle-#{$variant}-inactive-default);
+        var(--form-toggle-#{$variant}-unselected-default);
 
       + .tedi-toggle__slider {
-        background-color: var(--form-toggle-#{$variant}-inactive-default);
+        background-color: var(--form-toggle-#{$variant}-unselected-default);
       }
     }
 
@@ -114,11 +114,11 @@
       cursor: not-allowed;
       border: var(--tedi-borders-01)
         solid
-        var(--form-toggle-#{$variant}-inactive-default);
+        var(--form-toggle-#{$variant}-unselected-default);
       opacity: 0.5;
 
       + .tedi-toggle__slider {
-        background-color: var(--form-toggle-#{$variant}-inactive-default);
+        background-color: var(--form-toggle-#{$variant}-unselected-default);
       }
 
       + .tedi-toggle__slider {
@@ -129,43 +129,43 @@
     &:checked {
       border: var(--tedi-borders-01)
         solid
-        var(--form-toggle-#{$variant}-active-default);
+        var(--form-toggle-#{$variant}-selected-default);
 
       + .tedi-toggle__slider {
-        background-color: var(--form-toggle-#{$variant}-active-default);
+        background-color: var(--form-toggle-#{$variant}-selected-default);
       }
 
       &:hover {
         border: var(--tedi-borders-01)
           solid
-          var(--form-toggle-#{$variant}-active-hover);
+          var(--form-toggle-#{$variant}-selected-hover);
 
         + .tedi-toggle__slider {
-          background-color: var(--form-toggle-#{$variant}-active-hover);
+          background-color: var(--form-toggle-#{$variant}-selected-hover);
         }
       }
 
       &:active {
         border: var(--tedi-borders-01)
           solid
-          var(--form-toggle-#{$variant}-active-active);
+          var(--form-toggle-#{$variant}-selected-active);
 
         + .tedi-toggle__slider {
-          background-color: var(--form-toggle-#{$variant}-active-active);
+          background-color: var(--form-toggle-#{$variant}-selected-active);
         }
       }
 
       &:focus-visible {
         outline: calc(2 * var(--tedi-borders-01))
           solid
-          var(--form-toggle-primary-active-default);
+          var(--form-toggle-primary-selected-default);
         outline-offset: var(--tedi-borders-01);
         border: var(--tedi-borders-01)
           solid
-          var(--form-toggle-#{$variant}-active-default);
+          var(--form-toggle-#{$variant}-selected-default);
 
         + .tedi-toggle__slider {
-          background-color: var(--form-toggle-#{$variant}-active-default);
+          background-color: var(--form-toggle-#{$variant}-selected-default);
         }
       }
 
@@ -173,11 +173,11 @@
         cursor: not-allowed;
         border: var(--tedi-borders-01)
           solid
-          var(--form-toggle-#{$variant}-active-default);
+          var(--form-toggle-#{$variant}-selected-default);
         opacity: 0.5;
 
         + .tedi-toggle__slider {
-          background-color: var(--form-toggle-#{$variant}-active-default);
+          background-color: var(--form-toggle-#{$variant}-selected-default);
         }
 
         + .tedi-toggle__slider {

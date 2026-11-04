@@ -1,6 +1,6 @@
 {{--
     TEDI Accordion Item Content.
-    Port of angular/tedi/components/content/accordion/accordion-item-content/accordion-item-content.component.{ts,html}
+    Port of angular/src/tedi/components/content/accordion/accordion-item-content/accordion-item-content.component.{ts,html}
 
     `expanded` is read from the enclosing tedi-accordion-item's Alpine scope.
     See accordion-item.blade.php for the item-id/ARIA-pairing divergence.

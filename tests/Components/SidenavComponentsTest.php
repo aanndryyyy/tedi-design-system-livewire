@@ -167,6 +167,28 @@ class SidenavComponentsTest extends TestCase
         $this->assertHasClass('tedi-sidenav', $html, 'tedi-sidenav');
     }
 
+    public function test_sidenav_is_left_out_of_print(): void
+    {
+        $this->assertHasClass('no-print', Blade::render('<tedi:sidenav>x</tedi:sidenav>'), 'tedi-sidenav');
+    }
+
+    public function test_mobile_drawer_binds_the_measured_top_and_locks_scroll(): void
+    {
+        // Angular 8+: [style.top.px]="sidenavService.drawerTop()" on the nav and
+        // the overlay; the toggle measures and sends the offset.
+        $html = Blade::render('<tedi:sidenav mobile>x</tedi:sidenav>');
+        $this->assertStringContainsString('tediSidenavDrawerTop = $event.detail.top ?? null', $html);
+        $this->assertStringContainsString('x-bind:style="{ top: tediSidenavDrawerOpen', $html);
+        $this->assertStringContainsString('x-effect="tediSidenavLockScroll(tediSidenavDrawerOpen)"', $html);
+
+        $html = Blade::render('<tedi:sidenav.overlay mobile />');
+        $this->assertStringContainsString('tediSidenavOverlayTop = $event.detail.top ?? null', $html);
+
+        $html = Blade::render('<tedi:sidenav.toggle mobile />');
+        $this->assertStringContainsString("this.\$el.closest('header') ?? this.\$el", $html);
+        $this->assertStringContainsString("top: tediSidenavToggleTop()", $html);
+    }
+
     /** §7 #1: desktopBreakpoint is not declared, so it leaks as a stray attribute. */
     public function test_sidenav_does_not_declare_desktop_breakpoint(): void
     {

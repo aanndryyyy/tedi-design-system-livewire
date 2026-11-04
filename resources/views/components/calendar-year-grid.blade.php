@@ -1,6 +1,6 @@
 {{--
     TEDI Calendar year grid.
-    Port of angular/tedi/components/content/calendar/calendar-year-grid/{calendar-year-grid.component.ts,calendar-year-grid.component.html}
+    Port of angular/src/tedi/components/content/calendar/calendar-year-grid/{calendar-year-grid.component.ts,calendar-year-grid.component.html}
 
     Root element: the Angular template's own <div class="tedi-calendar-year-grid">.
     `tedi-calendar-year-grid` has no ELEMENT selector in the vendored SCSS, so no

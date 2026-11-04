@@ -180,6 +180,26 @@
     </div>
 
     <div class="gx-case">
+        <div class="gx-case__label">bordered: on the group (inherited) | on a standalone card</div>
+        <div class="gx-case__demo gx-case__demo--stack" style="gap:1.5rem">
+            <tedi:radio-card-group :bordered="true">
+                <tedi:radio-card variant="primary">
+                    <tedi:radio name="rc-bordered" />
+                    Kartul
+                </tedi:radio-card>
+                <tedi:radio-card variant="primary">
+                    <tedi:radio name="rc-bordered" :checked="true" />
+                    Peet
+                </tedi:radio-card>
+            </tedi:radio-card-group>
+            <tedi:radio-card variant="primary" :bordered="true">
+                <tedi:radio name="rc-bordered-standalone" />
+                Kapsas
+            </tedi:radio-card>
+        </div>
+    </div>
+
+    <div class="gx-case">
         <div class="gx-case__label">with description (feedback slot) | disabled | hidden indicator</div>
         <div class="gx-case__demo gx-case__demo--stack" style="gap:1.5rem">
             <tedi:checkbox-card-group>
@@ -251,6 +271,26 @@
                     Enterprise
                 </tedi:radio-card>
             </tedi:radio-card-group>
+        </div>
+    </div>
+
+    <div class="gx-case">
+        <div class="gx-case__label">bordered: on the group (inherited) | on a standalone card</div>
+        <div class="gx-case__demo gx-case__demo--stack" style="gap:1.5rem">
+            <tedi:radio-card-group :bordered="true">
+                <tedi:radio-card variant="primary">
+                    <tedi:radio name="rc-bordered" />
+                    Kartul
+                </tedi:radio-card>
+                <tedi:radio-card variant="primary">
+                    <tedi:radio name="rc-bordered" :checked="true" />
+                    Peet
+                </tedi:radio-card>
+            </tedi:radio-card-group>
+            <tedi:radio-card variant="primary" :bordered="true">
+                <tedi:radio name="rc-bordered-standalone" />
+                Kapsas
+            </tedi:radio-card>
         </div>
     </div>
 

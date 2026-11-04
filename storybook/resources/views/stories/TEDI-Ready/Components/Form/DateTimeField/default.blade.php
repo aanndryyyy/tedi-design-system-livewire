@@ -11,6 +11,7 @@
         'open' => true,
         'disabled' => false,
         'required' => false,
+        'clearable' => true,
     ],
     'argTypes' => [
         'display' => [
@@ -36,6 +37,11 @@
         ],
         'disabled' => ['control' => 'boolean'],
         'required' => ['control' => 'boolean'],
+        'clearable' => [
+            'control' => 'boolean',
+            'description' => 'Whether the field shows a clear button to reset the value. Disable it when the field is required or the value should not be cleared.',
+            'table' => ['defaultValue' => ['summary' => 'true']],
+        ],
     ],
 ])
 
@@ -49,4 +55,5 @@
     :open="(bool) $open"
     :disabled="(bool) $disabled"
     :required="(bool) $required"
+    :clearable="(bool) $clearable"
 />

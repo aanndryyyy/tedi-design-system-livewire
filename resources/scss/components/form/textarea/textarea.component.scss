@@ -1,5 +1,16 @@
 @use "../field-surface-mixins" as field-surface;
 
+// The surface draws its focus ring as an inset shadow, which paints under the
+// textarea's scrollbar and hides that side of it. An outline paints above the
+// scrollbar instead. It covers the border as well as the ring, so its corners
+// follow the border's curve rather than leaving a seam beside it; while the
+// ring is transparent the border shows through.
+@mixin ring-above-scrollbar {
+  outline: calc(2 * var(--tedi-borders-01)) solid var(--_field-ring-color);
+  outline-offset: calc(-2 * var(--tedi-borders-01));
+  box-shadow: none;
+}
+
 .tedi-textarea {
   @include field-surface.tokens(var(--form-textarea-min-height));
 
@@ -46,6 +57,7 @@
   // edges — an input group's addon — reaches it with two.
   &:where(.tedi-field-surface) {
     @include field-surface.surface(content);
+    @include ring-above-scrollbar;
   }
 
   &.tedi-field-surface {
@@ -62,15 +74,22 @@
 // form-field so the box keeps no knowledge of its controls: the rules only ship
 // when a textarea is on the page, which is exactly when they can match.
 .tedi-form-field__box:has(> .tedi-textarea) {
+  @include ring-above-scrollbar;
+
   align-items: flex-start;
   height: auto;
   min-height: var(--_field-height);
 
   // The textarea's own padding is the field's inset on three sides, which also
   // keeps its whole scroll area clickable rather than just the text. The box
-  // keeps the trailing one, where its additions sit.
+  // keeps the trailing one, where its additions sit, widened by the textarea's
+  // scrollbar so they sit beside it rather than on it.
   padding-block: 0;
-  padding-inline: 0 var(--form-field-padding-x-md-default);
+  padding-inline: 0
+    calc(
+      var(--form-field-padding-x-md-default) +
+        var(--tedi-form-field-control-scrollbar)
+    );
 
   // Centre the additions on the first row, where they sit in a single-line
   // field, instead of halfway down a tall one.
@@ -91,7 +110,9 @@
   // The lane plus the box's trailing padding is exactly the room the additions
   // take out of the row, so giving it back as a negative margin lands the
   // trailing edge — and with it the grip — on the border. The same figure as
-  // padding holds the text one inner gap clear of the additions.
+  // padding holds the text one inner gap clear of the additions. The margin also
+  // gives back what the box's padding grew by to clear the scrollbar; the
+  // padding does not need it, since the scrollbar already sits outside it.
   padding-inline-end: calc(
     var(--form-field-padding-x-md-default) + var(--tedi-form-field-addon-lane)
   );
@@ -99,7 +120,8 @@
     -1 *
       (
         var(--form-field-padding-x-md-default) +
-          var(--tedi-form-field-addon-lane)
+          var(--tedi-form-field-addon-lane) +
+          var(--tedi-form-field-control-scrollbar)
       )
   );
 }

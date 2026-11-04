@@ -20,6 +20,7 @@
     name="file-validation-failed"
     :label="$label"
     accept=".pdf,.txt"
+    :max-size="1024"
     multiple
     :files="[['name' => 'taotlus_scan_lk_1.pdf', 'is_valid' => false]]"
     :helper="['type' => 'error', 'text' => $helperText]"

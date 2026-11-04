@@ -8,21 +8,6 @@
     good-looking page: every interpolated class name must appear at least once.
 --}}
 
-{{-- Loader / Skeleton --}}
-<tedi:skeleton>
-    @foreach (['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as $height)
-        <tedi:skeleton-block :height="$height" :width="60" />
-    @endforeach
-    <tedi:skeleton-block width="80px" :height="12" />
-    <tedi:skeleton-block />
-</tedi:skeleton>
-
-{{-- Content / HeadingWithIcon --}}
-@foreach (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as $element)
-    <tedi:heading-with-icon :element="$element" name="info">Pealkiri</tedi:heading-with-icon>
-@endforeach
-<tedi:heading-with-icon>Ilma ikoonita</tedi:heading-with-icon>
-
 {{-- Content / Section --}}
 @foreach (['section', 'article', 'aside', 'div'] as $as)
     <tedi:section :as="$as">Sisu</tedi:section>
@@ -47,11 +32,6 @@
 @foreach (['left', 'right', 'up', 'down', 'center'] as $animationDirection)
     <tedi:scroll-visibility :animation-direction="$animationDirection">Peidetav</tedi:scroll-visibility>
 @endforeach
-
-{{-- Content / Truncate --}}
-<tedi:truncate :content="str_repeat('Pikk tekst. ', 40)" :max-length="60" />
-<tedi:truncate :content="str_repeat('Pikk tekst. ', 40)" :max-length="60" :expandable="false" />
-<tedi:truncate content="Lühike" />
 
 {{-- Navigation / HashTrigger --}}
 <tedi:hash-trigger id="ptk-1">Peatükk</tedi:hash-trigger>
@@ -100,6 +80,8 @@
 <tedi:file-upload name="failid" :files="[['name' => 'ainus.pdf', 'is_loading' => true]]" size="small" />
 <tedi:file-upload name="failid" :files="$twoFiles" read-only />
 <tedi:file-upload name="failid" />
+<tedi:file-upload name="failid" accept=".pdf,.txt" :max-size="1024" />
+<tedi:file-upload name="failid" accept=".pdf,.txt" :max-size="1024" :show-restrictions="false" />
 
 {{-- Form / MultiValueField — both directions, both icon shapes --}}
 @foreach (['stack', 'row'] as $tagsDirection)
@@ -118,6 +100,7 @@
 <tedi:multi-value-field name="v" :values="['A']" icon="expand_more" icon-is-button :icon-button-attributes="['aria-expanded' => 'false']" />
 <tedi:multi-value-field name="v" :values="[]" />
 <tedi:multi-value-field name="v" :values="['A']" disabled />
+<tedi:multi-value-field name="v" label="Väärtused" label-modifiers="nowrap" :values="['A']" show-clear-on-interaction />
 
 {{-- Form / DateTimeField — all four panel layouts --}}
 <tedi:date-time-field :open="true" display="01.01.2026 10:00" />
@@ -126,3 +109,45 @@
 <tedi:date-time-field :open="true" layout="multi-step" step="time" value="2026-01-01 10:00" />
 <tedi:date-time-field :open="true" :available-times="['09:00', '09:30']" time-variant="grid" />
 <tedi:date-time-field />
+<tedi:date-time-field display="01.01.2026 10:00" :clearable="false" />
+
+{{-- Overlay / Sheet (react/src/tedi/components/overlays/sheet) --}}
+@foreach ([['default', 'default', 'start'], ['small', 'card', 'center'], ['default', 'none', 'start']] as [$padding, $radius, $titlePosition])
+    <tedi:sheet open>
+        <tedi:sheet-trigger><tedi:button>Ava</tedi:button></tedi:sheet-trigger>
+        <tedi:sheet-content :padding="$padding" :radius="$radius">
+            <tedi:sheet-header title="Seaded" :title-position="$titlePosition" collapsible>
+                <x-slot:start>A</x-slot:start>
+            </tedi:sheet-header>
+            <tedi:sheet-body>Sisu</tedi:sheet-body>
+            <tedi:sheet-footer full-width>
+                <tedi:sheet-closer><tedi:button variant="secondary">Tühista</tedi:button></tedi:sheet-closer>
+                <x-slot:end>B</x-slot:end>
+            </tedi:sheet-footer>
+        </tedi:sheet-content>
+    </tedi:sheet>
+@endforeach
+<tedi:sheet collapsed :close-on-backdrop-click="false">
+    <tedi:sheet-content :show-overlay="false" :show-handle="false" :trap-focus="false" :snap-points="[0.4, 0.9]">
+        <tedi:sheet-header title="Vali" variant="default" />
+        <tedi:sheet-body padding="none">Sisu</tedi:sheet-body>
+        @foreach (['left', 'center', 'right'] as $align)
+            <tedi:sheet-footer :align="$align">C</tedi:sheet-footer>
+        @endforeach
+    </tedi:sheet-content>
+</tedi:sheet>
+
+{{-- Navigation / CardStepper (react/src/tedi/components/navigation/card-stepper) --}}
+@php
+    $cardSteps = [
+        ['title' => 'Isikuandmed', 'state' => 'completed'],
+        ['title' => 'Kontakt', 'description' => 'Kirjeldus', 'state' => 'error', 'sub_steps' => [['title' => 'A', 'current' => true]]],
+        ['title' => 'Lisa', 'disabled' => true],
+        ['title' => 'Ülevaade'],
+    ];
+@endphp
+<tedi:card-stepper :steps="$cardSteps" :active-step="1" show-status-icon />
+<tedi:card-stepper :steps="$cardSteps" :active-step="0" show-navigation counter-position="top" description-position="top" />
+<tedi:card-stepper :steps="$cardSteps" :active-step="3" :show-step-number="false" :show-progress="false" :show-step-list="false">
+    <x-slot:bottom>Lisa</x-slot:bottom>
+</tedi:card-stepper>

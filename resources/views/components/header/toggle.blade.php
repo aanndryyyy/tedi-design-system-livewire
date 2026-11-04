@@ -3,8 +3,8 @@
 
     Divergence (document, don't fake): Angular's header stories place a
     `<button tedi-sidenav-toggle>` (SideNavToggleComponent, from
-    layout/sidenav — out of this port's scope) in the header's mobile-toggle
-    slot. That component toggles `SideNavService.isMobileOpen` and its
+    layout/sidenav, which this package ports as `tedi:sidenav.toggle`) in the
+    header's mobile-toggle slot. That component toggles `SideNavService.isMobileOpen` and its
     accessible label uses the "sidenav.toggle" translation key (one static
     string, not an open/closed pair).
 
@@ -16,9 +16,10 @@
     classes for a header-mobile-toggle button — since "keep classes identical
     to Angular" means the classes this button actually renders with in every
     header story, not the Angular class of component that happens to own them.
-    There is no sidenav service here: `open` is local Alpine state. A real
-    sidenav integration should bind its own `x-on:click` via `$attributes` or
-    replace this component outright.
+    There is no sidenav service here: `open` is local Alpine state. To drive a
+    `tedi:sidenav`, use `tedi:sidenav.toggle` in this slot instead — it sends
+    the `tedi-sidenav:toggle` event, including the drawer `top` the mobile
+    sidenav needs, which this component does not supply.
 --}}
 @props([])
 

@@ -26,107 +26,6 @@ use Tedi\Livewire\Tests\TestCase;
 class ReactComponentsTest extends TestCase
 {
     // =====================================================================
-    // Loader / Skeleton
-    // =====================================================================
-
-    public function test_skeleton_renders_its_only_class_and_a_live_region(): void
-    {
-        $html = Blade::render('<tedi:skeleton>x</tedi:skeleton>');
-
-        $this->assertHasClass('tedi-skeleton', $html);
-        $this->assertStringContainsString('role="status"', $html);
-        $this->assertStringContainsString('Loading', $html);
-    }
-
-    public function test_skeleton_label_can_be_suppressed_with_an_empty_string(): void
-    {
-        $html = Blade::render('<tedi:skeleton label="">x</tedi:skeleton>');
-
-        $this->assertStringNotContainsString('role="status"', $html);
-    }
-
-    public function test_skeleton_block_height_modifiers(): void
-    {
-        foreach (['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as $height) {
-            $html = Blade::render('<tedi:skeleton-block height="'.$height.'" />');
-
-            $this->assertHasClass('tedi-skeleton-block', $html);
-            $this->assertHasClass('tedi-skeleton-block--'.$height, $html);
-        }
-    }
-
-    /**
-     * A numeric height is an inline px value, NOT a modifier — and it is the
-     * one case where no height modifier is emitted at all.
-     */
-    public function test_skeleton_block_numeric_height_is_inline_and_emits_no_modifier(): void
-    {
-        $html = Blade::render('<tedi:skeleton-block :height="12" />');
-
-        $this->assertStringContainsString('height: 12px', $html);
-        $this->assertMissingClass('tedi-skeleton-block--12', $html);
-        $this->assertMissingClass('tedi-skeleton-block--p', $html);
-    }
-
-    /**
-     * Upstream's three-way width resolution, including the asymmetry with
-     * height: a bare number is a PERCENT here and PIXELS there.
-     */
-    public function test_skeleton_block_width_resolution(): void
-    {
-        $this->assertStringContainsString('width: 60%',
-            Blade::render('<tedi:skeleton-block :width="60" />'));
-
-        $this->assertStringContainsString('width: 80px',
-            Blade::render('<tedi:skeleton-block width="80px" />'));
-
-        $this->assertStringContainsString('width: auto',
-            Blade::render('<tedi:skeleton-block />'));
-    }
-
-    // =====================================================================
-    // Content / HeadingWithIcon
-    // =====================================================================
-
-    public function test_heading_with_icon_renders_the_requested_heading_element(): void
-    {
-        foreach (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as $element) {
-            $html = Blade::render('<tedi:heading-with-icon element="'.$element.'" name="info">P</tedi:heading-with-icon>');
-
-            $this->assertMatchesRegularExpression('/<'.$element.'[^>]*>/', $html);
-            $this->assertHasClass('tedi-heading-with-icon', $html);
-        }
-    }
-
-    /**
-     * React's Heading passes `element` as the tag only — the typography
-     * modifier comes from `modifiers`, which nothing sets by default. So a
-     * default heading-with-icon carries NO tedi-text--h4.
-     */
-    public function test_heading_with_icon_emits_no_typography_modifier_by_default(): void
-    {
-        $html = Blade::render('<tedi:heading-with-icon name="info">P</tedi:heading-with-icon>');
-
-        $this->assertHasClass('tedi-text--primary', $html);
-        $this->assertMissingClass('tedi-text--h4', $html);
-    }
-
-    public function test_heading_with_icon_omits_the_icon_when_no_name_is_given(): void
-    {
-        $html = Blade::render('<tedi:heading-with-icon>P</tedi:heading-with-icon>');
-
-        $this->assertStringNotContainsString('<tedi-icon', $html);
-    }
-
-    public function test_heading_with_icon_colours_are_independent(): void
-    {
-        $html = Blade::render('<tedi:heading-with-icon name="info" heading-color="danger" icon-color="success">P</tedi:heading-with-icon>');
-
-        $this->assertHasClass('tedi-text--danger', $html);
-        $this->assertHasClass('tedi-icon--color-success', $html, on: 'tedi-icon');
-    }
-
-    // =====================================================================
     // Content / Section
     // =====================================================================
 
@@ -232,6 +131,22 @@ class ReactComponentsTest extends TestCase
         $this->assertStringNotContainsString('style=""', $fixed);
     }
 
+    /** 20.x writes the offsets as px custom properties on the sticky box. */
+    public function test_affix_sticky_exposes_its_offsets_as_custom_properties(): void
+    {
+        $sticky = Blade::render('<tedi:affix :top="1.5" :bottom="0.5">x</tedi:affix>');
+        $this->assertStringContainsString('--tedi-affix-offset-top: 24px', $sticky);
+        $this->assertStringContainsString('--tedi-affix-offset-bottom: 8px', $sticky);
+
+        // A non-numeric offset ('unset', or bottom not set) counts as 0.
+        $unset = Blade::render('<tedi:affix top="unset">x</tedi:affix>');
+        $this->assertStringContainsString('--tedi-affix-offset-top: 0px', $unset);
+        $this->assertStringContainsString('--tedi-affix-offset-bottom: 0px', $unset);
+
+        $fixed = Blade::render('<tedi:affix position="fixed">x</tedi:affix>');
+        $this->assertStringNotContainsString('--tedi-affix-offset', $fixed);
+    }
+
     // =====================================================================
     // Helpers / ScrollVisibility
     // =====================================================================
@@ -256,94 +171,6 @@ class ReactComponentsTest extends TestCase
 
         $this->assertMissingClass('tedi-scroll-visibility--hidden', $html);
         $this->assertStringContainsString('tediScrollVisibility(', $html);
-    }
-
-    // =====================================================================
-    // Content / Truncate
-    // =====================================================================
-
-    public function test_truncate_cuts_at_max_length_and_appends_the_ellipsis(): void
-    {
-        $html = Blade::render('<tedi:truncate content="'.str_repeat('a', 50).'" :max-length="10" />');
-
-        $this->assertStringContainsString('aaaaaaaaaa...', $html);
-        $this->assertHasClass('tedi-text--secondary', $html);
-    }
-
-    /**
-     * Upstream compares with `>=`, so a string of exactly maxLength counts as
-     * truncatable even though slicing it changes nothing.
-     */
-    public function test_truncate_treats_an_exact_length_match_as_truncatable(): void
-    {
-        $html = Blade::render('<tedi:truncate content="'.str_repeat('a', 10).'" :max-length="10" />');
-
-        $this->assertStringContainsString('Show more', $html);
-    }
-
-    public function test_truncate_shorter_than_max_length_renders_no_toggle(): void
-    {
-        $html = Blade::render('<tedi:truncate content="lühike" :max-length="200" />');
-
-        $this->assertStringNotContainsString('Show more', $html);
-        $this->assertStringNotContainsString('x-data', $html);
-    }
-
-    public function test_truncate_expandable_false_renders_the_cut_text_without_a_toggle(): void
-    {
-        $html = Blade::render('<tedi:truncate content="'.str_repeat('a', 50).'" :max-length="10" :expandable="false" />');
-
-        $this->assertStringContainsString('aaaaaaaaaa...', $html);
-        $this->assertStringNotContainsString('Show more', $html);
-    }
-
-    /**
-     * The server-rendered text is the collapsed one — the JS only swaps it.
-     */
-    public function test_truncate_server_render_is_the_collapsed_state(): void
-    {
-        $html = Blade::render('<tedi:truncate content="'.str_repeat('a', 50).'" :max-length="10" />');
-
-        $this->assertStringContainsString('aria-expanded="false"', $html);
-    }
-
-    // =====================================================================
-    // Misc / Print
-    // =====================================================================
-
-    public function test_print_visibility_classes(): void
-    {
-        $hide = Blade::render('<tedi:print visibility="hide">x</tedi:print>');
-        $this->assertHasClass('no-print', $hide);
-        $this->assertMissingClass('show-print', $hide);
-
-        $show = Blade::render('<tedi:print visibility="show">x</tedi:print>');
-        $this->assertHasClass('show-print', $show);
-        $this->assertMissingClass('no-print', $show);
-    }
-
-    public function test_print_emits_no_visibility_class_by_default(): void
-    {
-        $html = Blade::render('<tedi:print>x</tedi:print>');
-
-        $this->assertMissingClass('no-print', $html);
-        $this->assertMissingClass('show-print', $html);
-    }
-
-    public function test_print_break_unions(): void
-    {
-        $breaks = ['auto', 'avoid', 'avoid-column', 'avoid-page', 'avoid-region'];
-
-        foreach ($breaks as $break) {
-            $this->assertHasClass('break-before-'.$break,
-                Blade::render('<tedi:print break-before="'.$break.'">x</tedi:print>'));
-
-            $this->assertHasClass('break-after-'.$break,
-                Blade::render('<tedi:print break-after="'.$break.'">x</tedi:print>'));
-
-            $this->assertHasClass('break-inside-'.$break,
-                Blade::render('<tedi:print break-inside="'.$break.'">x</tedi:print>'));
-        }
     }
 
     // =====================================================================
@@ -407,7 +234,9 @@ class ReactComponentsTest extends TestCase
 
         $toggle = Blade::render('<tedi:top-nav-item key="a">A</tedi:top-nav-item>');
         $this->assertStringContainsString('<button', $toggle);
-        $this->assertStringContainsString('aria-haspopup="true"', $toggle);
+        // Upstream 20.x dropped aria-haspopup: the panel is a disclosure.
+        $this->assertStringNotContainsString('aria-haspopup', $toggle);
+        $this->assertStringContainsString('aria-expanded="false"', $toggle);
         $this->assertStringContainsString('aria-controls="top-nav-submenu-a"', $toggle);
     }
 
@@ -507,14 +336,22 @@ class ReactComponentsTest extends TestCase
         $this->assertStringContainsString('aria-current="page"', $html);
     }
 
-    public function test_top_nav_separator_is_a_presentational_list_item(): void
+    /**
+     * 20.x moved the separator role off the `<li>` onto the line span (#823),
+     * so the list item keeps its list semantics.
+     */
+    public function test_top_nav_separator_role_sits_on_the_line_not_the_list_item(): void
     {
         $html = Blade::render('<tedi:top-nav-separator />');
 
         $this->assertHasClass('tedi-top-nav__separator', $html, on: 'tedi-top-nav__separator');
         $this->assertHasClass('tedi-top-nav__separator-line', $html, on: 'tedi-top-nav__separator-line');
-        $this->assertStringContainsString('role="separator"', $html);
-        $this->assertStringContainsString('aria-orientation="vertical"', $html);
+        $this->assertMatchesRegularExpression('/<li class="tedi-top-nav__separator">/', $html);
+        $this->assertMatchesRegularExpression(
+            '/<span role="separator" aria-orientation="vertical" class="tedi-top-nav__separator-line"><\/span>/',
+            $html
+        );
+        $this->assertStringNotContainsString('aria-hidden', $html);
     }
 
     // =====================================================================
@@ -602,7 +439,7 @@ class ReactComponentsTest extends TestCase
     /**
      * CONVENTIONS.md §4 — upstream emits `tedi-file-upload__label` /
      * `__label-wrapper` with no stylesheet rules, so they stay dropped.
-     * `__container--{size}` now has rules in React 19 and is emitted.
+     * `__container--{size}` gained rules upstream and is emitted.
      */
     public function test_file_upload_emits_container_size_modifiers(): void
     {
@@ -612,14 +449,54 @@ class ReactComponentsTest extends TestCase
         $this->assertHasClass('tedi-file-upload__container--small', $html, on: 'tedi-file-upload__container');
     }
 
-    public function test_file_upload_show_restrictions_builds_the_default_hint(): void
+    /**
+     * getDefaultHelpers() — the restrictions hint, with `max-size` in bytes
+     * (#889) and formatted by formatFileSize().
+     */
+    public function test_file_upload_restrictions_hint_uses_bytes(): void
     {
-        $html = Blade::render('<tedi:file-upload name="f" accept=".pdf,.jpg" :max-size="5" />');
-        $this->assertStringContainsString('Allowed file extensions: .pdf, .jpg', $html);
-        $this->assertStringContainsString('Maximum size: 5MB', $html);
+        $html = Blade::render('<tedi:file-upload id="f" accept=".pdf,.txt" :max-size="1024" />');
 
-        $off = Blade::render('<tedi:file-upload name="f" accept=".pdf" :show-restrictions="false" />');
-        $this->assertStringNotContainsString('Allowed file extensions:', $off);
+        $this->assertStringContainsString(
+            __('tedi::tedi.file-upload.accept').' .pdf, .txt. '.__('tedi::tedi.file-upload.max-size').' 1 KB',
+            $html
+        );
+        $this->assertStringContainsString('aria-describedby="f-helper"', $html);
+        $this->assertHasClass('tedi-feedback-text--hint', $html, on: 'tedi-feedback-text');
+    }
+
+    public function test_file_upload_format_file_size(): void
+    {
+        $cases = [
+            512 => '512 B',
+            1024 => '1 KB',
+            1536 => '1.5 KB',
+            512 * 1024 => '512 KB',
+            5 * 1024 ** 2 => '5 MB',
+            (int) (2.5 * 1024 ** 2) => '2.5 MB',
+            3 * 1024 ** 3 => '3 GB',
+        ];
+
+        foreach ($cases as $bytes => $expected) {
+            $html = Blade::render('<tedi:file-upload :max-size="'.$bytes.'" />');
+            $this->assertStringContainsString(__('tedi::tedi.file-upload.max-size').' '.$expected.'<', str_replace(["\n", '  '], '', $html), "$bytes bytes");
+        }
+    }
+
+    /** showRestrictions (#786) — and a passed helper wins over the hint. */
+    public function test_file_upload_show_restrictions_and_helper_precedence(): void
+    {
+        $off = Blade::render('<tedi:file-upload accept=".pdf" :show-restrictions="false" />');
+        $this->assertStringNotContainsString(__('tedi::tedi.file-upload.accept'), $off);
+        $this->assertStringNotContainsString('tedi-feedback-text', $off);
+
+        $error = Blade::render('<tedi:file-upload accept=".pdf" :helper="[\'type\' => \'error\', \'text\' => \'Vale\']" />');
+        $this->assertStringContainsString('Vale', $error);
+        $this->assertStringNotContainsString(__('tedi::tedi.file-upload.accept'), $error);
+        $this->assertHasClass('tedi-file-upload--error', $error, on: 'tedi-file-upload__container');
+
+        $none = Blade::render('<tedi:file-upload />');
+        $this->assertStringNotContainsString('tedi-feedback-text', $none);
     }
 
     // =====================================================================
@@ -697,13 +574,45 @@ class ReactComponentsTest extends TestCase
         $this->assertStringNotContainsString('tedi-multi-value-field__right-area', $empty);
     }
 
-    /** CONVENTIONS.md §4 — the stylesheet defines neither of these. */
-    public function test_multi_value_field_drops_the_unstyled_upstream_classes(): void
+    /** CONVENTIONS.md §4 — the stylesheet has no rule for the bare root class. */
+    public function test_multi_value_field_drops_the_unstyled_root_class(): void
     {
         $html = Blade::render('<tedi:multi-value-field :values="[\'a\']" />');
 
         $this->assertMissingClass('tedi-multi-value-field', $html);
-        $this->assertStringNotContainsString('tedi-multi-value-field__clear-button', $html);
+        $this->assertStringNotContainsString('class=""', $html);
+    }
+
+    /**
+     * 20.x's `--clear-on-interaction` rules key on `__clear-button`, so the
+     * class is emitted now, and the modifier only when a clear control shows.
+     */
+    public function test_multi_value_field_show_clear_on_interaction(): void
+    {
+        $plain = Blade::render('<tedi:multi-value-field :values="[\'a\']" />');
+        $this->assertHasClass('tedi-closing-button', $plain, on: 'tedi-multi-value-field__clear-button');
+        $this->assertStringNotContainsString('tedi-multi-value-field--clear-on-interaction', $plain);
+
+        $hover = Blade::render('<tedi:multi-value-field :values="[\'a\']" show-clear-on-interaction />');
+        $this->assertHasClass('tedi-multi-value-field--clear-on-interaction', $hover, on: 'tedi-multi-value-field--clear-on-interaction');
+
+        // showClear && showClearOnInteraction — no values, nothing to clear.
+        $empty = Blade::render('<tedi:multi-value-field :values="[]" show-clear-on-interaction />');
+        $this->assertStringNotContainsString('tedi-multi-value-field--clear-on-interaction', $empty);
+
+        $disabled = Blade::render('<tedi:multi-value-field :values="[\'a\']" show-clear-on-interaction disabled />');
+        $this->assertStringNotContainsString('tedi-multi-value-field--clear-on-interaction', $disabled);
+    }
+
+    /** labelProps.modifiers → core's text-* utilities on the label. */
+    public function test_multi_value_field_label_modifiers(): void
+    {
+        $one = Blade::render('<tedi:multi-value-field label="Valik" label-modifiers="nowrap" />');
+        $this->assertHasClass('text-nowrap', $one, on: 'tedi-label');
+
+        $many = Blade::render('<tedi:multi-value-field label="Valik" :label-modifiers="[\'break-word\', \'uppercase\']" />');
+        $this->assertHasClass('text-break-word', $many, on: 'tedi-label');
+        $this->assertHasClass('text-uppercase', $many, on: 'tedi-label');
     }
 
     // =====================================================================
@@ -772,5 +681,63 @@ class ReactComponentsTest extends TestCase
         $html = Blade::render('<tedi:date-time-field :open="true" disabled />');
 
         $this->assertStringNotContainsString('tedi-date-time-field__popup', $html);
+    }
+
+    /**
+     * Upstream's TextField always draws a border; here that is the date-field
+     * surface shell around the date-input — exactly one surface, standalone or
+     * wrapped, and none of its own under a form-field box (an `icon`).
+     */
+    public function test_date_time_field_paints_exactly_one_surface(): void
+    {
+        $count = function (string $html): int {
+            preg_match_all('/(?<![-:.\w])class="([^"]*)"/', $html, $m);
+
+            return count(array_filter($m[1], fn ($c) => in_array('tedi-field-surface', preg_split('/\s+/', trim($c)), true)));
+        };
+
+        $html = Blade::render('<tedi:date-time-field display="01.01.2026 10:00" />');
+        $this->assertSame(1, $count($html));
+        $this->assertHasClass('tedi-field-surface', $html, on: 'tedi-date-field');
+
+        $html = Blade::render('<tedi:form-field :invalid="true"><tedi:date-time-field display="01.01.2026 10:00" /></tedi:form-field>');
+        $this->assertSame(1, $count($html));
+        $this->assertHasClass('tedi-field-surface--invalid', $html, on: 'tedi-date-field');
+        $this->assertSame(1, substr_count($html, '__clear"') + substr_count($html, '__clear '));
+
+        $html = Blade::render('<tedi:form-field icon="info"><tedi:date-time-field display="01.01.2026 10:00" /></tedi:form-field>');
+        $this->assertSame(1, $count($html));
+        $this->assertSame(['tedi-date-field'], $this->classesOf($html, 'tedi-date-field'));
+    }
+
+    /** React 20.1: `clearable` (default true) gates the clear button. */
+    public function test_date_time_field_clearable(): void
+    {
+        $html = Blade::render('<tedi:date-time-field display="01.01.2026 10:00" />');
+        $this->assertStringContainsString('tedi-date-input__clear', $html);
+
+        $html = Blade::render('<tedi:date-time-field display="01.01.2026 10:00" :clearable="false" />');
+        $this->assertStringNotContainsString('tedi-date-input__clear', $html);
+    }
+
+    /**
+     * React 20.1 moved the popup ARIA off the container and the input onto the
+     * calendar icon button, with aria-controls naming the open popup.
+     */
+    public function test_date_time_field_popup_aria_lives_on_the_icon_button(): void
+    {
+        $closed = Blade::render('<tedi:date-time-field input-id="dtf" />');
+        preg_match('/<button[^>]*tedi-date-input__icon[^>]*>/s', $closed, $button);
+        $this->assertStringContainsString('aria-haspopup="dialog"', $button[0]);
+        $this->assertStringContainsString('aria-expanded="false"', $button[0]);
+        $this->assertStringNotContainsString('aria-controls', $button[0]);
+        $this->assertSame(1, substr_count($closed, 'aria-haspopup'));
+        $this->assertDoesNotMatchRegularExpression('/<input[^>]*aria-expanded/s', $closed);
+
+        $open = Blade::render('<tedi:date-time-field input-id="dtf" :open="true" />');
+        preg_match('/<button[^>]*tedi-date-input__icon[^>]*>/s', $open, $button);
+        $this->assertStringContainsString('aria-expanded="true"', $button[0]);
+        $this->assertStringContainsString('aria-controls="dtf-popup"', $button[0]);
+        $this->assertMatchesRegularExpression('/<div class="tedi-date-time-field__popup" id="dtf-popup" role="dialog">/', $open);
     }
 }

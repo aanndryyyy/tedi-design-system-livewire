@@ -12,7 +12,26 @@
     `ModalConfig` key that exists only for them are NOT ported:
     `scrollBehavior` (its only rule is `.tedi-modal-dialog--scroll-page`),
     `fullscreen` / `fullscreen-<bp>` (also a breakpoint prop — CONVENTIONS §7 #1),
-    `maxWidth`, `closeOnEscape`, `ariaLabel`, `ariaLabelledBy`, `data`.
+    `maxWidth`, `closeOnEscape`, `data`. (`ariaLabel` / `ariaLabelledBy` used
+    to be service-only too; Angular 9 added them as standalone inputs, so they
+    are ported — see below.)
+
+    Accessible name (upstream #680). `aria-label` and `aria-labelledby` are
+    props here, as Angular's `ariaLabel` / `ariaLabelledBy` inputs, and land on
+    the `role="dialog"` element rather than the `tedi-modal` host. `aria-label`
+    wins: when it is set, `aria-labelledby` is not emitted. With neither, the
+    dialog is named from the first `h1`–`h6` in `tedi:modal-header`. Angular
+    finds that heading with a DOM query on open (`resolveModalHeadingId`), and
+    so does `tediModal` — Blade cannot see inside the slot — so the
+    `aria-labelledby` pointing at the heading appears only once Alpine runs.
+
+    Close guard (upstream #674). Angular's `ModalRef.canClose` exists only in
+    service mode. The port exposes the same decision point on this branch as a
+    cancelable `tedi-modal-close` event on the `tedi-modal` element, with
+    `detail.reason` = `backdrop` | `escape` | `close-button` | `programmatic`
+    (upstream's `ModalCloseReason`). `preventDefault()` keeps the modal open;
+    Alpine's `close()` is the unguarded close (upstream's `closeAll()`). See
+    `resources/js/src/modal.js`.
 
     Divergences a consumer will notice:
 
@@ -47,6 +66,13 @@
     'position' => 'center',
     /** Whether clicking the backdrop closes the modal. */
     'closeOnBackdropClick' => true,
+    /** Accessible name for the dialog. Only needed when the header has no heading, or it is not the name to announce. */
+    'ariaLabel' => null,
+    /**
+     * Id of an element labelling the dialog, for a label outside the header. Ignored when `aria-label` is set.
+     * Angular's `ariaLabelledBy`; spelled `ariaLabelledby` because Blade camel-cases the `aria-labelledby` attribute that way.
+     */
+    'ariaLabelledby' => null,
 ])
 
 @php
@@ -55,6 +81,13 @@
     $customWidth = $isPresetWidth ? null : $width;
 
     $isOpen = (bool) $open;
+
+    // dialogAriaLabel() / dialogAriaLabelledBy(): aria-label wins, so it is
+    // never paired with a labelledby. With neither, tediModal resolves the
+    // header heading on open.
+    $dialogAriaLabel = $ariaLabel ?: null;
+    $dialogAriaLabelledBy = $dialogAriaLabel ? null : ($ariaLabelledby ?: null);
+    $labelled = $dialogAriaLabel !== null || $dialogAriaLabelledBy !== null;
 
     // classes(): position 'top' emits BOTH --center and --top; 'bottom' emits
     // neither (dropped, no rule).
@@ -73,7 +106,7 @@
     ], array_fill_keys($positionClasses, true), [
         'tedi-modal--open' => $isOpen,
     ])) }}
-    x-data="tediModal({ open: {{ $isOpen ? 'true' : 'false' }}, closeOnBackdropClick: {{ $closeOnBackdropClick ? 'true' : 'false' }} })"
+    x-data="tediModal({ open: {{ $isOpen ? 'true' : 'false' }}, closeOnBackdropClick: {{ $closeOnBackdropClick ? 'true' : 'false' }}, labelled: {{ $labelled ? 'true' : 'false' }} })"
     x-bind:class="{ 'tedi-modal--open': open }"
     x-on:keydown.window="onKeydown($event)"
 >
@@ -83,6 +116,8 @@
         class="tedi-modal__dialog"
         role="dialog"
         aria-modal="true"
+        @if ($dialogAriaLabel) aria-label="{{ $dialogAriaLabel }}" @endif
+        @if ($dialogAriaLabelledBy) aria-labelledby="{{ $dialogAriaLabelledBy }}" @endif
         tabindex="-1"
         @if ($customWidth) style="width: {{ $customWidth }}" @endif
         x-ref="dialog"

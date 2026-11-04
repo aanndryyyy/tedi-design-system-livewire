@@ -1,6 +1,6 @@
 {{--
     TEDI Table.
-    Port of angular/tedi/components/content/table/table.component.{ts,html,table.types.ts}
+    Port of angular/src/tedi/components/content/table/table.component.{ts,html,table.types.ts}
 
     ══ DOCUMENTED SUBSET (CONVENTIONS.md §7, same spirit as <tedi:select>) ══
 
@@ -39,11 +39,20 @@
         `.tedi-table__filter-popover` / `__filter` / `__filter-actions`): its
         body is an Angular `TemplateRef` bound to per-column draft state that
         only the engine owns. `enableColumnFilters` — the plain filter ROW —
-        IS ported, as inert markup with an attributes hook per column.
+        IS ported, as inert markup with an attributes hook per column. With
+        the popover go its small-viewport **filter modal**
+        (`TableFilterModalComponent`) and the three inputs that configure the
+        two (`filterModalBreakpoint`, `filterModalFullscreen`,
+        `filterPopoverWidth`, plus `filterable.popoverWidth`).
       • `aria-rowcount` / `aria-rowindex`: both are derived from the paginated
         row model (`ariaRowIndexingEnabled = paginationEnabled && !interactive`,
         page offsets, total row count) which lives in the engine.
       • breakpoint props — never declared anywhere in this package (§7.1).
+
+    The scroll container's `--shadow-start` / `--shadow-end` / `--shadow-header`
+    elevation classes are toggled by an inline Alpine measure on `scroll` and
+    a ResizeObserver, as upstream's `measureScrollShadows()` does; without JS
+    they never appear, matching Angular's initial render.
 
     CLASSES DROPPED because the vendored SCSS defines no rule for them (§4):
       • `tedi-table--medium` — only `.tedi-table--small` has a rule.
@@ -60,11 +69,15 @@
         from table-managed state; here you compose <tedi:pagination> yourself in
         the `pagination` / `pagination-top` slots and the wrapper divs plus the
         `--has-pagination*` host classes follow from slot presence.
-      • `stickyFirstColumn` offsets: Angular measures each frozen column with
-        TanStack's `getSize()`. Here the same arithmetic runs on the declared
-        widths — control columns are 60px (upstream's `CONTROL_COLUMN_WIDTH`)
-        and a content column falls back to TanStack's 150px default. Set
-        `width` on your first content column to keep the offsets exact.
+      • `stickyFirstColumn` / `stickyLastColumn` offsets: Angular measures
+        each frozen column with TanStack's `getSize()`. Here the same
+        arithmetic runs on the declared widths — icon-only control columns
+        are 40px (upstream's `CONTROL_COLUMN_WIDTH`), and a content column or
+        a labelled expand column falls back to TanStack's 150px default. Set
+        `width` on your first / last content column to keep the offsets exact.
+      • Pagination's custom results (`tediPaginationResults`, which upstream
+        now renders in BOTH paginators) are whatever you put in each
+        `tedi:pagination`'s `results` slot.
       • `caption` / `placeholder` accept a string or any Htmlable; Angular also
         accepts a `TemplateRef`.
       • `rowAriaLabel` (a callback) becomes each row's `ariaLabel` key.
@@ -82,8 +95,9 @@
     /** Stable identifier; emitted as the inner <table>'s id and used for synthetic ids. */
     'id' => null,
     /**
-     * Column[]. Keys: key (required), header, footer, align (left|center|right),
-     * vAlign (top|middle|bottom), sortable, sort (none|asc|desc), sortAttributes,
+     * Column[]. Keys: key (required), header, footer, align (left|center|right;
+     * body / footer cells, and the header unless headerAlign is set), headerAlign
+     * (left|center|right), vAlign (top|middle|bottom), sortable, sort (none|asc|desc), sortAttributes,
      * width, minWidth, maxWidth, filterable, filter (Htmlable, replaces the default
      * filter input), filterAttributes, attributes (extra <th> attributes).
      */
@@ -99,14 +113,24 @@
     'size' => 'medium',
     /** Table caption; string or Htmlable. */
     'caption' => null,
+    /**
+     * Accessible name for the <table>. Use when no visible `caption` is rendered,
+     * so screen readers can announce the table and tell it apart from others on
+     * the page. Overrides `caption` as the accessible name; ignored when
+     * `ariaLabelledby` is provided.
+     */
+    'ariaLabel' => null,
+    /** ID of an external element that names the <table> (e.g. a heading above it). Takes precedence over `ariaLabel` and `caption`. */
+    'ariaLabelledby' => null,
     /** Alternating row backgrounds. */
     'striped' => false,
     /** Vertical separators between columns. */
     'verticalBorders' => false,
-    /** Remove the outer border + radius. */
+    /** Remove only the outer border + corner radius. Borders between rows and columns are unaffected. */
     'borderless' => false,
     /** Freeze the leading control columns + first content column during horizontal scroll. */
     'stickyFirstColumn' => false,
+    /** Freeze the last content column + any trailing control columns during horizontal scroll. */
     'stickyLastColumn' => false,
     /** Pin <thead> during vertical scroll. Requires maxHeight. */
     'stickyHeader' => false,
@@ -134,7 +158,12 @@
     'expandButtonVariant' => null,
     /** Visible expand-toggle label: a string, or ['open' => …, 'close' => …]. Icon-only when unset. */
     'expandButtonLabel' => null,
-    /** Order of the auto-injected control columns. `drag` is accepted but never rendered. */
+    /**
+     * Order of the auto-injected control columns. `drag` is accepted but never
+     * rendered. Include the `content` sentinel to split leading vs trailing:
+     * controls listed after it render after the data columns, e.g.
+     * ['content', 'expand'] puts the expand toggle in the last column.
+     */
     'controlColumnOrder' => ['drag', 'select', 'expand'],
     /** all|between|none — where row-group dividers are drawn. Needs `grouped`. */
     'rowGroupDividers' => 'all',
@@ -155,11 +184,10 @@
     'filterPlaceholder' => null,
 ])
 
+@use('Illuminate\Contracts\Support\Htmlable')
+@use('Illuminate\View\ComponentAttributeBag')
 @php
-    use Illuminate\Contracts\Support\Htmlable;
-    use Illuminate\View\ComponentAttributeBag;
-
-    $CONTROL_COLUMN_WIDTH = 60;
+    $CONTROL_COLUMN_WIDTH = 40;
     $DEFAULT_COLUMN_WIDTH = 150; // TanStack's default column size.
 
     $resolvedId = $id ?: \Tedi\Livewire\Tedi::id('tedi-table');
@@ -183,49 +211,70 @@
     if ($enableRowSelection) {
         $controls['select'] = [
             'srLabel' => __('tedi::tedi.table.select-column'),
-            'align' => 'center',
             'vAlign' => 'top',
             'width' => $CONTROL_COLUMN_WIDTH,
+            // controlCellClass(): icon-only controls drop to reduced padding.
+            'class' => 'tedi-table__cell--control',
         ];
     }
 
     if ($expandable) {
         $controls['expand'] = [
             'srLabel' => __('tedi::tedi.table.expand-column'),
-            'align' => $expandIconOnly ? 'center' : null,
             'vAlign' => 'top',
             'width' => $expandIconOnly ? $CONTROL_COLUMN_WIDTH : null,
+            // A labelled expand column hugs its content (`--control-fit`) and
+            // gets no width of its own, rather than TanStack's 150px default.
+            'class' => $expandIconOnly ? 'tedi-table__cell--control' : 'tedi-table__cell--control-fit',
         ];
     }
 
+    // The `content` sentinel splits leading (before) from trailing (after)
+    // controls; without it every listed control is leading. Enabled controls
+    // the consumer left out of the order stay leading.
     $order = array_values(array_unique($controlColumnOrder));
     $contentIndex = array_search('content', $order, true);
     $beforeContent = $contentIndex === false ? $order : array_slice($order, 0, $contentIndex);
     $afterContent = $contentIndex === false ? [] : array_slice($order, $contentIndex + 1);
 
-    $toControls = function (array $keys) use ($controls) {
-        $out = [];
-        foreach ($keys as $key) {
-            if (isset($controls[$key])) {
-                $out[$key] = $controls[$key];
-            }
-        }
+    $leadingControls = [];
+    $trailingControls = [];
 
-        return $out;
-    };
-
-    $leadingControlColumns = $toControls($beforeContent);
-    $trailingControlColumns = $toControls($afterContent);
-
-    foreach ($controls as $key => $control) {
-        if (! isset($leadingControlColumns[$key]) && ! isset($trailingControlColumns[$key])) {
-            $leadingControlColumns[$key] = $control;
+    foreach ($beforeContent as $key) {
+        if (isset($controls[$key])) {
+            $leadingControls[$key] = $controls[$key];
         }
     }
 
-    $controlColumns = $leadingControlColumns + $trailingControlColumns;
+    foreach ($controls as $key => $control) {
+        if (! in_array($key, $order, true)) {
+            $leadingControls[$key] = $control;
+        }
+    }
 
-    $leafColumnCount = count($controlColumns) + count($columns);
+    foreach ($afterContent as $key) {
+        if (isset($controls[$key])) {
+            $trailingControls[$key] = $controls[$key];
+        }
+    }
+
+
+    // leafColumns() in render order: leading controls, data, trailing controls.
+    $leaf = [];
+
+    foreach ($leadingControls as $key => $control) {
+        $leaf[] = ['type' => 'control', 'key' => $key, 'control' => $control, 'stickyId' => 'control:'.$key];
+    }
+
+    foreach ($columns as $column) {
+        $leaf[] = ['type' => 'column', 'column' => $column, 'stickyId' => 'column:'.$column['key']];
+    }
+
+    foreach ($trailingControls as $key => $control) {
+        $leaf[] = ['type' => 'control', 'key' => $key, 'control' => $control, 'stickyId' => 'control:'.$key];
+    }
+
+    $leafColumnCount = count($leaf);
 
     // ── stickyLeftColumns(): the leading control columns + the first content
     //    column, pinned as one block with cumulative `left` offsets.
@@ -234,7 +283,7 @@
     if ($stickyFirstColumn) {
         $frozen = [];
 
-        foreach ($leadingControlColumns as $key => $control) {
+        foreach ($leadingControls as $key => $control) {
             $frozen[] = ['id' => 'control:'.$key, 'width' => $control['width'] ?? $DEFAULT_COLUMN_WIDTH];
         }
 
@@ -255,12 +304,16 @@
         }
     }
 
+    // ── stickyRightColumns(): the last content column + any trailing control
+    //    columns, pinned as one block. `right` is the cumulative offset from
+    //    the trailing edge; `start` is the rightmost cell, `edge` the leftmost
+    //    (it draws the divider facing the scrolling body).
     $stickyRight = [];
 
     if ($stickyLastColumn) {
         $frozen = [];
 
-        foreach (array_reverse($trailingControlColumns, true) as $key => $control) {
+        foreach (array_reverse($trailingControls, true) as $key => $control) {
             $frozen[] = ['id' => 'control:'.$key, 'width' => $control['width'] ?? $DEFAULT_COLUMN_WIDTH];
         }
 
@@ -291,8 +344,9 @@
     ]);
 
     // headerCellWidth(): under fixedLayout only explicitly-sized columns get a
-    // width, so the unsized ones absorb the leftover space. `left` comes from
-    // stickyLeftColumns(). Returns a ready-to-emit style string, or null.
+    // width, so the unsized ones absorb the leftover space. `left` / `right`
+    // come from stickyLeftColumns() / stickyRightColumns(). Returns a
+    // ready-to-emit style string, or null.
     $cellStyle = function (string $stickyId, ?int $width = null, ?int $minWidth = null, ?int $maxWidth = null, bool $withSize = true)
         use (&$sticky, &$stickyRight, $fixedLayout, $DEFAULT_COLUMN_WIDTH) {
         $parts = [];
@@ -315,7 +369,6 @@
         if (isset($sticky[$stickyId])) {
             $parts[] = 'left: '.$sticky[$stickyId]['left'].'px';
         }
-
         if (isset($stickyRight[$stickyId])) {
             $parts[] = 'right: '.$stickyRight[$stickyId]['right'].'px';
         }
@@ -378,112 +431,120 @@
         <div class="tedi-table__pagination tedi-table__pagination--top">{{ $paginationTop }}</div>
     @endif
 
+    {{-- measureScrollShadows(): the elevation shadows only show while there is
+         off-edge content (≈1px tolerance for sub-pixel rounding). --}}
     <div
         class="tedi-table__scroll"
         tabindex="0"
         role="group"
         aria-label="{{ __('tedi::tedi.table.scroll-region') }}"
         @if ($maxHeightStyle) style="{{ $maxHeightStyle }}" @endif
+        x-data="{
+            shadowStart: false,
+            shadowEnd: false,
+            shadowHeader: false,
+            measureScrollShadows() {
+                const max = $el.scrollWidth - $el.clientWidth;
+                this.shadowStart = $el.scrollLeft > 1;
+                this.shadowEnd = $el.scrollLeft < max - 1;
+                this.shadowHeader = $el.scrollTop > 1;
+            },
+        }"
+        x-init="const observer = new ResizeObserver(() => measureScrollShadows()); observer.observe($el); if ($refs.table) observer.observe($refs.table)"
+        x-on:scroll="measureScrollShadows()"
+        x-bind:class="{
+            'tedi-table__scroll--shadow-start': shadowStart,
+            'tedi-table__scroll--shadow-end': shadowEnd,
+            'tedi-table__scroll--shadow-header': shadowHeader,
+        }"
     >
-        <table class="tedi-table__table" id="{{ $resolvedId }}">
+        <table
+            class="tedi-table__table"
+            id="{{ $resolvedId }}"
+            x-ref="table"
+            @if ($ariaLabel) aria-label="{{ $ariaLabel }}" @endif
+            @if ($ariaLabelledby) aria-labelledby="{{ $ariaLabelledby }}" @endif
+        >
             @if ($caption !== null && $caption !== '')
                 <caption class="tedi-table__caption">{!! $render($caption) !!}</caption>
             @endif
 
             <thead class="tedi-table__head">
                 <tr class="tedi-table__row">
-                    @foreach ($leadingControlColumns as $controlKey => $control)
-                        <th
-                            scope="col"
-                            @class(array_merge([
-                                'tedi-table__header-cell',
-                                'tedi-table__cell--align-'.$control['align'] => $control['align'] ?? false,
-                                'tedi-table__cell--valign-'.$control['vAlign'] => $control['vAlign'] ?? false,
-                            ], $stickyClasses('control:'.$controlKey)))
-                            @php $style = $cellStyle('control:'.$controlKey, $control['width'] ?? null, $control['width'] ?? null, $control['width'] ?? null); @endphp
-                            @if ($style) style="{{ $style }}" @endif
-                        >
-                            <span class="tedi-table__sr-only">{{ $control['srLabel'] }}</span>
-                            @if ($controlKey === 'select' && $selectionMode === 'multiple')
-                                <tedi:checkbox
-                                    :id="$resolvedId.'-select-all'"
-                                    :name="$resolvedId.'-select-all'"
-                                    :checked="(bool) $selectAllChecked"
-                                    :attributes="$bag($selectAllAttributes, [
-                                        'aria-label' => __('tedi::tedi.table.select-all.'.($selectAllChecked ? 'true' : 'false')),
-                                        'x-init' => $selectAllIndeterminate ? '$el.indeterminate = true' : null,
-                                    ])"
-                                />
-                            @endif
-                        </th>
-                    @endforeach
-
-                    @foreach ($columns as $column)
-                        @php
-                            $sort = $column['sort'] ?? 'none';
-                            $isSortable = (bool) ($column['sortable'] ?? false);
-                        @endphp
-                        <th
-                            scope="col"
-                            @class(array_merge([
-                                'tedi-table__header-cell',
-                                'tedi-table__cell--align-'.($column['align'] ?? '') => $column['align'] ?? false,
-                                'tedi-table__cell--valign-'.($column['vAlign'] ?? '') => $column['vAlign'] ?? false,
-                            ], $stickyClasses('column:'.$column['key'])))
-                            @php $style = $cellStyle('column:'.$column['key'], $column['width'] ?? null, $column['minWidth'] ?? null, $column['maxWidth'] ?? null); @endphp
-                            @if ($style) style="{{ $style }}" @endif
-                            @if ($isSortable) aria-sort="{{ $ariaSorts[$sort] ?? 'none' }}" @endif
-                            {{ $bag($column['attributes'] ?? []) }}
-                        >
-                            <span class="tedi-table__header-content">
-                                @if ($isSortable)
-                                    <tedi:table-header-button
-                                        :icon="$sortIcons[$sort] ?? 'unfold_more'"
-                                        :selected="$sort !== 'none'"
-                                        :attributes="$bag($column['sortAttributes'] ?? [])"
-                                    >{!! $render($column['header'] ?? '') !!}</tedi:table-header-button>
-                                @else
-                                    {!! $render($column['header'] ?? '') !!}
+                    @foreach ($leaf as $entry)
+                        @if ($entry['type'] === 'control')
+                            @php
+                                $controlKey = $entry['key'];
+                                $control = $entry['control'];
+                                $style = $control['width'] !== null
+                                    ? $cellStyle($entry['stickyId'], $control['width'], $control['width'], $control['width'])
+                                    : $cellStyle($entry['stickyId'], withSize: false);
+                            @endphp
+                            <th
+                                scope="col"
+                                @class(array_merge([
+                                    'tedi-table__header-cell',
+                                    'tedi-table__cell--valign-'.$control['vAlign'],
+                                    $control['class'],
+                                ], $stickyClasses($entry['stickyId'])))
+                                @if ($style) style="{{ $style }}" @endif
+                            >
+                                <span class="sr-only">{{ $control['srLabel'] }}</span>
+                                @if ($controlKey === 'select' && $selectionMode === 'multiple')
+                                    <tedi:checkbox
+                                        :id="$resolvedId.'-select-all'"
+                                        :name="$resolvedId.'-select-all'"
+                                        :checked="(bool) $selectAllChecked"
+                                        :attributes="$bag($selectAllAttributes, [
+                                            'aria-label' => __('tedi::tedi.table.select-all.'.($selectAllChecked ? 'true' : 'false')),
+                                            'x-init' => $selectAllIndeterminate ? '$el.indeterminate = true' : null,
+                                        ])"
+                                    />
                                 @endif
-                            </span>
-                        </th>
-                    @endforeach
-
-                    @foreach ($trailingControlColumns as $controlKey => $control)
-                        <th
-                            scope="col"
-                            @class(array_merge([
-                                'tedi-table__header-cell',
-                                'tedi-table__cell--align-'.$control['align'] => $control['align'] ?? false,
-                                'tedi-table__cell--valign-'.$control['vAlign'] => $control['vAlign'] ?? false,
-                            ], $stickyClasses('control:'.$controlKey)))
-                            @php $style = $cellStyle('control:'.$controlKey, $control['width'] ?? null, $control['width'] ?? null, $control['width'] ?? null); @endphp
-                            @if ($style) style="{{ $style }}" @endif
-                        >
-                            <span class="tedi-table__sr-only">{{ $control['srLabel'] }}</span>
-                            @if ($controlKey === 'select' && $selectionMode === 'multiple')
-                                <tedi:checkbox
-                                    :id="$resolvedId.'-select-all'"
-                                    :name="$resolvedId.'-select-all'"
-                                    :checked="(bool) $selectAllChecked"
-                                    :attributes="$bag($selectAllAttributes, [
-                                        'aria-label' => __('tedi::tedi.table.select-all.'.($selectAllChecked ? 'true' : 'false')),
-                                        'x-init' => $selectAllIndeterminate ? '$el.indeterminate = true' : null,
-                                    ])"
-                                />
-                            @endif
-                        </th>
+                            </th>
+                        @else
+                            @php
+                                $column = $entry['column'];
+                                $sort = $column['sort'] ?? 'none';
+                                $isSortable = (bool) ($column['sortable'] ?? false);
+                                // headerAlign falls back to align (#670).
+                                $headerAlign = $column['headerAlign'] ?? $column['align'] ?? null;
+                                $style = $cellStyle($entry['stickyId'], $column['width'] ?? null, $column['minWidth'] ?? null, $column['maxWidth'] ?? null);
+                            @endphp
+                            <th
+                                scope="col"
+                                @class(array_merge([
+                                    'tedi-table__header-cell',
+                                    'tedi-table__cell--align-'.$headerAlign => (bool) $headerAlign,
+                                    'tedi-table__cell--valign-'.($column['vAlign'] ?? '') => $column['vAlign'] ?? false,
+                                ], $stickyClasses($entry['stickyId'])))
+                                @if ($style) style="{{ $style }}" @endif
+                                @if ($isSortable) aria-sort="{{ $ariaSorts[$sort] ?? 'none' }}" @endif
+                                {{ $bag($column['attributes'] ?? []) }}
+                            >
+                                <span class="tedi-table__header-content">
+                                    @if ($isSortable)
+                                        <tedi:table-header-button
+                                            :icon="$sortIcons[$sort] ?? 'unfold_more'"
+                                            :selected="$sort !== 'none'"
+                                            :attributes="$bag($column['sortAttributes'] ?? [])"
+                                        >{!! $render($column['header'] ?? '') !!}</tedi:table-header-button>
+                                    @else
+                                        {!! $render($column['header'] ?? '') !!}
+                                    @endif
+                                </span>
+                            </th>
+                        @endif
                     @endforeach
                 </tr>
+
                 @if ($enableColumnFilters)
                     <tr class="tedi-table__row tedi-table__row--filter">
-                        @foreach ($leadingControlColumns as $controlKey => $control)
-                            <th class="tedi-table__header-cell" scope="col"></th>
-                        @endforeach
-
-                        @foreach ($columns as $column)
+                        @foreach ($leaf as $entry)
+                            @php $column = $entry['column'] ?? []; @endphp
                             <th class="tedi-table__header-cell" scope="col">
-                                @if (($column['filter'] ?? null) !== null)
+                                @if ($entry['type'] === 'control')
+                                @elseif (($column['filter'] ?? null) !== null)
                                     {!! $render($column['filter']) !!}
                                 @elseif ($column['filterable'] ?? false)
                                     @php $filterId = $resolvedId.'-filter-'.$column['key']; @endphp
@@ -500,12 +561,9 @@
                                 @endif
                             </th>
                         @endforeach
-
-                        @foreach ($trailingControlColumns as $controlKey => $control)
-                            <th class="tedi-table__header-cell" scope="col"></th>
-                        @endforeach
                     </tr>
                 @endif
+            </thead>
 
             <tbody class="tedi-table__body" x-data="{ tediTableExpanded: {{ \Illuminate\Support\Js::from($expandState) }} }">
                 @if (count($rows) === 0)
@@ -549,14 +607,19 @@
                             @endif
                             {{ $bag($row['attributes'] ?? []) }}
                         >
-                            @foreach ($leadingControlColumns as $controlKey => $control)
+                            @foreach ($leaf as $entry)
+                                @if ($entry['type'] === 'control')
+                                @php
+                                    $controlKey = $entry['key'];
+                                    $control = $entry['control'];
+                                    $style = $cellStyle($entry['stickyId'], withSize: false);
+                                @endphp
                                 <td
                                     @class(array_merge([
                                         'tedi-table__cell',
-                                        'tedi-table__cell--align-'.$control['align'] => $control['align'] ?? false,
-                                        'tedi-table__cell--valign-'.$control['vAlign'] => $control['vAlign'] ?? false,
-                                    ], $stickyClasses('control:'.$controlKey)))
-                                    @php $style = $cellStyle('control:'.$controlKey, withSize: false); @endphp
+                                        'tedi-table__cell--valign-'.$control['vAlign'],
+                                        $control['class'],
+                                    ], $stickyClasses($entry['stickyId'])))
                                     @if ($style) style="{{ $style }}" @endif
                                 >
                                     @if ($controlKey === 'select')
@@ -608,89 +671,28 @@
                                         </span>
                                     @endif
                                 </td>
-                            @endforeach
-
-                            @foreach ($columns as $column)
+                                @else
                                 @php
+                                    $column = $entry['column'];
                                     $cell = $row['cells'][$column['key']] ?? null;
                                     $cellData = is_array($cell) ? $cell : ['value' => $cell];
                                     $rowspan = $cellData['rowspan'] ?? null;
                                 @endphp
 
                                 @if ($rowspan !== 0)
+                                    @php $style = $cellStyle($entry['stickyId'], withSize: false); @endphp
                                     <td
                                         @class(array_merge([
                                             'tedi-table__cell',
                                             'tedi-table__cell--align-'.($cellData['align'] ?? $column['align'] ?? '') => ($cellData['align'] ?? $column['align'] ?? false),
                                             'tedi-table__cell--valign-'.($cellData['vAlign'] ?? $column['vAlign'] ?? '') => ($cellData['vAlign'] ?? $column['vAlign'] ?? false),
-                                        ], $stickyClasses('column:'.$column['key'])))
-                                        @php $style = $cellStyle('column:'.$column['key'], withSize: false); @endphp
+                                        ], $stickyClasses($entry['stickyId'])))
                                         @if ($style) style="{{ $style }}" @endif
                                         @if ($rowspan !== null && $rowspan > 1) rowspan="{{ $rowspan }}" @endif
                                         {{ $bag($cellData['attributes'] ?? []) }}
                                     >{!! $render($cellData['value'] ?? null) !!}</td>
                                 @endif
-                            @endforeach
-
-                            @foreach ($trailingControlColumns as $controlKey => $control)
-                                <td
-                                    @class(array_merge([
-                                        'tedi-table__cell',
-                                        'tedi-table__cell--align-'.$control['align'] => $control['align'] ?? false,
-                                        'tedi-table__cell--valign-'.$control['vAlign'] => $control['vAlign'] ?? false,
-                                    ], $stickyClasses('control:'.$controlKey)))
-                                    @php $style = $cellStyle('control:'.$controlKey, withSize: false); @endphp
-                                    @if ($style) style="{{ $style }}" @endif
-                                >
-                                    @if ($controlKey === 'select')
-                                        @if ($selectionMode === 'multiple')
-                                            <tedi:checkbox
-                                                :id="$resolvedId.'-select-'.$rowId"
-                                                :name="$resolvedId.'-select-'.$rowId"
-                                                :checked="(bool) ($row['selected'] ?? false)"
-                                                :disabled="(bool) ($row['selectDisabled'] ?? false)"
-                                                :attributes="$bag($row['selectAttributes'] ?? [], [
-                                                    'aria-label' => __('tedi::tedi.table.select-row.'.(($row['selected'] ?? false) ? 'true' : 'false')),
-                                                    'x-init' => ($row['selectIndeterminate'] ?? false) ? '$el.indeterminate = true' : null,
-                                                    'x-on:click' => '$event.stopPropagation()',
-                                                ])"
-                                            />
-                                        @else
-                                            <tedi:radio
-                                                :id="$resolvedId.'-select-'.$rowId"
-                                                :name="$resolvedId.'-select-row'"
-                                                :checked="(bool) ($row['selected'] ?? false)"
-                                                :disabled="(bool) ($row['selectDisabled'] ?? false)"
-                                                :attributes="$bag($row['selectAttributes'] ?? [], [
-                                                    'aria-label' => __('tedi::tedi.table.select-row.'.(($row['selected'] ?? false) ? 'true' : 'false')),
-                                                    'x-on:click' => '$event.stopPropagation()',
-                                                ])"
-                                            />
-                                        @endif
-                                    @elseif ($controlKey === 'expand')
-                                        <span @class([
-                                            'tedi-table__expand-toggle',
-                                            'tedi-table__expand-toggle--icon-only' => $expandIconOnly,
-                                        ])>
-                                            @if ($rowExpandable)
-                                                <tedi:collapse-button
-                                                    :state="$openExpr"
-                                                    :open="$isExpanded"
-                                                    :hide-text="$expandIconOnly"
-                                                    :arrow-type="$expandButtonVariant ?? 'secondary'"
-                                                    :open-text="$expandOpenText"
-                                                    :close-text="$expandCloseText"
-                                                    :id="$resolvedId.'-expand-'.$rowId"
-                                                    :aria-controls="($row['sub'] ?? null) !== null ? $subRowId : null"
-                                                    :aria-label="$expandIconOnly ? __('tedi::tedi.table.'.($isExpanded ? 'collapse-row' : 'expand-row')) : null"
-                                                    :attributes="$bag($row['expandAttributes'] ?? [], [
-                                                        'x-on:click.stop' => '',
-                                                    ])"
-                                                />
-                                            @endif
-                                        </span>
-                                    @endif
-                                </td>
+                                @endif
                             @endforeach
                         </tr>
 
@@ -725,31 +727,22 @@
             @if ($hasFooter)
                 <tfoot class="tedi-table__foot">
                     <tr class="tedi-table__row">
-                        @foreach ($leadingControlColumns as $controlKey => $control)
-                            <td @class([
-                                'tedi-table__cell',
-                                'tedi-table__cell--footer',
-                                'tedi-table__cell--align-'.$control['align'] => $control['align'] ?? false,
-                                'tedi-table__cell--valign-'.$control['vAlign'] => $control['vAlign'] ?? false,
-                            ])></td>
-                        @endforeach
-
-                        @foreach ($columns as $column)
-                            <td @class([
-                                'tedi-table__cell',
-                                'tedi-table__cell--footer',
-                                'tedi-table__cell--align-'.($column['align'] ?? '') => $column['align'] ?? false,
-                                'tedi-table__cell--valign-'.($column['vAlign'] ?? '') => $column['vAlign'] ?? false,
-                            ])>{!! $render($column['footer'] ?? null) !!}</td>
-                        @endforeach
-
-                        @foreach ($trailingControlColumns as $controlKey => $control)
-                            <td @class([
-                                'tedi-table__cell',
-                                'tedi-table__cell--footer',
-                                'tedi-table__cell--align-'.$control['align'] => $control['align'] ?? false,
-                                'tedi-table__cell--valign-'.$control['vAlign'] => $control['vAlign'] ?? false,
-                            ])></td>
+                        @foreach ($leaf as $entry)
+                            @if ($entry['type'] === 'control')
+                                <td @class([
+                                    'tedi-table__cell',
+                                    'tedi-table__cell--footer',
+                                    'tedi-table__cell--valign-'.$entry['control']['vAlign'],
+                                ])></td>
+                            @else
+                                @php $column = $entry['column']; @endphp
+                                <td @class([
+                                    'tedi-table__cell',
+                                    'tedi-table__cell--footer',
+                                    'tedi-table__cell--align-'.($column['align'] ?? '') => $column['align'] ?? false,
+                                    'tedi-table__cell--valign-'.($column['vAlign'] ?? '') => $column['vAlign'] ?? false,
+                                ])>{!! $render($column['footer'] ?? null) !!}</td>
+                            @endif
                         @endforeach
                     </tr>
                 </tfoot>

@@ -1,6 +1,6 @@
 {{--
     TEDI Tabs Trigger.
-    Port of angular/tedi/components/navigation/tabs/tabs-trigger/tabs-trigger.component.{ts,html}
+    Port of angular/src/tedi/components/navigation/tabs/tabs-trigger/tabs-trigger.component.{ts,html}
 
     Angular applies this as an attribute directive to a consumer-chosen
     `<button>` or `<a>`; `href` picks the tag, as in button.blade.php/link.blade.php.

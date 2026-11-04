@@ -1,6 +1,6 @@
 {{--
     TEDI Text Group Label.
-    Port of angular/tedi/components/content/text-group/text-group-label.component.ts
+    Port of angular/src/tedi/components/content/text-group/text-group-label.component.ts
 
     Angular's component has no host bindings; its `<ng-content />` template
     is styled purely via the vendored SCSS's `tedi-text-group-label` element

@@ -1,6 +1,6 @@
 {{--
     TEDI Card Content.
-    Port of angular/tedi/components/content/card/card-content/card-content.component.ts
+    Port of angular/src/tedi/components/content/card/card-content/card-content.component.ts
 
     Inherits unset `background`/`padding` from the parent tedi-card via
     @aware (Angular: `inject(CardComponent)`).

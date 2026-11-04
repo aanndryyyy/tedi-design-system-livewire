@@ -1,11 +1,17 @@
 {{--
     TEDI Tag.
-    Port of angular/tedi/components/tags/tag/tag.component.{ts,html}
+    Port of angular/src/tedi/components/tags/tag/tag.component.{ts,html}
 
     Angular emits a `closed` output; per CONVENTIONS.md §3 the Blade port instead
     lets the consumer bind their own listener to the close button via the
     `close-attributes` prop, e.g.
         <tedi:tag closable :close-attributes="['wire:click' => 'removeTag(1)']">
+
+    A11y (Angular 8+): a visually hidden polite status region is always
+    rendered, and carries the translated "loading" text while `loading` is
+    true, so the spinner swap is announced. The region is unconditional so a
+    Livewire morph that flips `loading` changes the text of a live region that
+    already exists, which is what makes it announce.
 --}}
 @props([
     /** primary|secondary|danger */
@@ -66,4 +72,6 @@
             {{ $attributes->only([])->merge($closeAttributes) }}
         />
     @endif
+
+    <span class="sr-only" role="status" aria-live="polite" aria-atomic="true">@if ($loading){{ __('tedi::tedi.loading') }}@endif</span>
 </span>

@@ -3,3 +3,9 @@ tedi-carousel {
   flex-direction: column;
   gap: var(--layout-grid-gutters-08);
 }
+
+.tedi-carousel__body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}

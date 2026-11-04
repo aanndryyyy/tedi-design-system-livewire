@@ -58,19 +58,31 @@ class NotificationComponentsTest extends TestCase
         $this->assertMissingClass('tedi-alert--no-side-borders', $html);
     }
 
-    public function test_alert_role_drives_aria_live_and_role_attribute(): void
+    public function test_alert_role_is_the_only_live_region_attribute(): void
     {
-        $html = Blade::render('<tedi:alert role="alert">Body</tedi:alert>');
+        // Angular 8+ dropped the host's aria-live and generated aria-label:
+        // role="alert"/"status" carry their own live-region semantics.
+        $html = Blade::render('<tedi:alert role="alert" title="T">Body</tedi:alert>');
         $this->assertStringContainsString('role="alert"', $html);
-        $this->assertStringContainsString('aria-live="assertive"', $html);
+        $this->assertStringNotContainsString('aria-live=', $html);
+        $this->assertStringNotContainsString('aria-label=', $html);
 
         $html = Blade::render('<tedi:alert role="status">Body</tedi:alert>');
         $this->assertStringContainsString('role="status"', $html);
-        $this->assertStringContainsString('aria-live="polite"', $html);
+        $this->assertStringNotContainsString('aria-live=', $html);
 
         $html = Blade::render('<tedi:alert role="none">Body</tedi:alert>');
-        $this->assertStringNotContainsString('role="none"', $html);
-        $this->assertStringContainsString('aria-live="off"', $html);
+        $this->assertStringNotContainsString('role=', $html);
+        $this->assertStringNotContainsString('aria-live=', $html);
+    }
+
+    public function test_alert_close_aria_label_names_the_close_button(): void
+    {
+        $html = Blade::render('<tedi:alert :show-close="true" close-aria-label="Sulge teade: Salvestatud">Body</tedi:alert>');
+        $this->assertStringContainsString('aria-label="Sulge teade: Salvestatud"', $html);
+
+        $html = Blade::render('<tedi:alert :show-close="true">Body</tedi:alert>');
+        $this->assertStringContainsString('aria-label="'.__('tedi::tedi.close').'"', $html);
     }
 
     public function test_alert_title_sets_heading_tag_and_head_wrapper(): void
@@ -139,6 +151,27 @@ class NotificationComponentsTest extends TestCase
         $this->assertHasClass('tedi-toast__wrapper', $html);
         $this->assertHasClass('tedi-alert--success', $html, on: 'tedi-alert--success');
         $this->assertHasClass('tedi-closing-button', $html, on: 'tedi-closing-button');
+    }
+
+    public function test_toast_is_not_a_live_region_itself(): void
+    {
+        // Angular 8+: the toast's alert is always role="none"; `role` only
+        // drives the (unported) ToastService announcer.
+        foreach (['status', 'alert', 'none'] as $role) {
+            $html = Blade::render('<tedi:toast role="'.$role.'" title="T">Sisu</tedi:toast>');
+            $this->assertStringNotContainsString('role="alert"', $html);
+            $this->assertStringNotContainsString('role="status"', $html);
+            $this->assertStringNotContainsString('aria-live=', $html);
+        }
+    }
+
+    public function test_toast_close_button_is_named_after_the_title(): void
+    {
+        $html = Blade::render('<tedi:toast title="Salvestatud">Sisu</tedi:toast>');
+        $this->assertStringContainsString('aria-label="'.e(__('tedi::tedi.toast.close', ['title' => 'Salvestatud'])).'"', $html);
+
+        $html = Blade::render('<tedi:toast>Sisu</tedi:toast>');
+        $this->assertStringContainsString('aria-label="'.__('tedi::tedi.close').'"', $html);
     }
 
     public function test_toast_progress_bar_renders_only_when_enabled_and_duration_positive(): void
@@ -297,5 +330,46 @@ class NotificationComponentsTest extends TestCase
         $this->assertSame(1, substr_count($html, ' id='));
         $this->assertStringContainsString('id="custom-id"', $html);
         $this->assertSame(1, substr_count($html, ' role='));
+    }
+
+    // --- tag -------------------------------------------------------------------
+
+    public function test_tag_type_and_state_classes(): void
+    {
+        $html = Blade::render('<tedi:tag>Silt</tedi:tag>');
+        $this->assertSame(['tedi-tag'], $this->classesOf($html, 'tedi-tag'));
+
+        foreach (['secondary', 'danger'] as $type) {
+            $html = Blade::render('<tedi:tag type="'.$type.'">Silt</tedi:tag>');
+            $this->assertHasClass('tedi-tag--'.$type, $html, 'tedi-tag');
+        }
+
+        $html = Blade::render('<tedi:tag loading closable ellipsis="end">Silt</tedi:tag>');
+        $this->assertHasClass('tedi-tag--loading', $html, 'tedi-tag');
+        $this->assertHasClass('tedi-tag--closable', $html, 'tedi-tag');
+        $this->assertHasClass('tedi-tag--ellipsis', $html, 'tedi-tag');
+    }
+
+    public function test_tag_announces_loading_from_a_persistent_status_region(): void
+    {
+        // Angular 8+: the sr-only status region is always rendered and only
+        // carries text while loading.
+        $html = Blade::render('<tedi:tag>Silt</tedi:tag>');
+        $this->assertMatchesRegularExpression('#<span class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>#', $html);
+
+        $html = Blade::render('<tedi:tag loading>Silt</tedi:tag>');
+        $this->assertStringContainsString('aria-atomic="true">'.__('tedi::tedi.loading').'</span>', $html);
+    }
+
+    public function test_forwarded_button_attributes_are_html_escaped(): void
+    {
+        // A value forwarded through close-attributes must be escaped; the bag's
+        // __toString() does not escape, only merge() does.
+        $html = Blade::render('<tedi:alert :close-attributes="$attrs" :show-close="true">x</tedi:alert>', [
+            'attrs' => ['title' => '"><script>alert(1)</script>'],
+        ]);
+
+        $this->assertStringNotContainsString('<script>alert(1)</script>', $html);
+        $this->assertStringContainsString('&lt;script&gt;', $html);
     }
 }

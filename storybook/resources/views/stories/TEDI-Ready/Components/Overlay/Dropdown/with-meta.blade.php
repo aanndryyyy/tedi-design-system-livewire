@@ -46,8 +46,8 @@
         ],
         'dropdownRole' => [
             'control' => 'radio',
-            'options' => ['menu', 'listbox'],
-            'description' => 'Role for content, use listbox for list and menu for actions',
+            'options' => ['menu', 'listbox', 'list'],
+            'description' => 'How the panel is exposed to assistive technology: `menu` for actions, `listbox` for selectable options, `list` for a plain list of links. `menu` and `listbox` are composite widgets (one tab stop, arrow-key navigation, `menuitem` / `option` items); `list` adds no roles or key handling, so projected links stay links and stay in the tab order. Every role moves focus into the panel when it opens, so the panel is not read last because of where the overlay renders.',
             'table' => [
                 'category' => 'dropdown-content',
                 'type' => ['summary' => 'DropdownRole'],
@@ -56,12 +56,12 @@
         ],
         'ariaHaspopup' => [
             'control' => 'radio',
-            'options' => ['menu', 'listbox', 'true'],
-            'description' => 'Defines the aria-haspopup attribute for the trigger, informing assistive technologies whether it opens a menu or listbox. Improves accessibility by describing the type of popup.',
+            'options' => ['menu', 'listbox', 'dialog', 'true', 'false'],
+            'description' => 'The `aria-haspopup` value for the trigger. Defaults to the content\'s `dropdownRole`, and a plain `list` gets no attribute at all, since ARIA has no token for it. `false` also omits the attribute.',
             'table' => [
                 'category' => 'dropdown-trigger',
                 'type' => ['summary' => 'DropdownTriggerAriaHasPopup'],
-                'defaultValue' => ['summary' => 'menu'],
+                'defaultValue' => ['summary' => 'dropdownRole'],
             ],
         ],
     ],
@@ -96,10 +96,10 @@
         @foreach ($locations as $key => [$label, $meta])
             <tedi:dropdown-item :value="$key" :selected="$value === $key">
                 <x-slot:item-value>
-                    <tedi:dropdown-item-value>
-                        <tedi:dropdown-item-value-label>{{ $label }}</tedi:dropdown-item-value-label>
-                        <tedi:dropdown-item-value-meta>{{ $meta }}</tedi:dropdown-item-value-meta>
-                    </tedi:dropdown-item-value>
+                    <tedi:option-content>
+                        <tedi:option-content-label>{{ $label }}</tedi:option-content-label>
+                        <tedi:option-content-meta>{{ $meta }}</tedi:option-content-meta>
+                    </tedi:option-content>
                 </x-slot:item-value>
             </tedi:dropdown-item>
         @endforeach

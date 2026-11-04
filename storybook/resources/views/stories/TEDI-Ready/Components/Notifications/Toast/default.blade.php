@@ -25,7 +25,7 @@
         'type' => [
             'control' => 'radio',
             'options' => ['info', 'success', 'warning', 'danger'],
-            'description' => 'Type of the toast notification determining its color scheme. Angular calls the error variant "error"; the Blade component takes the class-name value `danger`, which is what Angular maps it to.',
+            'description' => 'Type of the toast notification determining its color scheme.',
             'table' => ['defaultValue' => ['summary' => 'info']],
         ],
         'icon' => [
@@ -50,7 +50,7 @@
         'role' => [
             'control' => 'select',
             'options' => ['alert', 'status', 'none'],
-            'description' => "The ARIA role of the toast, informing screen readers about the notification's priority.",
+            'description' => "Politeness of the screen reader announcement. Options: \n - <b>alert</b> for high-priority messages that demand immediate attention. \n - <b>status</b> for less urgent messages providing feedback or updates.\n - <b>none</b> for no announcement. Inert in the Blade port: the announcement comes from the unported ToastService, and the toast itself is never a live region.",
             'table' => ['defaultValue' => ['summary' => 'status']],
         ],
     ],
