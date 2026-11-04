@@ -11,7 +11,7 @@
     'argTypes' => [
         'tediPrint' => [
             'description' => 'Controls the visibility of the element when printing.',
-            'control' => ['type' => 'radio', 'labels' => ['' => 'none']],
+            'control' => ['type' => 'radio'],
             'options' => ['', 'show', 'hide'],
             'table' => [
                 'type' => ['summary' => "PrintVisibility | ''"],

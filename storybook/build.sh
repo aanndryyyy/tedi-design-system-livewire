@@ -106,6 +106,15 @@ echo "==> Building the static Storybook"
 # value, which derives the right URL from the APP_URL exported above.
 php artisan blast:publish --output-dir=storybook-static --ansi
 
+# blast:publish ignores `storybook build`'s exit code, so a failed preview
+# build still "succeeds" and ships a manager-only Storybook that never finishes
+# loading. iframe.html is the preview build's output; without it, fail the deploy.
+if [ ! -f public/storybook-static/iframe.html ]; then
+    echo "The Storybook preview build failed: public/storybook-static/iframe.html" >&2
+    echo "is missing. Run the build in vendor/area17/blast directly to see the error." >&2
+    exit 1
+fi
+
 # Note: do NOT add `php artisan route:cache` here. Blast registers its
 # /storybook_preview routes as closures (vendor/area17/blast/routes/web.php),
 # and closure routes cannot be serialised — the command would fail the deploy.
