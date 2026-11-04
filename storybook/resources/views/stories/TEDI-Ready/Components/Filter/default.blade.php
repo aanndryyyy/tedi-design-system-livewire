@@ -71,7 +71,7 @@
         ],
         'value' => [
             'description' => 'Selected value (a string) or values (an array of strings) depending on allowMultiple. Bound with wire:model through x-modelable on the root',
-            'control' => false,
+            'control' => ['type' => 'text', 'disable' => true],
             'table' => [
                 'category' => 'inputs',
                 'type' => ['summary' => 'string | string array'],

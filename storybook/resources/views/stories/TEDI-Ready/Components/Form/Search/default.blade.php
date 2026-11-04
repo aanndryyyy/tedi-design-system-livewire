@@ -149,7 +149,7 @@
         ],
         'resultsCountText' => [
             'description' => 'Overrides the translated screen-reader result count: a Closure taking the count, or a string with a :count placeholder.',
-            'control' => false,
+            'control' => ['type' => 'text', 'disable' => true],
             'table' => ['category' => 'inputs', 'type' => ['summary' => 'Closure | string']],
         ],
         'minQueryLength' => [

@@ -45,7 +45,7 @@
         ],
         'overlay' => [
             'description' => 'Shows floating navigation buttons over the slides. Place navigation directly inside `tedi-carousel`, outside the header and footer. In this port it goes in the `navigation` slot of `tedi:carousel-content`, which renders the slide body it floats over.',
-            'control' => false,
+            'control' => ['type' => 'boolean', 'disable' => true],
             'table' => ['category' => 'Carousel Navigation', 'type' => ['summary' => 'boolean'], 'defaultValue' => ['summary' => 'false']],
         ],
         'withArrows' => [

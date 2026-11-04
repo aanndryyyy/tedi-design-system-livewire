@@ -18,7 +18,7 @@
     ],
     'argTypes' => [
         'inputId' => [
-            'control' => false,
+            'control' => ['type' => 'text', 'disable' => true],
             'description' => 'Identifier for the underlying range input; associates the label with the input.',
             'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
         ],
