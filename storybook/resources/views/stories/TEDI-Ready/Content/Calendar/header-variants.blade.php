@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'Header Variants',
-    'order' => 10,
+    'order' => 11,
     'status' => 'subset',
     'args' => [],
 ])

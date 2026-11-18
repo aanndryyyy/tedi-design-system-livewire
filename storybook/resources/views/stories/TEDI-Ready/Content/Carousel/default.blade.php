@@ -9,6 +9,8 @@
         'fade' => false,
         'transitionMs' => 400,
         'swipeThreshold' => 0.3,
+        'ariaLabel' => '',
+        'ariaLabelledby' => 'carousel-default-title',
         'withArrows' => false,
         'variant' => 'dots',
     ],
@@ -43,6 +45,18 @@
             'description' => 'Whether navigation wraps around at the ends. When `false`, it stops at the first and last reachable positions and disables the corresponding arrow.',
             'table' => ['category' => 'Carousel Content', 'type' => ['summary' => 'boolean'], 'defaultValue' => ['summary' => 'true']],
         ],
+        'ariaLabel' => [
+            'name' => 'ariaLabel',
+            'description' => 'Accessible label for the carousel region. Defaults to the `carousel.label` translation.',
+            'control' => 'text',
+            'table' => ['category' => 'Carousel Content', 'type' => ['summary' => 'string']],
+        ],
+        'ariaLabelledby' => [
+            'name' => 'ariaLabelledby',
+            'description' => 'Id of the element that names the carousel region, e.g. its heading.',
+            'control' => 'text',
+            'table' => ['category' => 'Carousel Content', 'type' => ['summary' => 'string']],
+        ],
         'overlay' => [
             'description' => 'Shows floating navigation buttons over the slides. Place navigation directly inside `tedi-carousel`, outside the header and footer. In this port it goes in the `navigation` slot of `tedi:carousel-content`, which renders the slide body it floats over.',
             'control' => ['type' => 'boolean', 'disable' => true],
@@ -71,12 +85,12 @@
 <tedi:carousel>
     <tedi:carousel-header>
         <div>
-            <tedi:text as="h2" modifiers="h1">Title</tedi:text>
+            <tedi:text as="h2" id="carousel-default-title" modifiers="h1">Title</tedi:text>
             <tedi:text as="p" color="secondary">Description</tedi:text>
         </div>
         <tedi:carousel-navigation />
     </tedi:carousel-header>
-    <tedi:carousel-content :slides-per-view="(float) $slidesPerView" :gap="(int) $gap" :fade="(bool) $fade" :transition-ms="(int) $transitionMs" :swipe-threshold="(float) $swipeThreshold">
+    <tedi:carousel-content :slides-per-view="(float) $slidesPerView" :gap="(int) $gap" :fade="(bool) $fade" :transition-ms="(int) $transitionMs" :swipe-threshold="(float) $swipeThreshold" :aria-label="$ariaLabel ?: null" :aria-labelledby="$ariaLabelledby ?: null">
         @for ($i = 0; $i < 5; $i++)
             <tedi:carousel-slide>
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--general-border-primary); border-radius: 4px; height: 10rem; padding: 1rem; flex: 1;">

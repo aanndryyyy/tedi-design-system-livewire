@@ -20,6 +20,8 @@
  *   src/dropdown.js           tediDropdown — tediOverlay + the ARIA menu keyboard layer
  *   src/filter.js             tediFilter — tediOverlay + the filter's listbox layer
  *   src/form-field.js         tediFormField — the clear button's live visibility and reset
+ *   src/file-upload.js        tediFileUpload — picker, label naming and announcements for file-upload
+ *   src/announcer.js          root-level screen-reader announcements, no Alpine (file-upload)
  *   src/progress-bar.js       tediProgressBar — opt-in throttled value announcements
  *   src/multiselect.js        tediMultiselect — tediOverlay + the multiselect's listbox layer
  *   src/search.js             tediSearch — tediOverlay + the search autocomplete's combobox layer
@@ -29,17 +31,22 @@
  *   src/scroll-visibility.js  tediScrollVisibility — hide/reveal past a scroll threshold
  *   src/hash-trigger.js       tediHashTrigger — scroll to the element the URL hash names
  *   src/sheet.js              tediSheet — the React bottom sheet: open/close, focus, drag and snap points
+ *   src/process-timeline.js   tediProcessTimeline — horizontal process timeline falls back to vertical when it overflows
+ *   src/rating.js             tediRating — the rating's hover preview and live selected/caption state
  */
 import { breakpoint } from './src/breakpoint.js';
 import { carousel } from './src/carousel.js';
 import { dropdown } from './src/dropdown.js';
+import { fileUpload } from './src/file-upload.js';
 import { filter } from './src/filter.js';
 import { formField } from './src/form-field.js';
 import { hashTrigger } from './src/hash-trigger.js';
 import { modal } from './src/modal.js';
 import { multiselect } from './src/multiselect.js';
 import { overlay } from './src/overlay.js';
+import { processTimeline } from './src/process-timeline.js';
 import { progressBar } from './src/progress-bar.js';
+import { rating } from './src/rating.js';
 import { scrollVisibility } from './src/scroll-visibility.js';
 import { sheet } from './src/sheet.js';
 import { search } from './src/search.js';
@@ -52,6 +59,7 @@ function register(Alpine) {
     Alpine.data('tediDropdown', dropdown);
     Alpine.data('tediFilter', filter);
     Alpine.data('tediFormField', formField);
+    Alpine.data('tediFileUpload', fileUpload);
     Alpine.data('tediMultiselect', multiselect);
     Alpine.data('tediSearch', search);
     Alpine.data('tediModal', modal);
@@ -61,6 +69,8 @@ function register(Alpine) {
     Alpine.data('tediHashTrigger', hashTrigger);
     Alpine.data('tediSheet', sheet);
     Alpine.data('tediProgressBar', progressBar);
+    Alpine.data('tediProcessTimeline', processTimeline);
+    Alpine.data('tediRating', rating);
 }
 
 if (window.Alpine) {

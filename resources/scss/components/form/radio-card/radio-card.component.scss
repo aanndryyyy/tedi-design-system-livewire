@@ -21,11 +21,11 @@ label[tedi-radio-card] {
   justify-content: flex-start;
   min-height: var(--form-field-height);
   padding: calc(
-      var(--form-checkbox-radio-card-checkbox-padding-y) - var(
+      var(--form-checkbox-radio-card-radio-padding-y) - var(
           --tedi-borders-01
         )
     )
-    var(--form-checkbox-radio-card-checkbox-padding-x);
+    var(--form-checkbox-radio-card-radio-padding-x);
   font-family: var(--family-default);
   font-size: var(--body-regular-size);
   line-height: var(--body-regular-line-height);
@@ -41,7 +41,7 @@ label[tedi-radio-card] {
     flex: 1 1 0;
     max-height: calc(
       (var(--form-field-height) - var(--body-regular-line-height)) /
-        2 - var(--form-checkbox-radio-card-checkbox-padding-y)
+        2 - var(--form-checkbox-radio-card-radio-padding-y)
     );
     content: "";
   }

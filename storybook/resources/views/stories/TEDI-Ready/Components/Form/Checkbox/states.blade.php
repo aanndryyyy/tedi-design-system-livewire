@@ -180,6 +180,7 @@
                                 :checked="$item['cell']['selected']"
                                 :invalid="$item['cell']['error']"
                                 :disabled="$item['cell']['disabled']"
+                                :required="$item['cell']['required']"
                             />
                             Tekst
                         </tedi:form.label>

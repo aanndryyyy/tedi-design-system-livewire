@@ -1,6 +1,6 @@
 {{--
-    Angular's CustomLabels example also overrides `pageAriaLabel`,
-    `currentPageAriaLabel` and `results`, which are closures — not
+    Angular's CustomLabels example also overrides `pageAriaLabel` and
+    `results`, which are closures — not
     JSON-serializable Storybook args. Only the plain-string label overrides
     are portable here; the closure-driven labels keep pagination.blade.php's
     own PHP defaults (see its `$defaultLabels`).

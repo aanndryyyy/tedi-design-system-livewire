@@ -11,7 +11,7 @@
     only.
 --}}
 <tedi:row :cols="3" :gap="3" align-items="center">
-    <tedi:col><tedi:text>Default</tedi:text></tedi:col>
+    <tedi:col><tedi:text modifiers="bold">Default</tedi:text></tedi:col>
     <tedi:col>
         <tedi:form-field>
             <x-slot:label>
@@ -29,7 +29,7 @@
         </tedi:form-field>
     </tedi:col>
 
-    <tedi:col><tedi:text>Small</tedi:text></tedi:col>
+    <tedi:col><tedi:text modifiers="bold">Small</tedi:text></tedi:col>
     <tedi:col>
         <tedi:form-field size="small">
             <x-slot:label>

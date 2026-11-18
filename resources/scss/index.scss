@@ -76,7 +76,7 @@
 // They share a Sass module namespace, so one is aliased.
 @use 'components/form/file-dropzone/file-dropzone.react' as file-dropzone-react;
 @use 'components/form/file-dropzone/file-dropzone.component';
-@use 'components/form/file-upload/file-upload.module';
+@use 'components/form/file-upload/file-upload.component';
 @use 'components/form/form-field/form-field.component';
 @use 'components/form/input-group/input-group.component';
 @use 'components/form/label-row/label-row.component';
@@ -87,6 +87,7 @@
 @use 'components/form/radio-card/radio-card.component';
 @use 'components/form/radio-group/radio-group.component';
 @use 'components/form/radio/radio.component';
+@use 'components/form/rating/rating.component';
 @use 'components/form/search/search.component';
 @use 'components/form/search/search-suggestion.component';
 @use 'components/form/select/select.component';
@@ -104,6 +105,8 @@
 @use 'components/helpers/grid/col/col.component';
 @use 'components/helpers/grid/row/row.component';
 @use 'components/helpers/option-content/option-content.component';
+@use 'components/helpers/process-timeline/process-timeline-item/process-timeline-item.component';
+@use 'components/helpers/process-timeline/process-timeline.component';
 @use 'components/helpers/scroll-fade/scroll-fade.component';
 @use 'components/helpers/scroll-visibility/scroll-visibility.module';
 @use 'components/helpers/separator/separator.component';

@@ -2,6 +2,59 @@
 
 ## Unreleased
 
+### Upstream sync (Angular 10.0.0-rc.21, React 21.0.0-rc.17, core 6.13.0)
+
+Re-synced against Angular 10.0.0-rc.21 (`6ecb1ee5`), React 21.0.0-rc.17
+(`917b2ce8`) and core 6.13.0 (`face373b`), recorded in the README baseline.
+**Breaking changes**; the README's "Upgrading" section lists them per component.
+
+- **BREAKING** `table-of-contents` / `-collapsible`: `bordered` → `divided`
+  (class `tedi-table-of-contents--divided`), as upstream, with no alias.
+- **BREAKING** the accessible-name series (upstream #888–#900): closing-button
+  renders its label once; alert's live region moves to `__body` and the close
+  button is described by the title; label drops the ", Required field" text;
+  search's landmark is unnamed by default and gains `hide-label`; carousel,
+  pagination, number-field, table, calendar day grid, progress-bar and sidenav
+  shorten or stabilise their labels. Several translation keys are removed or
+  reworded.
+- **BREAKING** `file-upload` is re-ported from Angular 10's new TEDI-Ready
+  file-upload (CONVENTIONS.md §13: Angular is the source wherever it has the
+  component). New markup and props; `label`, `helper`, `has-clear-button`,
+  `announcement` and `required` are gone. The add button, label naming and
+  screen-reader announcements run in the new `tediFileUpload` behaviour. The
+  selection pipeline (accept / max-size / duplicate validation, rejected
+  files) stays server-side.
+- New: `tedi:rating` (Angular TEDI-Ready Rating; native radios, so
+  `wire:model` binds it, with the hover preview in `tediRating`) and the
+  community `tedi:process-timeline` (`-item`, `-title`, `-description`; a
+  horizontal timeline that overflows turns vertical in `tediProcessTimeline`).
+- `table`: `rowHeader` columns (`<th scope="row">`), a column `label`, an
+  icon-only sort button after a custom header, per-row `selectionLabel`, and
+  the scoped stylesheet that keeps a nested table's look its own. New stories
+  Sortable Custom Header and Nested Table.
+- `calendar`: `full-width` and the Full Width Sizes story.
+- `popover-content`: `padding` on the card scale.
+- `time-field`: the input merges the form field's `aria-describedby` ids.
+- `sheet`: grabbing cursor from the press, pointer capture on press, native
+  drag blocked during a sheet drag, overlay inert while closing.
+- Re-vendored stylesheets: closing-button, accordion, collapse, calendar,
+  table, field-surface mixins, feedback-text, radio-card, timeline,
+  horizontal-stepper, alert, dropdown-content, tag, and React's sheet.
+- `scripts/generate-lang.cjs` handles optional interpolated parameters,
+  Russian one/few/many plurals and counts compared as strings (which had
+  lost their singular); `tests/LangTest.php` guards the lang files.
+
+Not ported: the file upload's client-side selection pipeline and five of its
+stories (see its story README); the table's filter popover footer (`filterActions`, `cancel`),
+since the filter popover itself is not ported; the date field's
+`calendarFullWidth` (modal branch); `numberField.quantityUpdated`
+announcements (number-field has no live region here); React's dock-panel,
+split-pane, mobile-nav and toast-container changes (components not ported).
+
+Dependencies: `@tedi-design-system/core` 6.12.0 → 6.13.0 (additive tokens),
+`sass` 1.107.1 → 1.108.2. Composer packages were current; the storybook app
+stays on Laravel 12 (area17/blast 1.11 caps it).
+
 ### Upstream sync (Angular 9.0.1-rc.1, React 20.1.0-rc.1, core 6.12.0)
 
 Supersedes the Angular 8 sync below. Every component is re-synced against

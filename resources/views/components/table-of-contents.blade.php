@@ -45,7 +45,7 @@
     /** default|transparent */
     'variant' => 'default',
     /** Draws a divider under each item except the last. */
-    'bordered' => false,
+    'divided' => false,
     /** Id of the currently active item. */
     'activeId' => null,
     /** Keep the active item visible inside the TOC's own scroll area. */
@@ -97,7 +97,7 @@
     ]));
     $rootAttributes = $attributes->class([
         'tedi-table-of-contents',
-        'tedi-table-of-contents--bordered' => $bordered,
+        'tedi-table-of-contents--divided' => $divided,
     ]);
 @endphp
 

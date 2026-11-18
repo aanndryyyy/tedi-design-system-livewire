@@ -86,7 +86,7 @@
   padding: var(--card-padding-md-default) 0;
 }
 
-.tedi-table-of-contents--bordered .tedi-table-of-contents__list {
+.tedi-table-of-contents--divided .tedi-table-of-contents__list {
   padding: var(--card-padding-xs) 0;
 }
 
@@ -167,11 +167,11 @@
   border-left-color: var(--table-of-contents-border-active);
 }
 
-.tedi-table-of-contents--bordered .tedi-table-of-contents__row {
+.tedi-table-of-contents--divided .tedi-table-of-contents__row {
   border-bottom: var(--tedi-borders-01) solid var(--card-border-primary);
 }
 
-.tedi-table-of-contents--bordered
+.tedi-table-of-contents--divided
   .tedi-table-of-contents__list
   > .tedi-table-of-contents__item:last-child
   > .tedi-table-of-contents__row {

@@ -152,6 +152,7 @@ summary:
 | `radio-card` | `grouped` and `bordered` inherit from `radio-card-group` via `@aware`, so the nearest explicit value wins; Angular ORs them, so an explicit `:grouped="false"` / `:bordered="false"` on a card overrides a grouped/bordered group |
 | `text-field`, `textarea`, `number-field`, `search`, `date-input` | The `value` attribute is emitted only when non-empty; an unconditional `value=""` would blank a `wire:model`-bound field on the initial server render. `slider` is the deliberate exception — a `type="range"` input has no empty state |
 | `number-field` | Increment/decrement buttons are inert; attach handlers via `decrement-attributes` / `increment-attributes`. `LiveAnnouncer` and wrapper click-to-focus not ported |
+| `rating` | No `ControlValueAccessor`: `wire:model` / `x-model` written on the rating are copied onto every radio, and everything else lands on the `<tedi-rating>` root. Bind `:value` to the same property on every render so each server render matches. The hover preview and live re-colouring after a pick need the bundled `tediRating` behaviour. `orientation` takes `horizontal` / `vertical` only (no breakpoint object). The dev-mode warning for `type="icon"` without `icons` is not ported. The read-only summary formats numbers with intl's `NumberFormatter` for `app()->getLocale()` |
 | `slider` | Thumb tooltip not ported — it needs `trackPosition`, the one `<tedi:tooltip>` prop that is itself unported. `tedi-slider--invalid` and `--dragging` dropped |
 | `textarea` | Slot content is a Blade extension used when `value` is empty; Angular has no `ng-content` here |
 | `form-field` | Both halves of Angular's DI — the field context the control injects and `contentChild(TEDI_FORM_FIELD_CONTROL)` — run through a `FieldContext` object the form-field (a class component) builds before its slot renders; controls find the nearest one through Blade's public `@aware` lookup (`Tedi::fieldContext()`). Only `tedi:text-field` / `tedi:textarea` register a control, so only they earn the clear button. Its state is server-rendered, then kept live by the bundled `tediFormField` behaviour: it follows typing, and `clear()` empties the control, fires `input` and `change` (so `wire:model` follows) and focuses it. Without the bundle the button keeps its render-time state and only `clear-attributes` (e.g. `wire:click`) act on a click; an `x-on:click` in `clear-attributes` runs after `clear()` rather than replacing it. The feedback text's id is not added to the control's `aria-describedby` (pass it yourself). `--tedi-form-field-control-scrollbar` is always `0px`. Click-to-focus on the box padding is not ported. `tedi-form-field--valid` / `--invalid` / `--disabled` dropped — no rule |
@@ -179,6 +180,7 @@ summary:
 | `button-group` | `enableMobileDropdown` + `mobileBreakpoint` become the explicit `dropdownMode` prop; the collapsed dropdown is built from `items` only, so a slot-only group cannot collapse |
 | `breadcrumbs`, `horizontal-stepper`, `button-group` | Angular's `contentChildren` registration becomes explicit props — an `items` array, or `step-number` on each stepper item |
 | `vertical-stepper-item` | Same `contentChildren` case: nested steps go in the `sub-items` slot and each carries `:sub-item="true"`, because Blade cannot set it on the slot's children. `route`/RouterLink becomes a plain `href`, and `routerLinkActive`'s auto-selection (plus the `opened` effect it drives) becomes explicit `:selected` / `:opened`. `tedi-vertical-stepper--compact` dropped — TEDI ships no rule for it |
+| `process-timeline`, `process-timeline-item` | `orientation` is `horizontal` or `vertical` (default `horizontal`); Angular's breakpoint-object form and its `{ xs: "vertical", md: "horizontal" }` default are not ported. `contentChildren` numbering becomes explicit `index` / `last` props on each item, and `last` defaults to false where Angular's standalone item counts as last. Title and description are the item's `title` / `description` slots. The overflow fallback (a horizontal timeline that doesn't fit turns vertical) runs on the bundled `tediProcessTimeline`; without it the timeline stays horizontal |
 | `filter` | **No native form control.** `wire:model` binds through `x-modelable="model"` on the root rather than through a hidden `<input>`: the model is `string`, `string[]` or `boolean` depending on the mode, and only Alpine can carry all three. Nothing is submitted in a plain non-Livewire `<form>` POST |
 | `filter` | `tedi-filter-dropdown--custom` and `tedi-filter-dropdown__item--select-all` are dropped — Angular emits both, TEDI ships no rule for either |
 | `filter` | The `cleared` output is not re-emitted; the custom-content dropdown's clear button forwards `clear-attributes` (e.g. `wire:click`) instead |
@@ -211,7 +213,74 @@ block already *is* the primary appearance).
 
 ## Upgrading
 
-### Breaking changes in this sync
+### Breaking changes in the Angular 10 sync
+
+The re-sync to Angular 10.0.0-rc.21, React 21.0.0-rc.17 and core 6.13 is
+mostly accessible-name work: labels say less, and state comes from ARIA
+attributes instead of the label text. Check these before upgrading:
+
+- **`table-of-contents`**, **`table-of-contents-collapsible`**: `bordered` is
+  renamed `divided`, and the class `tedi-table-of-contents--bordered` is
+  `tedi-table-of-contents--divided`. There is no alias.
+- **`closing-button`**: the label is rendered once, as `title` while
+  `show-title` is on (the default), otherwise as `aria-label`. The icon is
+  `color="inherit"`.
+- **`alert`**: `role` moves from `<tedi-alert>` to `.tedi-alert__body`, so the
+  close and action buttons are outside the live region. The title has an id,
+  and the close button is `aria-describedby` it. **`toast`**: the close button
+  is "Close", described by the title.
+- **`label`**: `required` renders only the `aria-hidden` asterisk (no
+  ", Required field" text). Mark the control `required` as well.
+- **`search`**: the `role="search"` landmark is unnamed unless `aria-label` is
+  set, and `aria-label` no longer names the input. New `hide-label`: always set
+  `label`, and hide it with `hide-label` rather than replacing it with
+  `aria-label`.
+- **`carousel-content`**: named "Carousel" by default; the
+  `aria-roledescription` appears only when you name it (new `aria-labelledby`).
+  Slide role descriptions are translated. The dot indicators are a `group`
+  named "Slides", the active dot carries `aria-current`, and dots read
+  "Slide N".
+- **`pagination`**: page buttons read "Page N" (the current page too, with
+  `aria-current`), and the nav is "Pages". The `currentPageAriaLabel` label
+  defaults to `pageAriaLabel` and is deprecated upstream.
+- **`number-field`**: the step buttons read "Decrease" / "Increase", without
+  the step.
+- **`table`**: select-all and row checkboxes have fixed names ("Select all
+  rows" / "Select row", or the new per-row `selectionLabel`); the expand toggle
+  is "Row details"; an open sub-row is no longer a `region`. Header content is
+  wrapped in `<span class="tedi-table__header-label">`. A sortable column whose
+  `header` is Htmlable now renders the header as-is, followed by an icon-only
+  sort button, instead of wrapping the markup in the sort button. New column
+  keys `label` and `rowHeader`.
+- **`calendar-day-grid`**: the weekday header row is `aria-hidden`, and day
+  labels omit the year unless the day is in another year.
+- **`progress-bar`**: the visible value is `aria-hidden`.
+- **`sidenav`**: the submenu toggle reads "{label} submenu"; `aria-expanded`
+  carries the state.
+- **`sheet`**: the overlay is `inert` while it animates out.
+- **`file-upload`** is re-ported from Angular's new TEDI-Ready file-upload
+  (it was React's). `id` is now `input-id` (`id` still works); `label` is
+  removed (use `tedi:form.label for="…"` in a `tedi:form-field`);
+  `has-clear-button` is `clearable` (default inherits); `helper` is replaced by
+  `error` / `success` / `hint`; `announcement`, `required` and the default
+  slot are removed; `size` defaults to `null` (inherits). `files` keys are
+  camelCase (`isValid`, `isLoading`; the snake_case keys are ignored), with an
+  optional `removeAttributes`. New: `invalid`, `stacked`, `clear-attributes`.
+  The markup is Angular's: a `<tedi-file-upload>` root, a field surface with
+  `__value` / `__tags` / `__actions` / `__clear` / `__add`, the hidden native
+  input carrying `$attributes`; the React classes (`__container`, `__content`,
+  `__items`, `__button`, `--error` / `--valid`) are gone, `aria-describedby`
+  moves to the add button, and feedback ids are `{id}-error|success|hint`.
+  The add button needs `dist/tedi.js` (`tediFileUpload`).
+- **Translations**: these keys are removed or renamed — `required`,
+  `toast.close`, `table.select-all.{true,false}`, `table.select-row.{true,false}`,
+  `table.expand-row`, `table.collapse-row`, `pagination.page.{true,false}`,
+  `sidenav.toggleSubmenu.{true,false}`, `date-picker.week-number-header`.
+  `carousel` is now the lowercase role description (`carousel.label` is the
+  name), and `table.sort.*` takes `:columnLabel`. Update any published or
+  overridden `lang/vendor/tedi` files.
+
+### Breaking changes in the Angular 9 sync
 
 **Run `php artisan view:clear` after upgrading.** `tedi:form-field` is now a
 class component. Views compiled before the upgrade still render it as an
@@ -337,10 +406,10 @@ Later passes added the components that exist only in Angular's `community/`
 entry point (see
 [From Angular's `community/` entry point](#from-angulars-community-entry-point)
 below), `filter`, the `tedi/directives/`, and the components that exist only in
-React. As of Angular 9.0.1-rc.1 that covers every directory under
-`src/tedi/components/<group>/` (73), plus `filter` and the four directives:
-**155 Blade components** once sub-components are counted. With 5 from
-`community/` and 24 from React, that is **184** in total.
+React. As of Angular 10.0.0-rc.21 that covers every directory under
+`src/tedi/components/<group>/` (75), plus `filter` and the four directives:
+**157 Blade components** once sub-components are counted. With 9 from
+`community/` and 23 from React, that is **189** in total.
 
 | Angular component | Blade tag |
 |---|---|
@@ -376,6 +445,7 @@ React. As of Angular 9.0.1-rc.1 that covers every directory under
 | `form/radio` | `<tedi:radio>` |
 | `form/radio-card` | `<tedi:radio-card>`, `<tedi:radio-card-group>` |
 | `form/radio-group` | `<tedi:radio-group>` |
+| `form/rating` | `<tedi:rating>` |
 | `form/search` | `<tedi:search>`, `<tedi:search-suggestion>`, `<tedi:search-footer-actions>` |
 | `form/slider` | `<tedi:slider>` |
 | `form/text-field` | `<tedi:text-field>` |
@@ -447,6 +517,7 @@ back in through `:columns` / `:rows` (see the divergences table above).
 | `<tedi:time-picker>` | All three variants' markup | The variant host classes, which TEDI ships no rules for |
 | `<tedi:date-field>`, `<tedi:time-field>` | Input, tags, trigger, and the panel under an `open` prop, anchored below the field | Open/close behaviour, CDK's flip/fallback placement, and the mobile modal branch |
 | `<tedi:number-field>` | Full markup with correct disabled states | Button behaviour — wire it via `increment-attributes` / `decrement-attributes` |
+| `<tedi:file-upload>` | The full markup and ARIA, a native `<input type="file">` that `wire:model` binds, the file list rendered from `:files` (`isValid`, `isLoading`), the restrictions hint, error / success / hint texts, the form-field context, and Alpine for the picker, label naming and announcements | The client-side selection pipeline — appending to the list, `accept` / `maxSize` / `validator` checks, duplicate skipping, `keepRejectedFiles`, the rejection summary — and the ControlValueAccessor. The below-`md` switch is the explicit `stacked` prop |
 | `<tedi:file-dropzone>` | Full markup, a native `<input type="file">` that `wire:model` binds, drag-and-drop into that input, and the file list / states rendered from `:files`, `state`, `has-error`, `error` | Angular's client-side file pipeline: `FileService` (append/replace, duplicate renaming), the `ControlValueAccessor`, and the `validators` / `validateIndividually` async validation that wrote `uploadState` |
 | `<tedi:multiselect>` | The full combobox: trigger, selected-value tags, clear button, and an anchored listbox panel with select-all and selectable groups | Per-option custom content, and pointing the panel's width at an arbitrary element (`dropdownWidthRef`) — it is the trigger's width or `auto` |
 | `<tedi:table-of-contents>`, `<tedi:table-of-contents-collapsible>` | Every input, both variants, sticky geometry, numbering, the active trail, `scroll-active-into-view`, the bottom bar + sheet with Escape/backdrop/link close and `hide-on-scroll` | The CDK Dialog (sheet rendered in place, fixed) and its focus trap |
@@ -458,7 +529,7 @@ to `tedi/`. Its components are built the same way — `ViewEncapsulation.None`,
 global BEM classes — so they port under the same rules; CONVENTIONS.md §12
 covers what differs (group mapping and the `Community/…` Storybook prefix).
 
-The four components that exist **only** there are ported:
+The five components that exist **only** there are ported:
 
 | Angular component | Blade tag |
 |---|---|
@@ -466,6 +537,7 @@ The four components that exist **only** there are ported:
 | `community/form/file-dropzone` | `<tedi:file-dropzone>` ⁷ |
 | `community/form/select/multiselect` | `<tedi:multiselect>` ⁷ ⁸ |
 | `community/navigation/vertical-stepper` | `<tedi:vertical-stepper>`, `<tedi:vertical-stepper-item>` |
+| `community/helpers/process-timeline` | `<tedi:process-timeline>`, `<tedi:process-timeline-item>`, `<tedi:process-timeline-title>`, `<tedi:process-timeline-description>` |
 
 ⁶ Angular is an attribute directive with no template; Blade has no directives,
 so it ports as a wrapper element carrying the same four host classes. It is the
@@ -492,7 +564,7 @@ editor, a client-side dependency this package does not carry).
 ### Promoted to Angular `tedi/`
 
 These components used to come from Angular's `community/` entry point or from
-React. Angular 9 ships them in `tedi/`, so they are now ported from there, and
+React. Angular 9 ships them in `tedi/` (`form/file-upload`: Angular 10), so they are now ported from there, and
 each changed API in the process (see
 [Breaking changes in this sync](#breaking-changes-in-this-sync)):
 
@@ -504,6 +576,7 @@ each changed API in the process (see
 | `content/heading-with-icon` | `<tedi:heading-with-icon>` | React |
 | `content/truncate` | `<tedi:truncate>` | React |
 | `directives/print` | `<tedi:print>` ⁹ | React |
+| `form/file-upload` | `<tedi:file-upload>` | React |
 
 ⁹ Emits core's own print utilities (`no-print`, `show-print`, `break-before-*`,
 `break-after-*`, `break-inside-*`), which are not `tedi-`-prefixed. That is
@@ -522,7 +595,7 @@ these styles were never part of the Angular build, **every `var(--…)` they use
 has to be checked against the installed `@tedi-design-system/core`** before the
 component can be ported at all.
 
-Twelve React-only components are ported:
+Eleven React-only components are ported:
 
 | React component | Blade tag |
 |---|---|
@@ -532,7 +605,6 @@ Twelve React-only components are ported:
 | `misc/scroll-visibility` | `<tedi:scroll-visibility>` |
 | `navigation/hash-trigger` | `<tedi:hash-trigger>` |
 | `layout/top-nav` | `<tedi:top-nav>`, `<tedi:top-nav-item>`, `<tedi:top-nav-submenu>`, `<tedi:top-nav-group>`, `<tedi:top-nav-subitem>`, `<tedi:top-nav-separator>` ⁸ |
-| `form/file-upload` | `<tedi:file-upload>` ⁸ |
 | `form/multi-value-field` | `<tedi:multi-value-field>` ⁸ ¹⁰ |
 | `form/date-time-field` | `<tedi:date-time-field>` ⁸ |
 | `overlays/sheet` | `<tedi:sheet>`, `<tedi:sheet-trigger>`, `<tedi:sheet-content>`, `<tedi:sheet-header>`, `<tedi:sheet-body>`, `<tedi:sheet-footer>`, `<tedi:sheet-closer>` ⁸ |
@@ -563,7 +635,6 @@ system.
 |---|---|---|
 | `<tedi:affix>` | Both positions, the full offset scale, and `position: sticky` written inline | `react-sticky-box`'s container measurement, and the `relative` prop that adds the rendered header height to the offset |
 | `<tedi:top-nav>` | The whole desktop bar: items, separator, both submenu fits, the open/close and dismissal behaviour | The mobile drawer. Upstream rebuilds it by walking its children with `Children.map` and re-emitting them as sidenav data — pair `<tedi:sidenav>` with `<tedi:hide-at>` / `<tedi:show-at>` instead |
-| `<tedi:file-upload>` | The full markup, a native `<input type="file">` that `wire:model` binds, the file list rendered from `:files`, and upstream's accept / max-size hint (`max-size` in bytes, `show-restrictions`) | `useFileUpload` — the client-side list, `maxSize`/`accept` validation, `keepRejectedFiles`, and the announcements derived from them. Also the below-`md` clear-button swap |
 | `<tedi:multi-value-field>` | Tags, overflow counter, clear control, icon trigger, and the JSON hidden input | The ResizeObserver that measures how many tags fit — pass `:visible-count` |
 | `<tedi:date-time-field>` | All four panel layouts (range, side-by-side, and both multi-step steps), composed from the existing calendar and time picker | Popup placement and the `datetime-local` native branch — it inherits `<tedi:date-field>`'s subset exactly. `clearable` ported; popup ARIA on the icon button; the date-input is wrapped in a `tedi-date-field tedi-field-surface` shell, the only vendored rule that draws its border. Not ported: `labelProps`, `minYear`/`maxYear` |
 | `<tedi:sheet>` | Open/close, dismissal, focus cycling and return, scroll lock, collapse, drag and snap points, header/footer layouts | Unmounting while closed (always behaves as `keepMounted`), the white closing-button variant (the brand header uses `neutral-inverted`), `initialFocus`, `closeButtonProps`, breakpoint `radius` |
@@ -631,7 +702,7 @@ its story directory contains any `.md` file:
 
 Both are ported verbatim from the Angular story file — its `parameters.docs.description.component` /
 `.story` if present, otherwise the doc comment above the `export default` / `export const`.
-All 84 components have a `README.md`; 173 stories have a per-story description,
+All 87 components have a `README.md`; 188 stories have a per-story description,
 which is every Angular story that carries one.
 
 Two known gaps. `Community/Form/FormField` has no description because the Angular
@@ -656,8 +727,8 @@ recorded and applies wherever Storybook honours it.
 
 Every Angular `TEDI-Ready` group now has a Blade counterpart, including
 `TEDI-Ready/Components/Overlay/*`. Under `Community/`, the community-only
-components that have upstream stories are present — `Form/FileDropzone` and
-`Navigation/VerticalStepper` — plus `Form/FormField`, which is where Angular
+components that have upstream stories are present — `Form/FileDropzone`,
+`Helpers/ProcessTimeline` and `Navigation/VerticalStepper` — plus `Form/FormField`, which is where Angular
 files the shared form-field stories. `multiselect` has none, because upstream
 removed its stories when it deprecated the component; `floating-button` and
 `table-of-contents` moved to `TEDI-Ready/Components/` with their promotion. `<tedi:choicegroup>` has no directory
@@ -667,7 +738,7 @@ the community `radio` / `checkbox` stories, which belong to components the
 
 ### Angular stories with no Blade equivalent
 
-638 stories across 84 components are ported. Some Angular stories exist purely
+661 stories across 87 components are ported. Some Angular stories exist purely
 to demonstrate behaviour this package documents as not ported (see the
 divergences table above). Those are deliberately absent rather than faked:
 
@@ -688,6 +759,7 @@ divergences table above). Those are deliberately absent rather than faked:
 | `DatePicker`, `TimePicker`, `TimeField`, `DateField`, `Filter`: WithReactiveForms · `TextField`, `Textarea`: WithTemplateDrivenForms, WithReactiveForms | Angular reactive / template-driven forms — use `wire:model` instead |
 | `Search`: AutocompleteAsync, WithReactiveForms | The debounce and loading transition is consumer runtime (a Livewire round-trip); reactive forms: use `wire:model` |
 | `DateField`, `TimeField`: NativePicker, MobileModal · `DateField`: CustomFormatAndParse, CustomLocale | Breakpoint props, the unported modal branch, JS format/parse callables, and `localeCode` |
+| `FileUpload`: DiscardingRejectedFiles, KeepingRejectedFiles, WithValidator, ControlledClearing, WithReactiveForms | The unported client-side selection pipeline and Angular reactive forms — validate on the server and use `wire:model` |
 | `FileDropzone`: Replace | Exercises the `mode` input, part of the unported `FileService` file pipeline |
 | `DateField`, `TimeField`: OpenForVisualTest | Hidden upstream (`!dev`), visual-regression only, driven by a play function |
 | `DateField`: Range — the "min/max limits" field | Open-ended `minDate`/`maxDate` cannot be expressed as the flat `disabledDays` list |
@@ -714,8 +786,6 @@ These React stories have no Blade equivalent:
 |---|---|
 | `HashTrigger`: TabsWithHashTrigger | Demonstrates the Tabs component selecting a tab from the URL hash, which this port's tabs do not do — `<tedi:hash-trigger>` emits a `tedi:hash-match` event to wire yourself |
 | `TopNav`: ControlledMobile | Forces the unported mobile drawer |
-| `FileUpload`: MultipleHandled, ControlledClearing | React state demos of `onChange` / `files` round-tripping |
-| `FileUpload`: SizeLimited, ExtensionAndSizeLimit | Exist to show the unported client-side validation rejecting a file |
 | `DateTimeField`: Native | The `datetime-local` branch, chosen at runtime by breakpoint |
 | `TableCard`: WithResponsiveLayout | Switches `columns` with the `md` breakpoint prop, which is not ported |
 | `DateTimeField`: Size, States, FieldOptions, PerDayTimeSlots, RangePredefinedTimeSlots, Controlled, YearGrid | Runtime selection state — each drives the picker through props this port hands to the consumer instead |
@@ -746,9 +816,9 @@ here (`git -C .reference/angular diff <sha> origin/rc -- src/tedi src/community`
 
 | Repo | Version | Commit |
 |---|---|---|
-| `TEDI-Design-System/angular` (`rc`) | 9.0.1-rc.1 | `d86bf8c7` |
-| `TEDI-Design-System/react` (`rc`) | 20.1.0-rc.1 | `e2c22c3c` |
-| `TEDI-Design-System/core` (`rc`) | 6.12.0 | `452b66a9` |
+| `TEDI-Design-System/angular` (`rc`) | 10.0.0-rc.21 | `6ecb1ee5` |
+| `TEDI-Design-System/react` (`rc`) | 21.0.0-rc.17 | `917b2ce8` |
+| `TEDI-Design-System/core` (`rc`) | 6.13.0 | `face373b` |
 
 `.reference/` holds plain clones of the three repos and is git-ignored. The
 Angular block of `lang/*/tedi.php` is regenerated from

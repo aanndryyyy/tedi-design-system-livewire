@@ -1,7 +1,10 @@
 .tedi-calendar-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+
+  // The title grows to fill free space; centring only matters when the header
+  // is wider than the month, so the overflow splits evenly to both sides.
+  justify-content: center;
 
   &__title {
     display: flex;
@@ -24,7 +27,7 @@
     display: inline-flex;
     gap: var(--layout-grid-gutters-04);
     align-items: center;
-    padding-left: var(--layout-grid-gutters-04);
+    padding: 0 0 0 var(--layout-grid-gutters-04);
     font-family: inherit;
     font-size: var(--body-regular-size);
     font-weight: 500;

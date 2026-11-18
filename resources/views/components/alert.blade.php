@@ -17,9 +17,13 @@
 
     A11y (Angular 8+): the host no longer carries `aria-live` or the generated
     `aria-label` ("info alert: …"). `role="alert"` / `role="status"` carry their
-    own live-region semantics, so only `role` is emitted. `closeAriaLabel` names
-    the close button; without it the closing button falls back to the generic
-    translated "close".
+    own live-region semantics, so only `role` is emitted.
+
+    Angular 10 (#898): the role sits on `.tedi-alert__body`, not the host, so
+    the close and action buttons are outside the live region and are not read
+    out with the message. The title gets an id and the close button is
+    `aria-describedby` it, so the generic "Close" already says which alert it
+    closes; `closeAriaLabel` still overrides the name.
 --}}
 @props([
     'title' => null,
@@ -29,9 +33,9 @@
     'icon' => '',
     /** Shows a close button. */
     'showClose' => false,
-    /** Accessible name for the close button. Override the generic "Close" when several alerts can be on screen at once. */
+    /** Accessible name for the close button. The title, when set, is its description, so the default ("Close") already says which alert it closes. */
     'closeAriaLabel' => null,
-    /** alert|status|none */
+    /** Live-region role of the message: alert (urgent, appears later) | status (non-urgent, appears later) | none (already on the page at load). */
     'role' => 'alert',
     /** default|global|noSideBorders */
     'variant' => 'default',
@@ -51,6 +55,7 @@
     $titleTag = in_array($titleElement, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], true)
         ? $titleElement
         : 'div';
+    $titleId = \Tedi\Livewire\Tedi::id('tedi-alert-title');
 @endphp
 
 {{-- Root is <tedi-alert>, the Angular selector's element: toast.component.scss:13
@@ -64,19 +69,17 @@
         'tedi-alert--size-'.$size,
         'tedi-alert--global' => $variant === 'global',
         'tedi-alert--no-side-borders' => $variant === 'noSideBorders',
-    ])->merge(array_filter([
-        'role' => $role !== 'none' ? $role : null,
-    ]))->style([
+    ])->style([
         'display: '.($open ? 'flex' : 'none'),
     ]) }}
 >
-    <div class="tedi-alert__body">
+    <div class="tedi-alert__body" @if ($role !== 'none') role="{{ $role }}" @endif>
         @if ($title)
             <div class="tedi-alert__head">
                 @if ($icon)
                     <tedi:icon :name="$icon" :size="18" />
                 @endif
-                <{{ $titleTag }} class="tedi-alert__title">{{ $title }}</{{ $titleTag }}>
+                <{{ $titleTag }} class="tedi-alert__title" id="{{ $titleId }}">{{ $title }}</{{ $titleTag }}>
             </div>
             <div>
                 {{ $slot }}
@@ -103,6 +106,7 @@
             size="small"
             :icon-size="18"
             :aria-label="$closeAriaLabel"
+            :aria-describedby="$title ? $titleId : null"
             {{ $attributes->only([])->merge($closeAttributes) }}
         />
     @endif

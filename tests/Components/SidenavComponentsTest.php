@@ -314,7 +314,8 @@ class SidenavComponentsTest extends TestCase
         $this->assertHasClass('tedi-sidenav-item__caret-button', $html, 'tedi-sidenav-item__caret-button');
         $this->assertHasClass('tedi-sidenav-item__caret-container', $html, 'tedi-sidenav-item__caret-container');
         $this->assertStringContainsString('<a class="tedi-sidenav-item__title"', $html);
-        $this->assertStringContainsString('Open Ravi submenu', $html);
+        // Angular 10: the state is aria-expanded's, not the label's.
+        $this->assertStringContainsString('<span class="sr-only">Ravi submenu</span>', $html);
     }
 
     /** …but collapses into a single button trigger while collapsed or mobile. */

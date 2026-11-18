@@ -8,6 +8,10 @@ tedi-timeline-description {
   line-height: var(--body-small-regular-line-height);
   color: var(--general-text-tertiary);
 
+  &:empty {
+    display: none;
+  }
+
   > * {
     font-size: inherit;
     font-weight: inherit;

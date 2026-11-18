@@ -1,6 +1,7 @@
 .tedi-feedback-text {
   display: block;
   font-size: var(--body-small-regular-size);
+  line-height: var(--body-small-regular-line-height);
   color: var(--general-text-tertiary);
 
   &--valid {

@@ -82,6 +82,7 @@ class IntegrityTest extends TestCase
             'table-of-contents-item' => 'id-to="ptk-1"',
             'button-group-button' => 'label="Kuu"',
             'table-header-button' => 'icon="sort"',
+            'rating' => 'label="Hinnang"',
             'header.mobile-button' => 'icon="menu"',
             'header.language' => ':languages="[\'et\' => \'Eesti\']"',
             'header.role' => ':representatives="[[\'id\' => 1, \'name\' => \'Firma\']]"'

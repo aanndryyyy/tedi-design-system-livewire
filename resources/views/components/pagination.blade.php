@@ -174,13 +174,16 @@
         'ariaLabel' => __('tedi::tedi.pagination.title'),
         'previous' => __('tedi::tedi.pagination.prev-page'),
         'next' => __('tedi::tedi.pagination.next-page'),
-        'pageAriaLabel' => fn (int $p) => __('tedi::tedi.pagination.page.false', ['page' => $p]),
-        'currentPageAriaLabel' => fn (int $p) => __('tedi::tedi.pagination.page.true', ['page' => $p]),
+        'pageAriaLabel' => fn (int $p) => __('tedi::tedi.pagination.page', ['page' => $p]),
         'results' => fn (int $count) => trans_choice('tedi::tedi.pagination.results', $count, ['count' => $count]),
         'pageSize' => __('tedi::tedi.pagination.page-size'),
         'pageStatus' => fn (int $p, int $total) => __('tedi::tedi.pagination.page-status', ['page' => $p, 'total' => $total]),
     ];
     $mergedLabels = array_replace($defaultLabels, $labels);
+    // Angular 10: the current page is conveyed by aria-current="page", so its
+    // label defaults to the (merged) pageAriaLabel. currentPageAriaLabel is
+    // deprecated upstream; a different label makes screen readers say it twice.
+    $mergedLabels['currentPageAriaLabel'] ??= $mergedLabels['pageAriaLabel'];
 
     $showResults = ! $hideResults && ($totalItems !== null || isset($results));
     $showPageSizeSelect = ! $hidePageSize && count($pageSizeOptions) > 0;

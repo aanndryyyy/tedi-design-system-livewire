@@ -324,12 +324,14 @@ class FormNumberFieldComponentsTest extends TestCase
         $this->assertStringNotContainsString('aria-label="Muu"', $with);
     }
 
-    public function test_button_aria_labels_substitute_the_step(): void
+    public function test_button_aria_labels_are_short_and_omit_the_step(): void
     {
+        // Angular 10 (#896): "Decrease" / "Increase", whatever the step.
         $html = Blade::render('<tedi:number-field input-id="a" :step="3" />');
 
-        $this->assertStringContainsString('aria-label="Decrease by 3"', $html);
-        $this->assertStringContainsString('aria-label="Increase by 3"', $html);
+        $this->assertStringContainsString('aria-label="Decrease"', $html);
+        $this->assertStringContainsString('aria-label="Increase"', $html);
+        $this->assertStringNotContainsString('by 3', $html);
     }
 
     // ---- feedback text ----------------------------------------------------

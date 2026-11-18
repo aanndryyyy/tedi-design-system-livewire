@@ -17,7 +17,7 @@
     cursor: pointer;
     background: none;
     border: none;
-    border-radius: 0;
+    border-radius: var(--stepper-item-horizontal-radius);
 
     &:focus-visible {
       z-index: 2;

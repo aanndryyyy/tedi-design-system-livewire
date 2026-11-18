@@ -95,6 +95,9 @@ export function sheet(config) {
         snapIndex: null,
         dragOffset: 0,
         dragging: false,
+        // From the press, not the drag threshold: the panel holds the pointer
+        // from then on, so its cursor (`--grabbing`) is the one shown.
+        grabbing: false,
         _drag: null,
         _previouslyFocused: null,
         _previousOverflow: '',
@@ -395,10 +398,9 @@ export function sheet(config) {
             var drag = this._drag;
             if (!drag) return;
             this._drag = null;
+            this.grabbing = false;
             this.dragging = false;
             this.dragOffset = 0;
-            document.removeEventListener('pointermove', drag.onDocMove, true);
-            document.removeEventListener('pointerup', drag.onDocUp, true);
             if (drag.target.hasPointerCapture && drag.target.hasPointerCapture(drag.pointerId)) {
                 drag.target.releasePointerCapture(drag.pointerId);
             }
@@ -412,30 +414,27 @@ export function sheet(config) {
             if (!(target instanceof Element) || !closestInside(target, DRAG_ZONE_SELECTOR, currentTarget)) return;
             if (closestInside(target, NO_DRAG_SELECTOR, currentTarget)) return;
 
-            var self = this;
-            var drag = {
+            this._drag = {
                 pointerId: event.pointerId,
                 startX: event.clientX,
                 startY: event.clientY,
                 target: currentTarget,
                 started: false,
             };
-            // Until the drag starts the pointer is not captured, so a mouse
-            // that leaves the panel within its first move — a quick flick up
-            // from the handle, which sits at the panel's top edge — would be
-            // lost, and its pointerup with it. Follow it at document level
-            // until capture takes over (captured events target the panel and
-            // are left to the panel's own listeners). Touch is implicitly
-            // captured already. Not upstream: sheet-content.tsx has the gap.
-            drag.onDocMove = function (e) {
-                if (!currentTarget.contains(e.target)) self.dragMove(e);
-            };
-            drag.onDocUp = function (e) {
-                if (!currentTarget.contains(e.target)) self.dragEnd(e);
-            };
-            document.addEventListener('pointermove', drag.onDocMove, true);
-            document.addEventListener('pointerup', drag.onDocUp, true);
-            this._drag = drag;
+            this.grabbing = true;
+            // Captured from the press (React 21, #1051), so a quick flick that
+            // leaves the small collapsed header still reaches the panel.
+            try {
+                currentTarget.setPointerCapture(event.pointerId);
+            } catch (e) {
+                // A pointer that is no longer active cannot be captured.
+            }
+        },
+
+        // A native drag, e.g. of selected text, sends `pointercancel`, which
+        // would end the sheet drag.
+        nativeDragStart: function (event) {
+            if (this._drag) event.preventDefault();
         },
 
         dragMove: function (event) {
@@ -458,12 +457,6 @@ export function sheet(config) {
                 }
                 drag.started = true;
                 this.dragging = true;
-                try {
-                    drag.target.setPointerCapture(drag.pointerId);
-                } catch (e) {
-                    // A pointer that is no longer active cannot be captured;
-                    // the drag still works without capture.
-                }
             }
 
             this.dragOffset = this._hasSnaps() ? delta : Math.max(0, delta);

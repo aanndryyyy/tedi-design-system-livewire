@@ -12,7 +12,7 @@
 @endphp
 
 <tedi:tabs default-value="tab-1">
-    <tedi:tabs.list aria-label="Tervise sakid">
+    <tedi:tabs.list aria-label="Terviseandmed">
         <tedi:tabs.trigger id="tab-1">Terviseteekond</tedi:tabs.trigger>
         <tedi:tabs.trigger id="tab-2">Haiguste kulg</tedi:tabs.trigger>
         <tedi:tabs.trigger id="tab-3">Ravimite ajalugu</tedi:tabs.trigger>

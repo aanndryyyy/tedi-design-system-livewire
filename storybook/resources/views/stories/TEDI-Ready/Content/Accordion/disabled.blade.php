@@ -33,21 +33,21 @@
                             <tedi:form.label :required="true" for="first-name">Eesnimi</tedi:form.label>
                         </x-slot:label>
 
-                        <tedi:text-field id="first-name" />
+                        <tedi:text-field id="first-name" required />
                     </tedi:form-field>
                     <tedi:form-field>
                         <x-slot:label>
                             <tedi:form.label :required="true" for="last-name">Perenimi</tedi:form.label>
                         </x-slot:label>
 
-                        <tedi:text-field id="last-name" />
+                        <tedi:text-field id="last-name" required />
                     </tedi:form-field>
                     <tedi:form-field>
                         <x-slot:label>
                             <tedi:form.label :required="true" for="id-code">Isikukood</tedi:form.label>
                         </x-slot:label>
 
-                        <tedi:text-field id="id-code" />
+                        <tedi:text-field id="id-code" required />
                     </tedi:form-field>
                 </div>
                 <tedi:separator />

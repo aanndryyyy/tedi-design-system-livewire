@@ -48,10 +48,34 @@
 
 /// Each state is matched twice: a native control carries it as `:disabled` /
 /// `aria-invalid`, a wrapper as `.tedi-field-surface--disabled` / `--invalid`.
+$disabled-selector: ":disabled, .tedi-field-surface--disabled";
+$invalid-selector: '[aria-invalid="true"], .tedi-field-surface--invalid';
+$settled-selector: '[aria-invalid="true"], .tedi-field-surface--invalid, .tedi-field-surface--valid';
+
+/// The states a field is *in* rather than ones the pointer or focus put it in.
+/// On its own for a surface that is not an input and so has no hover, active
+/// or focus of its own; `surface-states` adds those on top.
+@mixin settled-states {
+  &:not(#{$disabled-selector}) {
+    &:is(#{$invalid-selector}) {
+      --_field-border-color: var(--form-general-feedback-error-border);
+    }
+
+    &.tedi-field-surface--valid {
+      --_field-border-color: var(--form-general-feedback-success-border);
+    }
+  }
+
+  &:is(#{$disabled-selector}) {
+    --_field-border-color: var(--form-input-border-disabled);
+    --_field-background: var(--form-input-background-disabled);
+    --_field-ring-color: transparent;
+
+    cursor: not-allowed;
+  }
+}
+
 @mixin surface-states($focus: ":focus-visible", $from-descendant: false) {
-  $disabled: ":disabled, .tedi-field-surface--disabled";
-  $invalid: '[aria-invalid="true"], .tedi-field-surface--invalid';
-  $settled: '[aria-invalid="true"], .tedi-field-surface--invalid, .tedi-field-surface--valid';
   $hovered: "&:hover";
   $activated: "&:active";
   $focused: "&#{$focus}";
@@ -62,22 +86,16 @@
     $focused: "#{$focused}, &:has(input:focus-visible, textarea:focus-visible)";
   }
 
-  &:not(#{$disabled}) {
-    &:is(#{$invalid}) {
-      --_field-border-color: var(--form-general-feedback-error-border);
-    }
+  @include settled-states;
 
-    &.tedi-field-surface--valid {
-      --_field-border-color: var(--form-general-feedback-success-border);
-    }
-
+  &:not(#{$disabled-selector}) {
     #{$activated},
     #{$focused} {
       --_field-ring-color: var(--_field-border-color);
     }
   }
 
-  &:not(#{$disabled}, #{$settled}) {
+  &:not(#{$disabled-selector}, #{$settled-selector}) {
     #{$hovered} {
       --_field-border-color: var(--form-input-border-hover);
     }
@@ -89,13 +107,5 @@
     #{$focused} {
       --_field-border-color: var(--form-input-border-focus);
     }
-  }
-
-  &:is(#{$disabled}) {
-    --_field-border-color: var(--form-input-border-disabled);
-    --_field-background: var(--form-input-background-disabled);
-    --_field-ring-color: transparent;
-
-    cursor: not-allowed;
   }
 }

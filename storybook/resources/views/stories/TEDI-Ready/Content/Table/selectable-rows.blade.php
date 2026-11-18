@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'Selectable Rows',
-    'order' => 17,
+    'order' => 20,
     'status' => 'subset',
     'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.45.70?node-id=11335-186161&m=dev',
 ])
@@ -33,7 +33,8 @@
 
 @php
     $selectableRows = array_map(
-        fn ($row) => $row + ['selected' => in_array($row['id'], ['2', '4'], true)],
+        // rowSelectionLabel upstream: each checkbox is named after its person.
+        fn ($row) => $row + ['selected' => in_array($row['id'], ['2', '4'], true), 'selectionLabel' => 'Vali '.$row['cells']['name']],
         $rows
     );
 @endphp

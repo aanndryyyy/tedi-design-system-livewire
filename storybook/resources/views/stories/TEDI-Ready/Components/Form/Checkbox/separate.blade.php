@@ -11,7 +11,7 @@
         Nõustun tingimustega
     </tedi:form.label>
     <tedi:form.label color="primary" :required="true" class="flex align-items-center">
-        <tedi:checkbox style="margin-right: var(--form-checkbox-radio-inner-spacing)" />
+        <tedi:checkbox style="margin-right: var(--form-checkbox-radio-inner-spacing)" required />
         Nõustun tingimustega
     </tedi:form.label>
     <tedi:form.label color="primary" class="flex align-items-center gap-2">

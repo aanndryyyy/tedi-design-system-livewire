@@ -380,33 +380,35 @@ class CalendarComponentsTest extends TestCase
         $this->assertStringContainsString('aria-label="Week 18"', $with);
     }
 
-    public function test_day_grid_first_day_of_week_rotates_both_header_arrays(): void
+    public function test_day_grid_first_day_of_week_rotates_the_header(): void
     {
-        $monday = Blade::render('<tedi:calendar-day-grid :month="\''.self::MONTH.'\'" :first-day-of-week="1" />');
-        $this->assertStringContainsString('aria-label="Monday" >Mon</th>', preg_replace('/\s+/', ' ', $monday));
+        $monday = preg_replace('/\s+/', ' ', Blade::render('<tedi:calendar-day-grid :month="\''.self::MONTH.'\'" :first-day-of-week="1" />'));
+        $this->assertStringContainsString('<th class="tedi-calendar-day-grid__weekday">Mon</th>', $monday);
+        $this->assertLessThan(strpos($monday, '>Tue</th>'), strpos($monday, '>Mon</th>'));
 
-        $sunday = Blade::render('<tedi:calendar-day-grid :month="\''.self::MONTH.'\'" :first-day-of-week="0" />');
-        $normalised = preg_replace('/\s+/', ' ', $sunday);
-        $this->assertStringContainsString('aria-label="Sunday" >Sun</th>', $normalised);
-        $this->assertLessThan(
-            strpos($normalised, 'aria-label="Monday"'),
-            strpos($normalised, 'aria-label="Sunday"')
-        );
+        $sunday = preg_replace('/\s+/', ' ', Blade::render('<tedi:calendar-day-grid :month="\''.self::MONTH.'\'" :first-day-of-week="0" />'));
+        $this->assertLessThan(strpos($sunday, '>Mon</th>'), strpos($sunday, '>Sun</th>'));
     }
 
-    public function test_day_grid_focusable_day_is_the_first_selectable_in_month_day(): void
+    public function test_day_grid_header_is_hidden_from_screen_readers(): void
     {
-        $html = Blade::render('<tedi:calendar-day-grid :month="\''.self::MONTH.'\'" />');
-
-        $this->assertSame(1, substr_count($html, 'tabindex="0"'));
-        $this->assertSame(41, substr_count($html, 'tabindex="-1"'));
+        // Angular 10 (#895): each day's label names its weekday, so the header row
+        // (weekdays and the week-number corner) is aria-hidden and unnamed.
+        $html = Blade::render('<tedi:calendar-day-grid :month="\''.self::MONTH.'\'" show-week-numbers />');
+        $this->assertStringContainsString('<thead aria-hidden="true">', $html);
+        $this->assertStringContainsString('<th class="tedi-calendar-day-grid__week-number-header"></th>', $html);
+        $this->assertStringNotContainsString('role="columnheader"', $html);
     }
 
     public function test_day_grid_day_aria_label_and_date_key(): void
     {
         $html = Blade::render('<tedi:calendar-day-grid :month="\''.self::MONTH.'\'" />');
 
-        $this->assertStringContainsString('aria-label="Wednesday, 1. May 2030"', $html);
+        // Angular 10 (#895): the grid name carries the year, so in-year days omit it…
+        $this->assertStringContainsString('aria-label="Wednesday, 1. May"', $html);
+        // …and only days from another year repeat it.
+        $january = Blade::render('<tedi:calendar-day-grid :month="\'2030-01-01\'" />');
+        $this->assertStringContainsString('aria-label="Monday, 31. December 2029"', $january);
         $this->assertStringContainsString('data-date-key="'.(mktime(0, 0, 0, 5, 1, 2030) * 1000).'"', $html);
     }
 
@@ -418,7 +420,7 @@ class CalendarComponentsTest extends TestCase
         );
 
         $this->assertHasClass('tedi-calendar-day-grid__status', $html, on: 'tedi-calendar-day-grid__status');
-        $this->assertStringContainsString('aria-label="Friday, 10. May 2030, Kinnitatud"', $html);
+        $this->assertStringContainsString('aria-label="Friday, 10. May, Kinnitatud"', $html);
     }
 
     // -- calendar-month-grid ------------------------------------------------
@@ -523,5 +525,14 @@ class CalendarComponentsTest extends TestCase
 
         $html = Blade::render('<tedi:calendar-day-grid '.$month.' mode="multiple" :value="[\'2030-05-03\', [\'nested\'], \'nonsense\', true]" />');
         $this->assertSame(1, substr_count($html, 'tedi-calendar-day-grid__day--selected'));
+    }
+
+    public function test_calendar_full_width_modifier(): void
+    {
+        // Angular 10 (#505).
+        $this->assertHasClass('tedi-calendar--full-width',
+            Blade::render('<tedi:calendar :current-month="\''.self::MONTH.'\'" full-width />'), on: 'tedi-calendar');
+        $this->assertMissingClass('tedi-calendar--full-width',
+            Blade::render('<tedi:calendar :current-month="\''.self::MONTH.'\'" />'), on: 'tedi-calendar');
     }
 }

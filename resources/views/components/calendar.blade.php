@@ -75,6 +75,11 @@
     'showNavigation' => true,
     /** Render the outer border and rounded corners. */
     'bordered' => true,
+    /**
+     * Grow to fill the container's width instead of a fixed width; cells keep a
+     * square aspect ratio. Wrap in a sized container to control the scale (Angular 10, #505).
+     */
+    'fullWidth' => false,
     /** dropdown|grid|static — how the header exposes month/year picking. */
     'monthYearSelectType' => 'dropdown',
     /** When mode='multiple', prevents clearing the last date. Behavioural only. */
@@ -139,6 +144,7 @@
     'tedi-calendar--disabled' => (bool) $inputDisabled,
     'tedi-calendar--with-week-numbers' => (bool) $showWeekNumbers,
     'tedi-calendar--bordered' => (bool) $bordered,
+    'tedi-calendar--full-width' => (bool) $fullWidth,
 ])->style([
     '--_tedi-calendar-month-count: '.$numberOfMonths,
 ]) }}>

@@ -112,8 +112,10 @@
 @props([
     /** Id for the <input>, also the label's `for`. Auto-generated (Tedi::id()) when omitted. */
     'inputId' => null,
-    /** Visible label text. When omitted, provide `ariaLabel`. */
+    /** Label of the search field. Always set it; use `hideLabel` when it must not be visible. */
     'label' => null,
+    /** Hides the label visually while keeping it as the field's name. */
+    'hideLabel' => false,
     /** Value of the search input. Emitted only when non-empty (see text-field.blade.php). */
     'value' => '',
     /** Placeholder text for the search input. */
@@ -131,7 +133,7 @@
     'button' => null,
     /** Feedback text below the field: ['text' => ..., 'type' => 'hint', 'position' => 'left']. */
     'feedbackText' => null,
-    /** Accessible name for the search region. Falls back to label, placeholder, then the translated "search". */
+    /** Accessible name for the search landmark. Unnamed by default; set it when the page has more than one search. It does not name the field. */
     'ariaLabel' => null,
     /**
      * Already-filtered suggestions: strings, arrays or objects. Pass `[]` to
@@ -194,10 +196,11 @@
     // Angular: buttonAriaLabel() — a labelled button needs no aria-label.
     $buttonAriaLabel = $buttonText ? null : ($button['ariaLabel'] ?? __('tedi::tedi.search'));
 
-    // Angular: searchAriaLabel() / inputAriaLabel(). A visible label already
-    // names the input via for/id, so aria-label would silently override it.
-    $searchAriaLabel = $ariaLabel ?: ($label ?: ($placeholder ?: __('tedi::tedi.search')));
-    $inputAriaLabel = $label ? null : $searchAriaLabel;
+    // Angular 10 (#891): the search landmark is unnamed unless `ariaLabel` is
+    // given, and that never names the field. inputAriaLabel() — only without a
+    // `label`, which would otherwise be overridden.
+    $searchAriaLabel = $ariaLabel ?: null;
+    $inputAriaLabel = $label ? null : ($placeholder ?: __('tedi::tedi.search'));
 
     // Angular: feedbackId(). It is always computed upstream, but only reaches
     // aria-describedby when a feedback text is projected.
@@ -288,7 +291,7 @@
 
 <div
     role="search"
-    aria-label="{{ $searchAriaLabel }}"
+    @if ($searchAriaLabel) aria-label="{{ $searchAriaLabel }}" @endif
     style="--tedi-search-field-height: {{ $fieldHeight }}"
     @class([
         'tedi-search',
@@ -317,7 +320,7 @@
         >
             @if ($label)
                 <x-slot:label>
-                    <tedi:form.label :for="$inputId" :size="$size === 'small' ? 'small' : 'default'">
+                    <tedi:form.label :for="$inputId" :size="$size === 'small' ? 'small' : 'default'" :visually-hidden="(bool) $hideLabel">
                         {{ $label }}
                     </tedi:form.label>
                 </x-slot:label>

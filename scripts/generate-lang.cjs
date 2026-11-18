@@ -10,6 +10,9 @@
 //   - a boolean selector param   -> key.true / key.false variants
 //   - an enum selector (sort)    -> key.<value> variants
 //   - a count-dependent ternary  -> "{1} singular|[0,*] plural" (trans_choice)
+//   - Russian one/few/many       -> "one|few|many" (the locale's plural rule)
+//   - an optional (`p?`) param that is interpolated when given
+//                                -> key (without it) + key.<p> (with :p)
 const fs = require('fs');
 const path = require('path');
 const esbuild = require('esbuild');
@@ -41,6 +44,29 @@ function variants(key, fn) {
     const { param, values } = ENUMS[key];
     return Object.fromEntries(values.map((v) => [`${key}.${v}`, render(fn, ps, { [param]: v })]));
   }
+  // An optional param interpolated when given (`suffix?: string`) is not a
+  // boolean selector: `key` renders without it, `key.<param>` with :param.
+  // translations.ts reaches us type-stripped, so `?` is gone: such a param is
+  // interpolated when given and dropped when falsy (`suffix ? … : …`), so
+  // undefined, false and '' all render alike. A `page ?? 0` default does not.
+  const optional = ps.filter((p) => {
+    const given = render(fn, ps, {});
+    const omitted = render(fn, ps, { [p]: undefined });
+    return (
+      given.includes(`:${p}`) &&
+      omitted !== given &&
+      omitted === render(fn, ps, { [p]: false }) &&
+      omitted === render(fn, ps, { [p]: '' })
+    );
+  });
+  if (optional.length > 1) throw new Error(`${key}: multiple optional params ${optional}`);
+  if (optional.length) {
+    const [p] = optional;
+    return {
+      ...forms(key, fn, ps, { [p]: undefined }, []),
+      ...forms(`${key}.${p}`, fn, ps, {}, []),
+    };
+  }
   // A selector param is one whose truthiness changes the output's shape.
   const selectors = ps.filter((p) => {
     const t = render(fn, ps, { [p]: true }).replaceAll('true', `:${p}`);
@@ -48,17 +74,30 @@ function variants(key, fn) {
     return t !== f && !/^(count|n|page|total|slideNumber|totalNumber)$/.test(p);
   });
   if (selectors.length > 1) throw new Error(`${key}: multiple selectors ${selectors}`);
+  return forms(key, fn, ps, {}, selectors);
+}
+
+// The key's variants for one fixed set of overrides: key.true / key.false for
+// a selector, otherwise the key itself, each with count wording resolved.
+function forms(key, fn, ps, base, selectors) {
   const out = {};
-  const forms = selectors.length
-    ? [[`${key}.true`, { [selectors[0]]: true }], [`${key}.false`, { [selectors[0]]: false }]]
-    : [[key, {}]];
-  for (const [k, ov] of forms) {
+  const list = selectors.length
+    ? [[`${key}.true`, { ...base, [selectors[0]]: true }], [`${key}.false`, { ...base, [selectors[0]]: false }]]
+    : [[key, base]];
+  for (const [k, ov] of list) {
     // Count-dependent wording: render with 1 and 2 and see whether only the number differs.
     const countParam = ps.find((p) => p === 'count');
     if (countParam && !(countParam in ov)) {
-      const one = render(fn, ps, { ...ov, count: 1 }).replace(/\b1\b/, ':count');
-      const two = render(fn, ps, { ...ov, count: 2 }).replace(/\b2\b/, ':count');
-      out[k] = one === two ? two : `{1} ${one}|[0,*] ${two}`;
+      // Some entries compare `count === 1`, others `count === "1"` (the count
+      // arrives as a string there): render with whichever type changes the wording.
+      const at = (n, cast) => render(fn, ps, { ...ov, count: cast(n) }).replace(new RegExp(`\\b${n}\\b`), ':count');
+      const cast = at(1, String) !== at(2, String) && at(1, Number) === at(2, Number) ? String : Number;
+      const one = at(1, cast);
+      const two = at(2, cast);
+      const five = at(5, cast);
+      // Three forms (Russian one/few/many via pluralizeRu): no ranges, so
+      // trans_choice applies the locale's own plural rule, which matches.
+      out[k] = two !== five ? `${one}|${two}|${five}` : one === two ? two : `{1} ${one}|[0,*] ${two}`;
     } else {
       out[k] = render(fn, ps, ov);
     }
@@ -86,6 +125,7 @@ for (const lang of ['en', 'et', 'ru']) {
     '<?php\n\n// Generated from @tedi-design-system/angular\n' +
     '// src/tedi/services/translation/translations.ts by scripts/generate-lang.cjs — do not edit by hand.\n' +
     '// Function entries become :placeholders, key.true/key.false variants for a\n' +
-    '// boolean selector, and "{1} …|[0,*] …" choice strings for count wording.\n\nreturn [\n';
+    '// boolean selector, key + key.<param> for an optional parameter, and\n' +
+    '// "{1} …|[0,*] …" (or Russian "one|few|many") choice strings for count wording.\n\nreturn [\n';
   fs.writeFileSync(file, head + lines.join('\n') + '\n\n' + cur.slice(reactStart));
 }

@@ -21,10 +21,8 @@
   // --_tedi-calendar-month-count keeps it correct before/without the measurement
   // (e.g. SSR): all months side by side.
   width: calc(
-    var(
-        --_tedi-calendar-fit-columns,
-        var(--_tedi-calendar-month-count, 1)
-      ) * var(--_tedi-calendar-month-width)
+    var(--_tedi-calendar-fit-columns, var(--_tedi-calendar-month-count, 1)) *
+      var(--_tedi-calendar-month-width)
   );
   min-width: var(--_tedi-calendar-month-width);
   height: fit-content;
@@ -32,6 +30,17 @@
 
   &--with-week-numbers {
     --_tedi-calendar-day-columns: 8;
+  }
+
+  &--full-width {
+    box-sizing: border-box;
+    width: 100%;
+
+    .tedi-calendar__month {
+      flex: 1 1 var(--_tedi-calendar-month-width);
+      min-width: min(100%, var(--_tedi-calendar-month-width));
+      max-width: none;
+    }
   }
 
   &__months {
@@ -42,8 +51,10 @@
   }
 
   &__month {
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    max-width: var(--_tedi-calendar-month-width);
     padding: var(--card-padding-md-default);
   }
 

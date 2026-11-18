@@ -125,9 +125,10 @@
     // feedbackId()
     $feedbackId = $feedbackText ? $inputId.'-feedback' : null;
 
-    // 'numberField.decrement' | tediTranslate: step()
-    $decrementLabel = __('tedi::tedi.numberField.decrement', ['count' => $step]);
-    $incrementLabel = __('tedi::tedi.numberField.increment', ['count' => $step]);
+    // 'numberField.decrement' | tediTranslate: step() — since Angular 10 (#896)
+    // the label no longer mentions the step ("Decrease", not "Decrease by 3").
+    $decrementLabel = __('tedi::tedi.numberField.decrement');
+    $incrementLabel = __('tedi::tedi.numberField.increment');
 
     // <tedi:button> is a component tag, so its classes are passed as a plain
     // string attribute rather than through @class().

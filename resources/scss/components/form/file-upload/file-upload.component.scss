@@ -1,0 +1,142 @@
+@use "@tedi-design-system/core/bootstrap-utility/breakpoints";
+@use "../field-surface-mixins" as field-surface;
+
+.tedi-file-upload {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--form-field-outer-spacing);
+  min-width: 0;
+
+  &__field {
+    @include field-surface.tokens;
+
+    --_field-padding-y: var(--form-field-padding-y-md-has-button);
+
+    display: flex;
+    gap: var(--form-field-inner-spacing);
+    align-items: flex-start;
+    min-width: 0;
+
+    &:not(.tedi-field-surface) {
+      flex: 1;
+    }
+
+    &:where(.tedi-field-surface) {
+      @include field-surface.surface(content);
+
+      width: 100%;
+    }
+
+    // The field is not an input, so it has no hover, active or focus border of
+    // its own — the add button carries those.
+    &.tedi-field-surface {
+      @include field-surface.settled-states;
+    }
+  }
+
+  &--small &__field {
+    @include field-surface.size(small);
+
+    --_field-padding-y: var(--form-field-padding-y-sm-has-button);
+  }
+
+  @include breakpoints.media-breakpoint-up(md) {
+    &--small &__field {
+      --_field-padding-y: var(--tedi-borders-01);
+    }
+
+    &--small &__actions {
+      margin-block: calc(-1 * var(--tedi-borders-01));
+    }
+  }
+
+  &__value {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    align-self: stretch;
+    min-width: 0;
+    font-size: var(--body-regular-size);
+    line-height: var(--body-regular-line-height);
+    color: var(--form-input-text-filled);
+  }
+
+  &--small &__value {
+    font-size: var(--body-small-regular-size);
+    line-height: var(--body-small-regular-line-height);
+  }
+
+  &--disabled &__value {
+    color: var(--form-input-text-disabled);
+  }
+
+  &__name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--form-field-inner-spacing);
+    padding: var(--layout-grid-gutters-04) 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  &--read-only &__tags {
+    padding: 0;
+  }
+
+  &__tag {
+    display: flex;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  &__actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: var(--form-field-inner-spacing);
+    align-items: center;
+  }
+
+  &__clear-group {
+    display: flex;
+    gap: var(--layout-grid-gutters-04);
+    align-items: center;
+  }
+
+  &__input {
+    display: none;
+  }
+
+  @include breakpoints.media-breakpoint-down(md) {
+    &__field {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    &__value {
+      align-self: auto;
+    }
+
+    &--empty &__value {
+      display: none;
+    }
+
+    &__actions {
+      gap: var(--layout-grid-gutters-08);
+      justify-content: flex-end;
+    }
+
+    &__clear-group,
+    &__clear,
+    &__add {
+      flex: 1;
+    }
+  }
+}

@@ -66,6 +66,20 @@ class SheetComponentsTest extends TestCase
         $this->assertStringNotContainsString('tedi-sheet__handle-zone', $tuned);
     }
 
+    public function test_panel_grabbing_cursor_native_drag_guard_and_closing_inert(): void
+    {
+        // React 21 (#1051): --grabbing is bound to the press state, a native
+        // drag is blocked during a sheet drag, and the overlay is inert while
+        // it animates out.
+        $html = $this->sheet('<tedi:sheet-content>x</tedi:sheet-content>');
+        $this->assertStringContainsString('x-bind:class="{ \'tedi-sheet__panel--grabbing\': grabbing }"', $html);
+        $this->assertStringContainsString('x-on:dragstart="nativeDragStart($event)"', $html);
+        $this->assertStringContainsString('x-bind:inert="status === \'close\'"', $html);
+
+        $js = file_get_contents(__DIR__.'/../../resources/js/src/sheet.js');
+        $this->assertMatchesRegularExpression('/this\.grabbing = true;\s*\/\/[^\n]*\n[^\n]*\n\s*try \{\s*currentTarget\.setPointerCapture/s', $js);
+    }
+
     public function test_radius_is_a_custom_property_override(): void
     {
         $this->assertStringNotContainsString('--tedi-sheet-radius', $this->sheet('<tedi:sheet-content>x</tedi:sheet-content>'));

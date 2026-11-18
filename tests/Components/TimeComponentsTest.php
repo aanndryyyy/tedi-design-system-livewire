@@ -418,4 +418,15 @@ class TimeComponentsTest extends TestCase
         $this->assertStringContainsString('aria-haspopup="dialog"', $html);
         $this->assertStringContainsString('>schedule</tedi-icon>', $html);
     }
+
+    public function test_time_field_input_takes_name_required_and_described_by(): void
+    {
+        // Angular 10 (#801): the feedback text is linked to the input, and the
+        // input carries name / required for native form submission.
+        $html = Blade::render('<tedi:form-field><tedi:time-field input-id="t" name="algus" required aria-describedby="t-feedback" /></tedi:form-field>');
+        $this->assertSame(1, preg_match('/<input[^>]*tedi-time-field__input[^>]*>/s', $html, $m));
+        $this->assertStringContainsString('name="algus"', $m[0]);
+        $this->assertStringContainsString('required', $m[0]);
+        $this->assertStringContainsString('aria-describedby="t-feedback"', $m[0]);
+    }
 }

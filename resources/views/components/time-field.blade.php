@@ -30,6 +30,8 @@
     - **`useNativePicker` is dropped** (breakpoint prop, §7 item 1). The input is
       therefore always `type="text"`; the `type="time"` branch is unreachable.
     - `closeOnSelect` is dropped: runtime behaviour with no markup effect.
+    - Angular 10's `name` and `required` inputs (#801) need no props here: both
+      are plain attributes, and `$attributes` already lands on the <input>.
     - `output()`s are not re-emitted; blur-time normalisation of typed input
       (`9:5` → `09:05`) is JS and is not ported (§7 item 2, §8).
     - `open` is an explicit prop standing in for Angular's `popover().isOpen()`
@@ -110,6 +112,13 @@
     $paintsSurface = ! ($fieldContext['ownsSurface'] ?? false);
     $clearableResolved = $clearable !== null ? (bool) $clearable : ($fieldContext['clearable'] ?? true);
 
+    // controlDescribedBy() (Angular 10, #801): own ids first, then the ones the
+    // wrapping form-field pushes, de-duplicated — as text-field.blade.php.
+    $describedBy = array_values(array_unique(array_merge(
+        preg_split('/\s+/', trim((string) $attributes->get('aria-describedby', '')), -1, PREG_SPLIT_NO_EMPTY),
+        $fieldContext['describedBy'] ?? [],
+    )));
+
     // hasPicker(): useNativePicker is dropped, so it reduces to the variant check.
     $hasPicker = $pickerVariant !== 'none';
     // usePopover(): useMobileModal() is always false here (modal branch not ported).
@@ -153,11 +162,12 @@
                 type="text"
                 @disabled($disabled)
                 @if ($inputIsTrigger) readonly @endif
-                {{ $attributes->class(['tedi-time-field__input'])->merge(array_filter([
+                {{ $attributes->except('aria-describedby')->class(['tedi-time-field__input'])->merge(array_filter([
                     'id' => $inputId,
                     'value' => $hasValue ? $value : null,
                     'placeholder' => ($placeholder !== null && $placeholder !== '') ? $placeholder : null,
                     'aria-invalid' => $invalid ? 'true' : null,
+                    'aria-describedby' => $describedBy !== [] ? implode(' ', $describedBy) : null,
                 ], fn ($v) => $v !== null)) }}
             />
 

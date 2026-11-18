@@ -141,18 +141,35 @@ class SearchComponentsTest extends TestCase
         }
     }
 
-    public function test_search_aria_label_falls_back_through_label_then_placeholder(): void
+    public function test_search_landmark_is_unnamed_unless_aria_label_is_given(): void
     {
+        // Angular 10 (#891): `ariaLabel` names the landmark only, and nothing
+        // else falls back into it.
+        $landmark = function (string $blade): string {
+            preg_match('/<div\s[^>]*role="search"[^>]*>/s', Blade::render($blade), $m);
+
+            return $m[0];
+        };
+
         $this->assertStringContainsString('aria-label="Otsi tooteid"',
-            Blade::render('<tedi:search aria-label="Otsi tooteid" label="Otsing" placeholder="Trüki" />'));
+            $landmark('<tedi:search aria-label="Otsi tooteid" label="Otsing" placeholder="Trüki" />'));
+        foreach (['<tedi:search label="Otsing" placeholder="Trüki" />', '<tedi:search placeholder="Trüki" />', '<tedi:search />'] as $blade) {
+            $this->assertStringNotContainsString('aria-label', $landmark($blade));
+        }
 
-        $this->assertStringContainsString('aria-label="Otsing"',
-            Blade::render('<tedi:search label="Otsing" placeholder="Trüki" />'));
+        // The field without a label is named by the placeholder, then "Search";
+        // ariaLabel does not name it.
+        $this->assertMatchesRegularExpression('/<input\s+tedi-text-field[^>]*aria-label="Search"/s',
+            Blade::render('<tedi:search aria-label="Otsi tooteid" />'));
+    }
 
-        $this->assertStringContainsString('aria-label="Trüki"',
-            Blade::render('<tedi:search placeholder="Trüki" />'));
-
-        $this->assertStringContainsString('aria-label="Search"', Blade::render('<tedi:search />'));
+    public function test_search_hide_label_keeps_the_label_as_the_field_name(): void
+    {
+        $html = Blade::render('<tedi:search input-id="s" label="Otsing" hide-label />');
+        $this->assertHasClass('sr-only', $html, on: 'tedi-label');
+        $this->assertStringContainsString('for="s"', $html);
+        $this->assertDoesNotMatchRegularExpression('/<input\s+tedi-text-field[^>]*aria-label=/s', $html);
+        $this->assertMissingClass('sr-only', Blade::render('<tedi:search input-id="s" label="Otsing" />'), on: 'tedi-label');
     }
 
     public function test_search_input_aria_label_is_suppressed_when_a_visible_label_exists(): void

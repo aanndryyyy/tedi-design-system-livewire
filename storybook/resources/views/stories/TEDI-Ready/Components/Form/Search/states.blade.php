@@ -33,7 +33,7 @@
                 <tedi:search
                     :input-id="'search-states-'.$state"
                     label="Otsing"
-                    :aria-label="'Otsing – '.$state"
+                    :aria-label="$state"
                 />
             </tedi:col>
         </tedi:row>
@@ -45,7 +45,7 @@
             <tedi:search
                 input-id="search-states-disabled"
                 label="Otsing"
-                aria-label="Otsing – Disabled"
+                aria-label="Disabled"
                 :disabled="true"
             />
         </tedi:col>
@@ -57,7 +57,7 @@
             <tedi:search
                 input-id="search-states-success"
                 label="Otsing"
-                aria-label="Otsing – Success"
+                aria-label="Success"
                 :feedback-text="['text' => 'Tagasiside tekst', 'type' => 'valid']"
             />
         </tedi:col>
@@ -69,7 +69,7 @@
             <tedi:search
                 input-id="search-states-error"
                 label="Otsing"
-                aria-label="Otsing – Error"
+                aria-label="Error"
                 :feedback-text="['text' => 'Tagasiside tekst', 'type' => 'error']"
             />
         </tedi:col>

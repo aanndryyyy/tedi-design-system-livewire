@@ -110,6 +110,10 @@ tedi-timeline-item {
     display: flex;
     flex-direction: column;
     gap: var(--timeline-padding-y);
+
+    &:empty {
+      display: none;
+    }
   }
 
   > .tedi-timeline__timings-bottom {

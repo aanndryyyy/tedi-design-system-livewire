@@ -9,7 +9,8 @@
   border-radius: var(--form-select-area-radius);
   box-shadow: 0 1px 5px 0 rgb(0 0 0 / 20%);
 
-  &__list {
+  // Nested under the block so typical host-page list styles (e.g. `.wrapper ul`) don't override the reset.
+  & &__list {
     padding: 0;
     margin: 0;
 

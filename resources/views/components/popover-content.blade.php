@@ -39,6 +39,12 @@
     'containerId' => null,
     /** Id of the heading. Derived from container-id, or generated, when omitted. */
     'titleId' => null,
+    /**
+     * Inner padding on the `tedi:card` scale (Angular 9.1, #838): rems,
+     * ['vertical' => …, 'horizontal' => …] or ['top' => …, 'right' => …, 'bottom' => …,
+     * 'left' => …] (missing sides are 0). Null keeps the popover padding.
+     */
+    'padding' => null,
 ])
 
 @php
@@ -49,6 +55,15 @@
         'tedi-popover-content',
         'tedi-popover-content--'.$maxWidth => $isPresetWidth && $maxWidth !== 'none',
     ]);
+    // customPadding(): the card scale's four sides as an inline `padding`.
+    if ($padding !== null) {
+        $sides = is_numeric($padding)
+            ? array_fill_keys(['top', 'right', 'bottom', 'left'], $padding)
+            : (array_key_exists('vertical', $padding) && array_key_exists('horizontal', $padding)
+                ? ['top' => $padding['vertical'], 'right' => $padding['horizontal'], 'bottom' => $padding['vertical'], 'left' => $padding['horizontal']]
+                : ['top' => $padding['top'] ?? 0, 'right' => $padding['right'] ?? 0, 'bottom' => $padding['bottom'] ?? 0, 'left' => $padding['left'] ?? 0]);
+        $rootAttributes = $rootAttributes->style(['padding: '.implode(' ', array_map(fn ($v) => $v.'rem', $sides))]);
+    }
     $headingId = $titleId
         ?: ($containerId ? $containerId.'_title' : \Tedi\Livewire\Tedi::id('popover-title'));
 @endphp

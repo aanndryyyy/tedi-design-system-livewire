@@ -16,7 +16,7 @@
                 </tedi:label-row>
             </x-slot:label>
 
-            <tedi:text-field id="tooltip-plain" />
+            <tedi:text-field id="tooltip-plain" required />
 
             <x-slot:feedback>
                 <tedi:feedback-text text="Vihjetekst" />

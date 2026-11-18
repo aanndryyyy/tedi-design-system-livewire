@@ -17,7 +17,7 @@
             <tedi:icon name="arrow_forward" :size="18" />
         </tedi:button>
     </tedi:carousel-header>
-    <tedi:carousel-content :slides-per-view="3">
+    <tedi:carousel-content :slides-per-view="3" aria-label="Title">
         @for ($i = 0; $i < 3; $i++)
             <tedi:carousel-slide>
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--general-border-primary); border-radius: 4px; height: 10rem; padding: 1rem; flex: 1;">

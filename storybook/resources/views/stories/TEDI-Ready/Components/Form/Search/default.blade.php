@@ -6,6 +6,7 @@
     'args' => [
         'inputId' => 'search-default',
         'label' => 'Otsing',
+        'hideLabel' => false,
         'value' => '',
         'placeholder' => 'Otsi nime või märksõna järgi',
         'size' => 'default',
@@ -34,9 +35,18 @@
             'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
         ],
         'label' => [
-            'description' => 'Visible label text. When omitted, provide `ariaLabel` for accessibility.',
+            'description' => 'Label of the search field. Always set it; use `hideLabel` when it must not be visible.',
             'control' => ['type' => 'text'],
             'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
+        ],
+        'hideLabel' => [
+            'description' => "Hides the label visually while keeping it as the field's name.",
+            'control' => ['type' => 'boolean'],
+            'table' => [
+                'category' => 'inputs',
+                'type' => ['summary' => 'boolean'],
+                'defaultValue' => ['summary' => 'false'],
+            ],
         ],
         'value' => [
             'description' => 'Value of the search input. Bind it live with `wire:model`.',
@@ -105,7 +115,7 @@
             'table' => ['category' => 'inputs', 'type' => ['summary' => 'array']],
         ],
         'ariaLabel' => [
-            'description' => 'Accessible name for the search region. Falls back to `label`, then `placeholder`, then the translated "search" label.',
+            'description' => 'Accessible name for the search landmark. Unnamed by default; set it when the page has more than one search. It does not name the field.',
             'control' => ['type' => 'text'],
             'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
         ],
@@ -203,6 +213,7 @@
 <tedi:search
     :input-id="$inputId"
     :label="$label ?: null"
+    :hide-label="(bool) $hideLabel"
     :value="$value"
     :placeholder="$placeholder"
     :size="$size"

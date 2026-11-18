@@ -49,7 +49,7 @@
     /** Show auto-generated hierarchical numbers (1., 2., 2.1, …). */
     'numbered' => false,
     /** Draws a divider under each item except the last. */
-    'bordered' => false,
+    'divided' => false,
     /** Pin the bar to the bottom of the viewport. False renders it inline. */
     'sticky' => true,
     /** Hide the bar while scrolling down and reveal it on scroll up. */
@@ -133,7 +133,7 @@
         <div @class([
             'tedi-table-of-contents',
             'tedi-table-of-contents__sheet',
-            'tedi-table-of-contents--bordered' => $bordered,
+            'tedi-table-of-contents--divided' => $divided,
         ])>
             <div class="tedi-table-of-contents__sheet-header">
                 <tedi:text modifiers="bold" class="tedi-table-of-contents__bar-title">{{ $title }}</tedi:text>

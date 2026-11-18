@@ -68,21 +68,6 @@
     </tedi:top-nav-item>
 </tedi:top-nav>
 
-{{-- Form / FileUpload — every state modifier, both list shapes, read-only --}}
-@php
-    $twoFiles = [['name' => 'aruanne.pdf'], ['name' => 'vigane.pdf', 'is_valid' => false]];
-@endphp
-<tedi:file-upload name="failid" label="Manused" :files="$twoFiles" />
-<tedi:file-upload name="failid" :files="$twoFiles" :helper="['text' => 'Viga', 'type' => 'error']" />
-<tedi:file-upload name="failid" :files="$twoFiles" :helper="['text' => 'Korras', 'type' => 'valid']" />
-<tedi:file-upload name="failid" :files="$twoFiles" :helper="['text' => 'Vihje', 'type' => 'hint']" />
-<tedi:file-upload name="failid" :files="$twoFiles" disabled />
-<tedi:file-upload name="failid" :files="[['name' => 'ainus.pdf', 'is_loading' => true]]" size="small" />
-<tedi:file-upload name="failid" :files="$twoFiles" read-only />
-<tedi:file-upload name="failid" />
-<tedi:file-upload name="failid" accept=".pdf,.txt" :max-size="1024" />
-<tedi:file-upload name="failid" accept=".pdf,.txt" :max-size="1024" :show-restrictions="false" />
-
 {{-- Form / MultiValueField — both directions, both icon shapes --}}
 @foreach (['stack', 'row'] as $tagsDirection)
     @foreach (['primary', 'secondary', 'danger'] as $tagColor)

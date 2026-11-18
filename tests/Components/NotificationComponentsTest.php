@@ -78,23 +78,57 @@ class NotificationComponentsTest extends TestCase
 
     public function test_alert_close_aria_label_names_the_close_button(): void
     {
+        // Angular 10 (#900): the closing button renders its label once, as title.
         $html = Blade::render('<tedi:alert :show-close="true" close-aria-label="Sulge teade: Salvestatud">Body</tedi:alert>');
-        $this->assertStringContainsString('aria-label="Sulge teade: Salvestatud"', $html);
+        $this->assertStringContainsString('title="Sulge teade: Salvestatud"', $html);
+        $this->assertStringNotContainsString('aria-label=', $html);
 
         $html = Blade::render('<tedi:alert :show-close="true">Body</tedi:alert>');
-        $this->assertStringContainsString('aria-label="'.__('tedi::tedi.close').'"', $html);
+        $this->assertStringContainsString('title="'.__('tedi::tedi.close').'"', $html);
+    }
+
+    public function test_closing_button_renders_its_label_once(): void
+    {
+        // Angular 10 (#900): title while showTitle, else aria-label — never both.
+        $titled = Blade::render('<tedi:closing-button aria-label="Sulge dialoog" />');
+        $this->assertStringContainsString('title="Sulge dialoog"', $titled);
+        $this->assertStringNotContainsString('aria-label=', $titled);
+
+        $untitled = Blade::render('<tedi:closing-button :show-title="false" />');
+        $this->assertStringContainsString('aria-label="'.__('tedi::tedi.close').'"', $untitled);
+        $this->assertStringNotContainsString('title=', $untitled);
+
+        // #814: the icon follows the button's per-state text colour.
+        $this->assertHasClass('tedi-icon--color-inherit', $titled, on: 'tedi-icon');
+    }
+
+    public function test_alert_close_and_action_sit_outside_the_live_region(): void
+    {
+        // Angular 10 (#898): the role moves from the host to __body, and the
+        // close button is described by the title.
+        $html = Blade::render('<tedi:alert role="alert" title="Salvestatud" :show-close="true">Body<x-slot:action><tedi:button>Tegevus</tedi:button></x-slot:action></tedi:alert>');
+        $this->assertMatchesRegularExpression('/<div class="tedi-alert__body"\s+role="alert"\s*>/', $html);
+        $this->assertDoesNotMatchRegularExpression('/<tedi-alert[^>]*role=/', $html);
+        $this->assertSame(1, preg_match('/<h2 class="tedi-alert__title" id="([^"]+)">/', $html, $m));
+        $this->assertSame(1, preg_match('/<button[^>]*tedi-closing-button[^>]*>/s', $html, $close));
+        $this->assertStringContainsString('aria-describedby="'.$m[1].'"', $close[0]);
+        // Body closes before the action and close button.
+        $this->assertMatchesRegularExpression('/tedi-alert__body.*<\/div>\s*<div class="tedi-alert__action">/s', $html);
+
+        $untitled = Blade::render('<tedi:alert :show-close="true">Body</tedi:alert>');
+        $this->assertStringNotContainsString('aria-describedby', $untitled);
     }
 
     public function test_alert_title_sets_heading_tag_and_head_wrapper(): void
     {
         foreach (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as $tag) {
             $html = Blade::render('<tedi:alert title="Pealkiri" title-element="'.$tag.'">Body</tedi:alert>');
-            $this->assertStringContainsString('<'.$tag.' class="tedi-alert__title">Pealkiri</'.$tag.'>', $html);
+            $this->assertMatchesRegularExpression('/<'.$tag.' class="tedi-alert__title" id="tedi-alert-title-[0-9a-f]+">Pealkiri<\/'.$tag.'>/', $html);
             $this->assertHasClass('tedi-alert__head', $html, on: 'tedi-alert__head');
         }
 
         $html = Blade::render('<tedi:alert title="Pealkiri" title-element="div">Body</tedi:alert>');
-        $this->assertStringContainsString('<div class="tedi-alert__title">Pealkiri</div>', $html);
+        $this->assertMatchesRegularExpression('/<div class="tedi-alert__title" id="tedi-alert-title-[0-9a-f]+">Pealkiri<\/div>/', $html);
     }
 
     public function test_alert_without_title_uses_content_wrapper(): void
@@ -165,13 +199,16 @@ class NotificationComponentsTest extends TestCase
         }
     }
 
-    public function test_toast_close_button_is_named_after_the_title(): void
+    public function test_toast_close_button_is_titled_close_and_described_by_the_title(): void
     {
+        // Angular 10: "Close" with or without a title; the title describes it.
         $html = Blade::render('<tedi:toast title="Salvestatud">Sisu</tedi:toast>');
-        $this->assertStringContainsString('aria-label="'.e(__('tedi::tedi.toast.close', ['title' => 'Salvestatud'])).'"', $html);
+        $this->assertStringContainsString('title="'.__('tedi::tedi.close').'"', $html);
+        $this->assertStringContainsString('aria-describedby="tedi-alert-title-', $html);
+        $this->assertStringNotContainsString('Salvestatud"', $html);
 
         $html = Blade::render('<tedi:toast>Sisu</tedi:toast>');
-        $this->assertStringContainsString('aria-label="'.__('tedi::tedi.close').'"', $html);
+        $this->assertStringContainsString('title="'.__('tedi::tedi.close').'"', $html);
     }
 
     public function test_toast_progress_bar_renders_only_when_enabled_and_duration_positive(): void

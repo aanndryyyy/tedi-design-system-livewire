@@ -1026,6 +1026,108 @@
     });
   }
 
+  // resources/js/src/announcer.js
+  var ANNOUNCE_DELAY = 100;
+  var CLEAR_DELAY = 1e3;
+  function region(politeness) {
+    const id = `tedi-toast-announcer-${politeness}`;
+    let element = document.getElementById(id);
+    if (!element) {
+      element = document.createElement("div");
+      element.setAttribute("aria-live", politeness);
+      element.setAttribute("aria-atomic", "false");
+      element.classList.add("sr-only");
+      element.id = id;
+      document.body.appendChild(element);
+    }
+    return element;
+  }
+  function ensureRegions() {
+    region("polite");
+    region("assertive");
+  }
+  function announce(message, politeness = "polite") {
+    if (!message) return;
+    const target = region(politeness);
+    const entry = document.createElement("div");
+    entry.textContent = message;
+    setTimeout(() => {
+      target.appendChild(entry);
+      setTimeout(() => entry.remove(), CLEAR_DELAY);
+    }, ANNOUNCE_DELAY);
+  }
+
+  // resources/js/src/file-upload.js
+  var ADD_ANNOUNCE_DELAY = 300;
+  function fileUpload(config = {}) {
+    const { inputId = null, multiple = false, labels = {} } = config;
+    return {
+      _addTimeout: null,
+      _offMorph: null,
+      _label: null,
+      init() {
+        ensureRegions();
+        this.applyLabel();
+        const livewire = window.Livewire;
+        if (livewire && typeof livewire.hook === "function") {
+          const off = livewire.hook("morph.updated", ({ el }) => {
+            if (el === this._label || el === this.$el || this.$el.contains(el)) {
+              queueMicrotask(() => this.applyLabel());
+            }
+          });
+          this._offMorph = typeof off === "function" ? off : null;
+        }
+      },
+      destroy() {
+        var _a;
+        clearTimeout(this._addTimeout);
+        (_a = this._offMorph) == null ? void 0 : _a.call(this);
+        this._offMorph = null;
+      },
+      applyLabel() {
+        if (!inputId) return;
+        const label = Array.from(document.querySelectorAll("label")).find(
+          (candidate) => candidate.htmlFor === inputId
+        );
+        if (label && !label.id) label.id = `${inputId}-label`;
+        this._label = label || null;
+        const labelId = label ? label.id : null;
+        this._setOrRemove(this.$refs.add, "aria-labelledby", labelId ? `${labelId} ${inputId}-add` : null);
+        this._setOrRemove(this.$refs.list, "aria-labelledby", labelId);
+      },
+      openPicker() {
+        const input = this.$refs.input;
+        if (input && !input.disabled) input.click();
+      },
+      handleSelection(event) {
+        const count = event.target.files ? event.target.files.length : 0;
+        if (!count) return;
+        const n = multiple ? count : 1;
+        const message = ((n === 1 ? labels.added : labels.addedPlural) || labels.added || "").replace(":count", String(n));
+        clearTimeout(this._addTimeout);
+        this._addTimeout = setTimeout(() => announce(message, "assertive"), ADD_ANNOUNCE_DELAY);
+      },
+      clearFiles() {
+        if (this.$refs.input) this.$refs.input.value = "";
+        this._afterUserRemoval(labels.cleared || "");
+      },
+      fileRemoved(name) {
+        this._afterUserRemoval((labels.removed || "").replace(":file", name || ""));
+      },
+      _afterUserRemoval(message) {
+        var _a;
+        clearTimeout(this._addTimeout);
+        announce(message, "polite");
+        (_a = this.$refs.add) == null ? void 0 : _a.focus();
+      },
+      _setOrRemove(element, attribute, value) {
+        if (!element) return;
+        if (value) element.setAttribute(attribute, value);
+        else element.removeAttribute(attribute);
+      }
+    };
+  }
+
   // resources/js/src/filter.js
   var TAB_STOP_SELECTOR = 'input:not([disabled]):not([tabindex="-1"]), button:not([disabled]), [role="option"][tabindex="0"], [role="listbox"][tabindex="0"], [role="checkbox"][tabindex="0"]';
   function filter(config) {
@@ -1797,6 +1899,94 @@
     }));
   }
 
+  // resources/js/src/process-timeline.js
+  var VERTICAL_CLASS = "tedi-process-timeline--vertical";
+  var HORIZONTAL_CLASS = "tedi-process-timeline--horizontal";
+  var ITEM_CLASS = "tedi-process-timeline-item";
+  var ITEM_VERTICAL_CLASS = "tedi-process-timeline-item--vertical";
+  function processTimeline() {
+    return {
+      overflowing: false,
+      init() {
+        var _a;
+        this._el = this.$el;
+        if (typeof ResizeObserver === "undefined") {
+          return;
+        }
+        this._resize = new ResizeObserver(() => this.checkFit());
+        this._mutation = typeof MutationObserver === "undefined" ? null : new MutationObserver(() => this.observe());
+        (_a = this._mutation) == null ? void 0 : _a.observe(this._el, { childList: true, subtree: true, characterData: true });
+        const livewire = window.Livewire;
+        if (livewire && typeof livewire.hook === "function") {
+          const off = livewire.hook("morph.updated", ({ el }) => {
+            if (this._el && (el === this._el || this._el.contains(el))) {
+              queueMicrotask(() => this.apply());
+            }
+          });
+          this._offMorph = typeof off === "function" ? off : null;
+        }
+        this.observe();
+      },
+      destroy() {
+        var _a, _b, _c;
+        (_a = this._resize) == null ? void 0 : _a.disconnect();
+        (_b = this._mutation) == null ? void 0 : _b.disconnect();
+        (_c = this._offMorph) == null ? void 0 : _c.call(this);
+        this._el = null;
+      },
+      /** (Re-)observe the root and its current children, then re-check. */
+      observe() {
+        if (!this._el) {
+          return;
+        }
+        this._resize.disconnect();
+        this._resize.observe(this._el);
+        Array.from(this._el.children).forEach((child) => this._resize.observe(child));
+        this.checkFit();
+      },
+      checkFit() {
+        if (!this._el) {
+          return;
+        }
+        this.overflowing = this.horizontalWidth() > this._el.clientWidth;
+        this.apply();
+      },
+      horizontalWidth() {
+        const el = this._el;
+        if (!el.classList.contains(VERTICAL_CLASS)) {
+          return el.scrollWidth;
+        }
+        const items = Array.from(el.querySelectorAll(`:scope > .${ITEM_VERTICAL_CLASS}`));
+        el.classList.replace(VERTICAL_CLASS, HORIZONTAL_CLASS);
+        items.forEach((item) => item.classList.remove(ITEM_VERTICAL_CLASS));
+        const width = el.scrollWidth;
+        el.classList.replace(HORIZONTAL_CLASS, VERTICAL_CLASS);
+        items.forEach((item) => item.classList.add(ITEM_VERTICAL_CLASS));
+        return width;
+      },
+      /** Write the resolved layout onto the server-rendered markup. Idempotent. */
+      apply() {
+        const el = this._el;
+        if (!el) {
+          return;
+        }
+        const vertical = this.overflowing;
+        el.classList.toggle(VERTICAL_CLASS, vertical);
+        el.classList.toggle(HORIZONTAL_CLASS, !vertical);
+        el.querySelectorAll(`:scope > .${ITEM_CLASS}`).forEach((item) => {
+          item.classList.toggle(ITEM_VERTICAL_CLASS, vertical);
+          const separator = item.querySelector(":scope > .tedi-process-timeline-item__connector > .tedi-separator");
+          if (separator) {
+            separator.classList.toggle("tedi-separator--vertical", vertical);
+            separator.classList.toggle("tedi-separator--horizontal", !vertical);
+            separator.style.width = vertical ? "0px" : "100%";
+            separator.style.height = vertical ? "100%" : "0px";
+          }
+        });
+      }
+    };
+  }
+
   // resources/js/src/progress-bar.js
   function progressBar({ interval = 1e3 } = {}) {
     const resolvedInterval = Number.isFinite(interval) ? Math.max(0, interval) : 1e3;
@@ -1847,6 +2037,79 @@
         this.timeout = void 0;
         this.lastAnnouncedAt = Date.now();
         this.announcedValue = text;
+      }
+    };
+  }
+
+  // resources/js/src/rating.js
+  function rating(config = {}) {
+    const { type = "star", value = 0, labels = [] } = config;
+    return {
+      ratingValue: Number(value) || 0,
+      ratingHover: null,
+      _offMorph: null,
+      _onReset: null,
+      init() {
+        this.ratingSync(true);
+        this.$nextTick(() => this.ratingSync(true));
+        const livewire = window.Livewire;
+        if (livewire && typeof livewire.hook === "function") {
+          const off = livewire.hook("morph.updated", ({ el }) => {
+            if (el && this.$el.contains(el)) this.$nextTick(() => this.ratingSync());
+          });
+          this._offMorph = typeof off === "function" ? off : null;
+        }
+        const form = this.$el.closest("form");
+        if (form) {
+          this._onReset = () => setTimeout(() => this.ratingSync());
+          form.addEventListener("reset", this._onReset);
+        }
+      },
+      destroy() {
+        if (this._offMorph) this._offMorph();
+        const form = this.$el.closest("form");
+        if (form && this._onReset) form.removeEventListener("reset", this._onReset);
+      },
+      /**
+       * Read the committed value off the checked radio. With none checked
+       * on init, fall back to the server-rendered value: a fractional one
+       * (3.5) checks no radio but still fills three stars, as upstream does.
+       */
+      ratingSync(initial = false) {
+        const checked = this.$el.querySelector(".tedi-rating__input:checked");
+        this.ratingValue = checked ? Number(checked.value) : initial ? Number(value) || 0 : 0;
+        if (!this.ratingInteractive()) this.ratingHover = null;
+      },
+      /** `!disabled && !readOnly` — read off the DOM so a morph is picked up. */
+      ratingInteractive() {
+        return !this.$el.classList.contains("tedi-rating--disabled") && !this.$el.classList.contains("tedi-rating--readonly");
+      },
+      ratingSelect(position) {
+        if (!this.ratingInteractive()) return;
+        this.ratingValue = position;
+      },
+      ratingSetHover(position) {
+        this.ratingHover = this.ratingInteractive() ? position : null;
+      },
+      ratingInRange(position, target) {
+        return type === "icon" ? position === target : position <= target;
+      },
+      ratingHovering() {
+        return this.ratingInteractive() && this.ratingHover !== null;
+      },
+      ratingPreviewed(position) {
+        return this.ratingHovering() && this.ratingInRange(position, this.ratingHover);
+      },
+      // While hovering, items in the hovered range take the hover look; on
+      // cumulative scales items past it read as unselected, while the
+      // single-choice icon scale keeps its current pick visible.
+      ratingSelected(position) {
+        return this.ratingInRange(position, this.ratingValue) && (!this.ratingHovering() || this.ratingPreviewed(position) || type === "icon");
+      },
+      ratingStarCaption() {
+        var _a;
+        const display = this.ratingHovering() ? this.ratingHover : this.ratingValue;
+        return display > 0 ? (_a = labels[display - 1]) != null ? _a : "" : "";
       }
     };
   }
@@ -1955,6 +2218,9 @@
       snapIndex: null,
       dragOffset: 0,
       dragging: false,
+      // From the press, not the drag threshold: the panel holds the pointer
+      // from then on, so its cursor (`--grabbing`) is the one shown.
+      grabbing: false,
       _drag: null,
       _previouslyFocused: null,
       _previousOverflow: "",
@@ -2194,10 +2460,9 @@
         var drag = this._drag;
         if (!drag) return;
         this._drag = null;
+        this.grabbing = false;
         this.dragging = false;
         this.dragOffset = 0;
-        document.removeEventListener("pointermove", drag.onDocMove, true);
-        document.removeEventListener("pointerup", drag.onDocUp, true);
         if (drag.target.hasPointerCapture && drag.target.hasPointerCapture(drag.pointerId)) {
           drag.target.releasePointerCapture(drag.pointerId);
         }
@@ -2208,23 +2473,23 @@
         var currentTarget = event.currentTarget;
         if (!(target instanceof Element) || !closestInside(target, DRAG_ZONE_SELECTOR, currentTarget)) return;
         if (closestInside(target, NO_DRAG_SELECTOR, currentTarget)) return;
-        var self = this;
-        var drag = {
+        this._drag = {
           pointerId: event.pointerId,
           startX: event.clientX,
           startY: event.clientY,
           target: currentTarget,
           started: false
         };
-        drag.onDocMove = function(e) {
-          if (!currentTarget.contains(e.target)) self.dragMove(e);
-        };
-        drag.onDocUp = function(e) {
-          if (!currentTarget.contains(e.target)) self.dragEnd(e);
-        };
-        document.addEventListener("pointermove", drag.onDocMove, true);
-        document.addEventListener("pointerup", drag.onDocUp, true);
-        this._drag = drag;
+        this.grabbing = true;
+        try {
+          currentTarget.setPointerCapture(event.pointerId);
+        } catch (e) {
+        }
+      },
+      // A native drag, e.g. of selected text, sends `pointercancel`, which
+      // would end the sheet drag.
+      nativeDragStart: function(event) {
+        if (this._drag) event.preventDefault();
       },
       dragMove: function(event) {
         var drag = this._drag;
@@ -2244,10 +2509,6 @@
           }
           drag.started = true;
           this.dragging = true;
-          try {
-            drag.target.setPointerCapture(drag.pointerId);
-          } catch (e) {
-          }
         }
         this.dragOffset = this._hasSnaps() ? delta : Math.max(0, delta);
       },
@@ -2848,6 +3109,7 @@
     Alpine.data("tediDropdown", dropdown);
     Alpine.data("tediFilter", filter);
     Alpine.data("tediFormField", formField);
+    Alpine.data("tediFileUpload", fileUpload);
     Alpine.data("tediMultiselect", multiselect);
     Alpine.data("tediSearch", search);
     Alpine.data("tediModal", modal);
@@ -2857,6 +3119,8 @@
     Alpine.data("tediHashTrigger", hashTrigger);
     Alpine.data("tediSheet", sheet);
     Alpine.data("tediProgressBar", progressBar);
+    Alpine.data("tediProcessTimeline", processTimeline);
+    Alpine.data("tediRating", rating);
   }
   if (window.Alpine) {
     register(window.Alpine);

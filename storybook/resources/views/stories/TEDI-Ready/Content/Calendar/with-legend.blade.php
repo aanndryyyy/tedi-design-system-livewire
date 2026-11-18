@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'With Legend',
-    'order' => 12,
+    'order' => 13,
     'status' => 'subset',
     'args' => [],
 ])

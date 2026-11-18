@@ -10,7 +10,7 @@
 @endphp
 
 <tedi:tabs default-value="tab-1">
-    <tedi:tabs.list aria-label="Ikoonidega sakid">
+    <tedi:tabs.list aria-label="Vaade">
         <tedi:tabs.trigger id="tab-1" icon="table_chart">Tabel</tedi:tabs.trigger>
         <tedi:tabs.trigger id="tab-2" icon="grid_on">Ruudustik</tedi:tabs.trigger>
     </tedi:tabs.list>

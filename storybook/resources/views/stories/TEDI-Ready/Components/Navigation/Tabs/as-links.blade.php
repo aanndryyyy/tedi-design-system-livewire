@@ -11,7 +11,7 @@
 @endphp
 
 <tedi:tabs default-value="link-1">
-    <tedi:tabs.list aria-label="Lingina sakid">
+    <tedi:tabs.list aria-label="Terviseandmed">
         <tedi:tabs.trigger id="link-1" href="#link-1-panel">Terviseteekond</tedi:tabs.trigger>
         <tedi:tabs.trigger id="link-2" href="#link-2-panel">Haiguste kulg</tedi:tabs.trigger>
         <tedi:tabs.trigger id="link-3" href="#link-3-panel">Ravimite ajalugu</tedi:tabs.trigger>

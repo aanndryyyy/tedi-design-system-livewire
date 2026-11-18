@@ -2,7 +2,7 @@
     <h2>Community components</h2>
     <p>The components that exist only in Angular's <code>community/</code> entry point
         (CONVENTIONS.md §12): <code>choicegroup</code>, <code>file-dropzone</code>,
-        <code>vertical-stepper</code> and <code>multiselect</code>. This matrix exists to harvest every interpolated
+        <code>vertical-stepper</code>, <code>multiselect</code> and <code>process-timeline</code>. This matrix exists to harvest every interpolated
         modifier class they emit — see <code>tests/IntegrityTest.php</code>.</p>
 
     <h3>Choicegroup</h3>
@@ -133,6 +133,27 @@
                 :options="$msOptions"
                 :feedback-text="['text' => 'Vali vähemalt üks', 'type' => 'hint']"
             />
+        </div>
+    </div>
+
+    <h3>Process timeline</h3>
+
+    <div class="gx-case">
+        <div class="gx-case__label">orientation × connector thickness × item state, last</div>
+        <div class="gx-case__demo">
+            @foreach (['horizontal', 'vertical'] as $orientation)
+                @foreach ([1, 2] as $thickness)
+                    <tedi:process-timeline :orientation="$orientation" :connector-thickness="$thickness">
+                        @foreach (['completed', 'active', 'upcoming'] as $i => $state)
+                            <tedi:process-timeline-item :state="$state" :index="$i" :last="$i === 2">
+                                <x-slot:title>Etapp {{ $i + 1 }}</x-slot:title>
+                                <x-slot:description>Kirjeldus</x-slot:description>
+                                <tedi:status-badge color="success" text="Esitatud" />
+                            </tedi:process-timeline-item>
+                        @endforeach
+                    </tedi:process-timeline>
+                @endforeach
+            @endforeach
         </div>
     </div>
 </div>

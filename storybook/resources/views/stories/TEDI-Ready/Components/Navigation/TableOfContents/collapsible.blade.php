@@ -7,7 +7,7 @@
         'activeId' => 'methods',
         'defaultOpen' => true,
         'numbered' => false,
-        'bordered' => false,
+        'divided' => false,
         'sticky' => false,
         'hideOnScroll' => false,
         'ariaLabel' => '',
@@ -34,7 +34,7 @@
             'control' => 'boolean',
             'table' => ['category' => 'Table of Contents', 'type' => ['summary' => 'boolean'], 'defaultValue' => ['summary' => 'false']],
         ],
-        'bordered' => [
+        'divided' => [
             'description' => 'Draw a divider under each item except the last (sub-items included) so the list reads as separated rows.',
             'control' => 'boolean',
             'table' => ['category' => 'Table of Contents', 'type' => ['summary' => 'boolean'], 'defaultValue' => ['summary' => 'false']],
@@ -77,7 +77,7 @@
                     :active-id="$activeId"
                     :default-open="(bool) $defaultOpen"
                     :numbered="(bool) $numbered"
-                    :bordered="(bool) $bordered"
+                    :divided="(bool) $divided"
                     :aria-label="$ariaLabel ?: null">
                 <tedi:table-of-contents-item item-id="intro" :separator="(bool) $separator">
                     <tedi:link href="#intro" :underline="false">Sissejuhatus</tedi:link>
@@ -127,7 +127,7 @@
                 :active-id="$activeId"
                 :default-open="(bool) $defaultOpen"
                 :numbered="(bool) $numbered"
-                :bordered="(bool) $bordered"
+                :divided="(bool) $divided"
                 :sticky="(bool) $sticky"
                 :hide-on-scroll="(bool) $hideOnScroll"
                 :aria-label="$ariaLabel ?: null"
