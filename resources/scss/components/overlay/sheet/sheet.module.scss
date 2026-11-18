@@ -40,13 +40,10 @@ $sheet-fade-duration: 200ms;
 }
 
 .tedi-sheet__panel {
-  // Padding scale (default). Core 6.9.0 doesn't publish the semantic `--sheet-*-padding-md/-sm`
-  // tokens yet - they resolve to empty, which collapses the padding - so these use the primitive
-  // dimension tokens (1rem / 0.5rem) for now. Swap to the semantic sheet tokens once core is updated.
-  --tedi-sheet-radius: var(--tedi-dimensions-13);
-  --tedi-sheet-padding-x: var(--tedi-dimensions-10);
-  --tedi-sheet-padding-y: var(--tedi-dimensions-05);
-  --tedi-sheet-header-min-height: 3.75rem;
+  --tedi-sheet-radius: var(--sheet-header-radius-md);
+  --tedi-sheet-padding-x: var(--sheet-header-padding-md);
+  --tedi-sheet-padding-y: var(--sheet-header-padding-sm);
+  --tedi-sheet-header-min-height: var(--sheet-header-height);
 
   position: relative;
   display: flex;
@@ -57,6 +54,7 @@ $sheet-fade-duration: 200ms;
   background: var(--sheet-body-default);
   border-top-left-radius: var(--tedi-sheet-radius);
   border-top-right-radius: var(--tedi-sheet-radius);
+  box-shadow: 0 1px 5px 0 var(--general-effect-colors-elevation-general-primary);
   transform: translateY(100%);
   transition: transform $sheet-enter-duration $sheet-enter-easing, height $sheet-enter-duration $sheet-enter-easing;
 
@@ -66,11 +64,8 @@ $sheet-fade-duration: 200ms;
 }
 
 .tedi-sheet__panel--padding-small {
-  // Tighter padding scale (small) - header, body and footer all read these panel-level custom
-  // properties, so the whole sheet shrinks together.
-  // TODO: uses the primitive dimension token (0.5rem) because core 6.9.0 has no `--sheet-*-padding-sm`
-  // token yet - replace with `var(--sheet-footer-padding-sm)` (and header/body) once core is updated.
-  --tedi-sheet-padding-x: var(--tedi-dimensions-05);
+  // Header, body and footer all read these panel-level custom properties, so the whole sheet shrinks together.
+  --tedi-sheet-padding-x: var(--sheet-header-padding-sm);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -93,15 +88,12 @@ $sheet-fade-duration: 200ms;
   padding-top: var(--tedi-dimensions-04);
   touch-action: none;
   cursor: grab;
+  user-select: none;
   transform: translateX(-50%);
-
-  &:active {
-    cursor: grabbing;
-  }
 }
 
 .tedi-sheet__handle {
-  width: 2.5rem;
+  width: 2rem;
   height: var(--tedi-borders-04);
   background: var(--drag-indicator-light);
   border-radius: var(--tedi-dimensions-13);
@@ -133,29 +125,30 @@ $sheet-fade-duration: 200ms;
   flex: 1 1 auto;
   min-width: 0;
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: inherit;
+  white-space: nowrap;
 }
 
 .tedi-sheet__header--center {
-  position: relative;
+  // Equal side columns keep a short title centred; a long one stops short of the start content and actions.
+  display: grid;
+  grid-template-columns: 1fr minmax(0, auto) 1fr;
+
+  .tedi-sheet__header-start {
+    grid-column: 1;
+    justify-self: start;
+  }
 
   .tedi-sheet__title {
+    grid-column: 2;
     text-align: center;
   }
 
-  .tedi-sheet__header-start,
   .tedi-sheet__header-actions {
-    position: absolute;
-    inset-block-start: 50%;
-    transform: translateY(-50%);
-  }
-
-  .tedi-sheet__header-start {
-    inset-inline-start: var(--tedi-sheet-padding-x);
-  }
-
-  .tedi-sheet__header-actions {
-    inset-inline-end: var(--tedi-sheet-padding-x);
+    grid-column: 3;
+    justify-self: end;
   }
 }
 
@@ -175,7 +168,14 @@ $sheet-fade-duration: 200ms;
 
 .tedi-sheet__panel--draggable .tedi-sheet__header {
   touch-action: none;
+  cursor: grab;
   user-select: none;
+}
+
+// The panel holds the pointer capture from the press, so its cursor is the one shown.
+.tedi-sheet__panel--grabbing,
+.tedi-sheet__panel.tedi-sheet__panel--grabbing * {
+  cursor: grabbing;
 }
 
 .tedi-sheet__collapse-toggle > * {
@@ -199,7 +199,7 @@ $sheet-fade-duration: 200ms;
 
 .tedi-sheet__footer {
   display: flex;
-  gap: var(--layout-grid-gutters-08);
+  gap: var(--button-gutter-x);
   align-items: center;
   padding: var(--tedi-sheet-padding-x);
   background: var(--sheet-footer-background);
@@ -238,7 +238,7 @@ $sheet-fade-duration: 200ms;
 
 .tedi-sheet__footer-side {
   display: flex;
-  gap: var(--layout-grid-gutters-08);
+  gap: var(--button-gutter-x);
   align-items: center;
 }
 

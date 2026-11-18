@@ -26,7 +26,9 @@
   );
 
   &__body {
-    display: contents;
+    display: flex;
+    flex-direction: column;
+    gap: inherit;
   }
 
   &__head {
@@ -64,9 +66,7 @@
     align-items: center;
 
     .tedi-alert__body {
-      display: flex;
       flex: 1;
-      flex-direction: column;
       gap: var(--layout-grid-gutters-04);
     }
 

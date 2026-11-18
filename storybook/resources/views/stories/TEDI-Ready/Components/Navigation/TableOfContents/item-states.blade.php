@@ -12,11 +12,11 @@
 
 @php
     $variants = [
-        ['header' => 'Default', 'numbered' => false, 'icon' => false, 'separator' => false, 'bordered' => false],
-        ['header' => 'With number', 'numbered' => true, 'icon' => false, 'separator' => false, 'bordered' => false],
-        ['header' => 'With icon', 'numbered' => false, 'icon' => true, 'separator' => false, 'bordered' => false],
-        ['header' => 'With separator', 'numbered' => false, 'icon' => false, 'separator' => true, 'bordered' => false],
-        ['header' => 'With border', 'numbered' => false, 'icon' => false, 'separator' => false, 'bordered' => true],
+        ['header' => 'Default', 'numbered' => false, 'icon' => false, 'separator' => false, 'divided' => false],
+        ['header' => 'With number', 'numbered' => true, 'icon' => false, 'separator' => false, 'divided' => false],
+        ['header' => 'With icon', 'numbered' => false, 'icon' => true, 'separator' => false, 'divided' => false],
+        ['header' => 'With separator', 'numbered' => false, 'icon' => false, 'separator' => true, 'divided' => false],
+        ['header' => 'Divided', 'numbered' => false, 'icon' => false, 'separator' => false, 'divided' => true],
     ];
     $states = [
         ['id' => 'default', 'label' => 'Default', 'hover' => false],
@@ -33,9 +33,9 @@
                 heading=""
                 :sticky="false"
                 :numbered="$variant['numbered']"
-                :bordered="$variant['bordered']"
+                :divided="$variant['divided']"
                 active-id="selected"
-                :aria-label="$variant['header'].' states'"
+                :aria-label="$variant['header']"
             >
                 @foreach ($states as $state)
                     <tedi:table-of-contents-item :item-id="$state['id']" :separator="$variant['separator']">
@@ -47,8 +47,8 @@
                         >{{ $state['label'] }}</tedi:link>
                     </tedi:table-of-contents-item>
                 @endforeach
-                @if ($variant['bordered'])
-                    {{-- 'bordered' drops the divider under the last item (the card supplies
+                @if ($variant['divided'])
+                    {{-- 'divided' drops the divider under the last item (the card supplies
                          that edge in real use). This inert trailing row keeps the Selected
                          state above it non-last, so it shows its real divider like the design. --}}
                     <tedi:table-of-contents-item item-id="filler" aria-hidden="true" />

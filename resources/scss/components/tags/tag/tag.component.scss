@@ -34,8 +34,12 @@
     flex-shrink: 0;
   }
 
+  // Centred on the content's first padded line rather than the whole tag, so
+  // the icon stays beside the first line when a long label wraps.
   &__icon-wrapper {
-    line-height: var(--_line-height);
+    display: flex;
+    align-items: center;
+    height: calc(var(--_line-height) + 2 * var(--tag-default-padding-y));
   }
 
   &--ellipsis {

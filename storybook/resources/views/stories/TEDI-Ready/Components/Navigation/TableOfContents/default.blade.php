@@ -16,7 +16,7 @@
         'numbered' => false,
         'sticky' => false,
         'separator' => false,
-        'bordered' => false,
+        'divided' => false,
     ],
     'argTypes' => [
         'heading' => [
@@ -71,7 +71,7 @@
                 'defaultValue' => ['summary' => 'false'],
             ],
         ],
-        'bordered' => [
+        'divided' => [
             'description' => 'Draw a divider under each item except the last (sub-items included) so the list reads as separated rows.',
             'control' => 'boolean',
             'table' => [
@@ -114,7 +114,7 @@
     :default-open="(bool) $defaultOpen"
     :numbered="(bool) $numbered"
     :sticky="(bool) $sticky"
-    :bordered="(bool) $bordered"
+    :divided="(bool) $divided"
 >
     @foreach ($sections as $index => $label)
         @php $id = 'section-'.($index + 1); @endphp

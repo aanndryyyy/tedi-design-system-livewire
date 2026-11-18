@@ -26,11 +26,11 @@
     <tedi:floating-button :position="$position" :placement="['vertical' => 'bottom', 'horizontal' => 'center']" :offset="['bottom' => 16]" :z-index="1">Tagasiside</tedi:floating-button>
 @endforeach
 
-{{-- Navigation / TableOfContents — variant × bordered × sticky × numbered, heading levels, headless --}}
+{{-- Navigation / TableOfContents — variant × divided × sticky × numbered, heading levels, headless --}}
 @foreach (['default', 'transparent'] as $variant)
-    @foreach ([false, true] as $bordered)
+    @foreach ([false, true] as $divided)
         @foreach ([false, true] as $sticky)
-            <tedi:table-of-contents :variant="$variant" :bordered="$bordered" :sticky="$sticky" :numbered="$bordered" active-id="ptk-2-1">
+            <tedi:table-of-contents :variant="$variant" :divided="$divided" :sticky="$sticky" :numbered="$divided" active-id="ptk-2-1">
                 <tedi:table-of-contents-item item-id="ptk-1" :separator="true">
                     <tedi:link href="#ptk-1" :underline="false">Üldsätted</tedi:link>
                     <x-slot:suffix><tedi:tag>3</tedi:tag></x-slot:suffix>
@@ -56,7 +56,7 @@
     <tedi:table-of-contents-item item-id="a">A</tedi:table-of-contents-item>
 </tedi:table-of-contents>
 @foreach ([true, false] as $sticky)
-    <tedi:table-of-contents-collapsible :sticky="$sticky" :bordered="! $sticky" :numbered="true" active-id="a">
+    <tedi:table-of-contents-collapsible :sticky="$sticky" :divided="! $sticky" :numbered="true" active-id="a">
         <tedi:table-of-contents-item item-id="a">A</tedi:table-of-contents-item>
     </tedi:table-of-contents-collapsible>
 @endforeach

@@ -17,6 +17,7 @@ $transition-duration: 300ms;
   }
 
   &__content {
+    position: relative;
     display: grid;
     grid-template-rows: 0fr;
     overflow: hidden;

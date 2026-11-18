@@ -184,7 +184,7 @@ class PromotedComponentsTest extends TestCase
         $this->assertStringContainsString('<tedi-table-of-contents', $html);
         $this->assertStringContainsString('data-name="table-of-contents"', $html);
         $this->assertHasClass('tedi-table-of-contents', $html, 'tedi-table-of-contents');
-        $this->assertMissingClass('tedi-table-of-contents--bordered', $html, 'tedi-table-of-contents');
+        $this->assertMissingClass('tedi-table-of-contents--divided', $html, 'tedi-table-of-contents');
 
         // variant default → card container, sticky default true.
         $this->assertHasClass('tedi-card', $html, 'tedi-table-of-contents__container');
@@ -242,12 +242,12 @@ class PromotedComponentsTest extends TestCase
         $this->assertMissingClass('tedi-table-of-contents--transparent', $default, 'tedi-table-of-contents__container');
     }
 
-    public function test_table_of_contents_sticky_and_bordered(): void
+    public function test_table_of_contents_sticky_and_divided(): void
     {
-        $html = $this->toc(':sticky="false" :bordered="true"');
+        $html = $this->toc(':sticky="false" :divided="true"');
 
         $this->assertMissingClass('tedi-table-of-contents--sticky', $html, 'tedi-table-of-contents__container');
-        $this->assertHasClass('tedi-table-of-contents--bordered', $html, 'tedi-table-of-contents');
+        $this->assertHasClass('tedi-table-of-contents--divided', $html, 'tedi-table-of-contents');
     }
 
     public function test_table_of_contents_sticky_geometry_is_inline_custom_properties(): void
@@ -360,16 +360,16 @@ class PromotedComponentsTest extends TestCase
         $this->assertStringContainsString(' aria-current="location"', $html);
     }
 
-    public function test_table_of_contents_collapsible_static_bar_bordered_sheet_and_title_fallback(): void
+    public function test_table_of_contents_collapsible_static_bar_divided_sheet_and_title_fallback(): void
     {
         $html = Blade::render(<<<'BLADE'
-            <tedi:table-of-contents-collapsible heading="" :sticky="false" :bordered="true">
+            <tedi:table-of-contents-collapsible heading="" :sticky="false" :divided="true">
                 <tedi:table-of-contents-item item-id="a">A</tedi:table-of-contents-item>
             </tedi:table-of-contents-collapsible>
             BLADE);
 
         $this->assertHasClass('tedi-table-of-contents__bar--static', $html, 'tedi-table-of-contents__bar');
-        $this->assertHasClass('tedi-table-of-contents--bordered', $html, 'tedi-table-of-contents__sheet');
+        $this->assertHasClass('tedi-table-of-contents--divided', $html, 'tedi-table-of-contents__sheet');
         $this->assertStringContainsString('Table of contents', $html);
     }
 

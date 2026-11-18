@@ -391,7 +391,7 @@ class ReactComponentsTest extends TestCase
         $html = Blade::render('<tedi:file-upload name="f" :files="[[\'name\' => \'a.pdf\'], [\'name\' => \'b.pdf\', \'is_valid\' => false]]" />');
 
         $this->assertStringContainsString('tedi-tag--danger', $html);
-        $this->assertStringContainsString('File upload failed', $html);
+        $this->assertStringContainsString(__('tedi::tedi.file-upload.failed'), $html);
     }
 
     public function test_file_upload_read_only_renders_the_list_without_controls(): void

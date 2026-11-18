@@ -1,11 +1,11 @@
 @storybook([
-    'name' => 'Bordered',
+    'name' => 'Divided',
     'order' => 9,
     'status' => 'stable',
 ])
 
 <div style="max-width: 390px; padding: 1.5rem;">
-<tedi:table-of-contents heading="Sisukord" :sticky="false" active-id="methods" :bordered="true">
+<tedi:table-of-contents heading="Sisukord" :sticky="false" active-id="methods" :divided="true">
     <tedi:table-of-contents-item item-id="intro">
         <tedi:link href="#intro" :underline="false">Sissejuhatus</tedi:link>
     </tedi:table-of-contents-item>

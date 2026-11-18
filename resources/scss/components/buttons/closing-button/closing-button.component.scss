@@ -1,6 +1,4 @@
 .tedi-closing-button {
-  --general-icon-primary: var(--button-close-text-default);
-
   display: flex;
   flex-shrink: 0;
   align-items: center;
@@ -8,16 +6,17 @@
   width: var(--button-sm-icon-size);
   height: var(--button-sm-icon-size);
   padding: 0;
+  color: var(--button-close-text-default);
   cursor: pointer;
   background-color: var(--button-close-background-default);
   border: 1px solid var(--button-close-background-default);
   border-radius: var(--button-radius-default);
-  transition: background 0.5s ease;
+  transition: 150ms ease;
+  transition-property: background-color, border-color, color;
 
   @each $state in hover, active {
     &:#{ $state } {
-      --general-icon-primary: var(--button-close-text-#{$state});
-
+      color: var(--button-close-text-#{$state});
       background-color: var(--button-close-background-#{$state});
     }
   }
