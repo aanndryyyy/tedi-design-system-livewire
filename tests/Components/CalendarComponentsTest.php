@@ -526,4 +526,13 @@ class CalendarComponentsTest extends TestCase
         $html = Blade::render('<tedi:calendar-day-grid '.$month.' mode="multiple" :value="[\'2030-05-03\', [\'nested\'], \'nonsense\', true]" />');
         $this->assertSame(1, substr_count($html, 'tedi-calendar-day-grid__day--selected'));
     }
+
+    public function test_calendar_full_width_modifier(): void
+    {
+        // Angular 10 (#505).
+        $this->assertHasClass('tedi-calendar--full-width',
+            Blade::render('<tedi:calendar :current-month="\''.self::MONTH.'\'" full-width />'), on: 'tedi-calendar');
+        $this->assertMissingClass('tedi-calendar--full-width',
+            Blade::render('<tedi:calendar :current-month="\''.self::MONTH.'\'" />'), on: 'tedi-calendar');
+    }
 }

@@ -30,7 +30,9 @@
       never vendored: `grep -c '.tedi-date-field-modal' dist/tedi.css` is 0. Both
       the breakpoint prop (§7 item 1) and the modal itself (§7 item 3) are out of
       scope, so the port always takes the popover/inline branch. `fullscreen` goes
-      with it.
+      with it, as does Angular 10's `calendarFullWidth` (#505, modal mode only)
+      and the `date-field-modal.component.scss` it moved those styles into. A
+      full-width calendar is still available directly: `tedi:calendar full-width`.
 
     Further divergences:
     * `useNativePicker` is dropped (breakpoint prop, §7 item 1), so `showCalendar()`
