@@ -71,11 +71,9 @@
 
 <div class="gx-sec">
     <h2>Toast</h2>
-    <p>Port of <code>notifications/toast</code>. Renders the toast's visual
-        markup/classes only, statically positioned — CDK Overlay positioning
-        (top-left/top-right/bottom-left/bottom-right, slide animations) is out
-        of scope per CONVENTIONS.md §7. Wrap it in your own fixed-position
-        container to place it.</p>
+    <p>Port of <code>notifications/toast</code>. Outside a
+        <code>toast-container</code> a toast is static markup; inside one it is
+        placed, timed and announced (see the container case below).</p>
 
     <div class="gx-case">
         <div class="gx-case__label">type: info / success / warning / danger</div>
@@ -105,6 +103,15 @@
             <tedi:toast type="warning" title="Peatatud" :show-progress-bar="true" :paused="true">
                 Progress-riba animatsioon on peatatud (hover-simulatsioon).
             </tedi:toast>
+        </div>
+    </div>
+
+    <div class="gx-case">
+        <div class="gx-case__label">toast-container with a server-rendered toast (default bottom-right group)</div>
+        <div class="gx-case__demo">
+            <tedi:toast-container>
+                <tedi:toast type="success" title="Salvestatud" position="top-right" :duration="0">Muudatused salvestati.</tedi:toast>
+            </tedi:toast-container>
         </div>
     </div>
 </div>

@@ -34,6 +34,7 @@
  *   src/process-timeline.js   tediProcessTimeline — horizontal process timeline falls back to vertical when it overflows
  *   src/rating.js             tediRating — the rating's hover preview and live selected/caption state
  *   src/date-field.js         tediDateField — resolves a breakpoint-name date-field `modal` (popover vs modal)
+ *   src/toast-container.js    tediToastContainer + window.TediToast — ToastService: spawn, time, pause and announce toasts
  */
 import { breakpoint } from './src/breakpoint.js';
 import { carousel } from './src/carousel.js';
@@ -53,6 +54,7 @@ import { scrollVisibility } from './src/scroll-visibility.js';
 import { sheet } from './src/sheet.js';
 import { search } from './src/search.js';
 import { tableOfContents, tableOfContentsCollapsible } from './src/table-of-contents.js';
+import { toastContainer } from './src/toast-container.js';
 
 function register(Alpine) {
     Alpine.data('tediBreakpoint', breakpoint);
@@ -74,6 +76,7 @@ function register(Alpine) {
     Alpine.data('tediProcessTimeline', processTimeline);
     Alpine.data('tediRating', rating);
     Alpine.data('tediDateField', dateField);
+    Alpine.data('tediToastContainer', toastContainer);
 }
 
 if (window.Alpine) {
