@@ -258,6 +258,20 @@ attributes instead of the label text. Check these before upgrading:
 - **`sidenav`**: the submenu toggle reads "{label} submenu"; `aria-expanded`
   carries the state.
 - **`sheet`**: the overlay is `inert` while it animates out.
+- **`file-upload`** is re-ported from Angular's new TEDI-Ready file-upload
+  (it was React's). `id` is now `input-id` (`id` still works); `label` is
+  removed (use `tedi:form.label for="…"` in a `tedi:form-field`);
+  `has-clear-button` is `clearable` (default inherits); `helper` is replaced by
+  `error` / `success` / `hint`; `announcement`, `required` and the default
+  slot are removed; `size` defaults to `null` (inherits). `files` keys are
+  camelCase (`isValid`, `isLoading`; the snake_case keys are ignored), with an
+  optional `removeAttributes`. New: `invalid`, `stacked`, `clear-attributes`.
+  The markup is Angular's: a `<tedi-file-upload>` root, a field surface with
+  `__value` / `__tags` / `__actions` / `__clear` / `__add`, the hidden native
+  input carrying `$attributes`; the React classes (`__container`, `__content`,
+  `__items`, `__button`, `--error` / `--valid`) are gone, `aria-describedby`
+  moves to the add button, and feedback ids are `{id}-error|success|hint`.
+  The add button needs `dist/tedi.js` (`tediFileUpload`).
 - **Translations**: these keys are removed or renamed — `required`,
   `toast.close`, `table.select-all.{true,false}`, `table.select-row.{true,false}`,
   `table.expand-row`, `table.collapse-row`, `pagination.page.{true,false}`,
@@ -392,10 +406,10 @@ Later passes added the components that exist only in Angular's `community/`
 entry point (see
 [From Angular's `community/` entry point](#from-angulars-community-entry-point)
 below), `filter`, the `tedi/directives/`, and the components that exist only in
-React. As of Angular 9.0.1-rc.1 that covers every directory under
-`src/tedi/components/<group>/` (73), plus `filter` and the four directives:
-**155 Blade components** once sub-components are counted. With 9 from
-`community/` and 24 from React, that is **188** in total.
+React. As of Angular 10.0.0-rc.21 that covers every directory under
+`src/tedi/components/<group>/` (75), plus `filter` and the four directives:
+**157 Blade components** once sub-components are counted. With 9 from
+`community/` and 23 from React, that is **189** in total.
 
 | Angular component | Blade tag |
 |---|---|

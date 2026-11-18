@@ -17,6 +17,17 @@ Re-synced against Angular 10.0.0-rc.21 (`6ecb1ee5`), React 21.0.0-rc.17
   pagination, number-field, table, calendar day grid, progress-bar and sidenav
   shorten or stabilise their labels. Several translation keys are removed or
   reworded.
+- **BREAKING** `file-upload` is re-ported from Angular 10's new TEDI-Ready
+  file-upload (CONVENTIONS.md §13: Angular is the source wherever it has the
+  component). New markup and props; `label`, `helper`, `has-clear-button`,
+  `announcement` and `required` are gone. The add button, label naming and
+  screen-reader announcements run in the new `tediFileUpload` behaviour. The
+  selection pipeline (accept / max-size / duplicate validation, rejected
+  files) stays server-side.
+- New: `tedi:rating` (Angular TEDI-Ready Rating; native radios, so
+  `wire:model` binds it, with the hover preview in `tediRating`) and the
+  community `tedi:process-timeline` (`-item`, `-title`, `-description`; a
+  horizontal timeline that overflows turns vertical in `tediProcessTimeline`).
 - `table`: `rowHeader` columns (`<th scope="row">`), a column `label`, an
   icon-only sort button after a custom header, per-row `selectionLabel`, and
   the scoped stylesheet that keeps a nested table's look its own. New stories
@@ -29,10 +40,12 @@ Re-synced against Angular 10.0.0-rc.21 (`6ecb1ee5`), React 21.0.0-rc.17
 - Re-vendored stylesheets: closing-button, accordion, collapse, calendar,
   table, field-surface mixins, feedback-text, radio-card, timeline,
   horizontal-stepper, alert, dropdown-content, tag, and React's sheet.
-- `scripts/generate-lang.cjs` handles optional interpolated parameters and
-  Russian one/few/many plurals; `tests/LangTest.php` guards the lang files.
+- `scripts/generate-lang.cjs` handles optional interpolated parameters,
+  Russian one/few/many plurals and counts compared as strings (which had
+  lost their singular); `tests/LangTest.php` guards the lang files.
 
-Not ported: the table's filter popover footer (`filterActions`, `cancel`),
+Not ported: the file upload's client-side selection pipeline and five of its
+stories (see its story README); the table's filter popover footer (`filterActions`, `cancel`),
 since the filter popover itself is not ported; the date field's
 `calendarFullWidth` (modal branch); `numberField.quantityUpdated`
 announcements (number-field has no live region here); React's dock-panel,
