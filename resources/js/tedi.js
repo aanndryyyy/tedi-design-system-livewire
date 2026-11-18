@@ -20,7 +20,7 @@
  *   src/dropdown.js           tediDropdown — tediOverlay + the ARIA menu keyboard layer
  *   src/filter.js             tediFilter — tediOverlay + the filter's listbox layer
  *   src/form-field.js         tediFormField — the clear button's live visibility and reset
- *   src/file-upload.js        tediFileUpload — picker, label naming and announcements for file-upload
+ *   src/file-upload.js        tediFileUpload — file-upload's selection pipeline (accept / maxSize / validator, duplicates, rejected files, summary), picker, label naming and announcements
  *   src/announcer.js          root-level screen-reader announcements, no Alpine (file-upload, number-field)
  *   src/progress-bar.js       tediProgressBar — opt-in throttled value announcements
  *   src/multiselect.js        tediMultiselect — tediOverlay + the multiselect's listbox layer
