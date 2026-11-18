@@ -1,0 +1,16 @@
+.tedi-process-timeline {
+  display: flex;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+
+  &--horizontal {
+    flex-direction: row;
+    gap: var(--layout-grid-gutters-16);
+    align-items: flex-start;
+  }
+
+  &--vertical {
+    flex-direction: column;
+  }
+}

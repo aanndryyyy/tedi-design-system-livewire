@@ -179,6 +179,7 @@ summary:
 | `button-group` | `enableMobileDropdown` + `mobileBreakpoint` become the explicit `dropdownMode` prop; the collapsed dropdown is built from `items` only, so a slot-only group cannot collapse |
 | `breadcrumbs`, `horizontal-stepper`, `button-group` | Angular's `contentChildren` registration becomes explicit props — an `items` array, or `step-number` on each stepper item |
 | `vertical-stepper-item` | Same `contentChildren` case: nested steps go in the `sub-items` slot and each carries `:sub-item="true"`, because Blade cannot set it on the slot's children. `route`/RouterLink becomes a plain `href`, and `routerLinkActive`'s auto-selection (plus the `opened` effect it drives) becomes explicit `:selected` / `:opened`. `tedi-vertical-stepper--compact` dropped — TEDI ships no rule for it |
+| `process-timeline`, `process-timeline-item` | `orientation` is `horizontal` or `vertical` (default `horizontal`); Angular's breakpoint-object form and its `{ xs: "vertical", md: "horizontal" }` default are not ported. `contentChildren` numbering becomes explicit `index` / `last` props on each item, and `last` defaults to false where Angular's standalone item counts as last. Title and description are the item's `title` / `description` slots |
 | `filter` | **No native form control.** `wire:model` binds through `x-modelable="model"` on the root rather than through a hidden `<input>`: the model is `string`, `string[]` or `boolean` depending on the mode, and only Alpine can carry all three. Nothing is submitted in a plain non-Livewire `<form>` POST |
 | `filter` | `tedi-filter-dropdown--custom` and `tedi-filter-dropdown__item--select-all` are dropped — Angular emits both, TEDI ships no rule for either |
 | `filter` | The `cleared` output is not re-emitted; the custom-content dropdown's clear button forwards `clear-attributes` (e.g. `wire:click`) instead |
@@ -392,8 +393,8 @@ entry point (see
 below), `filter`, the `tedi/directives/`, and the components that exist only in
 React. As of Angular 9.0.1-rc.1 that covers every directory under
 `src/tedi/components/<group>/` (73), plus `filter` and the four directives:
-**155 Blade components** once sub-components are counted. With 5 from
-`community/` and 24 from React, that is **184** in total.
+**155 Blade components** once sub-components are counted. With 9 from
+`community/` and 24 from React, that is **188** in total.
 
 | Angular component | Blade tag |
 |---|---|
@@ -511,7 +512,7 @@ to `tedi/`. Its components are built the same way — `ViewEncapsulation.None`,
 global BEM classes — so they port under the same rules; CONVENTIONS.md §12
 covers what differs (group mapping and the `Community/…` Storybook prefix).
 
-The four components that exist **only** there are ported:
+The five components that exist **only** there are ported:
 
 | Angular component | Blade tag |
 |---|---|
@@ -519,6 +520,7 @@ The four components that exist **only** there are ported:
 | `community/form/file-dropzone` | `<tedi:file-dropzone>` ⁷ |
 | `community/form/select/multiselect` | `<tedi:multiselect>` ⁷ ⁸ |
 | `community/navigation/vertical-stepper` | `<tedi:vertical-stepper>`, `<tedi:vertical-stepper-item>` |
+| `community/helpers/process-timeline` | `<tedi:process-timeline>`, `<tedi:process-timeline-item>`, `<tedi:process-timeline-title>`, `<tedi:process-timeline-description>` |
 
 ⁶ Angular is an attribute directive with no template; Blade has no directives,
 so it ports as a wrapper element carrying the same four host classes. It is the
@@ -684,7 +686,7 @@ its story directory contains any `.md` file:
 
 Both are ported verbatim from the Angular story file — its `parameters.docs.description.component` /
 `.story` if present, otherwise the doc comment above the `export default` / `export const`.
-All 84 components have a `README.md`; 173 stories have a per-story description,
+All 85 components have a `README.md`; 175 stories have a per-story description,
 which is every Angular story that carries one.
 
 Two known gaps. `Community/Form/FormField` has no description because the Angular
@@ -709,8 +711,8 @@ recorded and applies wherever Storybook honours it.
 
 Every Angular `TEDI-Ready` group now has a Blade counterpart, including
 `TEDI-Ready/Components/Overlay/*`. Under `Community/`, the community-only
-components that have upstream stories are present — `Form/FileDropzone` and
-`Navigation/VerticalStepper` — plus `Form/FormField`, which is where Angular
+components that have upstream stories are present — `Form/FileDropzone`,
+`Helpers/ProcessTimeline` and `Navigation/VerticalStepper` — plus `Form/FormField`, which is where Angular
 files the shared form-field stories. `multiselect` has none, because upstream
 removed its stories when it deprecated the component; `floating-button` and
 `table-of-contents` moved to `TEDI-Ready/Components/` with their promotion. `<tedi:choicegroup>` has no directory
@@ -720,7 +722,7 @@ the community `radio` / `checkbox` stories, which belong to components the
 
 ### Angular stories with no Blade equivalent
 
-638 stories across 84 components are ported. Some Angular stories exist purely
+644 stories across 85 components are ported. Some Angular stories exist purely
 to demonstrate behaviour this package documents as not ported (see the
 divergences table above). Those are deliberately absent rather than faked:
 
@@ -744,6 +746,7 @@ divergences table above). Those are deliberately absent rather than faked:
 | `FileDropzone`: Replace | Exercises the `mode` input, part of the unported `FileService` file pipeline |
 | `DateField`, `TimeField`: OpenForVisualTest | Hidden upstream (`!dev`), visual-regression only, driven by a play function |
 | `DateField`: Range — the "min/max limits" field | Open-ended `minDate`/`maxDate` cannot be expressed as the flat `disabledDays` list |
+| `ProcessTimeline`: Mobile | Exercises the breakpoint default (`{ xs: "vertical", md: "horizontal" }`) at a phone viewport; breakpoint props are not ported and Blast has no viewport passthrough |
 
 Angular's Hover / Active / Focus matrix rows are reproduced in full.
 `storybook-addon-pseudo-states` isn't one of Blast's dependencies, so

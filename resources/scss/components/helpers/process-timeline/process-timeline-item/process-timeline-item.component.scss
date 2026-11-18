@@ -1,0 +1,125 @@
+.tedi-process-timeline-item {
+  --_process-timeline-indicator-size: var(--stepper-item-vertical-step-size-lg);
+
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-areas: "indicator body connector";
+  grid-template-columns:
+    var(--_process-timeline-indicator-size)
+    minmax(min-content, max-content)
+    minmax(var(--layout-grid-gutters-24), 1fr);
+  column-gap: var(--layout-grid-gutters-08);
+
+  &--last {
+    flex-grow: 0;
+    grid-template-areas: "indicator body";
+    grid-template-columns:
+      var(--_process-timeline-indicator-size)
+      minmax(min-content, max-content);
+  }
+
+  &--vertical {
+    grid-template-areas:
+      "indicator body"
+      "connector body";
+    grid-template-rows: var(--_process-timeline-indicator-size) 1fr;
+    grid-template-columns: var(--_process-timeline-indicator-size) minmax(0, 1fr);
+  }
+}
+
+.tedi-process-timeline-item__indicator {
+  box-sizing: border-box;
+  display: flex;
+  grid-area: indicator;
+  align-items: center;
+  justify-content: center;
+  width: var(--_process-timeline-indicator-size);
+  height: var(--_process-timeline-indicator-size);
+  font-family: var(--family-default);
+  font-size: var(--body-small-bold-size);
+  font-weight: var(--body-small-bold-weight);
+  line-height: var(--body-small-bold-line-height);
+  border-radius: 50%;
+
+  .tedi-process-timeline-item--completed & {
+    color: var(--general-text-white);
+    background-color: var(--stepper-step-completed-bg);
+  }
+
+  .tedi-process-timeline-item--active & {
+    color: var(--stepper-item-vertical-text-selected);
+    background-color: var(--stepper-step-selected-bg);
+    border: 2px solid var(--stepper-step-selected-border);
+  }
+
+  .tedi-process-timeline-item--upcoming & {
+    color: var(--general-text-secondary);
+    background-color: var(--stepper-step-default-bg);
+    border: 1px solid var(--stepper-step-default-border);
+  }
+}
+
+.tedi-process-timeline-item__connector {
+  display: flex;
+  grid-area: connector;
+  align-items: center;
+  height: var(--_process-timeline-indicator-size);
+  margin-inline-start: var(--layout-grid-gutters-08);
+
+  .tedi-process-timeline-item--vertical & {
+    align-items: stretch;
+    justify-content: center;
+    height: auto;
+    margin-inline-start: 0;
+  }
+}
+
+.tedi-process-timeline-item__body {
+  display: flex;
+  flex-direction: column;
+  grid-area: body;
+  min-width: 0;
+
+  .tedi-process-timeline-item--vertical:not(.tedi-process-timeline-item--last) & {
+    padding-bottom: var(--layout-grid-gutters-16);
+  }
+}
+
+.tedi-process-timeline-item__content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--layout-grid-gutters-08);
+  align-items: center;
+  padding-top: var(--layout-grid-gutters-04);
+  padding-bottom: var(--layout-grid-gutters-02);
+
+  &:empty {
+    display: none;
+  }
+}
+
+.tedi-process-timeline-title {
+  display: block;
+  font-family: var(--family-default);
+  font-size: var(--body-regular-size);
+  font-weight: var(--body-regular-weight);
+  line-height: var(--body-regular-line-height);
+  color: var(--general-text-primary);
+}
+
+.tedi-process-timeline-description {
+  display: block;
+  font-family: var(--family-default);
+  font-size: var(--body-small-regular-size);
+  font-weight: var(--body-small-regular-weight);
+  line-height: var(--body-small-regular-line-height);
+  color: var(--general-text-tertiary);
+}
+
+// Keeps long descriptions and content readable on wide screens, as in Figma (400px).
+.tedi-process-timeline-item:not(.tedi-process-timeline-item--vertical) {
+  .tedi-process-timeline-description,
+  .tedi-process-timeline-item__content {
+    max-width: 25rem;
+  }
+}

@@ -990,4 +990,42 @@ class AwareTest extends TestCase
         $this->assertSame($inner($explicit), $inner($omitted),
             'Omitting open/collapsed/role must render the parts identically to passing their defaults.');
     }
+
+    // -- process-timeline -> process-timeline-item @aware(['orientation', 'connectorThickness'])
+
+    public function test_process_timeline_item_reads_explicit_orientation_and_thickness(): void
+    {
+        $html = Blade::render(
+            '<tedi:process-timeline orientation="vertical" :connector-thickness="2">'
+            .'<tedi:process-timeline-item>x</tedi:process-timeline-item>'
+            .'</tedi:process-timeline>'
+        );
+
+        $this->assertHasClass('tedi-process-timeline-item--vertical', $html, 'tedi-process-timeline-item');
+        $this->assertHasClass('tedi-separator--vertical', $html, 'tedi-separator');
+        $this->assertHasClass('tedi-separator--thickness-2', $html, 'tedi-separator');
+    }
+
+    public function test_process_timeline_item_fallbacks_match_the_timeline_defaults_when_omitted(): void
+    {
+        // tedi:process-timeline defaults to orientation=horizontal and
+        // connectorThickness=1, matching the item's @aware fallbacks, so an
+        // omitted, an explicit and a parentless render all agree.
+        $item = '<tedi:process-timeline-item state="completed">x</tedi:process-timeline-item>';
+        $renders = [
+            Blade::render('<tedi:process-timeline>'.$item.'</tedi:process-timeline>'),
+            Blade::render('<tedi:process-timeline orientation="horizontal" :connector-thickness="1">'.$item.'</tedi:process-timeline>'),
+            Blade::render($item),
+        ];
+
+        foreach ($renders as $html) {
+            $this->assertMissingClass('tedi-process-timeline-item--vertical', $html, 'tedi-process-timeline-item');
+            $this->assertHasClass('tedi-separator--horizontal', $html, 'tedi-separator');
+            $this->assertHasClass('tedi-separator--thickness-1', $html, 'tedi-separator');
+        }
+
+        $li = fn (string $html) => substr($html, strpos($html, '<li'));
+        $this->assertSame($li($renders[1]), $li($renders[0]));
+        $this->assertSame(trim($renders[2]), trim(substr($li($renders[0]), 0, strrpos($li($renders[0]), '</ol>'))));
+    }
 }
