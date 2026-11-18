@@ -470,7 +470,7 @@ or is shared by several components — currently `tediBreakpoint`,
 `tediCarousel`, `tediOverlay` and `tediDropdown` (§11), `tediFilter`,
 `tediFormField`, `tediProgressBar`, `tediMultiselect`, `tediSearch`,
 `tediModal`, `tediTableOfContents`, `tediTableOfContentsCollapsible`,
-`tediScrollVisibility`, `tediHashTrigger`, `tediSheet` and `tediProcessTimeline`. The header comment
+`tediScrollVisibility`, `tediHashTrigger`, `tediSheet`, `tediProcessTimeline` and `tediRating`. The header comment
 of `resources/js/tedi.js` lists them with one line each.
 
 **The JS layout.** `resources/js/tedi.js` is the entry point and holds nothing
@@ -495,6 +495,7 @@ under `resources/js/src/`, exporting a factory of the same name:
 | `src/hash-trigger.js` | `hashTrigger` | `hashchange` + `scrollIntoView` for `hash-trigger` |
 | `src/sheet.js` | `sheet` | The React bottom sheet: open/close, focus, drag and snap points |
 | `src/process-timeline.js` | `processTimeline` | The community process timeline's overflow fallback: a horizontal timeline whose stages don't fit turns vertical, measured in the horizontal layout as upstream does. Writes the layout classes and separator axis onto the server markup and re-applies them after a Livewire morph |
+| `src/rating.js` | `rating` | The rating's hover preview and the live `--selected` / `--hover` classes, star glyph variant and star caption. Reads the checked radio; never writes the value (the radios are native, so `wire:model` / `x-model` own it) |
 
 A new behaviour is a new file in `src/` plus two lines in `tedi.js` (an import
 and an `Alpine.data()` call). Do not add a second `Alpine.data()` call site.

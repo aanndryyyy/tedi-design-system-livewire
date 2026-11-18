@@ -1939,6 +1939,79 @@
     };
   }
 
+  // resources/js/src/rating.js
+  function rating(config = {}) {
+    const { type = "star", value = 0, labels = [] } = config;
+    return {
+      ratingValue: Number(value) || 0,
+      ratingHover: null,
+      _offMorph: null,
+      _onReset: null,
+      init() {
+        this.ratingSync();
+        this.$nextTick(() => this.ratingSync());
+        const livewire = window.Livewire;
+        if (livewire && typeof livewire.hook === "function") {
+          const off = livewire.hook("morph.updated", ({ el }) => {
+            if (el && this.$el.contains(el)) this.$nextTick(() => this.ratingSync());
+          });
+          this._offMorph = typeof off === "function" ? off : null;
+        }
+        const form = this.$el.closest("form");
+        if (form) {
+          this._onReset = () => setTimeout(() => this.ratingSync());
+          form.addEventListener("reset", this._onReset);
+        }
+      },
+      destroy() {
+        if (this._offMorph) this._offMorph();
+        const form = this.$el.closest("form");
+        if (form && this._onReset) form.removeEventListener("reset", this._onReset);
+      },
+      /**
+       * Read the committed value off the checked radio. With none checked,
+       * fall back to the server-rendered value: a fractional one (3.5)
+       * checks no radio but still fills three stars, as upstream does.
+       */
+      ratingSync() {
+        const checked = this.$el.querySelector(".tedi-rating__input:checked");
+        this.ratingValue = checked ? Number(checked.value) : Number(value) || 0;
+        if (!this.ratingInteractive()) this.ratingHover = null;
+      },
+      /** `!disabled && !readOnly` — read off the DOM so a morph is picked up. */
+      ratingInteractive() {
+        return !this.$el.classList.contains("tedi-rating--disabled") && !this.$el.classList.contains("tedi-rating--readonly");
+      },
+      ratingSelect(position) {
+        if (!this.ratingInteractive()) return;
+        this.ratingValue = position;
+      },
+      ratingSetHover(position) {
+        this.ratingHover = this.ratingInteractive() ? position : null;
+      },
+      ratingInRange(position, target) {
+        return type === "icon" ? position === target : position <= target;
+      },
+      ratingHovering() {
+        return this.ratingInteractive() && this.ratingHover !== null;
+      },
+      ratingPreviewed(position) {
+        return this.ratingHovering() && this.ratingInRange(position, this.ratingHover);
+      },
+      // While hovering, items in the hovered range take the hover look; on
+      // cumulative scales items past it read as unselected, while the
+      // single-choice icon scale keeps its current pick visible.
+      ratingSelected(position) {
+        return this.ratingInRange(position, this.ratingValue) && (!this.ratingHovering() || this.ratingPreviewed(position) || type === "icon");
+      },
+      ratingStarCaption() {
+        var _a;
+        const display = this.ratingHovering() ? this.ratingHover : this.ratingValue;
+        return display > 0 ? (_a = labels[display - 1]) != null ? _a : "" : "";
+      }
+    };
+  }
+
   // resources/js/src/scroll-visibility.js
   function scrollVisibility(config = {}) {
     const {
@@ -2944,6 +3017,7 @@
     Alpine.data("tediSheet", sheet);
     Alpine.data("tediProgressBar", progressBar);
     Alpine.data("tediProcessTimeline", processTimeline);
+    Alpine.data("tediRating", rating);
   }
   if (window.Alpine) {
     register(window.Alpine);

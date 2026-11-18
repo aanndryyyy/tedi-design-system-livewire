@@ -30,6 +30,7 @@
  *   src/hash-trigger.js       tediHashTrigger — scroll to the element the URL hash names
  *   src/sheet.js              tediSheet — the React bottom sheet: open/close, focus, drag and snap points
  *   src/process-timeline.js   tediProcessTimeline — horizontal process timeline falls back to vertical when it overflows
+ *   src/rating.js             tediRating — the rating's hover preview and live selected/caption state
  */
 import { breakpoint } from './src/breakpoint.js';
 import { carousel } from './src/carousel.js';
@@ -42,6 +43,7 @@ import { multiselect } from './src/multiselect.js';
 import { overlay } from './src/overlay.js';
 import { processTimeline } from './src/process-timeline.js';
 import { progressBar } from './src/progress-bar.js';
+import { rating } from './src/rating.js';
 import { scrollVisibility } from './src/scroll-visibility.js';
 import { sheet } from './src/sheet.js';
 import { search } from './src/search.js';
@@ -64,6 +66,7 @@ function register(Alpine) {
     Alpine.data('tediSheet', sheet);
     Alpine.data('tediProgressBar', progressBar);
     Alpine.data('tediProcessTimeline', processTimeline);
+    Alpine.data('tediRating', rating);
 }
 
 if (window.Alpine) {
