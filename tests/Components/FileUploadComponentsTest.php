@@ -381,6 +381,25 @@ class FileUploadComponentsTest extends TestCase
         $this->assertStringContainsString('id="'.$match[1].'-hint"', $html);
     }
 
+    public function test_a_plain_id_is_the_input_id(): void
+    {
+        $html = Blade::render('<tedi:file-upload id="x" hint="Vihje" />');
+
+        $this->assertMatchesRegularExpression('/<input[^>]*\sid="x"/', $html);
+        $this->assertSame(1, substr_count($html, ' id="x"'));
+        $this->assertStringContainsString('<span id="x-add">', $html);
+        $this->assertStringContainsString('id="x-hint"', $html);
+        $this->assertStringContainsString('\u0022inputId\u0022:\u0022x\u0022', $html);
+    }
+
+    public function test_a_consumer_change_handler_runs_after_ours(): void
+    {
+        $html = $this->render('x-on:change="mine()"');
+
+        $this->assertSame(1, substr_count($html, 'x-on:change='));
+        $this->assertStringContainsString('x-on:change="handleSelection($event); mine()"', $html);
+    }
+
     private function between(string $html, string $from, string $to): string
     {
         $start = strpos($html, $from);

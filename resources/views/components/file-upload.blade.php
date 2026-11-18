@@ -84,7 +84,10 @@
 
     `input-id`'s fallback is `Tedi::id('tedi-file-upload')` rather than
     upstream's module counter; the label, add-label and feedback ids are
-    derived from it exactly as upstream.
+    derived from it exactly as upstream. A plain `id` attribute is taken as
+    `input-id`, so the derived ids always match the input's. A consumer
+    `x-on:change` / `@change` on the input runs after the field's own handler
+    rather than replacing it.
 --}}
 @props([
     /** Selected files: arrays with `name`, and optional `id`, `isValid`, `isLoading`, `removeAttributes`. Rendered server-side. */
@@ -124,7 +127,9 @@
 ])
 
 @php
-    $inputId = $inputId ?? \Tedi\Livewire\Tedi::id('tedi-file-upload');
+    // A plain `id` is read as `input-id`: it would land on the input anyway
+    // (`$attributes`), and every derived id has to agree with it.
+    $inputId = $inputId ?? $attributes->get('id') ?? \Tedi\Livewire\Tedi::id('tedi-file-upload');
     $files = array_values($files ?? []);
     $fileCount = count($files);
 
@@ -331,8 +336,8 @@
         @if ($multiple) multiple @endif
         @disabled($disabled || $readOnly)
         x-ref="input"
-        x-on:change="handleSelection($event)"
-        {{ $attributes->except('aria-describedby')->class(['tedi-file-upload__input'])->merge(array_filter([
+        x-on:change="{{ implode('; ', array_filter(['handleSelection($event)', $attributes->get('x-on:change'), $attributes->get('@change')])) }}"
+        {{ $attributes->except(['aria-describedby', 'id', 'x-on:change', '@change'])->class(['tedi-file-upload__input'])->merge(array_filter([
             'id' => $inputId,
             'name' => filled($name) ? $name : null,
             'accept' => filled($accept) ? $accept : null,
