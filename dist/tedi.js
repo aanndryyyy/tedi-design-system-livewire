@@ -1797,6 +1797,94 @@
     }));
   }
 
+  // resources/js/src/process-timeline.js
+  var VERTICAL_CLASS = "tedi-process-timeline--vertical";
+  var HORIZONTAL_CLASS = "tedi-process-timeline--horizontal";
+  var ITEM_CLASS = "tedi-process-timeline-item";
+  var ITEM_VERTICAL_CLASS = "tedi-process-timeline-item--vertical";
+  function processTimeline() {
+    return {
+      overflowing: false,
+      init() {
+        var _a;
+        this._el = this.$el;
+        if (typeof ResizeObserver === "undefined") {
+          return;
+        }
+        this._resize = new ResizeObserver(() => this.checkFit());
+        this._mutation = typeof MutationObserver === "undefined" ? null : new MutationObserver(() => this.observe());
+        (_a = this._mutation) == null ? void 0 : _a.observe(this._el, { childList: true, subtree: true, characterData: true });
+        const livewire = window.Livewire;
+        if (livewire && typeof livewire.hook === "function") {
+          const off = livewire.hook("morph.updated", ({ el }) => {
+            if (this._el && (el === this._el || this._el.contains(el))) {
+              queueMicrotask(() => this.apply());
+            }
+          });
+          this._offMorph = typeof off === "function" ? off : null;
+        }
+        this.observe();
+      },
+      destroy() {
+        var _a, _b, _c;
+        (_a = this._resize) == null ? void 0 : _a.disconnect();
+        (_b = this._mutation) == null ? void 0 : _b.disconnect();
+        (_c = this._offMorph) == null ? void 0 : _c.call(this);
+        this._el = null;
+      },
+      /** (Re-)observe the root and its current children, then re-check. */
+      observe() {
+        if (!this._el) {
+          return;
+        }
+        this._resize.disconnect();
+        this._resize.observe(this._el);
+        Array.from(this._el.children).forEach((child) => this._resize.observe(child));
+        this.checkFit();
+      },
+      checkFit() {
+        if (!this._el) {
+          return;
+        }
+        this.overflowing = this.horizontalWidth() > this._el.clientWidth;
+        this.apply();
+      },
+      horizontalWidth() {
+        const el = this._el;
+        if (!el.classList.contains(VERTICAL_CLASS)) {
+          return el.scrollWidth;
+        }
+        const items = Array.from(el.querySelectorAll(`:scope > .${ITEM_VERTICAL_CLASS}`));
+        el.classList.replace(VERTICAL_CLASS, HORIZONTAL_CLASS);
+        items.forEach((item) => item.classList.remove(ITEM_VERTICAL_CLASS));
+        const width = el.scrollWidth;
+        el.classList.replace(HORIZONTAL_CLASS, VERTICAL_CLASS);
+        items.forEach((item) => item.classList.add(ITEM_VERTICAL_CLASS));
+        return width;
+      },
+      /** Write the resolved layout onto the server-rendered markup. Idempotent. */
+      apply() {
+        const el = this._el;
+        if (!el) {
+          return;
+        }
+        const vertical = this.overflowing;
+        el.classList.toggle(VERTICAL_CLASS, vertical);
+        el.classList.toggle(HORIZONTAL_CLASS, !vertical);
+        el.querySelectorAll(`:scope > .${ITEM_CLASS}`).forEach((item) => {
+          item.classList.toggle(ITEM_VERTICAL_CLASS, vertical);
+          const separator = item.querySelector(":scope > .tedi-process-timeline-item__connector > .tedi-separator");
+          if (separator) {
+            separator.classList.toggle("tedi-separator--vertical", vertical);
+            separator.classList.toggle("tedi-separator--horizontal", !vertical);
+            separator.style.width = vertical ? "0px" : "100%";
+            separator.style.height = vertical ? "100%" : "0px";
+          }
+        });
+      }
+    };
+  }
+
   // resources/js/src/progress-bar.js
   function progressBar({ interval = 1e3 } = {}) {
     const resolvedInterval = Number.isFinite(interval) ? Math.max(0, interval) : 1e3;
@@ -2855,6 +2943,7 @@
     Alpine.data("tediHashTrigger", hashTrigger);
     Alpine.data("tediSheet", sheet);
     Alpine.data("tediProgressBar", progressBar);
+    Alpine.data("tediProcessTimeline", processTimeline);
   }
   if (window.Alpine) {
     register(window.Alpine);

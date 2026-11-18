@@ -31,6 +31,16 @@
     (CONVENTIONS.md §7.1). The default is `'horizontal'` because the item's
     @aware fallback must equal it, and Angular's item outside a timeline is
     horizontal (`vertical() ?? false`).
+
+    OVERFLOW FALLBACK. Upstream turns a horizontal timeline vertical while its
+    stages don't fit the container's width. That is measured in the browser, so
+    a horizontal timeline carries `x-data="tediProcessTimeline"`
+    (resources/js/src/process-timeline.js), which measures it as upstream does
+    and writes the vertical layout onto the root, the items and their
+    connectors. The server always renders the `orientation` given. Without the
+    bundled behaviour a horizontal timeline that is too wide stays horizontal
+    and overflows. A vertical timeline gets no behaviour, as upstream does not
+    measure one either.
 --}}
 @props([
     /** horizontal|vertical — layout direction. */
@@ -47,6 +57,9 @@
     'tedi-process-timeline',
     'tedi-process-timeline--vertical' => $vertical,
     'tedi-process-timeline--horizontal' => ! $vertical,
-])->merge(['role' => 'list']) }}>
+])->merge(array_filter([
+    'role' => 'list',
+    'x-data' => $vertical ? null : 'tediProcessTimeline',
+])) }}>
     {{ $slot }}
 </ol>

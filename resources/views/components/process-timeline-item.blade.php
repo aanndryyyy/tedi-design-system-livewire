@@ -17,7 +17,10 @@
 
     The @aware fallbacks equal `tedi:process-timeline`'s defaults
     (CONVENTIONS.md §3). The item declares neither name itself, so @aware
-    resolves the parent's value.
+    resolves the parent's value. That is the server render only: inside a
+    horizontal timeline, upstream's overflow fallback runs in the browser
+    (resources/js/src/process-timeline.js), which can add `--vertical` here
+    and flip the connector separator's axis class and inline size.
 
     `<ng-content select="tedi-process-timeline-title" />` and
     `select="tedi-process-timeline-description"` become the `title` and

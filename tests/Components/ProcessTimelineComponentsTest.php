@@ -359,4 +359,24 @@ class ProcessTimelineComponentsTest extends TestCase
         $this->assertSame(1, substr_count($html, 'aria-current='));
         $this->assertStringContainsString('aria-current="page"', $html);
     }
+
+    // -- overflow fallback (tediProcessTimeline) --------------------------
+
+    public function test_only_a_horizontal_timeline_registers_the_overflow_fallback(): void
+    {
+        $horizontal = Blade::render('<tedi:process-timeline>x</tedi:process-timeline>');
+        $vertical = Blade::render('<tedi:process-timeline orientation="vertical">x</tedi:process-timeline>');
+
+        $this->assertStringContainsString('x-data="tediProcessTimeline"', $horizontal);
+        $this->assertStringNotContainsString('x-data', $vertical);
+    }
+
+    public function test_overflow_fallback_is_registered_in_the_bundle(): void
+    {
+        $entry = file_get_contents(__DIR__.'/../../resources/js/tedi.js');
+        $dist = file_get_contents(__DIR__.'/../../dist/tedi.js');
+
+        $this->assertStringContainsString("Alpine.data('tediProcessTimeline', processTimeline)", $entry);
+        $this->assertStringContainsString('tediProcessTimeline', $dist);
+    }
 }

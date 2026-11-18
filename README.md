@@ -179,7 +179,7 @@ summary:
 | `button-group` | `enableMobileDropdown` + `mobileBreakpoint` become the explicit `dropdownMode` prop; the collapsed dropdown is built from `items` only, so a slot-only group cannot collapse |
 | `breadcrumbs`, `horizontal-stepper`, `button-group` | Angular's `contentChildren` registration becomes explicit props — an `items` array, or `step-number` on each stepper item |
 | `vertical-stepper-item` | Same `contentChildren` case: nested steps go in the `sub-items` slot and each carries `:sub-item="true"`, because Blade cannot set it on the slot's children. `route`/RouterLink becomes a plain `href`, and `routerLinkActive`'s auto-selection (plus the `opened` effect it drives) becomes explicit `:selected` / `:opened`. `tedi-vertical-stepper--compact` dropped — TEDI ships no rule for it |
-| `process-timeline`, `process-timeline-item` | `orientation` is `horizontal` or `vertical` (default `horizontal`); Angular's breakpoint-object form and its `{ xs: "vertical", md: "horizontal" }` default are not ported. `contentChildren` numbering becomes explicit `index` / `last` props on each item, and `last` defaults to false where Angular's standalone item counts as last. Title and description are the item's `title` / `description` slots |
+| `process-timeline`, `process-timeline-item` | `orientation` is `horizontal` or `vertical` (default `horizontal`); Angular's breakpoint-object form and its `{ xs: "vertical", md: "horizontal" }` default are not ported. `contentChildren` numbering becomes explicit `index` / `last` props on each item, and `last` defaults to false where Angular's standalone item counts as last. Title and description are the item's `title` / `description` slots. The overflow fallback (a horizontal timeline that doesn't fit turns vertical) runs on the bundled `tediProcessTimeline`; without it the timeline stays horizontal |
 | `filter` | **No native form control.** `wire:model` binds through `x-modelable="model"` on the root rather than through a hidden `<input>`: the model is `string`, `string[]` or `boolean` depending on the mode, and only Alpine can carry all three. Nothing is submitted in a plain non-Livewire `<form>` POST |
 | `filter` | `tedi-filter-dropdown--custom` and `tedi-filter-dropdown__item--select-all` are dropped — Angular emits both, TEDI ships no rule for either |
 | `filter` | The `cleared` output is not re-emitted; the custom-content dropdown's clear button forwards `clear-attributes` (e.g. `wire:click`) instead |
@@ -722,7 +722,7 @@ the community `radio` / `checkbox` stories, which belong to components the
 
 ### Angular stories with no Blade equivalent
 
-644 stories across 85 components are ported. Some Angular stories exist purely
+645 stories across 85 components are ported. Some Angular stories exist purely
 to demonstrate behaviour this package documents as not ported (see the
 divergences table above). Those are deliberately absent rather than faked:
 
@@ -746,7 +746,6 @@ divergences table above). Those are deliberately absent rather than faked:
 | `FileDropzone`: Replace | Exercises the `mode` input, part of the unported `FileService` file pipeline |
 | `DateField`, `TimeField`: OpenForVisualTest | Hidden upstream (`!dev`), visual-regression only, driven by a play function |
 | `DateField`: Range — the "min/max limits" field | Open-ended `minDate`/`maxDate` cannot be expressed as the flat `disabledDays` list |
-| `ProcessTimeline`: Mobile | Exercises the breakpoint default (`{ xs: "vertical", md: "horizontal" }`) at a phone viewport; breakpoint props are not ported and Blast has no viewport passthrough |
 
 Angular's Hover / Active / Focus matrix rows are reproduced in full.
 `storybook-addon-pseudo-states` isn't one of Blast's dependencies, so
