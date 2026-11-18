@@ -21,10 +21,10 @@
 
     THE FILE LIST IS SERVER STATE. Upstream's `files` is a two-way `model()`
     and a ControlValueAccessor fed by the component's own selection pipeline.
-    Here `files` is rendered by Blade and nothing on the client adds to it or
-    takes from it: with `wire:model` on the input, Livewire uploads on change
-    and your component renders the result back through `:files`. Each entry is
-    an array with upstream's FileUploadFile fields:
+    Here `files` is rendered by Blade: with `wire:model` on the input,
+    Livewire uploads on change and your component renders the result back
+    through `:files`. Each entry is an array with upstream's FileUploadFile
+    fields:
 
         ['name' => 'a.pdf', 'id' => …, 'isValid' => false, 'isLoading' => true,
          'removeAttributes' => ['wire:click' => "removeFile('a.pdf')"]]
@@ -37,26 +37,42 @@
     removing a file is the server's job here (§7 item 2 — upstream's
     `fileRemove` output has no equivalent).
 
-    So the following are NOT PORTED, and are the server's job:
-    - adding the selection to the list, and `multiple`'s append semantics
-      (each Livewire upload replaces the model unless you merge it yourself);
-    - the `accept` / `maxSize` / `validator` checks, duplicate skipping,
-      `keepRejectedFiles`, and the rejection summary built from them (the
-      `file-upload.*-rejected` messages). Validate on the server, mark kept
-      files `isValid => false`, and pass the message as `error`. `validator`
-      and `keepRejectedFiles` are therefore not declared;
-    - the ControlValueAccessor / Validator (`rejectedFiles` error), touched /
-      dirty tracking, and the `fileRemove` / `filesChange` outputs.
-    `accept` still lands on the native input (the browser filters the dialog
-    with it), and `accept` / `max-size` still write upstream's restrictions
-    hint.
+    THE SELECTION PIPELINE RUNS ON THE CLIENT (`tediFileUpload`,
+    resources/js/src/file-upload.js), before Livewire sees the files: a
+    capture-phase `change` listener on the root skips duplicates, checks
+    `accept` / `max-size` / `validator`, and rewrites `input.files` to the
+    accepted files — appended to the previous selection when `multiple`, so
+    Livewire uploads the whole list (re-uploading the earlier files), and a
+    native submit sends it. A selection that adds nothing is stopped there.
+    Rejected files are discarded, or with `keep-rejected-files` (multiple
+    fields only) listed after the server's tags as danger tags that never
+    reach the input. The rejection summary (`file-upload.*-rejected`, joined
+    with `error`) is the field's error text and its announcement. All of it is
+    cloned from the inert `<template x-ref="prototypes">` at the end of the
+    root and re-applied after every Livewire morph; that template's
+    `data-state` is how the behaviour reads the server render. Without the
+    bundle none of it runs and the input keeps the browser's selection. Server
+    validation still decides: the client checks are a convenience.
 
-    WHAT ALPINE ADDS (`tediFileUpload`, resources/js/src/file-upload.js):
-    opening the picker from the add button; naming the add button (and the
-    read-only list) by the `label` whose `for` is `input-id` — the label gets
-    the id `{input-id}-label` when it has none, as upstream; and upstream's
-    announcements — `file-upload.added` on a selection, `file-upload.cleared`
-    and `file-upload.removed` on the clear and remove buttons, which also move
+    `validator` is a JavaScript expression, not a PHP callable (upstream's
+    `FileUploadValidator` function cannot cross from PHP). It is evaluated by
+    Alpine with `file` in scope, and a function result is called with the
+    file: `validator="noSpaces"` or `validator="(file) => …"`. Return the
+    rejection message or nothing. It does not work with Alpine's CSP build,
+    and must never contain user input.
+
+    NOT PORTED: the ControlValueAccessor / Validator (`rejectedFiles` error),
+    touched / dirty tracking, and the `fileRemove` / `filesChange` outputs;
+    `keepRejectedFiles` in a single-file field (upstream replaces the listed
+    file with the rejected one, which the client cannot do to server state).
+    Client tags always follow the server's rather than interleaving.
+
+    ALPINE ALSO: opening the picker from the add button; naming the add button
+    (and the read-only list) by the `label` whose `for` is `input-id` — the
+    label gets the id `{input-id}-label` when it has none, as upstream; and
+    upstream's announcements — the rejections, skipped duplicates and
+    `file-upload.added` on a selection, `file-upload.cleared` and
+    `file-upload.removed` on the clear and remove buttons, which also move
     focus to the add button. Upstream clears `input.value` after each
     selection; here the input is the value (`wire:model` and a native submit
     both read it), so only the clear button resets it.
@@ -91,7 +107,8 @@
     derived from it exactly as upstream. A plain `id` attribute is taken as
     `input-id`, so the derived ids always match the input's. A consumer
     `x-on:change` / `@change` on the input runs after the field's own handler
-    rather than replacing it.
+    rather than replacing it, but only for a selection that reaches it: one
+    that adds nothing is stopped before the input.
 --}}
 @props([
     /** Selected files: arrays with `name`, and optional `id`, `isValid`, `isLoading`, `removeAttributes`. Rendered server-side. */
@@ -100,12 +117,16 @@
     'inputId' => null,
     /** `name` attribute of the file input. */
     'name' => null,
-    /** Allowed file types as comma-separated extensions and MIME types, e.g. ".pdf,image/*". Shown in the hint and set on the input; validate on the server. */
+    /** Allowed file types as comma-separated extensions and MIME types, e.g. ".pdf,image/*". Checked on selection, shown in the hint and set on the input; validate on the server too. */
     'accept' => null,
-    /** Largest accepted file size, in bytes. Shown in the hint; validate on the server. */
+    /** Largest accepted file size, in bytes. Checked on selection and shown in the hint; validate on the server too. */
     'maxSize' => null,
-    /** Whether more than one file can be selected. Lists even one file as a tag. */
+    /** JavaScript expression checked for each selected file (`file` in scope; a function result is called with it), returning the rejection message or nothing. Never put user input in it. */
+    'validator' => null,
+    /** Whether more than one file can be selected; a selection is appended. Lists even one file as a tag. */
     'multiple' => false,
+    /** Keeps rejected files in the list, marked invalid, instead of discarding them. Multiple fields only. */
+    'keepRejectedFiles' => false,
     /** Shows the allowed types and maximum size in the hint. */
     'showRestrictions' => true,
     /** Hint text, shown after the allowed types and maximum size. */
@@ -221,19 +242,82 @@
     };
     $clearButtonAttributes = $withClick($clearAttributes, 'clearFiles()');
 
+    // Count-worded strings are choice strings in en/et ("1 file added" /
+    // "2 files added"): both forms go to the browser, which knows the count.
+    $choice = fn (string $key) => [
+        trans_choice('tedi::tedi.file-upload.'.$key, 1, ['count' => ':count', 'files' => ':files']),
+        trans_choice('tedi::tedi.file-upload.'.$key, 2, ['count' => ':count', 'files' => ':files']),
+    ];
+    [$added, $addedPlural] = $choice('added');
+    [$extensionRejected, $extensionRejectedPlural] = $choice('extension-rejected');
+    [$sizeRejected, $sizeRejectedPlural] = $choice('size-rejected');
+    [$duplicatesSkipped, $duplicatesSkippedPlural] = $choice('duplicates-skipped');
+
     $alpine = \Illuminate\Support\Js::from([
         'inputId' => $inputId,
         'multiple' => (bool) $multiple,
+        'accept' => filled($accept) ? (string) $accept : null,
+        'maxSize' => is_numeric($maxSize) && $maxSize > 0 ? $maxSize + 0 : null,
+        'keepRejectedFiles' => (bool) $keepRejectedFiles,
+        'validator' => filled($validator) ? (string) $validator : null,
         'labels' => [
-            // A choice string in en/et ("1 file added" / "2 files added"): both
-            // forms go to the browser, which knows the count.
-            'added' => trans_choice('tedi::tedi.file-upload.added', 1, ['count' => ':count']),
-            'addedPlural' => trans_choice('tedi::tedi.file-upload.added', 2, ['count' => ':count']),
+            'added' => $added,
+            'addedPlural' => $addedPlural,
+            'extensionRejected' => $extensionRejected,
+            'extensionRejectedPlural' => $extensionRejectedPlural,
+            'sizeRejected' => $sizeRejected,
+            'sizeRejectedPlural' => $sizeRejectedPlural,
+            'duplicatesSkipped' => $duplicatesSkipped,
+            'duplicatesSkippedPlural' => $duplicatesSkippedPlural,
             'removed' => __('tedi::tedi.file-upload.removed'),
             'cleared' => __('tedi::tedi.file-upload.cleared'),
         ],
     ]);
+
+    // What the behaviour combines its own state with, refreshed by every
+    // morph (the x-data config is not). `describedBy` is the add button's
+    // ids before the error / success / hint ones.
+    $clientState = json_encode([
+        'count' => $fileCount,
+        'invalidCount' => count(array_filter($files, fn ($file) => ($file['isValid'] ?? null) === false)),
+        'error' => $errorText,
+        'success' => $successText !== null,
+        'hint' => $hintText !== null,
+        'invalid' => $invalid,
+        'valid' => $valid,
+        'clearable' => $clearableResolved,
+        'disabled' => $disabled,
+        'describedBy' => array_values(array_unique(array_merge(
+            preg_split('/\s+/', trim((string) $attributes->get('aria-describedby', '')), -1, PREG_SPLIT_NO_EMPTY),
+            $context['describedBy'] ?? [],
+        ))),
+    ]);
 @endphp
+
+{{-- The clear group, rendered once: in place while server files are listed,
+     and as the prototype the behaviour clones while only client entries are. --}}
+@php ob_start(); @endphp
+    <div class="tedi-file-upload__clear-group">
+        @if ($stacked)
+            <tedi:button
+                type="button"
+                variant="neutral"
+                icon-start="close"
+                class="tedi-file-upload__clear"
+                {{ $attributes->only([])->merge($clearButtonAttributes) }}
+            >{{ $clearLabel }}</tedi:button>
+        @else
+            <tedi:closing-button
+                size="small"
+                class="tedi-file-upload__clear"
+                :icon-size="18"
+                :aria-label="$clearLabel"
+                {{ $attributes->only([])->merge($clearButtonAttributes) }}
+            />
+        @endif
+        <tedi:separator axis="vertical" size="1.5rem" />
+    </div>
+@php $clearGroup = trim(ob_get_clean()); @endphp
 
 <tedi-file-upload @class([
     'tedi-file-upload',
@@ -289,28 +373,8 @@
 
         <div class="tedi-file-upload__actions">
             @if ($showClear)
-                <div class="tedi-file-upload__clear-group">
-                    @if ($stacked)
-                        <tedi:button
-                            type="button"
-                            variant="neutral"
-                            icon-start="close"
-                            class="tedi-file-upload__clear"
-                            {{ $attributes->only([])->merge($clearButtonAttributes) }}
-                        >{{ $clearLabel }}</tedi:button>
-                    @else
-                        <tedi:closing-button
-                            size="small"
-                            class="tedi-file-upload__clear"
-                            :icon-size="18"
-                            :aria-label="$clearLabel"
-                            {{ $attributes->only([])->merge($clearButtonAttributes) }}
-                        />
-                    @endif
-                    <tedi:separator axis="vertical" size="1.5rem" />
-                </div>
+                {!! $clearGroup !!}
             @endif
-
             <tedi:button
                 type="button"
                 variant="neutral"
@@ -334,6 +398,20 @@
     @if ($hintText !== null)
         <tedi:feedback-text :id="$feedbackIds['hint']" :text="$hintText" />
     @endif
+
+    {{-- Inert prototypes for the client-side pipeline, and the server state
+         it combines with (see the header). --}}
+    <template x-ref="prototypes" data-state="{{ $clientState }}">
+        <li class="tedi-file-upload__tag" data-prototype="tag">
+            <tedi:tag
+                type="danger"
+                :closable="$isEditable"
+                :close-attributes="['x-on:click' => 'removeRejected($event)']"
+            ><span class="sr-only"> ({{ $failedLabel }})</span></tedi:tag>
+        </li>
+        {!! str_replace('<div class="tedi-file-upload__clear-group"', '<div class="tedi-file-upload__clear-group" data-prototype="clear"', $clearGroup) !!}
+        <tedi:feedback-text data-prototype="error" :id="$feedbackIds['error']" text="" type="error" />
+    </template>
     @endunless
 
     <input
@@ -343,7 +421,9 @@
         @if ($multiple) multiple @endif
         @disabled($disabled || $readOnly)
         x-ref="input"
-        x-on:change="{{ implode('; ', array_filter(['handleSelection($event)', $attributes->get('x-on:change'), $attributes->get('@change')])) }}"
+        @if (filled($consumerChange = implode('; ', array_filter([$attributes->get('x-on:change'), $attributes->get('@change')]))))
+        x-on:change="{{ $consumerChange }}"
+        @endif
         {{ $attributes->except(['aria-describedby', 'id', 'x-on:change', '@change'])->class(['tedi-file-upload__input'])->merge(array_filter([
             'id' => $inputId,
             'name' => filled($name) ? $name : null,
