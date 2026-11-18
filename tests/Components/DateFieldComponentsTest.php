@@ -658,4 +658,241 @@ class DateFieldComponentsTest extends TestCase
         $this->assertStringContainsString('wire:model="birthday"', $this->element('/<div[^>]*>/', $html));
         $this->assertStringNotContainsString('wire:model', $this->element('/<input\b[^>]*>/s', $html));
     }
+
+    /** The class tokens of the first element whose opening tag matches. */
+    private function tokensOf(string $pattern, string $html): array
+    {
+        preg_match('/(?<![-:.\w])class="([^"]*)"/', $this->element($pattern, $html), $m);
+
+        return preg_split('/\s+/', trim($m[1] ?? ''), -1, PREG_SPLIT_NO_EMPTY);
+    }
+
+    /** `modal` defaults to false: the popover branch only, unchanged. */
+    public function test_date_field_modal_false_renders_no_modal(): void
+    {
+        foreach (['', ':modal="false"', 'modal="false"', 'modal="xs"', 'modal="nope"'] as $attr) {
+            $html = Blade::render('<tedi:date-field :open="true" '.$attr.' />');
+
+            $this->assertRendersClass('tedi-date-field__overlay', $html);
+            $this->assertRendersNoClass('tedi-date-field-modal', $html);
+            $this->assertRendersNoClass('tedi-modal', $html);
+            $this->assertStringNotContainsString('x-data="tediDateField', $html);
+        }
+    }
+
+    /**
+     * `modal = true`: openModal() → ModalService.open(…, { size: "small",
+     * width: "sm", position: "center" }), composed from the standalone modal.
+     */
+    public function test_date_field_modal_true_renders_only_the_modal(): void
+    {
+        foreach ([':modal="true"', 'modal="true"', 'modal'] as $attr) {
+            $html = Blade::render('<tedi:date-field :open="true" '.$attr.' />');
+
+            $this->assertRendersNoClass('tedi-date-field__overlay', $html);
+            $this->assertSame(
+                ['tedi-modal', 'tedi-modal--small', 'tedi-modal--center', 'tedi-modal--open', 'tedi-date-field-modal'],
+                $this->tokensOf('/<tedi-modal\b[^>]*>/', $html),
+            );
+            $this->assertStringContainsString('tediModal({ open: true', $html);
+            // No breakpoint to resolve, so no tediDateField scope.
+            $this->assertStringNotContainsString('x-data="tediDateField', $html);
+        }
+    }
+
+    public function test_date_field_modal_requires_open_and_enable_calendar(): void
+    {
+        $html = Blade::render('<tedi:date-field :modal="true" />');
+        $this->assertRendersNoClass('tedi-modal', $html);
+
+        $html = Blade::render('<tedi:date-field :open="true" :modal="true" :enable-calendar="false" />');
+        $this->assertRendersNoClass('tedi-modal', $html);
+
+        $html = Blade::render('<tedi:date-field :open="true" modal="md" :enable-calendar="false" />');
+        $this->assertRendersNoClass('tedi-modal', $html);
+        $this->assertRendersNoClass('tedi-date-field__overlay', $html);
+    }
+
+    /**
+     * date-field-modal.component.html: header title, borderless calendar in
+     * `__content`, Cancel (secondary) then Confirm in the footer.
+     */
+    public function test_date_field_modal_markup(): void
+    {
+        $html = Blade::render('<tedi:date-field :open="true" :modal="true" />');
+
+        $this->assertMatchesRegularExpression('/<tedi-modal-header class="tedi-modal-header">\s*<div class="tedi-modal-header__head">\s*<h2 id="(tedi-date-field-modal-title-[^"]+)">Date<\/h2>/', $html);
+        $this->assertSame(
+            ['tedi-modal-content', 'tedi-date-field-modal__content'],
+            $this->tokensOf('/<tedi-modal-content\b[^>]*>/', $html),
+        );
+        $this->assertSame(['tedi-calendar'], $this->tokensOf('/<div[^>]*class="tedi-calendar[ "][^>]*>/', $html));
+
+        $footer = $this->element('/<tedi-modal-footer\b.*<\/tedi-modal-footer>/s', $html);
+        preg_match_all('/<button\b[^>]*>\s*(\w+)/', $footer, $buttons);
+        $this->assertSame(['Cancel', 'Confirm'], $buttons[1]);
+        $this->assertStringContainsString('tedi-button--secondary', $this->element('/<button\b[^>]*>\s*Cancel/', $footer));
+        $this->assertStringContainsString('tedi-button--primary', $this->element('/<button\b[^>]*>\s*Confirm/', $footer));
+        $this->assertStringContainsString('type="button"', $this->element('/<button\b[^>]*>\s*Confirm/', $footer));
+    }
+
+    /** The dialog is named by the title, server-side (morph-safe), as resolveModalHeadingId does at runtime. */
+    public function test_date_field_modal_dialog_is_labelled_by_its_title(): void
+    {
+        $html = Blade::render('<tedi:date-field :open="true" :modal="true" />');
+
+        preg_match('/<h2 id="([^"]+)">/', $html, $title);
+        $dialog = $this->element('/<div\s+class="tedi-modal__dialog"[^>]*>/s', $html);
+        $this->assertStringContainsString('role="dialog"', $dialog);
+        $this->assertStringContainsString('aria-modal="true"', $dialog);
+        $this->assertStringContainsString('aria-labelledby="'.$title[1].'"', $dialog);
+    }
+
+    public function test_date_field_modal_is_translated(): void
+    {
+        app()->setLocale('et');
+        $html = Blade::render('<tedi:date-field :open="true" :modal="true" />');
+        app()->setLocale('en');
+
+        $this->assertMatchesRegularExpression('/<h2 id="[^"]+">Kuupäev<\/h2>/', $html);
+        $this->assertMatchesRegularExpression('/>\s*Tühista\s*<\/button>/', $html);
+        $this->assertMatchesRegularExpression('/>\s*Kinnita\s*<\/button>/', $html);
+    }
+
+    /** Confirm dispatches the commit event and closes; Cancel is a guarded `programmatic` close. */
+    public function test_date_field_modal_confirm_and_cancel_wiring(): void
+    {
+        $html = Blade::render('<tedi:date-field :open="true" :modal="true" />');
+
+        $this->assertStringContainsString(
+            'x-on:click="$dispatch(`tedi-date-field-confirm`); close()"',
+            $this->element('/<button\b[^>]*>\s*Confirm/', $html),
+        );
+        $this->assertStringContainsString(
+            'x-on:click="requestClose(\'programmatic\')"',
+            $this->element('/<button\b[^>]*>\s*Cancel/', $html),
+        );
+    }
+
+    /** The modal's calendar shows the draft, falling back to the value; the popover keeps the value. */
+    public function test_date_field_modal_calendar_shows_the_draft(): void
+    {
+        $selected = function (string $html): array {
+            preg_match_all('/aria-selected="true"[^>]*aria-label="[^"]*?(\d+)\. November/', $html, $m);
+
+            return $m[1];
+        };
+
+        $html = Blade::render('<tedi:date-field :open="true" :modal="true" current-month="2030-11-01" value="2030-11-05" draft="2030-11-20" />');
+        $this->assertSame(['20'], $selected($html));
+
+        $html = Blade::render('<tedi:date-field :open="true" :modal="true" current-month="2030-11-01" value="2030-11-05" />');
+        $this->assertSame(['5'], $selected($html));
+
+        // Breakpoint mode renders both: popover with the value, modal with the draft.
+        $html = Blade::render('<tedi:date-field :open="true" modal="md" current-month="2030-11-01" value="2030-11-05" draft="2030-11-20" />');
+        $this->assertSame(['5', '20'], $selected($html));
+    }
+
+    /** `draft`, `modal`, `fullscreen` and `calendar-full-width` are props, never stray attributes. */
+    public function test_date_field_modal_props_do_not_leak_onto_the_root(): void
+    {
+        $html = Blade::render('<tedi:date-field :open="true" modal="md" :fullscreen="true" :calendar-full-width="true" draft="2030-11-20" />');
+        $root = $this->element('/<div[^>]*>/', $html);
+
+        foreach (['modal=', 'fullscreen', 'calendar-full-width', 'draft='] as $leak) {
+            $this->assertStringNotContainsString($leak, $root);
+        }
+    }
+
+    /**
+     * A breakpoint name renders both branches: the popover x-shown off
+     * `modalActive`, the modal closed and driven by an x-effect.
+     */
+    public function test_date_field_modal_breakpoint_renders_both_branches(): void
+    {
+        foreach (['sm', 'md', 'lg', 'xl'] as $bp) {
+            $html = Blade::render('<tedi:date-field :open="true" modal="'.$bp.'" />');
+
+            $this->assertStringContainsString(
+                'x-data="tediDateField({ modal: &#039;'.$bp.'&#039; })"',
+                $this->element('/<div[^>]*>/', $html),
+            );
+            $overlay = $this->element('/<div class="tedi-date-field__overlay"[^>]*>/', $html);
+            $this->assertStringContainsString('x-show="! modalActive"', $overlay);
+
+            $modal = $this->element('/<tedi-modal\b[^>]*>/', $html);
+            $this->assertSame(
+                ['tedi-modal', 'tedi-modal--small', 'tedi-modal--center', 'tedi-date-field-modal'],
+                $this->tokensOf('/<tedi-modal\b[^>]*>/', $html),
+            );
+            $this->assertStringContainsString('x-effect="modalActive ? show() : close()"', $modal);
+            $this->assertStringContainsString('tediModal({ open: false', $modal);
+        }
+
+        // The scope is there while closed too, so a later open never adds x-data to a live root.
+        $html = Blade::render('<tedi:date-field modal="md" />');
+        $this->assertStringContainsString('x-data="tediDateField', $html);
+        $this->assertRendersNoClass('tedi-modal', $html);
+    }
+
+    /** openModal()'s maxWidth: N month grids + two borders, unless the calendar is full width. */
+    public function test_date_field_modal_width(): void
+    {
+        $html = Blade::render('<tedi:date-field :open="true" :modal="true" :number-of-months="2" />');
+        $this->assertStringContainsString(
+            'style="width: calc(2 * var(--tedi-containers-03) + 2 * var(--tedi-borders-01))"',
+            $this->element('/<div\s+class="tedi-modal__dialog"[^>]*>/s', $html),
+        );
+
+        $html = Blade::render('<tedi:date-field :open="true" :modal="true" :calendar-full-width="true" />');
+        $this->assertHasClass('tedi-modal--sm', $this->element('/<tedi-modal\b[^>]*>/', $html));
+        $this->assertStringNotContainsString('style=', $this->element('/<div\s+class="tedi-modal__dialog"[^>]*>/s', $html));
+    }
+
+    /** calendarFullWidth: modal modifier + calendar fullWidth, modal mode only. */
+    public function test_date_field_calendar_full_width_applies_in_modal_mode_only(): void
+    {
+        $html = Blade::render('<tedi:date-field :open="true" :modal="true" :calendar-full-width="true" />');
+        $this->assertHasClass('tedi-date-field-modal--full-width', $this->element('/<tedi-modal\b[^>]*>/', $html));
+        $this->assertHasClass('tedi-calendar--full-width', $html, on: 'tedi-calendar');
+
+        $html = Blade::render('<tedi:date-field :open="true" :modal="true" />');
+        $this->assertRendersNoClass('tedi-date-field-modal--full-width', $html);
+        $this->assertRendersNoClass('tedi-calendar--full-width', $html);
+
+        // Popover only: ignored.
+        $html = Blade::render('<tedi:date-field :open="true" :calendar-full-width="true" />');
+        $this->assertRendersNoClass('tedi-calendar--full-width', $html);
+
+        // Both branches: only the modal's calendar stretches.
+        $html = Blade::render('<tedi:date-field :open="true" modal="md" :calendar-full-width="true" />');
+        $this->assertSame(1, preg_match_all('/class="tedi-calendar tedi-calendar--full-width"/', $html));
+        $this->assertSame(2, preg_match_all('/class="tedi-calendar[ "]/', $html));
+    }
+
+    /** `fullscreen` is inert: the standalone modal has no fullscreen rule. */
+    public function test_date_field_fullscreen_is_inert(): void
+    {
+        $plain = Blade::render('<tedi:date-field input-id="d" :open="true" :modal="true" />');
+        foreach ([':fullscreen="true"', 'fullscreen="md"'] as $attr) {
+            $html = Blade::render('<tedi:date-field input-id="d" :open="true" :modal="true" '.$attr.' />');
+            $strip = fn (string $h) => preg_replace('/tedi-date-field-modal-title-[0-9a-f]+/', 'T', $h);
+            $this->assertSame($strip($plain), $strip($html));
+        }
+    }
+
+    /** Upstream does not project the calendar footer into the modal. */
+    public function test_date_field_modal_does_not_receive_the_footer(): void
+    {
+        $html = Blade::render('<tedi:date-field :open="true" :modal="true"><x-slot:footer><span class="probe">x</span></x-slot:footer></tedi:date-field>');
+        $this->assertRendersNoClass('probe', $html);
+    }
+
+    /** The trigger icon reflects `open` in modal mode too. */
+    public function test_date_field_modal_keeps_the_icon_active(): void
+    {
+        $html = Blade::render('<tedi:date-field :open="true" :modal="true" />');
+        $this->assertHasClass('tedi-date-input__icon--active', $html, on: 'tedi-date-input__icon');
+    }
 }

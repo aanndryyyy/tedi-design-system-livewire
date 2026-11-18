@@ -168,6 +168,12 @@
 @use 'components/overlay/dropdown/dropdown.component';
 @use 'components/overlay/info-tooltip/info-tooltip.component';
 @use 'components/overlay/modal/modal.component';
+// Out of alphabetical order on purpose: `.tedi-date-field-modal` resets
+// `--_tedi-modal-body-padding` on the same element `.tedi-modal--small` sets it
+// on, both one class, so it has to come later in the cascade (upstream gets the
+// same order from the date-field modal's component styles loading after the
+// modal's).
+@use 'components/form/date-field/date-field-modal/date-field-modal.component';
 @use 'components/overlay/popover/popover.component';
 @use 'components/overlay/sheet/sheet.module';
 @use 'components/overlay/tooltip/tooltip.component';
