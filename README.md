@@ -434,7 +434,7 @@ below), `filter`, the `tedi/directives/`, and the components that exist only in
 React. As of Angular 10.0.0-rc.21 that covers every directory under
 `src/tedi/components/<group>/` (75), plus `filter` and the four directives:
 **158 Blade components** once sub-components are counted. With 9 from
-`community/` and 25 from React, that is **192** in total.
+`community/` and 27 from React, that is **194** in total.
 
 | Angular component | Blade tag |
 |---|---|
@@ -619,7 +619,7 @@ these styles were never part of the Angular build, **every `var(--…)` they use
 has to be checked against the installed `@tedi-design-system/core`** before the
 component can be ported at all.
 
-Twelve React-only components are ported:
+Fourteen React-only components are ported:
 
 | React component | Blade tag |
 |---|---|
@@ -635,6 +635,8 @@ Twelve React-only components are ported:
 | `navigation/card-stepper` | `<tedi:card-stepper>` ⁸ |
 | `content/table-card` | `<tedi:table-card>`, `<tedi:text-group-list>` ⁸ ¹¹ |
 | `community/dock-panel` | `<tedi:dock-panel>`, `<tedi:dock-panel-layout>` ⁸ |
+| `community/map-components/resizer` | `<tedi:resizer>` ⁸ |
+| `community/map-components/split-pane` | `<tedi:split-pane>` ⁸ |
 
 ⁸ Documented subsets — see the table below.
 ¹⁰ React ships no stories for it, so it has no Storybook entry — Blast derives
@@ -654,14 +656,16 @@ deprecated upstream; it reuses `tedi-sidenav--mobile` and adds only
 `helpers/option-content`, which is what `<tedi:option-content>` ports.)
 
 React's `community/` tree is ported on request, component by component, under
-the same token gate (CONVENTIONS.md §13). `dock-panel` is ported from it. Its
-story titles stay `Community/…` verbatim, as Angular's community stories do.
+the same token gate (CONVENTIONS.md §13). `dock-panel`, `map-components/resizer`
+and `map-components/split-pane` are ported from it. Its story titles stay
+`Community/…` verbatim, as Angular's community stories do.
 
-**Not ported yet:** React's community `map-components/resizer` and
-`map-components/split-pane`, and with the resizer `<tedi:dock-panel>`'s
-`resizable`, `minWidth` and `minHeight`. Both stylesheets use
-`--drag-indicator-*` tokens that core does not ship, so they fail the §13.1
-token gate.
+The resizer and split pane need `--drag-indicator-accent`,
+`--drag-indicator-button-background` and `--drag-indicator-vertical-width`,
+which core 6.13 does not ship. Until it does,
+`resources/scss/_map-component-tokens.scss` defines exactly those three with
+React's values. React's own `_map-component.variables.scss` is not loaded,
+because it also redefines core's button tokens.
 
 | Component | What you get | What's missing |
 |---|---|---|
@@ -672,7 +676,9 @@ token gate.
 | `<tedi:sheet>` | Open/close, dismissal, focus cycling and return, scroll lock, collapse, drag and snap points, header/footer layouts | Unmounting while closed (always behaves as `keepMounted`), the white closing-button variant (the brand header uses `neutral-inverted`), `initialFocus`, `closeButtonProps`, breakpoint `radius` |
 | `<tedi:card-stepper>` | The card, counter, progress, navigation and the step list (in `<tedi:sheet>`) | The `CardStepper.Step` children API (pass `:steps`); uncontrolled navigation — the active step is server state, changes arrive as `tedi:step-change` |
 | `<tedi:table-card>` | Every layout, alignment, column and colSpan option, the header (title, subtitle, end slot, selection checkbox), collapse (Alpine), summary row, actions footer and child row-groups. The card is Angular's `<tedi:card>`; React's separator is restated as one scoped rule | Breakpoint props (`md={{ columns: 2 }}`); `onOpenChange` / `onSelectedChange` (controlled `open` / `selected` only set the initial state); small labels keep the body line height (Angular's label has no small line height) |
-| `<tedi:dock-panel>` | Docked panel, layout, collapse/restore, close, short title, dimensions (`max-width` / `max-height` included), the mobile Sheet presentation with content preserved, `minimize-counter`, and the three callbacks as `tedi:collapsed-change` / `tedi:close` / `tedi:presentation-change` DOM events | `resizable` / `minWidth` / `minHeight` (they need the unported Resizer, see above). Renders sibling elements rather than one root (upstream returns a fragment and its layout CSS selects the parts as direct children); the sheet is not portalled to `body`; `defaultCollapsed` is folded into the server-rendered `collapsed`; `labels` is a required array, as upstream |
+| `<tedi:dock-panel>` | Docked panel, layout, collapse/restore, close, short title, dimensions (`max-width` / `max-height` included), resizing (`resizable`, `min-width` / `min-height`, the 8–92% default limits, clamping on workspace resize), the mobile Sheet presentation with content preserved, `minimize-counter`, and the three callbacks as `tedi:collapsed-change` / `tedi:close` / `tedi:presentation-change` DOM events | With `resizable`, the consumer's `style` stays on the panel (upstream moves `zIndex` / `--dock-panel-gap|rail-size|layer` to the resize layout), and without JS a resizable panel stays in its measurement state. Renders sibling elements rather than one root (upstream returns a fragment and its layout CSS selects the parts as direct children); the sheet is not portalled to `body`; `defaultCollapsed` is folded into the server-rendered `collapsed`; `labels` is a required array, as upstream |
+| `<tedi:resizer>` | Drag to resize width or height between limits, indicator and handle styles | Mouse only, as upstream; no events (upstream has no callbacks). Icons are `<span>`s with `tedi:icon`'s classes (the vendored CSS targets `> span`) |
+| `<tedi:split-pane>` | Two panes, drag/touch/keyboard divider, ratio limits, highlighted side, close button; `onRatioChange` / `onClose` as `tedi:ratio-change` / `tedi:close` | The close button is an icon-only `tedi:button` named by `aria-label`; `initial-ratio` is initial-only |
 
 ### Not ported
 
@@ -740,7 +746,7 @@ its story directory contains any `.md` file:
 
 Both are ported verbatim from the Angular story file — its `parameters.docs.description.component` /
 `.story` if present, otherwise the doc comment above the `export default` / `export const`.
-All 88 components have a `README.md`; 213 stories have a per-story description,
+All 90 components have a `README.md`; 215 stories have a per-story description,
 which is every upstream story that carries one.
 
 Two known gaps. `Community/Form/FormField` has no description because the Angular
@@ -767,7 +773,7 @@ Every Angular `TEDI-Ready` group now has a Blade counterpart, including
 `TEDI-Ready/Components/Overlay/*`. Under `Community/`, the community-only
 components that have upstream stories are present — `Form/FileDropzone`,
 `Helpers/ProcessTimeline` and `Navigation/VerticalStepper` — plus `Form/FormField`, which is where Angular
-files the shared form-field stories, and `Layout/DockPanel`, which is React's. `multiselect` has none, because upstream
+files the shared form-field stories, and React's `Layout/DockPanel`, `Map components/Resizer` and `Map components/SplitPane`. `multiselect` has none, because upstream
 removed its stories when it deprecated the component; `floating-button` and
 `table-of-contents` moved to `TEDI-Ready/Components/` with their promotion. `<tedi:choicegroup>` has no directory
 because Angular has no story file for it: it is a directive, exercised through
@@ -776,7 +782,7 @@ the community `radio` / `checkbox` stories, which belong to components the
 
 ### Angular stories with no Blade equivalent
 
-687 stories across 88 components are ported. Some Angular stories exist purely
+699 stories across 90 components are ported. Some Angular stories exist purely
 to demonstrate behaviour this package documents as not ported (see the
 divergences table above). Those are deliberately absent rather than faked:
 
@@ -817,7 +823,7 @@ outright, so the case is normalised to `TEDI-Ready` and nothing else is changed.
 Two of them open groups beside `Components/` — `TEDI-Ready/Content/Section` and
 `TEDI-Ready/Layout/TopNav` — which is upstream's structure, kept. React's
 `community/` stories keep their `Community/…` title verbatim
-(`Community/Layout/DockPanel`).
+(`Community/Layout/DockPanel`, and `Community/Map components/…` with its space).
 
 These React stories have no Blade equivalent:
 
@@ -830,7 +836,6 @@ These React stories have no Blade equivalent:
 | `DateTimeField`: Size, States, FieldOptions, PerDayTimeSlots, RangePredefinedTimeSlots, Controlled, YearGrid | Runtime selection state — each drives the picker through props this port hands to the consumer instead |
 | `Sheet`: OpenForVisualTest, OpenBrandForVisualTest, OpenSmallForVisualTest, OpenWithoutHandleForVisualTest, CollapsedForVisualTest, OpenSnapPointForVisualTest, OpenScrollableForVisualTest | Tagged `!dev`/`!autodocs` — Chromatic snapshot fixtures, not in upstream's Storybook sidebar |
 | `CardStepper`: Interactive | The `CardStepper.Step` children API driven by React state |
-| `DockPanel`: ResizeWidth, ResizeHeight | Need `resizable`, which needs the unported Resizer (see [From the React package](#from-the-react-package)) |
 
 ## Development
 

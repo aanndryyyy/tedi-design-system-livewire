@@ -5,7 +5,7 @@
 ### Previously unported upstream features
 
 Ports what the Angular 10 sync below left out, plus React's community
-dock panel. **Breaking:** `number-field`. `file-upload`'s selection behaviour
+dock panel, resizer and split pane. **Breaking:** `number-field`. `file-upload`'s selection behaviour
 also changes; the README's "Upgrading" section covers both.
 
 `number-field`
@@ -85,11 +85,22 @@ also changes; the README's "Upgrading" section covers both.
   collapse/restore, close, short title, dimensions, `minimize-counter` and the
   mobile Sheet presentation; the callbacks are the DOM events
   `tedi:collapsed-change`, `tedi:close` and `tedi:presentation-change`. Runs in
-  `tediDockPanel` / `tediDockPanelSheet`. `resizable`, `minWidth` and
-  `minHeight` are not ported.
-- Storybook: `Community/Layout/DockPanel`, 13 stories (ResizeWidth and
-  ResizeHeight are skipped).
-- Not ported yet: React's community Resizer and SplitPane.
+  `tediDockPanel` / `tediDockPanelSheet`. `resizable`, `min-width` and
+  `min-height`: drag the workspace-facing edge, 8–92% default limits, clamped
+  on workspace resize.
+- Storybook: `Community/Layout/DockPanel`, 15 stories.
+
+`resizer`, `split-pane`
+
+- New: `tedi:resizer` and `tedi:split-pane`, ported from React's community
+  map components. Resizer: mouse-drag width/height between limits (`tediResizer`).
+  SplitPane: draggable, touch and keyboard divider, with `tedi:ratio-change`
+  and `tedi:close` events (`tediSplitPane`). New lang key `splitPaneResize`.
+- `resources/scss/_map-component-tokens.scss`: a temporary definition of
+  `--drag-indicator-accent`, `--drag-indicator-button-background` and
+  `--drag-indicator-vertical-width` until core ships them.
+- Storybook: `Community/Map components/Resizer` and `…/SplitPane`, five
+  stories each.
 
 Fixes
 
@@ -144,13 +155,12 @@ Re-synced against Angular 10.0.0-rc.21 (`6ecb1ee5`), React 21.0.0-rc.17
   Russian one/few/many plurals and counts compared as strings (which had
   lost their singular); `tests/LangTest.php` guards the lang files.
 
-Not ported: React's split-pane and mobile-nav changes (components not
-ported). Left out of this sync at first and since ported under "Previously
+Not ported: React's mobile-nav changes (component not ported). Left out of this sync at first and since ported under "Previously
 unported upstream features" above: the file upload's client-side selection
 pipeline and its five skipped stories, the table's filter popover and its
 footer (`filterActions`, `cancel`), the date field's `calendarFullWidth`
 (modal branch), the `numberField.quantityUpdated` announcement, the toast
-container, and React's dock-panel.
+container, and React's dock-panel and split-pane.
 
 Dependencies: `@tedi-design-system/core` 6.12.0 → 6.13.0 (additive tokens),
 `sass` 1.107.1 → 1.108.2. Composer packages were current; the storybook app

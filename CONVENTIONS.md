@@ -479,7 +479,7 @@ or is shared by several components — currently `tediBreakpoint`,
 `tediModal`, `tediTableOfContents`, `tediTableOfContentsCollapsible`,
 `tediScrollVisibility`, `tediHashTrigger`, `tediSheet`, `tediProcessTimeline`,
 `tediRating`, `tediDateField`, `tediToastContainer`, `tediNumberField`,
-`tediDockPanel` and `tediDockPanelSheet`. The header comment
+`tediDockPanel`, `tediDockPanelSheet`, `tediResizer` and `tediSplitPane`. The header comment
 of `resources/js/tedi.js` lists them with one line each.
 
 **The JS layout.** `resources/js/tedi.js` is the entry point and holds nothing
@@ -510,7 +510,9 @@ under `resources/js/src/`, exporting a factory of the same name:
 | `src/toast-container.js` | `toastContainer`, `TediToast` | Upstream's `ToastService` + `toast-container.component.ts`. Clones a `tedi:toast` `<template>` prototype per toast, keeps the position groups, and runs the timer, pause on hover/focus, exit and close as upstream. Announces through `announcer.js`. The window `tedi-toast` listener and `window.TediToast` are registered once at module load and route to the most recent container, so several containers on a page never duplicate a toast. Slotted server toasts are adopted on init; the root is `wire:ignore`d |
 | `src/number-field.js` | `numberField` | The step buttons (±step, clamped, decimal-safe; fires `input` and `change`), the live disabled / invalid state recomputed on input, after a step and after a Livewire morph, and the polite value announcement |
 | `src/date-field.js` | `dateField` | Resolves a breakpoint-name `modal` on `tedi:date-field`: one `matchMedia` query off `breakpoint.js`'s BREAKPOINTS sets `modalActive`. The popover is `x-show`n off it and the modal's `tediModal` follows it with an `x-effect`. It holds viewport state only, never open state, so a Livewire morph cannot leave a stale flag |
-| `src/dock-panel.js` | `dockPanel`, `dockPanelSheet` | The community dock panel: collapse state, events, and the mobile presentation — moves the content/footer/action slot nodes between the docked panel and a `tediSheet`-based sheet (`dockPanelSheet` composes `sheet()` by property descriptors and reroutes Escape / drag-dismiss to the panel). Restores the server layout on Livewire `morph` and re-applies on `morphed`; private state lives in a closure, not on the Alpine object |
+| `src/dock-panel.js` | `dockPanel`, `dockPanelSheet` | The community dock panel: collapse state, events, and the mobile presentation — moves the content/footer/action slot nodes between the docked panel and a `tediSheet`-based sheet (`dockPanelSheet` composes `sheet()` by property descriptors and reroutes Escape / drag-dismiss to the panel). Resizable mode: measures the panel and workspace, drives `tediResizer` with upstream's limits, clamps on workspace resize. Restores the server layout on Livewire `morph` and re-applies on `morphed`; private state lives in a closure, not on the Alpine object |
+| `src/resizer.js` | `resizer` | The community resizer: mouse drag of the wrapper's inline width/height between limits; re-applies the size after a Livewire morph. `configure()` / `size()` let `tediDockPanel` drive it |
+| `src/split-pane.js` | `splitPane` | The community split pane: mouse/touch drag and keyboard on the `role="separator"`, live `flex-grow` / `aria-valuenow`, `tedi:ratio-change` / `tedi:close`; re-applies the ratio after a Livewire morph |
 
 A new behaviour is a new file in `src/` plus two lines in `tedi.js` (an import
 and an `Alpine.data()` call). Do not add a second `Alpine.data()` call site.
@@ -840,8 +842,8 @@ Angular remains the source, because that is what the two other trees were ported
 from and re-syncing against two upstreams is how a port drifts.
 
 React's own `community/` tree used to be skipped wholesale. It is now ported on
-request, component by component, under the same rules: `dock-panel` is the
-first. `layout/mobile-nav` stays unported: it is deprecated upstream, and
+request, component by component, under the same rules: `dock-panel`,
+`map-components/resizer` and `map-components/split-pane` are ported. `layout/mobile-nav` stays unported: it is deprecated upstream, and
 `<tedi:sidenav.toggle>` already does its job.
 
 Seven things differ, and only these seven.
@@ -860,7 +862,11 @@ silently, as an unstyled element rather than a build error.
 React's `community/` stylesheets can fail it: some depend on tokens
 from React's own `community/styles/_map-component.variables.scss`, a top-level
 `:root` block that also redefines core's button tokens, so it can be neither
-vendored globally nor loaded scoped (§13.7 rule 4).
+vendored globally nor loaded scoped (§13.7 rule 4). Instead, a small
+non-vendored token file may define exactly the missing tokens with React's
+values, scoped as core scopes themes (`:root` / `.tedi-theme--dark`), with a
+header saying to delete it once core ships them.
+`resources/scss/_map-component-tokens.scss` is the one case.
 
 This replaces "are the class names stable" as the question to ask first.
 
@@ -895,11 +901,18 @@ and dropping the block would make the next re-sync diff lie. Where the dead rule
 carried something the Blade component actually needs, that belongs in the
 component, documented — not in the stylesheet.
 
+The same goes for element selectors that target React's markup. React's `Icon`
+is a `<span>`, and a module that styles it as `… > span` misses `tedi:icon`'s
+`<tedi-icon>`. There the component renders the icon as a `<span>` carrying
+exactly the class list, style and ARIA `tedi:icon` emits for the same props.
+`tedi:resizer` and `tedi:split-pane` are the cases. The Angular icon sheet's
+`.tedi-icon*` rules are class-based, so nothing is lost.
+
 ### 13.4 Storybook titles: verbatim, except for case
 
 Take the React story's `title` as-is, the way §12.2 does for `community/`; a
 React `community/` story keeps its `Community/…` title too
-(`Community/Layout/DockPanel`). One
+(`Community/Layout/DockPanel`), spaces included (`Community/Map components/…`). One
 mechanical exception: React's own titles are inconsistently cased —
 `TEDI-Ready/…`, `Tedi-Ready/…` and `Tedi-ready/…` all occur. Left alone they
 would be three sidebar roots, and on a case-insensitive filesystem (macOS
