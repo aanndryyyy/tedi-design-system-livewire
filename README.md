@@ -211,7 +211,60 @@ block already *is* the primary appearance).
 
 ## Upgrading
 
-### Breaking changes in this sync
+### Breaking changes in the Angular 10 sync
+
+The re-sync to Angular 10.0.0-rc.21, React 21.0.0-rc.17 and core 6.13 is
+mostly accessible-name work: labels say less, and state comes from ARIA
+attributes instead of the label text. Check these before upgrading:
+
+- **`table-of-contents`**, **`table-of-contents-collapsible`**: `bordered` is
+  renamed `divided`, and the class `tedi-table-of-contents--bordered` is
+  `tedi-table-of-contents--divided`. There is no alias.
+- **`closing-button`**: the label is rendered once, as `title` while
+  `show-title` is on (the default), otherwise as `aria-label`. The icon is
+  `color="inherit"`.
+- **`alert`**: `role` moves from `<tedi-alert>` to `.tedi-alert__body`, so the
+  close and action buttons are outside the live region. The title has an id,
+  and the close button is `aria-describedby` it. **`toast`**: the close button
+  is "Close", described by the title.
+- **`label`**: `required` renders only the `aria-hidden` asterisk (no
+  ", Required field" text). Mark the control `required` as well.
+- **`search`**: the `role="search"` landmark is unnamed unless `aria-label` is
+  set, and `aria-label` no longer names the input. New `hide-label`: always set
+  `label`, and hide it with `hide-label` rather than replacing it with
+  `aria-label`.
+- **`carousel-content`**: named "Carousel" by default; the
+  `aria-roledescription` appears only when you name it (new `aria-labelledby`).
+  Slide role descriptions are translated. The dot indicators are a `group`
+  named "Slides", the active dot carries `aria-current`, and dots read
+  "Slide N".
+- **`pagination`**: page buttons read "Page N" (the current page too, with
+  `aria-current`), and the nav is "Pages". The `currentPageAriaLabel` label
+  defaults to `pageAriaLabel` and is deprecated upstream.
+- **`number-field`**: the step buttons read "Decrease" / "Increase", without
+  the step.
+- **`table`**: select-all and row checkboxes have fixed names ("Select all
+  rows" / "Select row", or the new per-row `selectionLabel`); the expand toggle
+  is "Row details"; an open sub-row is no longer a `region`. Header content is
+  wrapped in `<span class="tedi-table__header-label">`. A sortable column whose
+  `header` is Htmlable now renders the header as-is, followed by an icon-only
+  sort button, instead of wrapping the markup in the sort button. New column
+  keys `label` and `rowHeader`.
+- **`calendar-day-grid`**: the weekday header row is `aria-hidden`, and day
+  labels omit the year unless the day is in another year.
+- **`progress-bar`**: the visible value is `aria-hidden`.
+- **`sidenav`**: the submenu toggle reads "{label} submenu"; `aria-expanded`
+  carries the state.
+- **`sheet`**: the overlay is `inert` while it animates out.
+- **Translations**: these keys are removed or renamed — `required`,
+  `toast.close`, `table.select-all.{true,false}`, `table.select-row.{true,false}`,
+  `table.expand-row`, `table.collapse-row`, `pagination.page.{true,false}`,
+  `sidenav.toggleSubmenu.{true,false}`, `date-picker.week-number-header`.
+  `carousel` is now the lowercase role description (`carousel.label` is the
+  name), and `table.sort.*` takes `:columnLabel`. Update any published or
+  overridden `lang/vendor/tedi` files.
+
+### Breaking changes in the Angular 9 sync
 
 **Run `php artisan view:clear` after upgrading.** `tedi:form-field` is now a
 class component. Views compiled before the upgrade still render it as an
@@ -746,9 +799,9 @@ here (`git -C .reference/angular diff <sha> origin/rc -- src/tedi src/community`
 
 | Repo | Version | Commit |
 |---|---|---|
-| `TEDI-Design-System/angular` (`rc`) | 9.0.1-rc.1 | `d86bf8c7` |
-| `TEDI-Design-System/react` (`rc`) | 20.1.0-rc.1 | `e2c22c3c` |
-| `TEDI-Design-System/core` (`rc`) | 6.12.0 | `452b66a9` |
+| `TEDI-Design-System/angular` (`rc`) | 10.0.0-rc.21 | `6ecb1ee5` |
+| `TEDI-Design-System/react` (`rc`) | 21.0.0-rc.17 | `917b2ce8` |
+| `TEDI-Design-System/core` (`rc`) | 6.13.0 | `face373b` |
 
 `.reference/` holds plain clones of the three repos and is git-ignored. The
 Angular block of `lang/*/tedi.php` is regenerated from
