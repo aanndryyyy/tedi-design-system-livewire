@@ -1,23 +1,18 @@
 @storybook([
     'name' => 'Multiple',
-    'order' => 9,
+    'order' => 5,
     'status' => 'subset',
-    'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-(work-in-progress)?node-id=4536-78765&m=dev',
-    'args' => [
-        'label' => 'Laadi fail üles',
-        'helperText' => 'JPG, PNG, PDF suurusega kuni 0.001 MB.',
-    ],
-    'argTypes' => [
-        'label' => ['control' => 'text'],
-        'helperText' => ['control' => 'text'],
-    ],
+    'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.77.99?node-id=4612-87581&m=dev',
 ])
 
-<tedi:file-upload
-    id="file-upload-multiple"
-    name="file-multiple"
-    :label="$label"
-    multiple
-    :files="[['name' => 'report.pdf'], ['name' => 'report_1.pdf'], ['name' => 'report_2.pdf']]"
-    :helper="['text' => $helperText]"
-/>
+<tedi:form-field>
+    <x-slot:label>
+        <tedi:form.label for="multiple">Label</tedi:form.label>
+    </x-slot:label>
+    <tedi:file-upload input-id="multiple" name="file" multiple :files="[
+        ['id' => '1', 'name' => 'taotlus_scan_lk_1.pdf'],
+        ['id' => '2', 'name' => 'koolitused_erialane.zip'],
+        ['id' => '3', 'name' => 'diplom_2024.pdf'],
+        ['id' => '4', 'name' => 'diplom_ulikool_2020.pdf'],
+    ]" />
+</tedi:form-field>

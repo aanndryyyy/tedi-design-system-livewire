@@ -503,6 +503,7 @@ back in through `:columns` / `:rows` (see the divergences table above).
 | `<tedi:time-picker>` | All three variants' markup | The variant host classes, which TEDI ships no rules for |
 | `<tedi:date-field>`, `<tedi:time-field>` | Input, tags, trigger, and the panel under an `open` prop, anchored below the field | Open/close behaviour, CDK's flip/fallback placement, and the mobile modal branch |
 | `<tedi:number-field>` | Full markup with correct disabled states | Button behaviour — wire it via `increment-attributes` / `decrement-attributes` |
+| `<tedi:file-upload>` | The full markup and ARIA, a native `<input type="file">` that `wire:model` binds, the file list rendered from `:files` (`isValid`, `isLoading`), the restrictions hint, error / success / hint texts, the form-field context, and Alpine for the picker, label naming and announcements | The client-side selection pipeline — appending to the list, `accept` / `maxSize` / `validator` checks, duplicate skipping, `keepRejectedFiles`, the rejection summary — and the ControlValueAccessor. The below-`md` switch is the explicit `stacked` prop |
 | `<tedi:file-dropzone>` | Full markup, a native `<input type="file">` that `wire:model` binds, drag-and-drop into that input, and the file list / states rendered from `:files`, `state`, `has-error`, `error` | Angular's client-side file pipeline: `FileService` (append/replace, duplicate renaming), the `ControlValueAccessor`, and the `validators` / `validateIndividually` async validation that wrote `uploadState` |
 | `<tedi:multiselect>` | The full combobox: trigger, selected-value tags, clear button, and an anchored listbox panel with select-all and selectable groups | Per-option custom content, and pointing the panel's width at an arbitrary element (`dropdownWidthRef`) — it is the trigger's width or `auto` |
 | `<tedi:table-of-contents>`, `<tedi:table-of-contents-collapsible>` | Every input, both variants, sticky geometry, numbering, the active trail, `scroll-active-into-view`, the bottom bar + sheet with Escape/backdrop/link close and `hide-on-scroll` | The CDK Dialog (sheet rendered in place, fixed) and its focus trap |
@@ -549,7 +550,7 @@ editor, a client-side dependency this package does not carry).
 ### Promoted to Angular `tedi/`
 
 These components used to come from Angular's `community/` entry point or from
-React. Angular 9 ships them in `tedi/`, so they are now ported from there, and
+React. Angular 9 ships them in `tedi/` (`form/file-upload`: Angular 10), so they are now ported from there, and
 each changed API in the process (see
 [Breaking changes in this sync](#breaking-changes-in-this-sync)):
 
@@ -561,6 +562,7 @@ each changed API in the process (see
 | `content/heading-with-icon` | `<tedi:heading-with-icon>` | React |
 | `content/truncate` | `<tedi:truncate>` | React |
 | `directives/print` | `<tedi:print>` ⁹ | React |
+| `form/file-upload` | `<tedi:file-upload>` | React |
 
 ⁹ Emits core's own print utilities (`no-print`, `show-print`, `break-before-*`,
 `break-after-*`, `break-inside-*`), which are not `tedi-`-prefixed. That is
@@ -579,7 +581,7 @@ these styles were never part of the Angular build, **every `var(--…)` they use
 has to be checked against the installed `@tedi-design-system/core`** before the
 component can be ported at all.
 
-Twelve React-only components are ported:
+Eleven React-only components are ported:
 
 | React component | Blade tag |
 |---|---|
@@ -589,7 +591,6 @@ Twelve React-only components are ported:
 | `misc/scroll-visibility` | `<tedi:scroll-visibility>` |
 | `navigation/hash-trigger` | `<tedi:hash-trigger>` |
 | `layout/top-nav` | `<tedi:top-nav>`, `<tedi:top-nav-item>`, `<tedi:top-nav-submenu>`, `<tedi:top-nav-group>`, `<tedi:top-nav-subitem>`, `<tedi:top-nav-separator>` ⁸ |
-| `form/file-upload` | `<tedi:file-upload>` ⁸ |
 | `form/multi-value-field` | `<tedi:multi-value-field>` ⁸ ¹⁰ |
 | `form/date-time-field` | `<tedi:date-time-field>` ⁸ |
 | `overlays/sheet` | `<tedi:sheet>`, `<tedi:sheet-trigger>`, `<tedi:sheet-content>`, `<tedi:sheet-header>`, `<tedi:sheet-body>`, `<tedi:sheet-footer>`, `<tedi:sheet-closer>` ⁸ |
@@ -620,7 +621,6 @@ system.
 |---|---|---|
 | `<tedi:affix>` | Both positions, the full offset scale, and `position: sticky` written inline | `react-sticky-box`'s container measurement, and the `relative` prop that adds the rendered header height to the offset |
 | `<tedi:top-nav>` | The whole desktop bar: items, separator, both submenu fits, the open/close and dismissal behaviour | The mobile drawer. Upstream rebuilds it by walking its children with `Children.map` and re-emitting them as sidenav data — pair `<tedi:sidenav>` with `<tedi:hide-at>` / `<tedi:show-at>` instead |
-| `<tedi:file-upload>` | The full markup, a native `<input type="file">` that `wire:model` binds, the file list rendered from `:files`, and upstream's accept / max-size hint (`max-size` in bytes, `show-restrictions`) | `useFileUpload` — the client-side list, `maxSize`/`accept` validation, `keepRejectedFiles`, and the announcements derived from them. Also the below-`md` clear-button swap |
 | `<tedi:multi-value-field>` | Tags, overflow counter, clear control, icon trigger, and the JSON hidden input | The ResizeObserver that measures how many tags fit — pass `:visible-count` |
 | `<tedi:date-time-field>` | All four panel layouts (range, side-by-side, and both multi-step steps), composed from the existing calendar and time picker | Popup placement and the `datetime-local` native branch — it inherits `<tedi:date-field>`'s subset exactly. `clearable` ported; popup ARIA on the icon button; the date-input is wrapped in a `tedi-date-field tedi-field-surface` shell, the only vendored rule that draws its border. Not ported: `labelProps`, `minYear`/`maxYear` |
 | `<tedi:sheet>` | Open/close, dismissal, focus cycling and return, scroll lock, collapse, drag and snap points, header/footer layouts | Unmounting while closed (always behaves as `keepMounted`), the white closing-button variant (the brand header uses `neutral-inverted`), `initialFocus`, `closeButtonProps`, breakpoint `radius` |
@@ -688,7 +688,7 @@ its story directory contains any `.md` file:
 
 Both are ported verbatim from the Angular story file — its `parameters.docs.description.component` /
 `.story` if present, otherwise the doc comment above the `export default` / `export const`.
-All 85 components have a `README.md`; 175 stories have a per-story description,
+All 87 components have a `README.md`; 188 stories have a per-story description,
 which is every Angular story that carries one.
 
 Two known gaps. `Community/Form/FormField` has no description because the Angular
@@ -724,7 +724,7 @@ the community `radio` / `checkbox` stories, which belong to components the
 
 ### Angular stories with no Blade equivalent
 
-645 stories across 85 components are ported. Some Angular stories exist purely
+661 stories across 87 components are ported. Some Angular stories exist purely
 to demonstrate behaviour this package documents as not ported (see the
 divergences table above). Those are deliberately absent rather than faked:
 
@@ -745,6 +745,7 @@ divergences table above). Those are deliberately absent rather than faked:
 | `DatePicker`, `TimePicker`, `TimeField`, `DateField`, `Filter`: WithReactiveForms · `TextField`, `Textarea`: WithTemplateDrivenForms, WithReactiveForms | Angular reactive / template-driven forms — use `wire:model` instead |
 | `Search`: AutocompleteAsync, WithReactiveForms | The debounce and loading transition is consumer runtime (a Livewire round-trip); reactive forms: use `wire:model` |
 | `DateField`, `TimeField`: NativePicker, MobileModal · `DateField`: CustomFormatAndParse, CustomLocale | Breakpoint props, the unported modal branch, JS format/parse callables, and `localeCode` |
+| `FileUpload`: DiscardingRejectedFiles, KeepingRejectedFiles, WithValidator, ControlledClearing, WithReactiveForms | The unported client-side selection pipeline and Angular reactive forms — validate on the server and use `wire:model` |
 | `FileDropzone`: Replace | Exercises the `mode` input, part of the unported `FileService` file pipeline |
 | `DateField`, `TimeField`: OpenForVisualTest | Hidden upstream (`!dev`), visual-regression only, driven by a play function |
 | `DateField`: Range — the "min/max limits" field | Open-ended `minDate`/`maxDate` cannot be expressed as the flat `disabledDays` list |
@@ -771,8 +772,6 @@ These React stories have no Blade equivalent:
 |---|---|
 | `HashTrigger`: TabsWithHashTrigger | Demonstrates the Tabs component selecting a tab from the URL hash, which this port's tabs do not do — `<tedi:hash-trigger>` emits a `tedi:hash-match` event to wire yourself |
 | `TopNav`: ControlledMobile | Forces the unported mobile drawer |
-| `FileUpload`: MultipleHandled, ControlledClearing | React state demos of `onChange` / `files` round-tripping |
-| `FileUpload`: SizeLimited, ExtensionAndSizeLimit | Exist to show the unported client-side validation rejecting a file |
 | `DateTimeField`: Native | The `datetime-local` branch, chosen at runtime by breakpoint |
 | `TableCard`: WithResponsiveLayout | Switches `columns` with the `md` breakpoint prop, which is not ported |
 | `DateTimeField`: Size, States, FieldOptions, PerDayTimeSlots, RangePredefinedTimeSlots, Controlled, YearGrid | Runtime selection state — each drives the picker through props this port hands to the consumer instead |

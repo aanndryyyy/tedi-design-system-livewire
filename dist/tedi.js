@@ -1026,6 +1026,107 @@
     });
   }
 
+  // resources/js/src/announcer.js
+  var ANNOUNCE_DELAY = 100;
+  var CLEAR_DELAY = 1e3;
+  function region(politeness) {
+    const id = `tedi-toast-announcer-${politeness}`;
+    let element = document.getElementById(id);
+    if (!element) {
+      element = document.createElement("div");
+      element.setAttribute("aria-live", politeness);
+      element.setAttribute("aria-atomic", "false");
+      element.classList.add("sr-only");
+      element.id = id;
+      document.body.appendChild(element);
+    }
+    return element;
+  }
+  function ensureRegions() {
+    region("polite");
+    region("assertive");
+  }
+  function announce(message, politeness = "polite") {
+    if (!message) return;
+    const target = region(politeness);
+    const entry = document.createElement("div");
+    entry.textContent = message;
+    setTimeout(() => {
+      target.appendChild(entry);
+      setTimeout(() => entry.remove(), CLEAR_DELAY);
+    }, ANNOUNCE_DELAY);
+  }
+
+  // resources/js/src/file-upload.js
+  var ADD_ANNOUNCE_DELAY = 300;
+  function fileUpload(config = {}) {
+    const { inputId = null, multiple = false, labels = {} } = config;
+    return {
+      _addTimeout: null,
+      _offMorph: null,
+      _label: null,
+      init() {
+        ensureRegions();
+        this.applyLabel();
+        const livewire = window.Livewire;
+        if (livewire && typeof livewire.hook === "function") {
+          const off = livewire.hook("morph.updated", ({ el }) => {
+            if (el === this._label || el === this.$el || this.$el.contains(el)) {
+              queueMicrotask(() => this.applyLabel());
+            }
+          });
+          this._offMorph = typeof off === "function" ? off : null;
+        }
+      },
+      destroy() {
+        var _a;
+        clearTimeout(this._addTimeout);
+        (_a = this._offMorph) == null ? void 0 : _a.call(this);
+        this._offMorph = null;
+      },
+      applyLabel() {
+        if (!inputId) return;
+        const label = Array.from(document.querySelectorAll("label")).find(
+          (candidate) => candidate.htmlFor === inputId
+        );
+        if (label && !label.id) label.id = `${inputId}-label`;
+        this._label = label || null;
+        const labelId = label ? label.id : null;
+        this._setOrRemove(this.$refs.add, "aria-labelledby", labelId ? `${labelId} ${inputId}-add` : null);
+        this._setOrRemove(this.$refs.list, "aria-labelledby", labelId);
+      },
+      openPicker() {
+        const input = this.$refs.input;
+        if (input && !input.disabled) input.click();
+      },
+      handleSelection(event) {
+        const count = event.target.files ? event.target.files.length : 0;
+        if (!count) return;
+        const message = (labels.added || "").replace(":count", String(multiple ? count : 1));
+        clearTimeout(this._addTimeout);
+        this._addTimeout = setTimeout(() => announce(message, "assertive"), ADD_ANNOUNCE_DELAY);
+      },
+      clearFiles() {
+        if (this.$refs.input) this.$refs.input.value = "";
+        this._afterUserRemoval(labels.cleared || "");
+      },
+      fileRemoved(name) {
+        this._afterUserRemoval((labels.removed || "").replace(":file", name || ""));
+      },
+      _afterUserRemoval(message) {
+        var _a;
+        clearTimeout(this._addTimeout);
+        announce(message, "polite");
+        (_a = this.$refs.add) == null ? void 0 : _a.focus();
+      },
+      _setOrRemove(element, attribute, value) {
+        if (!element) return;
+        if (value) element.setAttribute(attribute, value);
+        else element.removeAttribute(attribute);
+      }
+    };
+  }
+
   // resources/js/src/filter.js
   var TAB_STOP_SELECTOR = 'input:not([disabled]):not([tabindex="-1"]), button:not([disabled]), [role="option"][tabindex="0"], [role="listbox"][tabindex="0"], [role="checkbox"][tabindex="0"]';
   function filter(config) {
@@ -3007,6 +3108,7 @@
     Alpine.data("tediDropdown", dropdown);
     Alpine.data("tediFilter", filter);
     Alpine.data("tediFormField", formField);
+    Alpine.data("tediFileUpload", fileUpload);
     Alpine.data("tediMultiselect", multiselect);
     Alpine.data("tediSearch", search);
     Alpine.data("tediModal", modal);

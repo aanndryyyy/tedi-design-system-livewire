@@ -468,7 +468,7 @@ JS, or the parity tests in §10 have nothing to assert against.
 `resources/js/` as an `Alpine.data()` only when it is too large to read inline
 or is shared by several components — currently `tediBreakpoint`,
 `tediCarousel`, `tediOverlay` and `tediDropdown` (§11), `tediFilter`,
-`tediFormField`, `tediProgressBar`, `tediMultiselect`, `tediSearch`,
+`tediFormField`, `tediFileUpload`, `tediProgressBar`, `tediMultiselect`, `tediSearch`,
 `tediModal`, `tediTableOfContents`, `tediTableOfContentsCollapsible`,
 `tediScrollVisibility`, `tediHashTrigger`, `tediSheet`, `tediProcessTimeline` and `tediRating`. The header comment
 of `resources/js/tedi.js` lists them with one line each.
@@ -485,6 +485,8 @@ under `resources/js/src/`, exporting a factory of the same name:
 | `src/dropdown.js` | `dropdown`, `dropdownTrigger` | `dropdown` composes `overlay` and adds the ARIA menu keyboard layer (§11). `dropdownTrigger` is the trigger directive's init/keys (`initTrigger`, `triggerActivationKeydown`, `triggerKeyup`, `triggerFocusout`), mixed into every x-data that renders `tedi:dropdown-trigger` |
 | `src/filter.js` | `filter` | Composes `overlay`, mixes in `dropdownTrigger`, and adds the filter's selection state plus its `aria-activedescendant` listbox layer — deliberately **not** `dropdown`, whose roving-tabindex menu is a different ARIA pattern |
 | `src/form-field.js` | `formField` | The clear button's live visibility and reset: follows typing, and `clear()` empties the control, fires `input` and `change` and focuses it. The scope sits on `.tedi-form-field__buttons`, beside the slotted control |
+| `src/file-upload.js` | `fileUpload` | Opens the picker, names the add button (and the read-only list) by the `label[for]` it finds, re-applied after a Livewire morph, and the added / removed / cleared announcements. The file list itself is server state |
+| `src/announcer.js` | `announce`, `ensureRegions` | Not an `Alpine.data()`: upstream's `ToastAnnouncerService` — one root-level live region per politeness, one child per message |
 | `src/progress-bar.js` | `progressBar` | Opt-in throttled live-region announcements for `progress-bar`; observes the `<progress>` attributes |
 | `src/search.js` | `search` | Composes `overlay` and adds the search autocomplete's `aria-activedescendant` combobox layer (wrapping arrow keys, as upstream does). Reads rows from the DOM so a Livewire morph is picked up; the panel state sits on a hidden child because Livewire does not patch attributes of an element `x-show` is showing |
 | `src/multiselect.js` | `multiselect` | Composes `overlay` and adds the community multiselect's selection state plus its `aria-activedescendant` listbox layer — the same ARIA pattern as `filter`, not `dropdown`'s menu |

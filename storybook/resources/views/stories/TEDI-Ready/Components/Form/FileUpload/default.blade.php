@@ -2,85 +2,131 @@
     'name' => 'Default',
     'order' => 1,
     'status' => 'subset',
-    'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-(work-in-progress)?node-id=4536-78765&m=dev',
+    'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.77.99?node-id=4612-87581&m=dev',
     'args' => [
-        'id' => 'file-upload',
+        'inputId' => 'file-upload',
         'name' => 'file',
-        'label' => 'Laadi fail üles',
         'accept' => '',
         'maxSize' => 0,
-        'showRestrictions' => true,
         'multiple' => false,
-        'disabled' => false,
+        'showRestrictions' => true,
+        'error' => '',
+        'success' => '',
+        'hint' => '',
+        'clearable' => '',
         'readOnly' => false,
-        'size' => 'default',
-        'hasClearButton' => true,
+        'disabled' => false,
+        'invalid' => false,
+        'size' => '',
+        'stacked' => false,
     ],
     'argTypes' => [
-        'id' => [
+        'inputId' => [
+            'description' => "Id of the file input, which the field label's `for` points to. Generated when not set.",
             'control' => 'text',
-            'description' => 'Unique HTML id for the file input, also used to associate the label and helper text. Generated when omitted.',
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
         ],
         'name' => [
+            'description' => '`name` attribute of the file input.',
             'control' => 'text',
-            'description' => 'The name of the file input field, used for form submission and accessibility.',
-        ],
-        'label' => [
-            'control' => 'text',
-            'description' => 'Visible label for the field.',
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
         ],
         'accept' => [
+            'description' => 'Allowed file types as comma-separated extensions and MIME types, e.g. `".pdf,image/*"`. Shown in the hint and set on the input; validate on the server.',
             'control' => 'text',
-            'description' => 'Specifies the allowed file types, e.g. "image/png, image/jpeg". Sets the native accept attribute.',
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
         ],
         'maxSize' => [
+            'description' => 'Largest accepted file size, in bytes. Shown in the hint; validate on the server. 0 means not set.',
             'control' => 'number',
-            'description' => 'Maximum allowed file size in bytes (e.g. `5 * 1024 ** 2` for 5 MB). Shown in the restrictions hint; validate it on the server. 0 means not set.',
-        ],
-        'showRestrictions' => [
-            'control' => 'boolean',
-            'description' => 'Whether to show the auto-generated restrictions hint (allowed types / max size) below the field. Turn it off when the same info is shown elsewhere to avoid a duplicate.',
-            'table' => ['defaultValue' => ['summary' => 'true']],
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'number']],
         ],
         'multiple' => [
+            'description' => 'Whether more than one file can be selected. Lists even one file as a tag.',
             'control' => 'boolean',
-            'description' => 'Allows multiple file selection.',
-            'table' => ['defaultValue' => ['summary' => 'false']],
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'boolean'], 'defaultValue' => ['summary' => 'false']],
         ],
-        'disabled' => [
+        'showRestrictions' => [
+            'description' => 'Shows the allowed types and maximum size in the hint.',
             'control' => 'boolean',
-            'description' => 'Disables the file upload field, preventing interactions.',
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'boolean'], 'defaultValue' => ['summary' => 'true']],
+        ],
+        'error' => [
+            'description' => 'Error text. Marks the field invalid.',
+            'control' => 'text',
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
+        ],
+        'success' => [
+            'description' => 'Success text, shown while the field has no error.',
+            'control' => 'text',
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
+        ],
+        'hint' => [
+            'description' => 'Hint text, shown after the allowed types and maximum size. Use it instead of a projected `tedi:feedback-text`, which would add a second hint.',
+            'control' => 'text',
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
+        ],
+        'clearable' => [
+            'description' => "Whether the clear button shows while files are listed. Falls back to the wrapping `tedi:form-field`'s `clearable`.",
+            'control' => ['type' => 'boolean'],
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'boolean | undefined'], 'defaultValue' => ['summary' => 'undefined']],
         ],
         'readOnly' => [
+            'description' => 'Shows only the file list, without buttons.',
             'control' => 'boolean',
-            'description' => 'Renders the file list only — no input and no buttons.',
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'boolean'], 'defaultValue' => ['summary' => 'false']],
+        ],
+        'disabled' => [
+            'description' => "Disables the field. Combines with the form field's `disabled`.",
+            'control' => 'boolean',
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'boolean'], 'defaultValue' => ['summary' => 'false']],
+        ],
+        'invalid' => [
+            'description' => "Marks the field as invalid. Combines with `error` and the form field's `invalid`.",
+            'control' => 'boolean',
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'boolean'], 'defaultValue' => ['summary' => 'false']],
         ],
         'size' => [
-            'control' => 'radio',
-            'options' => ['default', 'small'],
-            'description' => 'Determines the visual size of the field.',
-            'table' => ['defaultValue' => ['summary' => 'default']],
+            'description' => 'Field size. Falls back to the size of a wrapping `tedi:form-field`.',
+            'control' => ['type' => 'radio'],
+            'options' => ['', 'default', 'small'],
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'FileUploadSize | undefined'], 'defaultValue' => ['summary' => 'undefined']],
         ],
-        'hasClearButton' => [
+        'stacked' => [
+            'description' => "This port's stand-in for upstream's below-`md` layout switch, which is resolved at runtime there: the clear button spelled out as a neutral button, and a default-size add button.",
             'control' => 'boolean',
-            'description' => 'Determines whether a clear control is shown to remove all files.',
-            'table' => ['defaultValue' => ['summary' => 'true']],
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'boolean'], 'defaultValue' => ['summary' => 'false']],
         ],
     ],
 ])
 
-{{-- The client-side validation pipeline is not ported: the file list arrives
-     through :files from the server. See the component's header comment. --}}
-<tedi:file-upload
-    :id="$id"
-    :name="$name"
-    :label="$label"
-    :accept="$accept ?: null"
-    :max-size="(int) $maxSize ?: null"
-    :show-restrictions="(bool) $showRestrictions"
-    :multiple="(bool) $multiple"
-    :disabled="(bool) $disabled"
-    :read-only="(bool) $readOnly"
-    :size="$size"
-    :has-clear-button="(bool) $hasClearButton"
-/>
+{{--
+    Angular's argTypes also list `files` (no control), `keepRejectedFiles`
+    and `validator`, and the `fileRemove` / `filesChange` outputs. The
+    client-side selection pipeline they belong to is not ported — the list is
+    server state (see the component's docblock) — so they have no control here.
+    `stacked` is added: it is how the below-`md` branch is reached.
+--}}
+<tedi:form-field>
+    <x-slot:label>
+        <tedi:form.label :for="$inputId">Label</tedi:form.label>
+    </x-slot:label>
+
+    <tedi:file-upload
+        :input-id="$inputId"
+        :name="$name ?: null"
+        :accept="$accept ?: null"
+        :max-size="(int) $maxSize ?: null"
+        :multiple="(bool) $multiple"
+        :show-restrictions="(bool) $showRestrictions"
+        :error="$error ?: null"
+        :success="$success ?: null"
+        :hint="$hint ?: null"
+        :clearable="$clearable === '' ? null : (bool) $clearable"
+        :read-only="(bool) $readOnly"
+        :disabled="(bool) $disabled"
+        :invalid="(bool) $invalid"
+        :size="$size ?: null"
+        :stacked="(bool) $stacked"
+    />
+</tedi:form-field>
