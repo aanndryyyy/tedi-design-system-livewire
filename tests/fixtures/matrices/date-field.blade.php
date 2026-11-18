@@ -256,10 +256,10 @@
     </div>
 
     <div class="gx-case">
-        <div class="gx-case__label">open + modal="xl" — popover from xl up, the date-field modal below it (rendered closed until tediDateField resolves the breakpoint) | + calendar-full-width (modal calendar only) | + draft</div>
+        <div class="gx-case__label">open + modal="sm" — popover from sm up, the date-field modal below it (rendered closed until tediDateField resolves the breakpoint) | + calendar-full-width (modal calendar only) | + draft</div>
         <div class="gx-case__demo gx-case__demo--stack">
-            <tedi:date-field input-id="df-modal-xl" modal="xl" :open="true" value="2026-06-08" />
-            <tedi:date-field input-id="df-modal-full" modal="xl" :calendar-full-width="true" :open="true" value="2026-06-08" draft="2026-06-12" />
+            <tedi:date-field input-id="df-modal-sm" modal="sm" :open="true" value="2026-06-08" />
+            <tedi:date-field input-id="df-modal-full" modal="sm" :calendar-full-width="true" :open="true" value="2026-06-08" draft="2026-06-12" />
         </div>
     </div>
 </div>

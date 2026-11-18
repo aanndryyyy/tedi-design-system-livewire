@@ -895,4 +895,11 @@ class DateFieldComponentsTest extends TestCase
         $html = Blade::render('<tedi:date-field :open="true" :modal="true" />');
         $this->assertHasClass('tedi-date-input__icon--active', $html, on: 'tedi-date-input__icon');
     }
+
+    /** As the popover: a disabled field disables the modal's calendar too. */
+    public function test_date_field_modal_calendar_follows_the_disabled_field(): void
+    {
+        $html = Blade::render('<tedi:date-field :open="true" :modal="true" :input-disabled="true" />');
+        $this->assertHasClass('tedi-calendar--disabled', $this->element('/<tedi-modal-content\b.*<\/tedi-modal-content>/s', $html), on: 'tedi-calendar');
+    }
 }

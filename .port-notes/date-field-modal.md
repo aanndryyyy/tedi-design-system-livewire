@@ -129,5 +129,9 @@ worktree tests the main checkout's `src/` and `tests/`, not the worktree's.
 I ran with a bootstrap that prepends the worktree's PSR-4 paths:
 `vendor/bin/phpunit --bootstrap <bootstrap.php>`, where the bootstrap does
 `$l = require 'vendor/autoload.php'; $l->addPsr4('Tedi\\Livewire\\', WT.'/src', true); $l->addPsr4('Tedi\\Livewire\\Tests\\', WT.'/tests', true);`.
-Result: 1438 tests, all passing. Other streams' workers probably hit the same
-trap.
+Result after `npm run build`: 1439 tests, all passing. Against the
+**committed** `dist/`, `IntegrityTest` fails 2 tests (the source-literal scan
+and the matrix harvest). The reason is that `dist/` is not committed by rule
+and so lacks `.tedi-date-field-modal`, `.tedi-date-field-modal--full-width`
+and `.tedi-date-field-modal__content`. Rebuild `dist/` when integrating.
+Other streams' workers probably hit the same trap.

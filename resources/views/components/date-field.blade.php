@@ -404,6 +404,7 @@
                     :full-width="(bool) $calendarFullWidth"
                     :month-year-select-type="$monthYearSelectType"
                     :required="(bool) $required"
+                    :input-disabled="$fieldDisabled"
                     :disabled-days="$disabledDays"
                     :first-day-of-week="$firstDayOfWeek"
                 />
