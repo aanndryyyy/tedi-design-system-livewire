@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'Pagination Top And Bottom',
-    'order' => 37,
+    'order' => 40,
     'status' => 'subset',
     'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.45.70?node-id=11335-186161&m=dev',
 ])

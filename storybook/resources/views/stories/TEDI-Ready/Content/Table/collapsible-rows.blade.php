@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'Collapsible Rows',
-    'order' => 13,
+    'order' => 15,
     'status' => 'subset',
     'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.45.70?node-id=11335-186161&m=dev',
 ])

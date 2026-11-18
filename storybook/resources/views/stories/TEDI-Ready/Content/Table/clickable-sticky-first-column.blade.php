@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'Clickable Sticky First Column',
-    'order' => 27,
+    'order' => 30,
     'status' => 'subset',
     'design' => 'https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.45.70?node-id=11335-186161&m=dev',
 ])
