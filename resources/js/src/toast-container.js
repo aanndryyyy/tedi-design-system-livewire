@@ -65,13 +65,24 @@ const POSITIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
 const TYPES = ['info', 'success', 'warning', 'danger'];
 const ROLES = ['alert', 'status', 'none'];
 
-let toastId = 0;
+// One registry per document, kept on `window`: if the bundle runs twice (a
+// second script tag, or `wire:navigate` re-running body scripts), the second
+// copy joins the first copy's containers and listener instead of adding its own.
+const firstLoad = typeof window !== 'undefined' && !window.__tediToast;
+const registry =
+    typeof window === 'undefined'
+        ? { containers: [], pending: [], id: 0 }
+        : (window.__tediToast ??= { containers: [], pending: [], id: 0 });
 
 /** Live containers, oldest first; the last one receives new toasts. */
-const containers = [];
+const containers = registry.containers;
 
 /** show() calls made while no container is on the page. */
-const pending = [];
+const pending = registry.pending;
+
+function nextId() {
+    return `toast-${++registry.id}`;
+}
 
 function active() {
     return containers[containers.length - 1] ?? null;
@@ -79,7 +90,7 @@ function active() {
 
 function show(options = {}) {
     const config = { ...options };
-    config.id = config.id || `toast-${++toastId}`;
+    config.id = config.id || nextId();
 
     const container = active();
     if (container) {
@@ -109,7 +120,7 @@ export const TediToast = {
     danger: withType('danger', { role: 'alert' }),
 };
 
-if (typeof window !== 'undefined') {
+if (firstLoad) {
     window.TediToast = TediToast;
 
     window.addEventListener('tedi-toast', (event) => {
@@ -243,7 +254,7 @@ export function toastContainer() {
             const content = el.querySelector('.tedi-alert__body > :last-child')?.textContent.trim() ?? '';
 
             const toast = normalise({
-                id: el.id || `toast-${++toastId}`,
+                id: el.id || nextId(),
                 title,
                 content: title ? content : '',
                 type: TYPES.find((type) => el.querySelector(`.tedi-alert--${type}`)) ?? 'info',
