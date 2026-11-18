@@ -366,8 +366,12 @@ export function dockPanel(config) {
 
             this._apply();
             this._observeTitles();
-            if (s.morphFocus && s.morphFocus.isConnected) s.morphFocus.focus();
+            // Focus goes back where it was, or to the toggle if the server minimized the panel around it.
+            const target = s.morphFocus;
             s.morphFocus = null;
+            // Every moved node is hidden while collapsed (the sheet body only after Alpine's next tick).
+            if (target && target.isConnected && !this.collapsed) target.focus();
+            else if (target) this._toggle(this.presentation)?.focus();
         },
 
         // -- shortTitle ----------------------------------------------------------
