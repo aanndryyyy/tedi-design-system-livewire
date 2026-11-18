@@ -416,7 +416,8 @@ class FormNumberFieldComponentsTest extends TestCase
 
         $this->assertSame(1, preg_match('/<button\b[^>]*tedi-number-field__button--decrement[^>]*x-ref="decrement" x-on:click="stepBy\(-1\)"/s', $html));
         $this->assertSame(1, preg_match('/<button\b[^>]*tedi-number-field__button--increment[^>]*x-ref="increment" x-on:click="stepBy\(1\)"/s', $html));
-        $this->assertSame(1, preg_match('/<input\b[^>]*x-ref="input"/s', $html));
+        // The input is found by class, so a consumer's own x-ref cannot collide.
+        $this->assertSame(0, preg_match('/<input\b[^>]*x-ref=/s', $html));
         $this->assertSame(1, preg_match('/<div class="tedi-number-field[^"]*" x-ref="field">/', $html));
         // The live computeds follow typing: input events bubble to the root.
         $this->assertStringContainsString('x-on:input="sync()" x-on:change="sync()"', $html);
@@ -427,7 +428,7 @@ class FormNumberFieldComponentsTest extends TestCase
     {
         $html = Blade::render('<tedi:number-field input-id="a" />');
 
-        $this->assertSame(1, preg_match('/<div class="tedi-number-field__input-wrapper"[^>]*x-on:click="\$refs\.input\.focus\(\)"/', $html));
+        $this->assertSame(1, preg_match('/<div class="tedi-number-field__input-wrapper"[^>]*x-on:click="\$el\.querySelector\(\\\'input\\\'\)\.focus\(\)"/', $html));
     }
 
     /** numberField.quantityUpdated and its `.suffix` form go to the browser with their placeholders. */

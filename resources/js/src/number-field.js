@@ -5,8 +5,9 @@
 //
 //   - handleButtonClick(action): the value moves by ±step. Dispatching `input`
 //     and `change` on the native input stands in for upstream's
-//     `onChange(nextValue)`, so `wire:model` (any modifier) and `x-model`
-//     follow the value.
+//     `onChange(nextValue)`, so `x-model` and `wire:model` (plain, `.live`,
+//     `.change`) follow the value. `.blur` does not: a step never blurs the
+//     input.
 //   - announceValue(): the new value, politely, through the root-level regions
 //     of `announcer.js` (`numberField.quantityUpdated`, or its `.suffix` form
 //     when the field has a suffix). Upstream uses CDK's LiveAnnouncer; this
@@ -78,8 +79,13 @@ export function numberField(config = {}) {
         _offMorph: null,
         _forcedInvalid: false,
         _morphQueued: false,
+        // The input is found by class, not by an x-ref: a consumer's own
+        // x-ref on it would collide with ours. Kept from init() because a
+        // method called from a button's x-on sees that button as `$el`.
+        _root: null,
 
         init() {
+            this._root = this.$el;
             ensureRegions();
             this._readServerInvalid();
             // A child's wire:model / x-model writes its value after this scope
@@ -91,7 +97,7 @@ export function numberField(config = {}) {
                 const off = livewire.hook('morph.updated', ({ el }) => {
                     // Once per morph: a second read after sync() has toggled
                     // the class would take our own class for the server's.
-                    if (el && !this._morphQueued && (el === this.$el || this.$el.contains(el))) {
+                    if (el && !this._morphQueued && (el === this._root || this._root.contains(el))) {
                         this._morphQueued = true;
                         queueMicrotask(() => {
                             this._morphQueued = false;
@@ -112,9 +118,13 @@ export function numberField(config = {}) {
             this._offMorph = null;
         },
 
+        _input() {
+            return this._root?.querySelector('.tedi-number-field__input') || null;
+        },
+
         /** handleButtonClick(): -1 decrements, 1 increments. */
         stepBy(direction) {
-            const input = this.$refs.input;
+            const input = this._input();
             if (!input || input.disabled || input.readOnly) return;
 
             const step = bound(input, 'step') ?? 1;
@@ -144,7 +154,7 @@ export function numberField(config = {}) {
 
         /** The computeds that depend on the value. */
         sync() {
-            const input = this.$refs.input;
+            const input = this._input();
             if (!input) return;
 
             const value = current(input);
@@ -168,7 +178,7 @@ export function numberField(config = {}) {
          * instead: invalid there while the server-rendered value is in range.
          */
         _readServerInvalid() {
-            const input = this.$refs.input;
+            const input = this._input();
             const field = this.$refs.field;
             if (!input || !field) return;
 

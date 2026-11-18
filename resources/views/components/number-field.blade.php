@@ -198,7 +198,7 @@
         'tedi-number-field__input-wrapper--disabled' => $isDisabled,
         'tedi-number-field__input-wrapper--with-suffix' => filled($suffix),
         'tedi-number-field__input-wrapper--full-width' => $fullWidth,
-    ]) x-on:click="$refs.input.focus()">
+    ]) x-on:click="$el.querySelector('input').focus()">
         <input
             id="{{ $inputId }}"
             type="number"
@@ -206,7 +206,6 @@
             @if ($hasValue) value="{{ $value }}" @endif
             @disabled($isDisabled)
             @required($required)
-            x-ref="input"
             {{ $attributes->class(['tedi-number-field__input'])->merge(array_filter([
                 'min' => $min,
                 'max' => $max,
