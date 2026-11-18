@@ -11,5 +11,5 @@ resets the property and the validation, and the field clears with it — the
 rejected files and the rejection summary too.
 
 The round trip needs the host app's `web` middleware (a session for the CSRF
-token). Blast's preview routes run without it, so in this Storybook the
-server half answers 419; the field's own checks still run.
+token). Blast registers its preview routes without it, so this Storybook's app
+adds it (`storybook/bootstrap/app.php`).

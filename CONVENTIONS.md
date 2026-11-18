@@ -354,6 +354,11 @@ things:
 ## 6. Attribute merging & the root element
 
 - Exactly **one** root element per component, and `{{ $attributes }}` goes on it.
+  One exception: where upstream returns a fragment and its vendored CSS
+  addresses the parts as direct children of a parent component, the parts may
+  be sibling roots. `tedi:dock-panel` is the case (`.tedi-dock-panel-layout >
+  .tedi-dock-panel[…]`, `> .tedi-dock-panel__sheet-spacer`); `$attributes` go on
+  the docked panel.
 - Use `$attributes->class([...])` for classes; plain `{{ $attributes }}` already
   includes them, so never emit both.
 - Pull props that must not leak to the DOM through `@props`, never read them off
@@ -423,7 +428,9 @@ Use the same idiom on plain HTML tags too, so there is one way to do it.
    The single exception is a breakpoint-ish prop whose *name* does not signal
    this (`attachment`'s `verticalBelow`), which is declared and documented as
    inert precisely so it does not leak into the DOM looking like a real
-   attribute. If in doubt, omit.
+   attribute. If in doubt, omit. `date-field`'s `modal` is resolved client-side
+   instead (`tediDateField`), because it chooses between two whole branches,
+   both rendered, rather than a class.
 2. **`output()` events are not re-emitted.** Consumers bind Livewire/Alpine
    listeners directly to the rendered element.
 3. **Tooltip/dropdown/modal positioning** is ported, but by this package's own
@@ -470,7 +477,9 @@ or is shared by several components — currently `tediBreakpoint`,
 `tediCarousel`, `tediOverlay` and `tediDropdown` (§11), `tediFilter`,
 `tediFormField`, `tediFileUpload`, `tediProgressBar`, `tediMultiselect`, `tediSearch`,
 `tediModal`, `tediTableOfContents`, `tediTableOfContentsCollapsible`,
-`tediScrollVisibility`, `tediHashTrigger`, `tediSheet`, `tediProcessTimeline` and `tediRating`. The header comment
+`tediScrollVisibility`, `tediHashTrigger`, `tediSheet`, `tediProcessTimeline`,
+`tediRating`, `tediDateField`, `tediToastContainer`, `tediNumberField`,
+`tediDockPanel` and `tediDockPanelSheet`. The header comment
 of `resources/js/tedi.js` lists them with one line each.
 
 **The JS layout.** `resources/js/tedi.js` is the entry point and holds nothing
@@ -485,8 +494,8 @@ under `resources/js/src/`, exporting a factory of the same name:
 | `src/dropdown.js` | `dropdown`, `dropdownTrigger` | `dropdown` composes `overlay` and adds the ARIA menu keyboard layer (§11). `dropdownTrigger` is the trigger directive's init/keys (`initTrigger`, `triggerActivationKeydown`, `triggerKeyup`, `triggerFocusout`), mixed into every x-data that renders `tedi:dropdown-trigger` |
 | `src/filter.js` | `filter` | Composes `overlay`, mixes in `dropdownTrigger`, and adds the filter's selection state plus its `aria-activedescendant` listbox layer — deliberately **not** `dropdown`, whose roving-tabindex menu is a different ARIA pattern |
 | `src/form-field.js` | `formField` | The clear button's live visibility and reset: follows typing, and `clear()` empties the control, fires `input` and `change` and focuses it. The scope sits on `.tedi-form-field__buttons`, beside the slotted control |
-| `src/file-upload.js` | `fileUpload` | Opens the picker, names the add button (and the read-only list) by the `label[for]` it finds, re-applied after a Livewire morph, and the added / removed / cleared announcements. The file list itself is server state |
-| `src/announcer.js` | `announce`, `ensureRegions` | Not an `Alpine.data()`: upstream's `ToastAnnouncerService` — one root-level live region per politeness, one child per message |
+| `src/file-upload.js` | `fileUpload` | The selection pipeline in a capture-phase `change` listener on the root (so it runs before Livewire's `wire:model` handler): duplicates, `accept` / `maxSize` / `validator`, and `input.files` rewritten with a `DataTransfer` (appended for `multiple`); kept rejected files, the rejection summary and a client clear button cloned from an inert `<template>` of prototypes and re-applied after every Livewire morph from the template's `data-state`. Also the picker, label naming and announcements. The file list itself is server state |
+| `src/announcer.js` | `announce`, `ensureRegions` | Not an `Alpine.data()`: upstream's `ToastAnnouncerService` — one root-level live region per politeness, one child per message. Used by `file-upload`, `number-field` and `toast-container` |
 | `src/progress-bar.js` | `progressBar` | Opt-in throttled live-region announcements for `progress-bar`; observes the `<progress>` attributes |
 | `src/search.js` | `search` | Composes `overlay` and adds the search autocomplete's `aria-activedescendant` combobox layer (wrapping arrow keys, as upstream does). Reads rows from the DOM so a Livewire morph is picked up; the panel state sits on a hidden child because Livewire does not patch attributes of an element `x-show` is showing |
 | `src/multiselect.js` | `multiselect` | Composes `overlay` and adds the community multiselect's selection state plus its `aria-activedescendant` listbox layer — the same ARIA pattern as `filter`, not `dropdown`'s menu |
@@ -498,9 +507,22 @@ under `resources/js/src/`, exporting a factory of the same name:
 | `src/sheet.js` | `sheet` | The React bottom sheet: open/close, focus, drag and snap points |
 | `src/process-timeline.js` | `processTimeline` | The community process timeline's overflow fallback: a horizontal timeline whose stages don't fit turns vertical, measured in the horizontal layout as upstream does. Writes the layout classes and separator axis onto the server markup and re-applies them after a Livewire morph |
 | `src/rating.js` | `rating` | The rating's hover preview and the live `--selected` / `--hover` classes, star glyph variant and star caption. Reads the checked radio; never writes the value (the radios are native, so `wire:model` / `x-model` own it) |
+| `src/toast-container.js` | `toastContainer`, `TediToast` | Upstream's `ToastService` + `toast-container.component.ts`. Clones a `tedi:toast` `<template>` prototype per toast, keeps the position groups, and runs the timer, pause on hover/focus, exit and close as upstream. Announces through `announcer.js`. The window `tedi-toast` listener and `window.TediToast` are registered once at module load and route to the most recent container, so several containers on a page never duplicate a toast. Slotted server toasts are adopted on init; the root is `wire:ignore`d |
+| `src/number-field.js` | `numberField` | The step buttons (±step, clamped, decimal-safe; fires `input` and `change`), the live disabled / invalid state recomputed on input, after a step and after a Livewire morph, and the polite value announcement |
+| `src/date-field.js` | `dateField` | Resolves a breakpoint-name `modal` on `tedi:date-field`: one `matchMedia` query off `breakpoint.js`'s BREAKPOINTS sets `modalActive`. The popover is `x-show`n off it and the modal's `tediModal` follows it with an `x-effect`. It holds viewport state only, never open state, so a Livewire morph cannot leave a stale flag |
+| `src/dock-panel.js` | `dockPanel`, `dockPanelSheet` | The community dock panel: collapse state, events, and the mobile presentation — moves the content/footer/action slot nodes between the docked panel and a `tediSheet`-based sheet (`dockPanelSheet` composes `sheet()` by property descriptors and reroutes Escape / drag-dismiss to the panel). Restores the server layout on Livewire `morph` and re-applies on `morphed`; private state lives in a closure, not on the Alpine object |
 
 A new behaviour is a new file in `src/` plus two lines in `tedi.js` (an import
 and an `Alpine.data()` call). Do not add a second `Alpine.data()` call site.
+
+**Private state is declared.** Alpine merges nested `x-data` scopes, and an
+assignment to a property the object does not declare is written to the nearest
+*enclosing* scope that has that key. `tediFormField`'s undeclared `_root` once
+overwrote the dock panel's root element this way. Declare every private field
+in the returned object (`_root: null`), or keep it in a closure; never assign
+an ad hoc property on `this`. Related: in a method called from a child's
+directive (`x-on:click` on a cloned button), `this.$el` is that child, not the
+root, so a behaviour whose methods query the DOM keeps its root from `init()`.
 
 `npm run build:js` bundles them with **esbuild** into a single classic (IIFE,
 non-module, es2017) `dist/tedi.js`. That output is unchanged in kind from
@@ -817,6 +839,11 @@ components that exist *only* there — where a component exists in Angular too,
 Angular remains the source, because that is what the two other trees were ported
 from and re-syncing against two upstreams is how a port drifts.
 
+React's own `community/` tree used to be skipped wholesale. It is now ported on
+request, component by component, under the same rules: `dock-panel` is the
+first. `layout/mobile-nav` stays unported: it is deprecated upstream, and
+`<tedi:sidenav.toggle>` already does its job.
+
 Seven things differ, and only these seven.
 
 ### 13.1 The token check is the real feasibility gate
@@ -829,6 +856,11 @@ stylesheet uses.** `sheet.module.scss` wants the `--sheet-*` tokens
 define them and core 6.12 does, so the sheet became portable only with the
 6.12 bump. A component whose tokens are missing does not port — and it fails
 silently, as an unstyled element rather than a build error.
+
+React's `community/` stylesheets can fail it: some depend on tokens
+from React's own `community/styles/_map-component.variables.scss`, a top-level
+`:root` block that also redefines core's button tokens, so it can be neither
+vendored globally nor loaded scoped (§13.7 rule 4).
 
 This replaces "are the class names stable" as the question to ask first.
 
@@ -865,7 +897,9 @@ component, documented — not in the stylesheet.
 
 ### 13.4 Storybook titles: verbatim, except for case
 
-Take the React story's `title` as-is, the way §12.2 does for `community/`. One
+Take the React story's `title` as-is, the way §12.2 does for `community/`; a
+React `community/` story keeps its `Community/…` title too
+(`Community/Layout/DockPanel`). One
 mechanical exception: React's own titles are inconsistently cased —
 `TEDI-Ready/…`, `Tedi-Ready/…` and `Tedi-ready/…` all occur. Left alone they
 would be three sidebar roots, and on a case-insensitive filesystem (macOS
