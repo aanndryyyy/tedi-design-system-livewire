@@ -1955,6 +1955,9 @@
       snapIndex: null,
       dragOffset: 0,
       dragging: false,
+      // From the press, not the drag threshold: the panel holds the pointer
+      // from then on, so its cursor (`--grabbing`) is the one shown.
+      grabbing: false,
       _drag: null,
       _previouslyFocused: null,
       _previousOverflow: "",
@@ -2194,10 +2197,9 @@
         var drag = this._drag;
         if (!drag) return;
         this._drag = null;
+        this.grabbing = false;
         this.dragging = false;
         this.dragOffset = 0;
-        document.removeEventListener("pointermove", drag.onDocMove, true);
-        document.removeEventListener("pointerup", drag.onDocUp, true);
         if (drag.target.hasPointerCapture && drag.target.hasPointerCapture(drag.pointerId)) {
           drag.target.releasePointerCapture(drag.pointerId);
         }
@@ -2208,23 +2210,23 @@
         var currentTarget = event.currentTarget;
         if (!(target instanceof Element) || !closestInside(target, DRAG_ZONE_SELECTOR, currentTarget)) return;
         if (closestInside(target, NO_DRAG_SELECTOR, currentTarget)) return;
-        var self = this;
-        var drag = {
+        this._drag = {
           pointerId: event.pointerId,
           startX: event.clientX,
           startY: event.clientY,
           target: currentTarget,
           started: false
         };
-        drag.onDocMove = function(e) {
-          if (!currentTarget.contains(e.target)) self.dragMove(e);
-        };
-        drag.onDocUp = function(e) {
-          if (!currentTarget.contains(e.target)) self.dragEnd(e);
-        };
-        document.addEventListener("pointermove", drag.onDocMove, true);
-        document.addEventListener("pointerup", drag.onDocUp, true);
-        this._drag = drag;
+        this.grabbing = true;
+        try {
+          currentTarget.setPointerCapture(event.pointerId);
+        } catch (e) {
+        }
+      },
+      // A native drag, e.g. of selected text, sends `pointercancel`, which
+      // would end the sheet drag.
+      nativeDragStart: function(event) {
+        if (this._drag) event.preventDefault();
       },
       dragMove: function(event) {
         var drag = this._drag;
@@ -2244,10 +2246,6 @@
           }
           drag.started = true;
           this.dragging = true;
-          try {
-            drag.target.setPointerCapture(drag.pointerId);
-          } catch (e) {
-          }
         }
         this.dragOffset = this._hasSnaps() ? delta : Math.max(0, delta);
       },

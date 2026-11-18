@@ -153,6 +153,8 @@
     data-status="{{ $isOpen ? 'open' : 'unmounted' }}"
     x-bind:class="{ 'tedi-sheet__overlay--hidden': ! active }"
     x-bind:data-status="status"
+    {{-- Out of the Tab order, the accessibility tree and pointer input while it animates out. --}}
+    x-bind:inert="status === 'close'"
 >
     @if ($dismiss)
         <button type="button" tabindex="-1" class="sr-only" data-tedi-sheet-dismiss x-show="active" x-on:click="hide()">{{ __('tedi::tedi.sheet.close') }}</button>
@@ -171,6 +173,7 @@
         x-bind:hidden="! active"
         x-bind:data-status="status"
         x-bind:style="panelStyle"
+        x-bind:class="{ 'tedi-sheet__panel--grabbing': grabbing }"
         x-on:keydown="onPanelKeydown($event)"
         x-on:pointerdown="dragStart($event)"
         x-on:pointermove="dragMove($event)"
@@ -178,6 +181,7 @@
         x-on:pointercancel="dragCancel($event)"
         x-on:lostpointercapture="dragCancel($event)"
         x-on:contextmenu="resetDrag()"
+        x-on:dragstart="nativeDragStart($event)"
     >
         @if ($showHandle)
             <div class="tedi-sheet__handle-zone" data-name="sheet-handle" aria-hidden="true"><span class="tedi-sheet__handle"></span></div>
