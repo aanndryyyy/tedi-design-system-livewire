@@ -33,9 +33,11 @@
  *   src/sheet.js              tediSheet — the React bottom sheet: open/close, focus, drag and snap points
  *   src/process-timeline.js   tediProcessTimeline — horizontal process timeline falls back to vertical when it overflows
  *   src/rating.js             tediRating — the rating's hover preview and live selected/caption state
+ *   src/date-field.js         tediDateField — resolves a breakpoint-name date-field `modal` (popover vs modal)
  */
 import { breakpoint } from './src/breakpoint.js';
 import { carousel } from './src/carousel.js';
+import { dateField } from './src/date-field.js';
 import { dropdown } from './src/dropdown.js';
 import { fileUpload } from './src/file-upload.js';
 import { filter } from './src/filter.js';
@@ -71,6 +73,7 @@ function register(Alpine) {
     Alpine.data('tediProgressBar', progressBar);
     Alpine.data('tediProcessTimeline', processTimeline);
     Alpine.data('tediRating', rating);
+    Alpine.data('tediDateField', dateField);
 }
 
 if (window.Alpine) {

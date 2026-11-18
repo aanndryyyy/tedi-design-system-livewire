@@ -31,6 +31,9 @@
         'visibleTagCount' => '',
         'firstDayOfWeek' => 1,
         'open' => false,
+        'modal' => false,
+        'fullscreen' => false,
+        'calendarFullWidth' => false,
     ],
     'argTypes' => [
         'inputId' => [
@@ -271,12 +274,41 @@
                 'defaultValue' => ['summary' => 'false'],
             ],
         ],
+        'modal' => [
+            'description' => 'Opens the calendar in a modal (with explicit Cancel/Confirm) instead of the popover. `true` always uses the modal, `false` never; a breakpoint name (`sm | md | lg | xl`) uses the modal below that breakpoint and the popover from it upward.',
+            'control' => ['type' => 'select'],
+            'options' => [true, false, 'sm', 'md', 'lg', 'xl'],
+            'table' => [
+                'category' => 'Date Field inputs',
+                'type' => ['summary' => 'DateFieldModalInput'],
+                'defaultValue' => ['summary' => 'false'],
+            ],
+        ],
+        'fullscreen' => [
+            'description' => 'Render the calendar modal fullscreen. `true` always, `false` never; a breakpoint name (`sm | md | lg | xl`) makes it fullscreen below that breakpoint. Only applies when the calendar actually opens as a modal (see `modal`). Accepted but inert in this port: the standalone `tedi:modal` has no fullscreen styles.',
+            'control' => ['type' => 'select'],
+            'options' => [true, false, 'sm', 'md', 'lg', 'xl'],
+            'table' => [
+                'category' => 'Date Field inputs',
+                'type' => ['summary' => 'ModalFullscreen'],
+                'defaultValue' => ['summary' => 'false'],
+            ],
+        ],
+        'calendarFullWidth' => [
+            'description' => 'Stretch the calendar across the modal body; cells keep a square aspect ratio and scale with the modal width (see Calendar `fullWidth`). Only applies in modal mode.',
+            'control' => ['type' => 'boolean'],
+            'table' => [
+                'category' => 'inputs',
+                'type' => ['summary' => 'boolean'],
+                'defaultValue' => ['summary' => 'false'],
+            ],
+        ],
     ],
 ])
 
 {{--
-    Angular's argTypes also expose `localeCode` (§0.5), `useNativePicker`,
-    `modal`, `fullscreen` (breakpoint props, CONVENTIONS.md §7 item 1),
+    Angular's argTypes also expose `localeCode` (§0.5), `useNativePicker`
+    (a breakpoint prop, CONVENTIONS.md §7 item 1),
     `hideOnScroll` / `closeOnSelect` (runtime only), `formatDate` / `parseDate`
     (JS callables) and the matcher machinery (`disabledMatchers`, `minDate`,
     `maxDate`, `disablePast`, `disableFuture`, `availableDays`,
@@ -317,6 +349,9 @@
         :visible-tag-count="filled($visibleTagCount) ? (int) $visibleTagCount : null"
         :first-day-of-week="(int) $firstDayOfWeek"
         :open="(bool) $open"
+        :modal="$modal"
+        :fullscreen="$fullscreen"
+        :calendar-full-width="(bool) $calendarFullWidth"
     />
 
     @if ($feedback)
