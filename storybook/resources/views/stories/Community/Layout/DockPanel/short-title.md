@@ -1,0 +1,1 @@
+At 400 px the full title does not fit, so the heading and the panel name show shortTitle. Press Use full width to bring the full title back. Press Remove short title to see the default: without shortTitle, the full title truncates with an ellipsis and stays the accessible name. Docked panel and Bottom sheet switch the presentation; the title is measured again in each.

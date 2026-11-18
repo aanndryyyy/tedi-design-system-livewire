@@ -36,10 +36,12 @@
  *   src/date-field.js         tediDateField — resolves a breakpoint-name date-field `modal` (popover vs modal)
  *   src/toast-container.js    tediToastContainer + window.TediToast — ToastService: spawn, time, pause and announce toasts
  *   src/number-field.js       tediNumberField — the step buttons, their live disabled state and the value announcement
+ *   src/dock-panel.js         tediDockPanel, tediDockPanelSheet — the community dock panel: collapse, events, mobile sheet presentation
  */
 import { breakpoint } from './src/breakpoint.js';
 import { carousel } from './src/carousel.js';
 import { dateField } from './src/date-field.js';
+import { dockPanel, dockPanelSheet } from './src/dock-panel.js';
 import { dropdown } from './src/dropdown.js';
 import { fileUpload } from './src/file-upload.js';
 import { filter } from './src/filter.js';
@@ -80,6 +82,8 @@ function register(Alpine) {
     Alpine.data('tediDateField', dateField);
     Alpine.data('tediToastContainer', toastContainer);
     Alpine.data('tediNumberField', numberField);
+    Alpine.data('tediDockPanel', dockPanel);
+    Alpine.data('tediDockPanelSheet', dockPanelSheet);
 }
 
 if (window.Alpine) {
