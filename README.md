@@ -152,6 +152,7 @@ summary:
 | `radio-card` | `grouped` and `bordered` inherit from `radio-card-group` via `@aware`, so the nearest explicit value wins; Angular ORs them, so an explicit `:grouped="false"` / `:bordered="false"` on a card overrides a grouped/bordered group |
 | `text-field`, `textarea`, `number-field`, `search`, `date-input` | The `value` attribute is emitted only when non-empty; an unconditional `value=""` would blank a `wire:model`-bound field on the initial server render. `slider` is the deliberate exception — a `type="range"` input has no empty state |
 | `number-field` | Increment/decrement buttons are inert; attach handlers via `decrement-attributes` / `increment-attributes`. `LiveAnnouncer` and wrapper click-to-focus not ported |
+| `rating` | No `ControlValueAccessor`: `wire:model` / `x-model` written on the rating are copied onto every radio, and everything else lands on the `<tedi-rating>` root. Pass `:value` with them so the server render matches. The hover preview and live re-colouring after a pick need the bundled `tediRating` behaviour. `orientation` takes `horizontal` / `vertical` only (no breakpoint object). The dev-mode warning for `type="icon"` without `icons` is not ported. The read-only summary formats numbers with intl's `NumberFormatter` for `app()->getLocale()` |
 | `slider` | Thumb tooltip not ported — it needs `trackPosition`, the one `<tedi:tooltip>` prop that is itself unported. `tedi-slider--invalid` and `--dragging` dropped |
 | `textarea` | Slot content is a Blade extension used when `value` is empty; Angular has no `ng-content` here |
 | `form-field` | Both halves of Angular's DI — the field context the control injects and `contentChild(TEDI_FORM_FIELD_CONTROL)` — run through a `FieldContext` object the form-field (a class component) builds before its slot renders; controls find the nearest one through Blade's public `@aware` lookup (`Tedi::fieldContext()`). Only `tedi:text-field` / `tedi:textarea` register a control, so only they earn the clear button. Its state is server-rendered, then kept live by the bundled `tediFormField` behaviour: it follows typing, and `clear()` empties the control, fires `input` and `change` (so `wire:model` follows) and focuses it. Without the bundle the button keeps its render-time state and only `clear-attributes` (e.g. `wire:click`) act on a click; an `x-on:click` in `clear-attributes` runs after `clear()` rather than replacing it. The feedback text's id is not added to the control's `aria-describedby` (pass it yourself). `--tedi-form-field-control-scrollbar` is always `0px`. Click-to-focus on the box padding is not ported. `tedi-form-field--valid` / `--invalid` / `--disabled` dropped — no rule |
@@ -430,6 +431,7 @@ React. As of Angular 9.0.1-rc.1 that covers every directory under
 | `form/radio` | `<tedi:radio>` |
 | `form/radio-card` | `<tedi:radio-card>`, `<tedi:radio-card-group>` |
 | `form/radio-group` | `<tedi:radio-group>` |
+| `form/rating` | `<tedi:rating>` |
 | `form/search` | `<tedi:search>`, `<tedi:search-suggestion>`, `<tedi:search-footer-actions>` |
 | `form/slider` | `<tedi:slider>` |
 | `form/text-field` | `<tedi:text-field>` |
