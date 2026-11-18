@@ -35,17 +35,19 @@
         are computed from the live post-filter/sort/pagination row model. The
         RESULT is portable — pass `rowspan` on a cell and `groupStart` on a row
         yourself — but the computation is not.
-      • the built-in **filter popover** (`filterable` + `filterTemplate`,
-        `.tedi-table__filter-popover` / `__filter` / `__filter-actions`): its
-        body is an Angular `TemplateRef` bound to per-column draft state that
-        only the engine owns. `enableColumnFilters` — the plain filter ROW —
-        IS ported, as inert markup with an attributes hook per column. With
-        the popover go its small-viewport **filter modal**
-        (`TableFilterModalComponent`) and the three inputs that configure the
-        two (`filterModalBreakpoint`, `filterModalFullscreen`,
-        `filterPopoverWidth`, plus `filterable.popoverWidth`), and Angular 10's
-        footer configuration (`filterActions`, `filterable.actions`, the
-        `cancel` action).
+      • the filter popover's DRAFT state and its `clearOnClose` option: the
+        values inside the popover are the consumer's (`wire:model` /
+        `x-model`), so resetting them on open is a `wire:click` on the trigger
+        through the column's `filterTriggerAttributes`.
+      • the small-viewport **filter modal** (`TableFilterModalComponent`) and
+        its two inputs, `filterModalBreakpoint` and `filterModalFullscreen`
+        (deliberately not declared, §7.1). Showing the same filter in a modal
+        below a breakpoint would mean rendering the consumer's filter body
+        twice (duplicate ids and duplicate `wire:model` controls) or moving
+        one subtree between the popover and the modal at runtime, which a
+        Livewire morph undoes; and `tedi:modal` has no `fullscreen`, since
+        upstream's lives only in the unported `ModalService`. Below `sm` the
+        popover is used, positioned with `preventOverflow` as upstream's is.
       • `aria-rowcount` / `aria-rowindex`: both are derived from the paginated
         row model (`ariaRowIndexingEnabled = paginationEnabled && !interactive`,
         page offsets, total row count) which lives in the engine.
@@ -90,6 +92,37 @@
         seeded from each row's `expanded` flag, so the open classes and
         `aria-expanded` are correct in the static HTML too.
 
+    FILTER POPOVER (Angular 10's `filterable` + `filterTemplate`). A column
+    with `filterable` truthy AND a `filterTemplate` (Htmlable) gets the
+    icon-only `filter_alt` header button inside a `tedi:popover`
+    (`.tedi-table__filter-popover`, `bottom-end`, `preventOverflow`), whose
+    content is `.tedi-table__filter` > the template + `.tedi-table__filter-actions`.
+    Requiring the template keeps a plain `filterable` (the filter ROW's opt-in
+    below) from sprouting an empty popover. `filterable` may be `true` or
+    upstream's options as an array: `popoverWidth` (overrides the table's
+    `filterPopoverWidth`) and `actions` (overrides `filterActions`; `[]` hides
+    the footer). Repeated and unknown actions are dropped, as upstream's `Set`
+    drops repeats. The column's `filterActive` drives the trigger's selected /
+    filled state (upstream: `getFilterValue() !== undefined`).
+
+    Footer buttons are `apply` (primary), `clear` and `cancel` (secondary),
+    labelled `table.filter-{action}`. `handleFilterAction()` is the consumer's
+    (§3: outputs become attributes / events). Each click
+      1. runs whatever the column's `filterActionAttributes[action]` binds
+         (`wire:click`, `x-on:click`, …),
+      2. dispatches a bubbling `tedi-table:filter-action` DOM event from the
+         button, detail `{ column, action }`, and
+      3. closes the popover and returns focus to the trigger (`hide(true)`, as
+         upstream's `hidePopover(true)`).
+    `cancel` therefore closes without applying anything unless the consumer
+    binds it to something (e.g. resetting a deferred draft). A consumer
+    `x-on:click` in `filterActionAttributes` / `filterTriggerAttributes` is
+    run alongside the component's own handler, not instead of it.
+
+    `.tedi-table__filter-body` is dropped (§4): the vendored SCSS has no rule
+    for it. Its `<div>` is kept, so a multi-element template is still one flex
+    child of `.tedi-table__filter`.
+
     Angular's selector is the element `tedi-table`, so the root is that literal
     element with the `data-name` host attribute (§4).
 --}}
@@ -104,8 +137,12 @@
      * (left|center|right), vAlign (top|middle|bottom), rowHeader (body cells
      * render as <th scope="row">, naming their row), sortable, sort
      * (none|asc|desc), sortAttributes,
-     * width, minWidth, maxWidth, filterable, filter (Htmlable, replaces the default
-     * filter input), filterAttributes, attributes (extra <th> attributes).
+     * width, minWidth, maxWidth, filterable (true, or ['popoverWidth' => …,
+     * 'actions' => […]]), filter (Htmlable, replaces the default filter-row
+     * input), filterAttributes, filterTemplate (Htmlable body of the header's
+     * filter popover), filterActive, filterTriggerAttributes,
+     * filterActionAttributes (['apply' => [...], 'clear' => [...], 'cancel' => [...]]),
+     * attributes (extra <th> attributes).
      *
      * A sortable column with a string header becomes the sort button itself;
      * with an Htmlable (custom) header, the header renders as-is followed by an
@@ -194,6 +231,18 @@
     'selectAllAttributes' => [],
     /** Placeholder text of the default filter-row inputs. */
     'filterPlaceholder' => null,
+    /**
+     * Width of the column filter popover: small|medium|large, or any CSS length
+     * ('20rem'). 'none' lets the panel size to its content. A single column
+     * overrides it through `filterable` => ['popoverWidth' => …].
+     */
+    'filterPopoverWidth' => 'small',
+    /**
+     * Footer buttons of the column filter popover, in display order:
+     * apply|clear|cancel. A single column overrides it through
+     * `filterable` => ['actions' => […]]; an empty list hides the footer.
+     */
+    'filterActions' => ['clear', 'apply'],
 ])
 
 @use('Illuminate\Contracts\Support\Htmlable')
@@ -425,6 +474,36 @@
     }
 
     $expandExpr = fn ($rowId) => "tediTableExpanded[".\Illuminate\Support\Js::from((string) $rowId)."]";
+
+    // resolveFilterOptions() + filterTemplateFor(): the popover needs both the
+    // opt-in and a body (see the header).
+    $filterOptions = function (array $column) {
+        $flag = $column['filterable'] ?? false;
+
+        if (! $flag || ($column['filterTemplate'] ?? null) === null) {
+            return null;
+        }
+
+        return is_array($flag) ? $flag : [];
+    };
+    // filterActionsFor(): the column's list, else the table's; repeats dropped.
+    $filterActionsFor = fn (array $options) => array_values(array_unique(array_filter(
+        $options['actions'] ?? $filterActions,
+        fn ($action) => in_array($action, ['apply', 'clear', 'cancel'], true),
+    )));
+    // As $bag, but HTML-escaped (CONVENTIONS.md §6): these bags carry the
+    // component's own Alpine expressions next to consumer values.
+    $escapedBag = fn (array $consumer, array $defaults = []) => (new ComponentAttributeBag)->merge(
+        array_merge(array_filter($defaults, fn ($v) => $v !== null), $consumer)
+    );
+    // Runs the component's own click handler alongside a consumer's x-on:click
+    // instead of letting the consumer's replace it.
+    $withClick = function (array $consumer, string $handler) {
+        $own = isset($consumer['x-on:click']) ? $handler.'; '.$consumer['x-on:click'] : $handler;
+        unset($consumer['x-on:click']);
+
+        return ['x-on:click' => $own] + $consumer;
+    };
 @endphp
 
 <tedi-table
@@ -538,10 +617,11 @@
                                 $sortAfterHeader = $isSortable && $customHeader;
                                 $srHeaderLabel = $blankHeader($column) ? ($column['label'] ?? null) : null;
                                 $labelId = $headerLabelId($column);
-                                // headerLabelledBy(): keeps the sort button out of the header's name.
-                                // The filter popover and column reordering are not ported, so the
-                                // icon-only sort button is the only control that can sit here.
-                                $labelledBy = $sortAfterHeader
+                                $columnFilter = $filterOptions($column);
+                                // headerLabelledBy(): keeps the icon-only sort and filter buttons out
+                                // of the header's name. Column reordering is not ported, so those two
+                                // are the only controls that can sit here.
+                                $labelledBy = $sortAfterHeader || $columnFilter !== null
                                     ? ($srHeaderLabel !== null ? $labelId.'-sr '.$labelId : $labelId)
                                     : null;
                             @endphp
@@ -580,6 +660,69 @@
                                             :aria-label="__('tedi::tedi.table.sort.'.(isset($sortIcons[$sort]) ? $sort : 'none'), ['columnLabel' => $columnLabel($column)])"
                                             :attributes="$bag($column['sortAttributes'] ?? [])"
                                         />
+                                    @endif
+                                    @if ($columnFilter !== null)
+                                        @php
+                                            $filterPopoverId = $resolvedId.'-filter-popover-'.$column['key'];
+                                            $filterIsActive = (bool) ($column['filterActive'] ?? false);
+                                            $filterActionList = $filterActionsFor($columnFilter);
+                                            $filterActionAttributes = $column['filterActionAttributes'] ?? [];
+                                            // tedi-popover-trigger stacked on the header button, as upstream's
+                                            // `<button tedi-popover-trigger tedi-table-header-button>`.
+                                            $filterTriggerAttributes = $escapedBag(
+                                                $withClick($column['filterTriggerAttributes'] ?? [], 'toggle()'),
+                                                [
+                                                    'tedi-popover-trigger' => true,
+                                                    'tabindex' => '0',
+                                                    'role' => 'button',
+                                                    'aria-haspopup' => 'dialog',
+                                                    'aria-expanded' => 'false',
+                                                    'id' => $filterPopoverId.'_trigger',
+                                                    'x-ref' => 'trigger',
+                                                    'x-bind:aria-expanded' => 'open',
+                                                    'x-bind:aria-controls' => 'open ? '.\Illuminate\Support\Js::from($filterPopoverId).' : null',
+                                                ],
+                                            );
+                                        @endphp
+                                        <tedi:popover
+                                            class="tedi-table__filter-popover"
+                                            position="bottom-end"
+                                            :prevent-overflow="true"
+                                            :container-id="$filterPopoverId"
+                                        >
+                                            <x-slot:trigger>
+                                                <tedi:table-header-button
+                                                    icon="filter_alt"
+                                                    :selected="$filterIsActive"
+                                                    :filled="$filterIsActive"
+                                                    :aria-label="__('tedi::tedi.table.filter-button-aria', ['column' => $columnLabel($column)])"
+                                                    :attributes="$filterTriggerAttributes"
+                                                />
+                                            </x-slot:trigger>
+
+                                            <tedi:popover-content :max-width="$columnFilter['popoverWidth'] ?? $filterPopoverWidth">
+                                                <div class="tedi-table__filter">
+                                                    <div>{!! $render($column['filterTemplate']) !!}</div>
+                                                    @if (count($filterActionList) > 0)
+                                                        <div class="tedi-table__filter-actions">
+                                                            @foreach ($filterActionList as $filterAction)
+                                                                {{-- handleFilterAction(): the consumer's binding, the
+                                                                     tedi-table:filter-action event, then close. --}}
+                                                                <tedi:button
+                                                                    size="small"
+                                                                    type="button"
+                                                                    :variant="$filterAction === 'apply' ? 'primary' : 'secondary'"
+                                                                    :attributes="$escapedBag($withClick(
+                                                                        $filterActionAttributes[$filterAction] ?? [],
+                                                                        '$dispatch(\'tedi-table:filter-action\', '.\Illuminate\Support\Js::from(['column' => (string) $column['key'], 'action' => $filterAction]).'); hide(true)',
+                                                                    ))"
+                                                                >{{ __('tedi::tedi.table.filter-'.$filterAction) }}</tedi:button>
+                                                            @endforeach
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </tedi:popover-content>
+                                        </tedi:popover>
                                     @endif
                                 </span>
                             </th>
