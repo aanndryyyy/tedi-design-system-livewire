@@ -537,7 +537,40 @@ BLADE);
         $this->assertStringContainsString('x-bind:disabled="!canNext"', $withArrows);
         // One dot per positionCount(), not per slide.
         $this->assertStringContainsString('x-for="i in positionCount"', $dots);
-        $this->assertStringContainsString('Show slide __N__', html_entity_decode($dots, ENT_QUOTES));
+        // Angular 10 (#888): "Slide N", the dots grouped as "Slides", the active one aria-current.
+        $this->assertStringContainsString("'Slide __N__'", html_entity_decode($dots, ENT_QUOTES));
+        $this->assertStringContainsString('x-bind:aria-current="isActive(i - 1) ? \'true\' : null"', html_entity_decode($dots, ENT_QUOTES));
+        $this->assertMatchesRegularExpression('/<tedi-carousel-indicators role="group" aria-label="Slides">/', $dots);
+        $this->assertMatchesRegularExpression('/<tedi-carousel-indicators role="group"/', $withArrows);
+        $this->assertDoesNotMatchRegularExpression('/<tedi-carousel-indicators[^>]*role=/', $numbers);
+    }
+
+    public function test_carousel_content_names_the_region_and_announces_its_role_once(): void
+    {
+        $region = function (string $blade): string {
+            preg_match('/<div\s[^>]*role="region"[^>]*>/s', Blade::render($blade), $m);
+
+            return $m[0];
+        };
+
+        // Angular 10 (#888): unnamed, the region gets the default "Carousel"
+        // name and no role description, so it is not read as "carousel carousel".
+        $default = $region('<tedi:carousel-content>s</tedi:carousel-content>');
+        $this->assertStringContainsString('aria-label="Carousel"', $default);
+        $this->assertStringNotContainsString('aria-roledescription', $default);
+        $this->assertStringContainsString(
+            'aria-roledescription="slide"',
+            Blade::render('<tedi:carousel-content><tedi:carousel-slide>s</tedi:carousel-slide></tedi:carousel-content>'),
+        );
+
+        $labelled = $region('<tedi:carousel-content aria-label="News">s</tedi:carousel-content>');
+        $this->assertStringContainsString('aria-roledescription="carousel"', $labelled);
+        $this->assertStringContainsString('aria-label="News"', $labelled);
+
+        $byHeading = $region('<tedi:carousel-content aria-labelledby="news-heading">s</tedi:carousel-content>');
+        $this->assertStringContainsString('aria-roledescription="carousel"', $byHeading);
+        $this->assertStringContainsString('aria-labelledby="news-heading"', $byHeading);
+        $this->assertStringNotContainsString('aria-label=', $byHeading);
     }
 
     public function test_carousel_content_renders_body_wrapper_and_navigation_slot(): void

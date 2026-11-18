@@ -62,8 +62,10 @@
      * first and last reachable positions and disables the corresponding arrow.
      */
     'loop' => true,
-    /** Accessible label for the carousel region. Falls back to the translated "carousel" label. */
+    /** Accessible name for the carousel. Without it or `ariaLabelledby`, the name defaults to the `carousel.label` translation. */
     'ariaLabel' => null,
+    /** Id of the element that names the carousel, typically its heading. */
+    'ariaLabelledby' => null,
 ])
 
 @php
@@ -74,20 +76,28 @@
         'swipeThreshold' => min(max(is_numeric($swipeThreshold) ? (float) $swipeThreshold : 0.3, 0), 1),
         'transitionMs' => (int) $transitionMs,
     ];
+
+    // Angular 10 (#888): the region announces its role description only when
+    // it is named by the consumer, so the default name is not "carousel carousel".
+    $label = trim((string) $ariaLabel) ?: null;
+    $labelledby = trim((string) $ariaLabelledby) ?: null;
+    $named = $label || $labelledby;
 @endphp
 
 <div class="tedi-carousel__body">
     <div
         tabindex="0"
         role="region"
-        aria-roledescription="carousel"
-        aria-label="{{ $ariaLabel ?? __('tedi::tedi.carousel') }}"
         aria-live="off"
         {{ $attributes->class([
             'tedi-carousel__content',
             'tedi-carousel__content--fade-right' => $fade && $slidesPerView > 1,
             'tedi-carousel__content--fade-x' => $fade && $slidesPerView <= 1,
-        ]) }}
+        ])->merge(array_filter([
+            'aria-roledescription' => $named ? __('tedi::tedi.carousel') : null,
+            'aria-label' => $label ?? ($labelledby ? null : __('tedi::tedi.carousel.label')),
+            'aria-labelledby' => $labelledby,
+        ])) }}
         x-init="configure({ ...{{ \Illuminate\Support\Js::from($config) }}, viewport: $el })"
         x-on:keydown="keydown($event)"
         x-on:pointerdown="pointerDown($event)"

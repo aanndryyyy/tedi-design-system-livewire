@@ -19,6 +19,15 @@ class LayoutComponentsTest extends TestCase
         $this->assertStringContainsString('40%', $html);
     }
 
+    public function test_progress_bar_visible_value_is_hidden_from_screen_readers(): void
+    {
+        // Angular 10 (#890): the <progress> already conveys the value.
+        foreach (['horizontal', 'bottom'] as $position) {
+            $html = Blade::render('<tedi:progress-bar :value="40" label="Laadimine" value-position="'.$position.'" />');
+            $this->assertMatchesRegularExpression('/<span[^>]*tedi-progress-bar__value[^>]*aria-hidden="true"|<span[^>]*aria-hidden="true"[^>]*tedi-progress-bar__value/', $html);
+        }
+    }
+
     public function test_progress_bar_size_small(): void
     {
         $html = Blade::render('<tedi:progress-bar :value="20" size="small" />');

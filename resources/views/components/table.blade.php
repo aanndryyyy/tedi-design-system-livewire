@@ -43,7 +43,9 @@
         the popover go its small-viewport **filter modal**
         (`TableFilterModalComponent`) and the three inputs that configure the
         two (`filterModalBreakpoint`, `filterModalFullscreen`,
-        `filterPopoverWidth`, plus `filterable.popoverWidth`).
+        `filterPopoverWidth`, plus `filterable.popoverWidth`), and Angular 10's
+        footer configuration (`filterActions`, `filterable.actions`, the
+        `cancel` action).
       • `aria-rowcount` / `aria-rowindex`: both are derived from the paginated
         row model (`ariaRowIndexingEnabled = paginationEnabled && !interactive`,
         page offsets, total row count) which lives in the engine.
@@ -95,18 +97,28 @@
     /** Stable identifier; emitted as the inner <table>'s id and used for synthetic ids. */
     'id' => null,
     /**
-     * Column[]. Keys: key (required), header, footer, align (left|center|right;
+     * Column[]. Keys: key (required), header, label (names a blank or non-text
+     * header for screen readers and in the sort label; falls back to a string
+     * header, then the key), footer, align (left|center|right;
      * body / footer cells, and the header unless headerAlign is set), headerAlign
-     * (left|center|right), vAlign (top|middle|bottom), sortable, sort (none|asc|desc), sortAttributes,
+     * (left|center|right), vAlign (top|middle|bottom), rowHeader (body cells
+     * render as <th scope="row">, naming their row), sortable, sort
+     * (none|asc|desc), sortAttributes,
      * width, minWidth, maxWidth, filterable, filter (Htmlable, replaces the default
      * filter input), filterAttributes, attributes (extra <th> attributes).
+     *
+     * A sortable column with a string header becomes the sort button itself;
+     * with an Htmlable (custom) header, the header renders as-is followed by an
+     * icon-only sort button named "Sort by {label} …" (Angular 10, #817).
      */
     'columns' => [],
     /**
      * Row[]. Keys: id, cells (keyed by column key; a scalar/Htmlable, or an array
      * with value/rowspan/align/vAlign/attributes), selected, subRow, groupStart,
      * expandable, expanded, sub (Htmlable sub-component content), selectAttributes,
-     * selectDisabled, selectIndeterminate, expandAttributes, ariaLabel, attributes.
+     * selectDisabled, selectIndeterminate, selectionLabel (accessible name of the
+     * row's checkbox / radio; defaults to "Select row" — upstream's
+     * `rowSelectionLabel`), expandAttributes, ariaLabel, attributes.
      */
     'rows' => [],
     /** medium|small — visual size. */
@@ -193,6 +205,15 @@
     $resolvedId = $id ?: \Tedi\Livewire\Tedi::id('tedi-table');
 
     $render = fn ($value) => $value instanceof Htmlable ? $value->toHtml() : e((string) ($value ?? ''));
+
+    // resolveColumnLabel(): meta.label, else a string header, else the column id.
+    $columnLabel = fn (array $column) => $column['label']
+        ?? (is_scalar($column['header'] ?? null) ? (string) $column['header'] : $column['key']);
+    // getSrOnlyHeaderLabel(): only a blank header gets an sr-only name, from `label`.
+    $blankHeader = fn (array $column) => ! (($column['header'] ?? null) instanceof Htmlable)
+        && trim((string) ($column['header'] ?? '')) === '';
+    // headerLabelId()
+    $headerLabelId = fn (array $column) => $resolvedId.'-header-'.$column['key'];
 
     // Consumer-supplied attributes win over the component's computed defaults,
     // mirroring how $attributes->merge() behaves on a root element (§6).
@@ -496,7 +517,8 @@
                                         :name="$resolvedId.'-select-all'"
                                         :checked="(bool) $selectAllChecked"
                                         :attributes="$bag($selectAllAttributes, [
-                                            'aria-label' => __('tedi::tedi.table.select-all.'.($selectAllChecked ? 'true' : 'false')),
+                                            // Angular 10 (#893): one stable name; the state is the checkbox's.
+                                            'aria-label' => __('tedi::tedi.table.select-all'),
                                             'x-init' => $selectAllIndeterminate ? '$el.indeterminate = true' : null,
                                         ])"
                                     />
@@ -510,6 +532,18 @@
                                 // headerAlign falls back to align (#670).
                                 $headerAlign = $column['headerAlign'] ?? $column['align'] ?? null;
                                 $style = $cellStyle($entry['stickyId'], $column['width'] ?? null, $column['minWidth'] ?? null, $column['maxWidth'] ?? null);
+                                // shouldRenderSortableHeader() vs shouldRenderSortButtonAfterHeader():
+                                // a custom (Htmlable) header renders as-is, then an icon-only sort button.
+                                $customHeader = ($column['header'] ?? null) instanceof Htmlable;
+                                $sortAfterHeader = $isSortable && $customHeader;
+                                $srHeaderLabel = $blankHeader($column) ? ($column['label'] ?? null) : null;
+                                $labelId = $headerLabelId($column);
+                                // headerLabelledBy(): keeps the sort button out of the header's name.
+                                // The filter popover and column reordering are not ported, so the
+                                // icon-only sort button is the only control that can sit here.
+                                $labelledBy = $sortAfterHeader
+                                    ? ($srHeaderLabel !== null ? $labelId.'-sr '.$labelId : $labelId)
+                                    : null;
                             @endphp
                             <th
                                 scope="col"
@@ -520,17 +554,32 @@
                                 ], $stickyClasses($entry['stickyId'])))
                                 @if ($style) style="{{ $style }}" @endif
                                 @if ($isSortable) aria-sort="{{ $ariaSorts[$sort] ?? 'none' }}" @endif
+                                @if ($labelledBy) aria-labelledby="{{ $labelledBy }}" @endif
                                 {{ $bag($column['attributes'] ?? []) }}
                             >
+                                @if ($srHeaderLabel !== null)
+                                    <span class="sr-only" id="{{ $labelId }}-sr">{{ $srHeaderLabel }}</span>
+                                @endif
                                 <span class="tedi-table__header-content">
-                                    @if ($isSortable)
+                                    <span class="tedi-table__header-label" id="{{ $labelId }}">
+                                        @if ($isSortable && ! $sortAfterHeader)
+                                            <tedi:table-header-button
+                                                :icon="$sortIcons[$sort] ?? 'unfold_more'"
+                                                :selected="$sort !== 'none'"
+                                                :attributes="$bag($column['sortAttributes'] ?? [])"
+                                            >{!! $render($column['header'] ?? '') !!}</tedi:table-header-button>
+                                        @else
+                                            {!! $render($column['header'] ?? '') !!}
+                                        @endif
+                                    </span>
+                                    @if ($sortAfterHeader)
+                                        {{-- sortAriaLabel(): the next action + the column. --}}
                                         <tedi:table-header-button
                                             :icon="$sortIcons[$sort] ?? 'unfold_more'"
                                             :selected="$sort !== 'none'"
+                                            :aria-label="__('tedi::tedi.table.sort.'.(isset($sortIcons[$sort]) ? $sort : 'none'), ['columnLabel' => $columnLabel($column)])"
                                             :attributes="$bag($column['sortAttributes'] ?? [])"
-                                        >{!! $render($column['header'] ?? '') !!}</tedi:table-header-button>
-                                    @else
-                                        {!! $render($column['header'] ?? '') !!}
+                                        />
                                     @endif
                                 </span>
                             </th>
@@ -554,7 +603,7 @@
                                             :name="$filterId"
                                             :placeholder="$filterPlaceholder ?? __('tedi::tedi.table.filter-placeholder')"
                                             :attributes="$bag($column['filterAttributes'] ?? [], [
-                                                'aria-label' => trim(__('tedi::tedi.table.filter').' '.strip_tags($render($column['header'] ?? ''))),
+                                                'aria-label' => __('tedi::tedi.table.filter-input', ['column' => $columnLabel($column)]),
                                             ])"
                                         />
                                     </tedi:form-field>
@@ -630,7 +679,7 @@
                                                 :checked="(bool) ($row['selected'] ?? false)"
                                                 :disabled="(bool) ($row['selectDisabled'] ?? false)"
                                                 :attributes="$bag($row['selectAttributes'] ?? [], [
-                                                    'aria-label' => __('tedi::tedi.table.select-row.'.(($row['selected'] ?? false) ? 'true' : 'false')),
+                                                    'aria-label' => $row['selectionLabel'] ?? __('tedi::tedi.table.select-row'),
                                                     'x-init' => ($row['selectIndeterminate'] ?? false) ? '$el.indeterminate = true' : null,
                                                     'x-on:click' => '$event.stopPropagation()',
                                                 ])"
@@ -642,7 +691,7 @@
                                                 :checked="(bool) ($row['selected'] ?? false)"
                                                 :disabled="(bool) ($row['selectDisabled'] ?? false)"
                                                 :attributes="$bag($row['selectAttributes'] ?? [], [
-                                                    'aria-label' => __('tedi::tedi.table.select-row.'.(($row['selected'] ?? false) ? 'true' : 'false')),
+                                                    'aria-label' => $row['selectionLabel'] ?? __('tedi::tedi.table.select-row'),
                                                     'x-on:click' => '$event.stopPropagation()',
                                                 ])"
                                             />
@@ -662,7 +711,7 @@
                                                     :close-text="$expandCloseText"
                                                     :id="$resolvedId.'-expand-'.$rowId"
                                                     :aria-controls="($row['sub'] ?? null) !== null ? $subRowId : null"
-                                                    :aria-label="$expandIconOnly ? __('tedi::tedi.table.'.($isExpanded ? 'collapse-row' : 'expand-row')) : null"
+                                                    :aria-label="$expandIconOnly ? __('tedi::tedi.table.row-details') : null"
                                                     :attributes="$bag($row['expandAttributes'] ?? [], [
                                                         'x-on:click.stop' => '',
                                                     ])"
@@ -680,8 +729,13 @@
                                 @endphp
 
                                 @if ($rowspan !== 0)
-                                    @php $style = $cellStyle($entry['stickyId'], withSize: false); @endphp
-                                    <td
+                                    @php
+                                        $style = $cellStyle($entry['stickyId'], withSize: false);
+                                        // rowHeader (Angular 10, #876): the cell heads its row.
+                                        $cellTag = ($column['rowHeader'] ?? false) ? 'th' : 'td';
+                                    @endphp
+                                    <{{ $cellTag }}
+                                        @if ($cellTag === 'th') scope="row" @endif
                                         @class(array_merge([
                                             'tedi-table__cell',
                                             'tedi-table__cell--align-'.($cellData['align'] ?? $column['align'] ?? '') => ($cellData['align'] ?? $column['align'] ?? false),
@@ -690,7 +744,7 @@
                                         @if ($style) style="{{ $style }}" @endif
                                         @if ($rowspan !== null && $rowspan > 1) rowspan="{{ $rowspan }}" @endif
                                         {{ $bag($cellData['attributes'] ?? []) }}
-                                    >{!! $render($cellData['value'] ?? null) !!}</td>
+                                    >{!! $render($cellData['value'] ?? null) !!}</{{ $cellTag }}>
                                 @endif
                                 @endif
                             @endforeach
@@ -709,7 +763,9 @@
                                     class="tedi-table__cell tedi-table__cell--sub-component"
                                     id="{{ $subRowId }}"
                                     colspan="{{ max($leafColumnCount, 1) }}"
-                                    @if ($isExpanded) role="region" aria-label="{{ __('tedi::tedi.table.row-details') }}" @else inert @endif
+                                    {{-- No region role (Angular 10): one landmark per open row would pile up
+                                         (axe landmark-unique). The toggle's aria-controls points here. --}}
+                                    @if (! $isExpanded) inert @endif
                                     x-bind:inert="{{ $openExpr }} ? null : ''"
                                 >
                                     <div class="tedi-table__sub-component-wrapper">

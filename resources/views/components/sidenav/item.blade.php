@@ -84,8 +84,9 @@
     $renderAsButton = ! $hasLink || ($hasDropdown && ($isCollapsed || $mobile));
     $ariaExpanded = $open ? 'true' : 'false';
 
-    // 'sidenav.toggleSubmenu' | tediTranslate: textContent(): open
-    $submenuLabel = __('tedi::tedi.sidenav.toggleSubmenu.'.($open ? 'true' : 'false'), ['value' => $label]);
+    // 'sidenav.toggleSubmenu' | tediTranslate: textContent() — Angular 10 drops
+    // the open/closed wording; aria-expanded already conveys the state.
+    $submenuLabel = __('tedi::tedi.sidenav.toggleSubmenu', ['value' => $label]);
 
     $tooltipEnabled = $isCollapsed;
 

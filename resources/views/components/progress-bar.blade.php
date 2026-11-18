@@ -102,7 +102,7 @@
                 ></progress>
 
                 @if ($showValue && $valuePosition === 'horizontal')
-                    <tedi:form.label as="span" size="small" class="tedi-progress-bar__value">
+                    <tedi:form.label as="span" size="small" class="tedi-progress-bar__value" aria-hidden="true">
                         {{ $formattedValue }}
                     </tedi:form.label>
                 @endif
@@ -112,7 +112,7 @@
                 {{ $slot }}
 
                 @if ($showValue && $valuePosition === 'bottom')
-                    <tedi:form.label as="span" size="small" class="tedi-progress-bar__value tedi-progress-bar__value--bottom">
+                    <tedi:form.label as="span" size="small" class="tedi-progress-bar__value tedi-progress-bar__value--bottom" aria-hidden="true">
                         {{ $formattedValue }}
                     </tedi:form.label>
                 @endif

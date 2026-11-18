@@ -915,4 +915,71 @@ class TableComponentsTest extends TestCase
         $this->assertStringContainsString('Veerud (2)', $html);
         $this->assertStringContainsString('wire:click="toggle(&#039;a&#039;)"', $html);
     }
+
+    // -- Angular 10 ----------------------------------------------------------
+
+    public function test_header_content_is_wrapped_in_a_labelled_span(): void
+    {
+        $html = Blade::render('<tedi:table id="t" :columns="[[\'key\' => \'name\', \'header\' => \'Nimi\']]" :rows="[]" />');
+        $this->assertMatchesRegularExpression('/<span class="tedi-table__header-label" id="t-header-name">\s*Nimi\s*<\/span>/', $html);
+        // No controls next to it, so the <th> is named by its own text.
+        $this->assertStringNotContainsString('aria-labelledby', $html);
+    }
+
+    public function test_sortable_custom_header_gets_an_icon_only_sort_button_after_it(): void
+    {
+        // #817 / #893: the custom header renders as-is, then a sort button named
+        // by the next action and the column; the <th> is named by the header only.
+        $html = Blade::render(<<<'BLADE'
+@php $header = new \Illuminate\Support\HtmlString('<em>Hind</em>'); @endphp
+<tedi:table id="t" :columns="[['key' => 'price', 'header' => $header, 'label' => 'Hind', 'sortable' => true, 'sort' => 'asc']]" :rows="[]" />
+BLADE);
+        $this->assertMatchesRegularExpression('/<span class="tedi-table__header-label" id="t-header-price">\s*<em>Hind<\/em>\s*<\/span>/', $html);
+        $this->assertStringContainsString('aria-label="Sort by Hind descending"', $html);
+        $this->assertStringContainsString('aria-labelledby="t-header-price"', $html);
+        $this->assertSame(1, substr_count($html, '<button'));
+
+        // A string header is the sort button itself, as before.
+        $plain = Blade::render('<tedi:table id="t" :columns="[[\'key\' => \'n\', \'header\' => \'Nimi\', \'sortable\' => true]]" :rows="[]" />');
+        $this->assertMatchesRegularExpression('/<span class="tedi-table__header-label" id="t-header-n">\s*<button/', $plain);
+        $this->assertStringNotContainsString('aria-labelledby', $plain);
+    }
+
+    public function test_blank_header_is_named_by_its_label_for_screen_readers(): void
+    {
+        $html = Blade::render('<tedi:table id="t" :columns="[[\'key\' => \'actions\', \'header\' => \'\', \'label\' => \'Tegevused\']]" :rows="[]" />');
+        $this->assertStringContainsString('<span class="sr-only" id="t-header-actions-sr">Tegevused</span>', $html);
+
+        // A visible header is not doubled.
+        $named = Blade::render('<tedi:table id="t" :columns="[[\'key\' => \'n\', \'header\' => \'Nimi\', \'label\' => \'Nimi\']]" :rows="[]" />');
+        $this->assertStringNotContainsString('t-header-n-sr', $named);
+    }
+
+    public function test_selection_labels_are_stable_and_overridable_per_row(): void
+    {
+        // #893: "Select all rows" / "Select row" whatever the state.
+        $rows = "[['id' => 1, 'selected' => true, 'cells' => []], ['id' => 2, 'selectionLabel' => 'Vali Mari', 'cells' => []]]";
+        $html = Blade::render('<tedi:table id="t" enable-row-selection :select-all-checked="true" :columns="[]" :rows="'.$rows.'" />');
+        $this->assertStringContainsString('aria-label="Select all rows"', $html);
+        $this->assertStringContainsString('aria-label="Select row"', $html);
+        $this->assertStringContainsString('aria-label="Vali Mari"', $html);
+        $this->assertStringNotContainsString('Deselect', $html);
+    }
+
+    public function test_row_header_column_renders_th_scope_row(): void
+    {
+        $columns = "[['key' => 'name', 'header' => 'Nimi', 'rowHeader' => true], ['key' => 'age', 'header' => 'Vanus']]";
+        $html = Blade::render('<tedi:table :columns="'.$columns.'" :rows="[[\'cells\' => [\'name\' => \'Mari\', \'age\' => 30]]]" />');
+        $this->assertMatchesRegularExpression('/<th\s+scope="row"\s+class="tedi-table__cell"[^>]*>Mari<\/th>/', $html);
+        $this->assertMatchesRegularExpression('/<td\s+class="tedi-table__cell"[^>]*>30<\/td>/', $html);
+    }
+
+    public function test_expand_toggle_is_named_row_details_and_the_sub_row_is_not_a_landmark(): void
+    {
+        $rows = "[['id' => 1, 'expandable' => true, 'expanded' => true, 'sub' => 'Detail', 'cells' => []]]";
+        $html = Blade::render('<tedi:table id="t" expandable :columns="[]" :rows="'.$rows.'" />');
+        $this->assertStringContainsString('aria-label="Row details"', $html);
+        $this->assertStringNotContainsString('role="region"', $html);
+        $this->assertStringContainsString('aria-controls="t-sub-1"', $html);
+    }
 }

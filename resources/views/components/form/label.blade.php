@@ -27,7 +27,7 @@
     'as' => 'label',
     /** small|default. Falls back to the wrapping form-field's size. */
     'size' => null,
-    /** Whether the field is required; appends a "*" and a screen-reader hint. */
+    /** Shows the required asterisk. It is hidden from screen readers (Angular 10, #889), so mark the control `required` too. */
     'required' => false,
     /** primary|secondary */
     'color' => 'secondary',
@@ -50,6 +50,5 @@
     {{ $slot }}
     @if ($required)
         <span class="tedi-label--required" aria-hidden="true">*</span>
-        <span class="sr-only">, {{ __('tedi::tedi.required') }}</span>
     @endif
 </{{ $as }}>

@@ -23,7 +23,15 @@
     $showSlideLabel = __('tedi::tedi.carousel.showSlide', ['slideNumber' => '__N__']);
 @endphp
 
-<tedi-carousel-indicators {{ $attributes }}>
+@php
+    // Angular 10 (#888): the dots (or arrows) form a group named "Slides".
+    $isGroup = $variant === 'dots' || $withArrows;
+@endphp
+
+<tedi-carousel-indicators {{ $attributes->merge(array_filter([
+    'role' => $isGroup ? 'group' : null,
+    'aria-label' => $isGroup ? __('tedi::tedi.carousel.slides') : null,
+])) }}>
     @if ($withArrows)
         <tedi:button type="button" variant="neutral" :icon-only="true" :aria-label="__('tedi::tedi.carousel.moveBack')" x-bind:disabled="!canPrev" @click="prev()">
             <tedi:icon name="arrow_back" :size="18" />
@@ -37,6 +45,7 @@
                 class="tedi-carousel__indicator"
                 x-bind:class="{ 'tedi-carousel__indicator--active': isActive(i - 1) }"
                 x-bind:aria-label="{{ \Illuminate\Support\Js::from($showSlideLabel) }}.replace('__N__', i)"
+                x-bind:aria-current="isActive(i - 1) ? 'true' : null"
                 @click="go(i - 1)"
             ></button>
         </template>

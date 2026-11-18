@@ -95,11 +95,13 @@ class FormFieldComponentsTest extends TestCase
         }
     }
 
-    public function test_label_required_renders_marker_and_sr_hint(): void
+    public function test_label_required_renders_only_a_hidden_marker(): void
     {
+        // Angular 10 (#889): no ", Required field" hint; the control's own
+        // `required` announces it, so the asterisk is aria-hidden.
         $html = Blade::render('<tedi:form.label required>Nimi</tedi:form.label>');
-        $this->assertStringContainsString('tedi-label--required', $html);
-        $this->assertStringContainsString('sr-only', $html);
+        $this->assertStringContainsString('<span class="tedi-label--required" aria-hidden="true">*</span>', $html);
+        $this->assertStringNotContainsString('sr-only', $html);
 
         $html = Blade::render('<tedi:form.label>Nimi</tedi:form.label>');
         $this->assertStringNotContainsString('tedi-label--required', $html);

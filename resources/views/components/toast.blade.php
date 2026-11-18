@@ -30,8 +30,8 @@
     so here `role` is accepted for API parity but INERT. A consumer who needs
     the announcement must make it from a live region that already exists on the
     page (as upstream's announcer does), not from the toast markup.
-    The close button is named after the toast — the `toast.close` translation
-    with the title, or the generic "close" when there is no title.
+    The close button is the alert's: titled "Close", and described by the
+    toast's title when there is one (Angular 10, #898/#900 — `toast.close` is gone).
     Upstream also pauses the auto-close timer while the toast holds keyboard
     focus (`focusIn` / `focusOut` outputs); like `pauseOnHover`, that belongs to
     the unported timer.
@@ -56,12 +56,6 @@
     'closeAttributes' => [],
 ])
 
-@php
-    $closeLabel = $title
-        ? __('tedi::tedi.toast.close', ['title' => $title])
-        : __('tedi::tedi.close');
-@endphp
-
 <tedi-toast {{ $attributes }}>
     <div class="tedi-toast__wrapper">
         <tedi:alert
@@ -69,7 +63,6 @@
             :type="$type"
             :icon="$icon"
             :show-close="true"
-            :close-aria-label="$closeLabel"
             :close-delay="300"
             role="none"
             :close-attributes="$closeAttributes"

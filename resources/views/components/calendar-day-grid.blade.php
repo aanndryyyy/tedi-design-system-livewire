@@ -18,8 +18,10 @@
     * There is no "narrow" (one-letter) weekday translation key, so Angular's
       `getWeekdayNames(…, "narrow", …)` column headers map to the `-short` keys
       ("Mon", "Tue", …) instead of single letters.
-    * The long `aria-label` date is built as "<weekday>, <d>. <month> <Y>" from
-      the same keys rather than `Intl`-formatted (`formatLocaleDateLong`).
+    * The day's `aria-label` is built as "<weekday>, <d>. <month>" from the same
+      keys rather than `Intl`-formatted (`formatLocaleDayLabel`). As upstream
+      (Angular 10, #895), the year is appended only to days from another year,
+      because the grid's own name already carries it.
     * `disabledMatchers` (matcher objects / predicates) and the callable forms of
       `availableDays` / `unavailableDays` / `dayStatus` have no server-side
       analogue — they become flat `Y-m-d` arrays and a `Y-m-d`-keyed map.
@@ -253,20 +255,15 @@
     'aria-label' => $gridAriaLabel,
     'aria-multiselectable' => in_array($mode, ['multiple', 'range'], true) ? 'true' : null,
 ])) }}>
-    <thead>
-        <tr class="tedi-calendar-day-grid__header" role="row">
+    {{-- Angular 10 (#895): the weekday header row is hidden from screen readers;
+         each day's own label already names its weekday. --}}
+    <thead aria-hidden="true">
+        <tr class="tedi-calendar-day-grid__header">
             @if ($showWeekNumbers)
-                <th class="tedi-calendar-day-grid__week-number-header" scope="col">
-                    <span class="sr-only">{{ __('tedi::tedi.date-picker.week-number-header') }}</span>
-                </th>
+                <th class="tedi-calendar-day-grid__week-number-header"></th>
             @endif
             @foreach ($columnKeys as $columnKey)
-                <th
-                    class="tedi-calendar-day-grid__weekday"
-                    role="columnheader"
-                    scope="col"
-                    aria-label="{{ __('tedi::tedi.date-picker.'.$columnKey) }}"
-                >{{ __('tedi::tedi.date-picker.'.$columnKey.'-short') }}</th>
+                <th class="tedi-calendar-day-grid__weekday">{{ __('tedi::tedi.date-picker.'.$columnKey.'-short') }}</th>
             @endforeach
         </tr>
     </thead>
@@ -337,7 +334,8 @@
 
                             $status = $statusMap[$dayKey] ?? null;
 
-                            // ariaLabelForDay() — "Today, <weekday>, <d>. <month> <Y>, <status>".
+                            // ariaLabelForDay() — "Today, <weekday>, <d>. <month>[ <Y>], <status>".
+                            // The grid name carries the year, so only days from another year repeat it.
                             $labelParts = [];
                             if ($dayKey === $todayKey) {
                                 $labelParts[] = __('tedi::tedi.date-picker.today');
@@ -345,7 +343,7 @@
                             $labelParts[] = __('tedi::tedi.date-picker.'.$weekdayKeys[(int) date('w', $cell)])
                                 .', '.(int) date('j', $cell)
                                 .'. '.__('tedi::tedi.date-picker.'.$monthKeys[(int) date('n', $cell)])
-                                .' '.(int) date('Y', $cell);
+                                .((int) date('Y', $cell) !== (int) $monthYear ? ' '.(int) date('Y', $cell) : '');
                             if (! empty($status['label'])) {
                                 $labelParts[] = $status['label'];
                             }
