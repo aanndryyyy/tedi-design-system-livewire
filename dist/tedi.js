@@ -1948,8 +1948,8 @@
       _offMorph: null,
       _onReset: null,
       init() {
-        this.ratingSync();
-        this.$nextTick(() => this.ratingSync());
+        this.ratingSync(true);
+        this.$nextTick(() => this.ratingSync(true));
         const livewire = window.Livewire;
         if (livewire && typeof livewire.hook === "function") {
           const off = livewire.hook("morph.updated", ({ el }) => {
@@ -1969,13 +1969,13 @@
         if (form && this._onReset) form.removeEventListener("reset", this._onReset);
       },
       /**
-       * Read the committed value off the checked radio. With none checked,
-       * fall back to the server-rendered value: a fractional one (3.5)
-       * checks no radio but still fills three stars, as upstream does.
+       * Read the committed value off the checked radio. With none checked
+       * on init, fall back to the server-rendered value: a fractional one
+       * (3.5) checks no radio but still fills three stars, as upstream does.
        */
-      ratingSync() {
+      ratingSync(initial = false) {
         const checked = this.$el.querySelector(".tedi-rating__input:checked");
-        this.ratingValue = checked ? Number(checked.value) : Number(value) || 0;
+        this.ratingValue = checked ? Number(checked.value) : initial ? Number(value) || 0 : 0;
         if (!this.ratingInteractive()) this.ratingHover = null;
       },
       /** `!disabled && !readOnly` — read off the DOM so a morph is picked up. */

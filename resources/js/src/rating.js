@@ -37,9 +37,9 @@ export function rating(config = {}) {
         _onReset: null,
 
         init() {
-            this.ratingSync();
+            this.ratingSync(true);
             // A child's x-model applies its value after this scope inits.
-            this.$nextTick(() => this.ratingSync());
+            this.$nextTick(() => this.ratingSync(true));
 
             const livewire = window.Livewire;
             if (livewire && typeof livewire.hook === 'function') {
@@ -65,13 +65,15 @@ export function rating(config = {}) {
         },
 
         /**
-         * Read the committed value off the checked radio. With none checked,
-         * fall back to the server-rendered value: a fractional one (3.5)
-         * checks no radio but still fills three stars, as upstream does.
+         * Read the committed value off the checked radio. With none checked
+         * on init, fall back to the server-rendered value: a fractional one
+         * (3.5) checks no radio but still fills three stars, as upstream does.
          */
-        ratingSync() {
+        ratingSync(initial = false) {
             const checked = this.$el.querySelector('.tedi-rating__input:checked');
-            this.ratingValue = checked ? Number(checked.value) : Number(value) || 0;
+            // Only the first sync may fall back to the config value: after a
+            // morph or a reset, nothing checked means the model is empty.
+            this.ratingValue = checked ? Number(checked.value) : initial ? Number(value) || 0 : 0;
             // Upstream's effect: a preview cannot outlive interactivity.
             if (!this.ratingInteractive()) this.ratingHover = null;
         },

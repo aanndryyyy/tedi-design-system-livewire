@@ -15,9 +15,10 @@
     (same name, value = position), so Livewire / Alpine bind the group
     natively. Every other attribute — `class`, `id`, `data-*`, `x-on:*` —
     lands on the root, unlike toggle / slider, where the whole bag goes on
-    the single input. Pass `:value` together with `wire:model` so the first
-    server render (checked radio, selected classes, star caption) matches the
-    bound state. A plain non-Livewire form POST submits the radio group under
+    the single input. Bind `:value` to the same property as `wire:model` on
+    every render, so each server render (checked radio, selected classes,
+    star caption) matches the bound state; a Livewire morph against markup
+    for a different value would otherwise strip the live classes. A plain non-Livewire form POST submits the radio group under
     `name`.
 
     INTERACTIVITY (CONVENTIONS.md §8). The hover preview (`hoverValue`) and the
