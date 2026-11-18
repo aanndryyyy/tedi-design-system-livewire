@@ -21,7 +21,7 @@
 <div class="flex flex-column gap-2">
     <p>Current tab: <strong>tab-1</strong></p>
     <tedi:tabs value="tab-1">
-        <tedi:tabs.list aria-label="Juhitavad sakid">
+        <tedi:tabs.list aria-label="Terviseandmed">
             <tedi:tabs.trigger id="tab-1">Terviseteekond</tedi:tabs.trigger>
             <tedi:tabs.trigger id="tab-2">Haiguste kulg</tedi:tabs.trigger>
             <tedi:tabs.trigger id="tab-3">Ravimite ajalugu</tedi:tabs.trigger>

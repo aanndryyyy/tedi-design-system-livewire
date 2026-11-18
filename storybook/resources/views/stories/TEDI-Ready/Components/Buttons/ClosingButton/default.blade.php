@@ -29,7 +29,7 @@
         ],
         'showTitle' => [
             'control' => 'boolean',
-            'description' => 'Render the label as a native `title` attribute. Set to `false` when the button is wrapped in a `tedi-tooltip` so the native tooltip does not double the custom one.',
+            'description' => 'Render the label as a native `title` attribute, which also names the button. When `false`, the label is set as `aria-label` instead. Set to `false` when the button is wrapped in a `tedi-tooltip` so the native tooltip does not double the custom one.',
             'table' => ['defaultValue' => ['summary' => 'true']],
         ],
     ],

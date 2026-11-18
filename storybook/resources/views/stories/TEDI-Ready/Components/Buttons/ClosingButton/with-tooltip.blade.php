@@ -1,7 +1,7 @@
 {{--
     Wrap the button in a `tedi-tooltip` to show a custom tooltip on hover.
     Set `:show-title="false"` so the native browser tooltip (the `title`
-    attribute) does not double the custom one — the `aria-label` is kept.
+    attribute) does not double the custom one: the label then moves to `aria-label`.
 
     `description` / `description-id` / `described-by` are the CONVENTIONS.md §5
     translation of behaviour Angular gets for free: `tedi-tooltip` reads its

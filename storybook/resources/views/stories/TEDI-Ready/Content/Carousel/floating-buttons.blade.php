@@ -31,7 +31,7 @@
     <tedi:carousel-header>
         <tedi:text as="h2" modifiers="h1">Title</tedi:text>
     </tedi:carousel-header>
-    <tedi:carousel-content :slides-per-view="(float) $slidesPerView" :loop="(bool) $loop">
+    <tedi:carousel-content :slides-per-view="(float) $slidesPerView" :loop="(bool) $loop" aria-label="Title">
         @for ($i = 0; $i < 5; $i++)
             <tedi:carousel-slide>
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--general-border-primary); border-radius: 4px; height: 10rem; padding: 1rem 3.5rem; flex: 1;">

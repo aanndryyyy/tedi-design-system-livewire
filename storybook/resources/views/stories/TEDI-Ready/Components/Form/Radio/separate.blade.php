@@ -11,7 +11,7 @@
         Tekst
     </tedi:form.label>
     <tedi:form.label color="primary" :required="true" class="flex align-items-center">
-        <tedi:radio style="margin-right: var(--form-checkbox-radio-inner-spacing)" name="separate-required" />
+        <tedi:radio style="margin-right: var(--form-checkbox-radio-inner-spacing)" name="separate-required" required />
         Tekst
     </tedi:form.label>
     <div class="flex align-items-center gap-1">

@@ -16,6 +16,7 @@
         'maxWidth' => 'small',
         'title' => 'Pealkiri',
         'showClose' => true,
+        'padding' => '',
         'interactive' => true,
     ],
     'argTypes' => [
@@ -133,6 +134,16 @@
                 'defaultValue' => ['summary' => 'false'],
             ],
         ],
+        'padding' => [
+            'control' => ['type' => 'select'],
+            'options' => [0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3],
+            'description' => 'Inner padding on the `tedi-card` scale: rems, `{ vertical, horizontal }` or `{ top, right, bottom, left }` (missing sides are 0).',
+            'table' => [
+                'category' => 'popover-content inputs',
+                'type' => ['summary' => 'CardPadding'],
+                'defaultValue' => ['summary' => '1'],
+            ],
+        ],
         'underline' => [
             'description' => 'Underline the trigger element.',
             'table' => [
@@ -178,6 +189,7 @@
             :max-width="$maxWidth"
             :title="$title"
             :show-close="(bool) $showClose"
+            :padding="is_numeric($padding) ? (float) $padding : null"
         >Jääkaru (Ursus maritimus) on suur karu, kes elab Arktikas ja selle lähialadel.</tedi:popover-content>
     </tedi:popover>
 </div>

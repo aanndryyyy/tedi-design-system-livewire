@@ -24,7 +24,7 @@
                     <tedi:text as="p" modifiers="bold">{{ $state }}</tedi:text>
                 </tedi:col>
                 <tedi:col :width="10">
-                    <tedi:button-group variant="primary-button-group" :aria-label="'Esmane '.$state">
+                    <tedi:button-group variant="primary-button-group" aria-label="Esmane vaate valik">
                         <tedi:button-group-button
                             :id="strtolower($state).'-primary'"
                             value="1"

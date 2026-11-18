@@ -25,7 +25,7 @@
         <tedi:carousel-header>
             <tedi:text as="h2" modifiers="h1">Title</tedi:text>
         </tedi:carousel-header>
-        <tedi:carousel-content :slides-per-view="(float) $slidesPerView" :fade="(bool) $fade" aria-label="Karussell (mitu slaidi vaates)">
+        <tedi:carousel-content :slides-per-view="(float) $slidesPerView" :fade="(bool) $fade" aria-label="Mitu slaidi vaates">
             @for ($i = 0; $i < 5; $i++)
                 <tedi:carousel-slide>
                     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--general-border-primary); border-radius: 4px; height: 10rem; padding: 1rem; flex: 1;">
@@ -41,7 +41,7 @@
         </tedi:carousel-footer>
     </tedi:carousel>
     <tedi:carousel style="max-width: 400px;">
-        <tedi:carousel-content :slides-per-view="1" :fade="(bool) $fade" aria-label="Karussell (üks slaid vaates)">
+        <tedi:carousel-content :slides-per-view="1" :fade="(bool) $fade" aria-label="Üks slaid vaates">
             @for ($i = 0; $i < 5; $i++)
                 <tedi:carousel-slide>
                     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--general-border-primary); border-radius: 4px; height: 10rem; padding: 1rem; flex: 1;">

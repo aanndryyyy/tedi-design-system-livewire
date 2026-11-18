@@ -13,7 +13,7 @@
         'showValue' => true,
         'valuePosition' => 'horizontal',
         'valueLabel' => '',
-        'ariaLabel' => 'Edenemisriba pealkiri',
+        'ariaLabel' => 'Faili üleslaadimine',
         'announce' => 'off',
         'announceInterval' => 1000,
     ],

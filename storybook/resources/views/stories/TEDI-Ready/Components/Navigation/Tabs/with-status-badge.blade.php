@@ -11,7 +11,7 @@
 @endphp
 
 <tedi:tabs default-value="tab-1">
-    <tedi:tabs.list aria-label="Olekumärgisega sakid">
+    <tedi:tabs.list aria-label="Terviseandmed">
         <tedi:tabs.trigger id="tab-1">
             <tedi:ellipsis :line-clamp="1">Terviseteekond</tedi:ellipsis>
             <tedi:status-badge color="brand" text="Esitatud" />

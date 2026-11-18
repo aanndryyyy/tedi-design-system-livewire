@@ -13,9 +13,9 @@
 
 <div style="max-width: 320px;">
     <tedi:button-group
-        aria-label="Mobiilis koondub rippmenüüks"
+        aria-label="Vaate valik"
         :dropdown-mode="true"
-        dropdown-label="Alammenüü"
+        dropdown-label="Vaade"
         dropdown-label-mode="static"
         :items="[
             ['value' => '1', 'label' => 'Tabel', 'iconLeft' => 'table'],

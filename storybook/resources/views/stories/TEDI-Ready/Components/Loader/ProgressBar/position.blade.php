@@ -11,7 +11,7 @@
         <tedi:text as="p" modifiers="small">Horizontal value</tedi:text>
         <tedi:text as="p" modifiers="small">Bottom hint</tedi:text>
     </div>
-    <tedi:progress-bar :value="20" label="Edenemisriba pealkiri" :required="true" label-position="top" value-position="horizontal">
+    <tedi:progress-bar :value="20" label="Faili üleslaadimine" :required="true" label-position="top" value-position="horizontal">
         <tedi:feedback-text text="Üleslaadimine" type="hint" />
     </tedi:progress-bar>
 
@@ -20,7 +20,7 @@
         <tedi:text as="p" modifiers="small">Bottom value</tedi:text>
         <tedi:text as="p" modifiers="small">Bottom hint</tedi:text>
     </div>
-    <tedi:progress-bar :value="20" label="Edenemisriba pealkiri" :required="true" label-position="top" value-position="bottom">
+    <tedi:progress-bar :value="20" label="Faili üleslaadimine" :required="true" label-position="top" value-position="bottom">
         <tedi:feedback-text text="Üleslaadimine" type="hint" />
     </tedi:progress-bar>
 
@@ -29,7 +29,7 @@
         <tedi:text as="p" modifiers="small">Horizontal value</tedi:text>
         <tedi:text as="p" modifiers="small">Bottom hint</tedi:text>
     </div>
-    <tedi:progress-bar :value="20" label="Edenemisriba pealkiri" :required="true" label-position="horizontal" value-position="horizontal">
+    <tedi:progress-bar :value="20" label="Faili üleslaadimine" :required="true" label-position="horizontal" value-position="horizontal">
         <tedi:feedback-text text="Üleslaadimine" type="hint" />
     </tedi:progress-bar>
 
@@ -38,7 +38,7 @@
         <tedi:text as="p" modifiers="small">Bottom value</tedi:text>
         <tedi:text as="p" modifiers="small">Bottom hint</tedi:text>
     </div>
-    <tedi:progress-bar :value="20" label="Edenemisriba pealkiri" :required="true" label-position="horizontal" value-position="bottom">
+    <tedi:progress-bar :value="20" label="Faili üleslaadimine" :required="true" label-position="horizontal" value-position="bottom">
         <tedi:feedback-text text="Üleslaadimine" type="hint" />
     </tedi:progress-bar>
 </div>

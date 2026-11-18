@@ -51,20 +51,20 @@
                     :input-id="'size-'.$size.'-plain'"
                     :size="$size"
                     label="Otsing"
-                    :aria-label="'Otsing – '.$size.', ilma nuputa'"
+                    :aria-label="ucfirst($size).', lihtne'"
                 />
                 <tedi:search
                     :input-id="'size-'.$size.'-icon'"
                     :size="$size"
                     label="Otsing"
-                    :aria-label="'Otsing – '.$size.', nupp ikooniga'"
+                    :aria-label="ucfirst($size).', ikooniga'"
                     :button="['ariaLabel' => 'Otsi']"
                 />
                 <tedi:search
                     :input-id="'size-'.$size.'-button'"
                     :size="$size"
                     label="Otsing"
-                    :aria-label="'Otsing – '.$size.', nupp ikooni ja tekstiga'"
+                    :aria-label="ucfirst($size).', tekstiga'"
                     :button="['text' => 'Otsi']"
                 />
             </div>

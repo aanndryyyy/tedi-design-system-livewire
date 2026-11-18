@@ -42,7 +42,7 @@
     <tedi:date-picker :input-placeholder="$inputPlaceholder" :input-size="$inputSize" :input-state="$inputState" />
     <tedi:date-picker :input-placeholder="$inputPlaceholder" :input-size="$inputSize" :input-state="$inputState" />
     <div>
-        <tedi:form.label for="success" :required="true">Label</tedi:form.label>
+        <tedi:form.label for="success">Label</tedi:form.label>
         <tedi:date-picker input-id="success" :input-placeholder="$inputPlaceholder" :input-size="$inputSize" :input-state="$inputState" />
     </div>
     <tedi:date-picker :input-placeholder="$inputPlaceholder" :input-size="$inputSize" :input-state="$inputState" />

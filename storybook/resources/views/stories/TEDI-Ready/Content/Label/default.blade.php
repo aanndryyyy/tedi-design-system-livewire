@@ -39,7 +39,7 @@
         ],
         'required' => [
             'control' => 'boolean',
-            'description' => 'Marks the label as required.',
+            'description' => 'Shows the required asterisk, hidden from screen readers. Mark the control required too.',
             'table' => [
                 'category' => 'inputs',
                 'defaultValue' => ['summary' => 'false'],

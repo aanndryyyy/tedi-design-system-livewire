@@ -7,6 +7,7 @@
 
 <tedi:search
     input-id="search-accessible"
+    label="Otsi tooteid või teenuseid"
+    :hide-label="true"
     placeholder="Otsi tooteid või teenuseid..."
-    aria-label="Otsi tooteid või teenuseid"
 />

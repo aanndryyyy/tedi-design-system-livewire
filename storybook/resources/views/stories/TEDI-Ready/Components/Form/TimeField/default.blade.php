@@ -9,6 +9,7 @@
         'size' => '',
         'value' => '',
         'placeholder' => 'tt:mm',
+        'required' => false,
         'invalid' => false,
         'disabled' => false,
         'formFieldClearable' => true,
@@ -44,6 +45,15 @@
             'table' => [
                 'category' => 'Time Field inputs',
                 'type' => ['summary' => 'string'],
+            ],
+        ],
+        'required' => [
+            'description' => 'Marks the input as required.',
+            'control' => ['type' => 'boolean'],
+            'table' => [
+                'category' => 'Time Field inputs',
+                'type' => ['summary' => 'boolean'],
+                'defaultValue' => ['summary' => 'false'],
             ],
         ],
         'invalid' => [
@@ -175,13 +185,14 @@
 --}}
 <tedi:form-field :size="$formFieldSize" :clearable="(bool) $formFieldClearable">
     <x-slot:label>
-        <tedi:form.label :for="$inputId" :size="$formFieldSize">Aeg</tedi:form.label>
+        <tedi:form.label :for="$inputId" :size="$formFieldSize" :required="(bool) $required">Aeg</tedi:form.label>
     </x-slot:label>
 
     <tedi:time-field
         :input-id="$inputId"
         :value="$value ?: null"
         :placeholder="$placeholder ?: null"
+        :required="(bool) $required"
         :invalid="(bool) $invalid"
         :disabled="(bool) $disabled"
         :clearable="$clearable === '' ? null : (bool) $clearable"
