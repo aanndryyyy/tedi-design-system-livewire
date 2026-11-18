@@ -1,6 +1,6 @@
 <div class="gx-sec">
     <h2>Number field</h2>
-    <p>Port of <code>form/number-field</code>. A native <code>&lt;input type="number"&gt;</code> between a decrement and an increment <code>&lt;tedi:button&gt;</code>. <code>wire:model</code> lands on the input; the buttons are wired with <code>decrement-attributes</code> / <code>increment-attributes</code>.</p>
+    <p>Port of <code>form/number-field</code>. A native <code>&lt;input type="number"&gt;</code> between a decrement and an increment <code>&lt;tedi:button&gt;</code>. <code>wire:model</code> lands on the input; the buttons step it with the bundled <code>tediNumberField</code> behaviour.</p>
 
     <div class="gx-case">
         <div class="gx-case__label">size: default | small</div>

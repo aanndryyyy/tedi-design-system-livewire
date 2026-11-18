@@ -2,13 +2,12 @@
     TEDI Number field.
     Port of angular/src/tedi/components/form/number-field/{number-field.component.ts,number-field.component.html}
 
-    ROOT ELEMENT. Angular's selector is the element `tedi-number-field`, but the
-    vendored SCSS has no element rule for that tag — every rule keys on the
-    `.tedi-number-field` class, which in the Angular template is an *inner* div
-    wrapping the two buttons and the input. So there is no `<tedi-number-field>`
-    here: the template renders the same three top-level nodes Angular's own
-    template does (optional label, `div.tedi-number-field`, optional feedback
-    text), exactly as `form-field.blade.php` does.
+    ROOT ELEMENT. Angular's selector is the element `tedi-number-field`, so
+    per CONVENTIONS.md §4 the root is that literal element. Upstream's host
+    has no classes; every rule keys on the inner `.tedi-number-field` div that
+    wraps the two buttons and the input. Label, field and feedback text are
+    therefore all inside the one root, as in Angular (§6), and the root carries
+    the Alpine scope.
 
     `{{ $attributes }}` SITS ON THE `<input type="number">`, not on the wrapper.
     This component wraps a single native control, so per CONVENTIONS.md §6's
@@ -24,33 +23,41 @@
     is neither `null` nor `''` — pass `:value="0"` explicitly to render a zero.
     The `isInvalid` / `decrementDisabled` / `incrementDisabled` computeds still
     evaluate against `0` when `value` is omitted, which is faithful to Angular's
-    model default; note that a `wire:model`-bound field therefore computes those
-    against 0 on the first render, before Livewire has hydrated a value.
+    model default. With the bundle loaded they are recomputed from the live
+    input as soon as Alpine starts, so a `wire:model`-bound field corrects
+    itself; without it they stay at their server-rendered state.
 
-    NOT PORTED (CONVENTIONS.md §7, §8 — this is a template-only component):
+    WHAT ALPINE ADDS (`tediNumberField`, resources/js/src/number-field.js):
 
-      Angular                              Blade
+      Angular                              Blade + Alpine
       -----------------------------------  --------------------------------
-      handleButtonClick('decrement'|…)     decrementAttributes /
-        (mutates value by ±step)             incrementAttributes — arrays
-                                             merged onto the two buttons so a
-                                             consumer attaches wire:click /
-                                             x-on:click themselves (the same
-                                             hook form-field.blade.php gives
-                                             its clear button). No Alpine
-                                             state is invented here.
-      announceValue() / LiveAnnouncer      dropped — a live region announcing
-                                             a value only a client-side
-                                             handler can change.
-      handleInputChange() / handleBlur()   dropped — the consumer's wire:model
+      handleButtonClick('decrement'|…)     stepBy(-1|1): ±step, clamped to
+                                             min/max in the direction of
+                                             travel, rounded to the step's
+                                             decimals; fires `input` and
+                                             `change` on the input, so
+                                             wire:model / x-model follow.
+      announceValue() / LiveAnnouncer      the root-level regions of
+                                             announcer.js, politely, with
+                                             `numberField.quantityUpdated`
+                                             (or its `.suffix` form).
+      decrementDisabled() /                recomputed from the live input on
+        incrementDisabled() / isInvalid()    `input` / `change`, after a step
+                                             and after a Livewire morph.
+      (click)="focus()" on the wrapper     inline `x-on:click`.
+
+    `decrementAttributes` / `incrementAttributes` still merge onto the two
+    buttons. An `x-on:click` / `@click` in them runs after the step rather than
+    replacing it. A `wire:click` that steps the value on the server now steps
+    it twice: remove it (see the Upgrading notes).
+
+    NOT PORTED:
+      handleInputChange() / handleBlur()   the consumer's wire:model / x-model
                                              on the <input> does this.
-      (click)="focus()" on the wrapper     dropped — click-to-focus on the
-                                             wrapper padding is DOM runtime
-                                             behaviour.
-      ControlValueAccessor, formDisabled   dropped — `isDisabled` is therefore
-        (setDisabledState)                   just the `disabled` prop; there
-                                             is no forms-API source for it.
-      focus() / blur() public methods      dropped — no component instance.
+      ControlValueAccessor, formDisabled   `isDisabled` is the `disabled` prop
+        (setDisabledState)                   (the live input's `disabled` on
+                                             the client).
+      focus() / blur() public methods      no component instance.
 
     No classes are dropped: all fourteen classes number-field.component.html
     can emit have rules in the vendored SCSS.
@@ -130,6 +137,25 @@
     $decrementLabel = __('tedi::tedi.numberField.decrement');
     $incrementLabel = __('tedi::tedi.numberField.increment');
 
+    // Our step and a consumer's `x-on:click` / `@click` both run: merging them
+    // as-is would let the consumer's replace ours (an attribute bag keeps one
+    // value per key) — the same join file-upload.blade.php makes.
+    $withClick = function ($attributes, string $own): array {
+        $attributes = $attributes instanceof \Illuminate\View\ComponentAttributeBag ? $attributes->getAttributes() : (array) $attributes;
+        $clicks = array_values(array_filter([$attributes['x-on:click'] ?? null, $attributes['@click'] ?? null]));
+        unset($attributes['x-on:click'], $attributes['@click']);
+
+        return ['x-on:click' => implode('; ', array_merge([$own], $clicks))] + $attributes;
+    };
+
+    $alpine = \Illuminate\Support\Js::from([
+        'suffix' => filled($suffix) ? (string) $suffix : null,
+        'labels' => [
+            'updated' => __('tedi::tedi.numberField.quantityUpdated'),
+            'updatedSuffix' => __('tedi::tedi.numberField.quantityUpdated.suffix'),
+        ],
+    ]);
+
     // <tedi:button> is a component tag, so its classes are passed as a plain
     // string attribute rather than through @class().
     $buttonClass = fn (string $direction) => implode(' ', array_filter([
@@ -141,7 +167,7 @@
 
 {{-- Angular's host element: label, field and feedback are ONE root (CONVENTIONS.md §6),
      so a grid or flex parent lays them out as one item. --}}
-<tedi-number-field>
+<tedi-number-field x-data="tediNumberField({{ $alpine }})" x-on:input="sync()" x-on:change="sync()">
 @if ($label)
     <tedi:form.label :for="$inputId" :required="$required" :size="$size">
         {{ $label }}
@@ -152,7 +178,7 @@
     'tedi-number-field',
     'tedi-number-field--invalid' => $isInvalid,
     'tedi-number-field--disabled' => $isDisabled,
-])>
+]) x-ref="field">
     <tedi:button
         type="button"
         variant="secondary"
@@ -160,7 +186,8 @@
         class="{{ $buttonClass('decrement') }}"
         :disabled="$decrementDisabled"
         :aria-label="$decrementLabel"
-        {{ $attributes->only([])->merge($decrementAttributes) }}
+        x-ref="decrement"
+        {{ $attributes->only([])->merge($withClick($decrementAttributes, 'stepBy(-1)')) }}
     >
         <tedi:icon name="remove" :size="18" />
     </tedi:button>
@@ -171,7 +198,7 @@
         'tedi-number-field__input-wrapper--disabled' => $isDisabled,
         'tedi-number-field__input-wrapper--with-suffix' => filled($suffix),
         'tedi-number-field__input-wrapper--full-width' => $fullWidth,
-    ])>
+    ]) x-on:click="$refs.input.focus()">
         <input
             id="{{ $inputId }}"
             type="number"
@@ -179,6 +206,7 @@
             @if ($hasValue) value="{{ $value }}" @endif
             @disabled($isDisabled)
             @required($required)
+            x-ref="input"
             {{ $attributes->class(['tedi-number-field__input'])->merge(array_filter([
                 'min' => $min,
                 'max' => $max,
@@ -204,7 +232,8 @@
         class="{{ $buttonClass('increment') }}"
         :disabled="$incrementDisabled"
         :aria-label="$incrementLabel"
-        {{ $attributes->only([])->merge($incrementAttributes) }}
+        x-ref="increment"
+        {{ $attributes->only([])->merge($withClick($incrementAttributes, 'stepBy(1)')) }}
     >
         <tedi:icon name="add" :size="18" />
     </tedi:button>

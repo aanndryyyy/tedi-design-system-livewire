@@ -403,8 +403,68 @@ class FormNumberFieldComponentsTest extends TestCase
         $html = trim(Blade::render('<tedi:number-field label="Kogus" :feedback-text="[\'text\' => \'Vigane\', \'type\' => \'error\']" />'));
 
         // Angular's host element wraps all three, so a grid parent sees one item.
-        $this->assertStringStartsWith('<tedi-number-field>', $html);
+        $this->assertStringStartsWith('<tedi-number-field x-data="tediNumberField(', $html);
         $this->assertStringEndsWith('</tedi-number-field>', $html);
-        $this->assertSame(1, substr_count($html, '<tedi-number-field>'));
+        $this->assertSame(1, substr_count($html, '<tedi-number-field '));
+    }
+
+    // ---- Alpine (tediNumberField) -----------------------------------------
+
+    public function test_buttons_step_through_the_behaviour(): void
+    {
+        $html = Blade::render('<tedi:number-field input-id="a" />');
+
+        $this->assertSame(1, preg_match('/<button\b[^>]*tedi-number-field__button--decrement[^>]*x-ref="decrement" x-on:click="stepBy\(-1\)"/s', $html));
+        $this->assertSame(1, preg_match('/<button\b[^>]*tedi-number-field__button--increment[^>]*x-ref="increment" x-on:click="stepBy\(1\)"/s', $html));
+        $this->assertSame(1, preg_match('/<input\b[^>]*x-ref="input"/s', $html));
+        $this->assertSame(1, preg_match('/<div class="tedi-number-field[^"]*" x-ref="field">/', $html));
+        // The live computeds follow typing: input events bubble to the root.
+        $this->assertStringContainsString('x-on:input="sync()" x-on:change="sync()"', $html);
+    }
+
+    /** Upstream's `(click)="focus()"` on the input wrapper. */
+    public function test_wrapper_click_focuses_the_input(): void
+    {
+        $html = Blade::render('<tedi:number-field input-id="a" />');
+
+        $this->assertSame(1, preg_match('/<div class="tedi-number-field__input-wrapper"[^>]*x-on:click="\$refs\.input\.focus\(\)"/', $html));
+    }
+
+    /** numberField.quantityUpdated and its `.suffix` form go to the browser with their placeholders. */
+    public function test_announcement_labels_and_suffix_reach_the_behaviour(): void
+    {
+        $html = Blade::render('<tedi:number-field input-id="a" suffix="tk" />');
+
+        $this->assertSame(1, preg_match('/x-data="tediNumberField\(JSON\.parse\(\'(.*?)\'\)\)"/', $html, $m));
+        $config = json_decode(json_decode('"'.html_entity_decode($m[1], ENT_QUOTES).'"'), true);
+
+        $this->assertSame([
+            'suffix' => 'tk',
+            'labels' => ['updated' => ':count', 'updatedSuffix' => ':count :suffix'],
+        ], $config);
+    }
+
+    /** A consumer's Alpine click handler runs after the step instead of replacing it. */
+    public function test_a_consumer_click_handler_runs_after_the_step(): void
+    {
+        $html = Blade::render(
+            '<tedi:number-field input-id="a"'
+            .' :decrement-attributes="[\'@click\' => \'mine()\']"'
+            .' :increment-attributes="[\'x-on:click\' => \'theirs()\']" />'
+        );
+
+        $this->assertStringContainsString('x-on:click="stepBy(-1); mine()"', $html);
+        $this->assertStringContainsString('x-on:click="stepBy(1); theirs()"', $html);
+        $this->assertStringNotContainsString('@click', $html);
+    }
+
+    /** Without JS the server render stays the source of truth. */
+    public function test_static_markup_keeps_the_server_computed_states(): void
+    {
+        $html = Blade::render('<tedi:number-field input-id="a" :min="0" :max="3" :value="3" />');
+
+        $this->assertSame(1, $this->disabledAttributeCount($this->buttonTag($html, 'increment')));
+        $this->assertSame(0, $this->disabledAttributeCount($this->buttonTag($html, 'decrement')));
+        $this->assertStringContainsString('aria-invalid="false"', $html);
     }
 }
