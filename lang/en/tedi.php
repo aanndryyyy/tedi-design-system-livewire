@@ -3,7 +3,8 @@
 // Generated from @tedi-design-system/angular
 // src/tedi/services/translation/translations.ts by scripts/generate-lang.cjs — do not edit by hand.
 // Function entries become :placeholders, key.true/key.false variants for a
-// boolean selector, and "{1} …|[0,*] …" choice strings for count wording.
+// boolean selector, key + key.<param> for an optional parameter, and
+// "{1} …|[0,*] …" (or Russian "one|few|many") choice strings for count wording.
 
 return [
     "close" => "Close",

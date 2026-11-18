@@ -125,6 +125,7 @@ for (const lang of ['en', 'et', 'ru']) {
     '<?php\n\n// Generated from @tedi-design-system/angular\n' +
     '// src/tedi/services/translation/translations.ts by scripts/generate-lang.cjs — do not edit by hand.\n' +
     '// Function entries become :placeholders, key.true/key.false variants for a\n' +
-    '// boolean selector, and "{1} …|[0,*] …" choice strings for count wording.\n\nreturn [\n';
+    '// boolean selector, key + key.<param> for an optional parameter, and\n' +
+    '// "{1} …|[0,*] …" (or Russian "one|few|many") choice strings for count wording.\n\nreturn [\n';
   fs.writeFileSync(file, head + lines.join('\n') + '\n\n' + cur.slice(reactStart));
 }
