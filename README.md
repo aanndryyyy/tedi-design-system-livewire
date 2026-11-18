@@ -722,7 +722,12 @@ Two stories (`FileUpload`: Controlled Clearing, With Reactive Forms) mount real
 Livewire components from `storybook/resources/views/livewire/`. Blast registers
 its `/storybook_preview` routes outside the `web` middleware group, so
 `storybook/bootstrap/app.php` adds `web` to them; without that, a story page has
-no session and every Livewire request answers 419.
+no session and every Livewire request answers 419. That covers the deployed
+build, where `storybook-static` is served by the same app. Under the local
+`:6006` dev server the preview runs on Storybook's origin, so Livewire's
+update request to `APP_URL` is cross-origin, carries no session cookie and
+still fails; open the story's `/storybook_preview/…` URL directly to try the
+round trip locally.
 
 ### Structure
 

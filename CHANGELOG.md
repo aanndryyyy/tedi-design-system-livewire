@@ -111,7 +111,9 @@ Fixes
   `sheet`.
 - Storybook: the app adds the `web` middleware to Blast's
   `/storybook_preview` routes (`storybook/bootstrap/app.php`), so stories that
-  mount Livewire components no longer answer 419.
+  mount Livewire components no longer answer 419 when the preview is served
+  by the app itself (the deployed build). Under the local `:6006` dev server
+  the Livewire request is cross-origin and still carries no session.
 
 ### Upstream sync (Angular 10.0.0-rc.21, React 21.0.0-rc.17, core 6.13.0)
 

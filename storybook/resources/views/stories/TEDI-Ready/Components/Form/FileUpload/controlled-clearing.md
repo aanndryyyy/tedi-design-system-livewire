@@ -11,4 +11,6 @@ the list from outside also clears the field's own state.
 
 The round trip needs the host app's `web` middleware (a session for the CSRF
 token). Blast registers its preview routes without it, so this Storybook's app
-adds it (`storybook/bootstrap/app.php`).
+adds it (`storybook/bootstrap/app.php`). That works in the deployed
+Storybook, which the app serves itself. In the local `:6006` dev server the
+request is cross-origin and has no session, so it fails there.
