@@ -1,9 +1,9 @@
 # Port notes — `file-upload-number-field`
 
-Branch `file-upload-number-field`, two commits on 8553d19:
-
-- `3b896ff` NumberField: live step buttons and value announcements (`tediNumberField`)
-- `0fcd7c6` FileUpload: client-side selection pipeline and the five skipped stories
+Branch `file-upload-number-field`, on 8553d19. Number field: `3b896ff`
+(the port) and `1a055fa` (input found by class, not `x-ref`). File upload:
+`0fcd7c6` (the pipeline and the five stories) and a docs/matrix follow-up.
+Squash per component as you like.
 
 `dist/` is not committed. Rebuild with `npm run build:js` after merging (the
 CSS is unchanged). `node scripts/generate-lang.cjs <angular>/src/tedi/services/translation/translations.ts`
@@ -49,7 +49,9 @@ the subset table). Add:
   through `decrement-attributes` / `increment-attributes` with a `wire:click`
   (or `x-on:click`) that changes the value, **remove it** — the value would now
   step twice. Handlers that do something else can stay; an `x-on:click` there
-  runs after the step. The root `tedi-number-field` now carries the `x-data`.
+  runs after the step. The root `tedi-number-field` now carries the `x-data`,
+  so an `x-ref` you put on the input resolves inside the number field's scope:
+  a parent's `$refs.<name>` no longer reaches it.
 - **`file-upload`**: `accept`, `max-size` and the new `validator` now filter the
   selection in the browser before `wire:model` uploads it, and a `multiple`
   field appends each selection to the previous one (Livewire re-uploads the
@@ -99,9 +101,14 @@ New:
 - Docs section (line ~705): "188 stories have a per-story description" →
   **193** (+5: `discarding-rejected-files.md`, `keeping-rejected-files.md`,
   `with-validator.md`, `controlled-clearing.md`, `with-reactive-forms.md`).
-  `with-reactive-forms.md` replaces upstream's reactive-forms text with a note
-  (CONTRACT.md §6), and `controlled-clearing.md` keeps upstream's text with an
-  HTML-comment note.
+  `with-reactive-forms.md` and `controlled-clearing.md` replace upstream's
+  text with a note (CONTRACT.md §6), so add two rows to the skipped-stories
+  table, beside Toast's Docs-page row:
+
+  ```
+  | `FileUpload` Docs page: the "With Reactive Forms" description | Documents Angular reactive forms (`FormControl`, `Validators.required`, the `rejectedFiles` error). Replaced by a note describing the Livewire equivalent (`wire:model` plus server validation) |
+  | `FileUpload` Docs page: the "Controlled Clearing" description | Documents Angular's two-way `[(files)]` binding, and says a one-way binding never reaches the field again — untrue for `:files`, which re-renders on every request. Replaced by a note |
+  ```
 
 `ReadmeTest` passed without these edits, so it does not pin either count.
 
