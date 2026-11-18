@@ -46,6 +46,10 @@ const ITEM_VERTICAL_CLASS = 'tedi-process-timeline-item--vertical';
 export function processTimeline() {
     return {
         overflowing: false,
+        _el: null,
+        _resize: null,
+        _mutation: null,
+        _offMorph: null,
 
         init() {
             this._el = this.$el;

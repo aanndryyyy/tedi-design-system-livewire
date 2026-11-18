@@ -98,6 +98,9 @@ export function sheet(config) {
         // From the press, not the drag threshold: the panel holds the pointer
         // from then on, so its cursor (`--grabbing`) is the one shown.
         grabbing: false,
+        _onPointerDownOutside: null,
+        _onKeydown: null,
+        _onBlur: null,
         _drag: null,
         _previouslyFocused: null,
         _previousOverflow: '',

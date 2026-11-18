@@ -35,6 +35,13 @@ export function formField({ clearOnInteraction = false } = {}) {
         clearOnInteraction,
         filled: false,
         blocked: false,
+        // Declared so Alpine keeps them on this scope. An undeclared property
+        // written from a method lands on whichever enclosing x-data already
+        // has that key, so `this._root` used to overwrite e.g. dock-panel's.
+        _root: null,
+        _control: null,
+        _sync: null,
+        _offMorph: null,
 
         init() {
             this._root = this.$el.closest('.tedi-form-field');

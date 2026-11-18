@@ -119,6 +119,8 @@ function getFocusableElements(container) {
 export var dropdownTrigger = {
     /** Only a Space press that starts on the trigger may activate it on keyup. */
     _spacePressed: false,
+    /** The trigger's resolved ARIA config, re-applied after a morph. */
+    _triggerAria: null,
 
     /**
      * The trigger directive's ngAfterViewInit + effect(). `el` is the

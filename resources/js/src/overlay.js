@@ -63,6 +63,7 @@ export function overlay(config) {
             ? 'bottom'
             : parsePlacement(cfg.placement).side,
         _hideTimer: null,
+        _lockedScroll: false,
         _frame: null,
         _listeners: [],
         _contentHovered: false,
