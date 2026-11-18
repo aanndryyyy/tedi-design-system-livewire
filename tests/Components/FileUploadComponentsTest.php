@@ -14,11 +14,42 @@ class FileUploadComponentsTest extends TestCase
 {
     private const TWO = "[['name' => 'a.pdf'], ['name' => 'b.pdf']]";
 
+    /**
+     * The inert prototype template is stripped: its tag, clear group and error
+     * text are clones-in-waiting, not rendered markup, and would satisfy every
+     * string assertion about the live field. `withPrototypes()` keeps it.
+     */
     private function render(string $attributes = '', ?string $wrapper = null): string
+    {
+        return $this->stripPrototypes($this->withPrototypes($attributes, $wrapper));
+    }
+
+    private function withPrototypes(string $attributes = '', ?string $wrapper = null): string
     {
         $tag = '<tedi:file-upload input-id="f" '.$attributes.' />';
 
         return Blade::render($wrapper ? sprintf($wrapper, $tag) : $tag);
+    }
+
+    private function stripPrototypes(string $html): string
+    {
+        return preg_replace('#\s*<template x-ref="prototypes".*?</template>#s', '', $html);
+    }
+
+    /** The prototype template's `data-state`, decoded. */
+    private function clientState(string $html): array
+    {
+        $this->assertSame(1, preg_match('/<template x-ref="prototypes" data-state="([^"]*)">/', $html, $m));
+
+        return json_decode(html_entity_decode($m[1], ENT_QUOTES), true);
+    }
+
+    /** The x-data config, decoded. */
+    private function alpineConfig(string $html): array
+    {
+        $this->assertSame(1, preg_match('/x-data="tediFileUpload\(JSON\.parse\(\'(.*?)\'\)\)"/', $html, $m));
+
+        return json_decode(json_decode('"'.html_entity_decode($m[1], ENT_QUOTES).'"'), true);
     }
 
     // -- host ----------------------------------------------------------------
@@ -364,7 +395,7 @@ class FileUploadComponentsTest extends TestCase
     {
         $html = $this->render('name="manused" accept=".pdf" multiple wire:model="files"');
 
-        $this->assertMatchesRegularExpression('/<input\s+type="file"\s+tabindex="-1"\s+aria-hidden="true"\s+multiple\s+x-ref="input"\s+x-on:change="handleSelection\(\$event\)"\s+id="f" name="manused" accept=".pdf" class="tedi-file-upload__input" wire:model="files"\s*\/>/', $html);
+        $this->assertMatchesRegularExpression('/<input\s+type="file"\s+tabindex="-1"\s+aria-hidden="true"\s+multiple\s+x-ref="input"\s+id="f" name="manused" accept=".pdf" class="tedi-file-upload__input" wire:model="files"\s*\/>/', $html);
 
         $bare = $this->render();
         $this->assertDoesNotMatchRegularExpression('/<input[^>]*\s(multiple|disabled|name=|accept=)/', $bare);
@@ -392,12 +423,108 @@ class FileUploadComponentsTest extends TestCase
         $this->assertStringContainsString('\u0022inputId\u0022:\u0022x\u0022', $html);
     }
 
-    public function test_a_consumer_change_handler_runs_after_ours(): void
+    /**
+     * The pipeline runs in a capture listener on the root, so the input carries
+     * only a consumer's own change handlers, joined, and none otherwise.
+     */
+    public function test_a_consumer_change_handler_stays_on_the_input(): void
     {
-        $html = $this->render('x-on:change="mine()"');
+        $html = $this->render('x-on:change="mine()" @change="theirs()"');
 
         $this->assertSame(1, substr_count($html, 'x-on:change='));
-        $this->assertStringContainsString('x-on:change="handleSelection($event); mine()"', $html);
+        $this->assertStringContainsString('x-on:change="mine(); theirs()"', $html);
+        $this->assertStringNotContainsString('@change', $html);
+
+        $this->assertStringNotContainsString('x-on:change', $this->render());
+    }
+
+    // -- the client-side selection pipeline -----------------------------------
+
+    public function test_the_pipeline_config_reaches_the_behaviour(): void
+    {
+        $config = $this->alpineConfig($this->render('multiple keep-rejected-files accept=".pdf,image/*" :max-size="1024" validator="noSpaces"'));
+
+        $this->assertSame('f', $config['inputId']);
+        $this->assertTrue($config['multiple']);
+        $this->assertSame('.pdf,image/*', $config['accept']);
+        $this->assertSame(1024, $config['maxSize']);
+        $this->assertTrue($config['keepRejectedFiles']);
+        $this->assertSame('noSpaces', $config['validator']);
+
+        $bare = $this->alpineConfig($this->render());
+        $this->assertNull($bare['accept']);
+        $this->assertNull($bare['maxSize']);
+        $this->assertFalse($bare['keepRejectedFiles']);
+        $this->assertNull($bare['validator']);
+    }
+
+    /** Upstream's translate(key, files, count) compares the count as a string: "1" picks the singular. */
+    public function test_rejection_and_duplicate_messages_have_singular_and_plural_forms(): void
+    {
+        $labels = $this->alpineConfig($this->render())['labels'];
+
+        $this->assertSame('File :files has the wrong extension', $labels['extensionRejected']);
+        $this->assertSame('Files :files have the wrong extension', $labels['extensionRejectedPlural']);
+        $this->assertSame('File :files is too large', $labels['sizeRejected']);
+        $this->assertSame('Files :files are too large', $labels['sizeRejectedPlural']);
+        $this->assertSame('File :files has already been added', $labels['duplicatesSkipped']);
+        $this->assertSame('Files :files have already been added', $labels['duplicatesSkippedPlural']);
+        $this->assertSame('File :file removed', $labels['removed']);
+        $this->assertSame('All files removed', $labels['cleared']);
+    }
+
+    /** The template is inert: its id and clones never reach the document until the behaviour clones them. */
+    public function test_prototypes_are_tedi_tag_and_feedback_text_markup(): void
+    {
+        $html = $this->withPrototypes('multiple');
+
+        $this->assertSame(1, preg_match('#<template x-ref="prototypes"[^>]*>(.*?)</template>#s', $html, $m));
+        $template = $m[1];
+
+        // A rejected file: a danger tag whose remove button drops it from the state.
+        $this->assertMatchesRegularExpression('/<li class="tedi-file-upload__tag" data-prototype="tag">\s*<span class="tedi-tag tedi-tag--danger tedi-tag--closable">/', $template);
+        $this->assertStringContainsString('x-on:click="removeRejected($event)"', $template);
+        $this->assertStringContainsString('<span class="sr-only"> ('.e(__('tedi::tedi.file-upload.failed')).')</span>', $template);
+
+        // The clear group, the same markup as the live one.
+        $this->assertStringContainsString('<div class="tedi-file-upload__clear-group" data-prototype="clear">', $template);
+        $this->assertStringContainsString('x-on:click="clearFiles()"', $template);
+
+        // The error text the rejection summary fills.
+        $this->assertSame(['tedi-feedback-text', 'tedi-feedback-text--error', 'tedi-feedback-text--left'], $this->classesOf($template, 'tedi-feedback-text'));
+        $this->assertStringContainsString('data-prototype="error"', $template);
+
+        // Not editable: the tag prototype has no remove button either.
+        $this->assertStringNotContainsString('removeRejected', $this->withPrototypes('multiple disabled'));
+        // Read-only renders no prototypes: nothing can be selected.
+        $this->assertStringNotContainsString('x-ref="prototypes"', $this->withPrototypes('read-only'));
+    }
+
+    /** The server state `apply()` combines with, refreshed by every Livewire morph. */
+    public function test_client_state_describes_the_server_render(): void
+    {
+        $state = $this->clientState($this->withPrototypes(
+            "aria-describedby=\"own\" error=\"Bad\" hint=\"h\" :files=\"[['name' => 'a.pdf'], ['name' => 'b.pdf', 'isValid' => false]]\"",
+            '<tedi:form-field :clearable="false">%s</tedi:form-field>',
+        ));
+
+        $this->assertSame([
+            'count' => 2,
+            'invalidCount' => 1,
+            'error' => 'Bad',
+            'success' => false,
+            'hint' => true,
+            'invalid' => true,
+            'valid' => false,
+            'clearable' => false,
+            'disabled' => false,
+            'describedBy' => ['own'],
+        ], $state);
+
+        $valid = $this->clientState($this->withPrototypes('success="Ok"'));
+        $this->assertTrue($valid['valid']);
+        $this->assertTrue($valid['success']);
+        $this->assertSame(0, $valid['count']);
     }
 
     private function between(string $html, string $from, string $to): string

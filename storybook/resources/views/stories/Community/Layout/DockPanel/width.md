@@ -1,0 +1,1 @@
+Click xs, sm, md, lg or xl to open a right-docked panel at 25%, 35%, 50%, 65% or 80% of workspace width. The scale matches Height. Even xl leaves 20% of the workspace visible and interactive beside the panel. Switching buttons while open preserves content, and resizing the workspace updates the panel proportionally.

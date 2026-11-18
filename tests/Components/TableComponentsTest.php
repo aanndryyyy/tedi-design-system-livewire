@@ -753,6 +753,261 @@ class TableComponentsTest extends TestCase
         $this->assertStringNotContainsString('tedi-text-field', $html);
     }
 
+    // -- table: filter popover (Angular 10 `filterable` + `filterTemplate`) ----
+
+    /** One popover-filterable column `name` plus a plain column; `$column` is merged into `name`. */
+    private function filterFixture(array $column = [], string $tableAttributes = ''): string
+    {
+        $column = var_export($column, true);
+
+        return Blade::render(<<<BLADE
+        @php
+        \$template = new \Illuminate\Support\HtmlString('<input id="name-filter" class="custom-filter-input">');
+        \$columns = [
+            array_merge(['key' => 'name', 'header' => 'Nimi', 'filterable' => true, 'filterTemplate' => \$template], {$column}),
+            ['key' => 'city', 'header' => 'Linn'],
+        ];
+        @endphp
+        <tedi:table id="t" :columns="\$columns" :rows="[['id' => 'r1', 'cells' => ['name' => 'Anna', 'city' => 'Tallinn']]]" {$tableAttributes} />
+        BLADE);
+    }
+
+    /** `Js::from()` writes `"` as `"` inside its JSON.parse() string; undo that for readable assertions. */
+    private function unescapeJs(string $html): string
+    {
+        return str_replace('\\'.'u0022', '"', $html);
+    }
+
+    public function test_filter_popover_structure_and_classes(): void
+    {
+        $html = $this->unescapeJs($this->filterFixture());
+
+        $this->assertHasClass('tedi-popover', $html, on: 'tedi-table__filter-popover');
+        $this->assertHasClass('tedi-table__filter-popover', $html, on: 'tedi-popover');
+        $this->assertHasClass('tedi-popover-content--small', $html, on: 'tedi-popover-content');
+        $this->assertHasClass('tedi-table__filter', $html, on: 'tedi-table__filter');
+        $this->assertHasClass('tedi-table__filter-actions', $html, on: 'tedi-table__filter-actions');
+        $this->assertStringContainsString('custom-filter-input', $html);
+        $this->assertStringContainsString('"placement":"bottom-end"', $html);
+        $this->assertStringContainsString('"preventOverflow":true', $html);
+        // Only the one opted-in column gets a popover.
+        $this->assertSame(1, preg_match_all('/<tedi-popover\s/', $html));
+    }
+
+    public function test_filter_body_class_is_dropped_but_its_wrapper_kept(): void
+    {
+        $html = $this->filterFixture();
+
+        $this->assertMissingClass('tedi-table__filter-body', $html);
+        $this->assertMatchesRegularExpression('/<div class="tedi-table__filter">\s*<div><input id="name-filter"/', $html);
+    }
+
+    public function test_filter_trigger_is_an_icon_only_popover_trigger(): void
+    {
+        $html = $this->filterFixture();
+
+        $this->assertMatchesRegularExpression('/<button\s+tedi-table-header-button[^>]*tedi-popover-trigger/', $html);
+        $this->assertHasClass('tedi-table-header-button', $html, on: 'tedi-table-header-button');
+        $this->assertMissingClass('tedi-table-header-button--selected', $html, on: 'tedi-table-header-button');
+        $this->assertMissingClass('tedi-icon--filled', $html, on: 'tedi-icon');
+        $this->assertStringContainsString('>filter_alt</tedi-icon>', $html);
+        $this->assertStringContainsString('aria-label="Filter Nimi"', $html);
+        $this->assertStringContainsString('aria-haspopup="dialog"', $html);
+        $this->assertStringContainsString('aria-expanded="false"', $html);
+        $this->assertStringContainsString('role="button"', $html);
+        $this->assertStringContainsString('id="t-filter-popover-name_trigger"', $html);
+        $this->assertStringContainsString('x-on:click="toggle()"', $html);
+        $this->assertStringContainsString('x-ref="trigger"', $html);
+        // The panel is paired with the trigger, as upstream's generated containerId does.
+        $this->assertStringContainsString('id="t-filter-popover-name"', $html);
+        $this->assertStringContainsString('aria-labelledby="t-filter-popover-name_trigger"', $html);
+    }
+
+    public function test_active_filter_selects_and_fills_the_trigger(): void
+    {
+        $html = $this->filterFixture(['filterActive' => true]);
+
+        $this->assertHasClass('tedi-table-header-button--selected', $html, on: 'tedi-table-header-button');
+        $this->assertHasClass('tedi-icon--filled', $html, on: 'tedi-icon');
+    }
+
+    public function test_filter_trigger_label_uses_the_column_label(): void
+    {
+        $html = $this->filterFixture(['label' => 'Isiku nimi']);
+
+        $this->assertStringContainsString('aria-label="Filter Isiku nimi"', $html);
+    }
+
+    public function test_filter_button_keeps_itself_out_of_the_header_name(): void
+    {
+        $html = $this->filterFixture();
+
+        $this->assertStringContainsString('aria-labelledby="t-header-name"', $html);
+    }
+
+    public function test_filterable_without_a_template_renders_no_popover(): void
+    {
+        $html = Blade::render(<<<'BLADE'
+        <tedi:table :columns="[['key' => 'a', 'header' => 'A', 'filterable' => true]]" :rows="[]" />
+        BLADE);
+
+        $this->assertStringNotContainsString('tedi-popover', $html);
+        $this->assertStringNotContainsString('aria-labelledby', $html);
+    }
+
+    public function test_template_without_filterable_renders_no_popover(): void
+    {
+        $html = $this->filterFixture(['filterable' => false]);
+
+        $this->assertStringNotContainsString('tedi-popover', $html);
+    }
+
+    public function test_filter_popover_width_table_wide_and_per_column(): void
+    {
+        foreach (['small', 'medium', 'large'] as $width) {
+            $html = $this->filterFixture([], 'filter-popover-width="'.$width.'"');
+            $this->assertHasClass('tedi-popover-content--'.$width, $html, on: 'tedi-popover-content');
+        }
+
+        $none = $this->filterFixture([], 'filter-popover-width="none"');
+        $this->assertSame(['tedi-popover-content'], $this->classesOf($none, 'tedi-popover-content'));
+
+        $column = $this->filterFixture(['filterable' => ['popoverWidth' => '19rem']], 'filter-popover-width="large"');
+        $this->assertMissingClass('tedi-popover-content--large', $column, on: 'tedi-popover-content');
+        $this->assertStringContainsString('style="width: 19rem;"', $column);
+    }
+
+    /** @return list<string> the footer button labels, in order */
+    private function filterActionLabels(string $html): array
+    {
+        preg_match('/<div class="tedi-table__filter-actions">(.*?)<\/div>/s', $html, $footer);
+        preg_match_all('/<button[^>]*>\s*(.*?)\s*<\/button>/s', $footer[1] ?? '', $labels);
+
+        return $labels[1];
+    }
+
+    public function test_default_filter_actions_are_clear_then_apply(): void
+    {
+        $html = $this->filterFixture();
+
+        $this->assertSame(['Clear', 'Apply'], $this->filterActionLabels($html));
+        preg_match('/<div class="tedi-table__filter-actions">(.*?)<\/div>/s', $html, $footer);
+        $this->assertHasClass('tedi-button--secondary', $footer[1], on: 'tedi-button');
+        $this->assertHasClass('tedi-button--primary', $footer[1], on: 'tedi-button--primary');
+        $this->assertLessThan(strpos($footer[1], 'tedi-button--primary'), strpos($footer[1], 'tedi-button--secondary'));
+        $this->assertSame(2, substr_count($footer[1], 'tedi-button--small'));
+        $this->assertSame(2, substr_count($footer[1], 'type="button"'));
+    }
+
+    public function test_filter_action_variants(): void
+    {
+        foreach (['apply' => 'primary', 'clear' => 'secondary', 'cancel' => 'secondary'] as $action => $variant) {
+            $html = $this->filterFixture([], ':filter-actions="[\''.$action.'\']"');
+            preg_match('/<div class="tedi-table__filter-actions">(.*?)<\/div>/s', $html, $footer);
+            $this->assertHasClass('tedi-button--'.$variant, $footer[1], on: 'tedi-button');
+        }
+    }
+
+    public function test_table_filter_actions_and_column_override(): void
+    {
+        $table = $this->filterFixture([], ':filter-actions="[\'cancel\', \'apply\']"');
+        $this->assertSame(['Cancel', 'Apply'], $this->filterActionLabels($table));
+
+        // The column's own list wins; repeats and unknown entries are dropped.
+        $column = $this->filterFixture(
+            ['filterable' => ['actions' => ['clear', 'cancel', 'apply', 'cancel', 'bogus']]],
+            ':filter-actions="[\'apply\']"',
+        );
+        $this->assertSame(['Clear', 'Cancel', 'Apply'], $this->filterActionLabels($column));
+    }
+
+    public function test_empty_filter_actions_hide_the_footer(): void
+    {
+        $this->assertStringNotContainsString('tedi-table__filter-actions', $this->filterFixture(['filterable' => ['actions' => []]]));
+        $this->assertStringNotContainsString('tedi-table__filter-actions', $this->filterFixture([], ':filter-actions="[]"'));
+    }
+
+    public function test_filter_action_labels_are_translated(): void
+    {
+        app()->setLocale('et');
+        $html = $this->filterFixture([], ':filter-actions="[\'clear\', \'cancel\', \'apply\']"');
+
+        $this->assertSame(
+            [__('tedi::tedi.table.filter-clear'), __('tedi::tedi.table.filter-cancel'), __('tedi::tedi.table.filter-apply')],
+            $this->filterActionLabels($html),
+        );
+        $this->assertStringContainsString('aria-label="'.e(__('tedi::tedi.table.filter-button-aria', ['column' => 'Nimi'])).'"', $html);
+    }
+
+    public function test_filter_actions_dispatch_the_event_and_close(): void
+    {
+        $html = $this->unescapeJs($this->filterFixture());
+
+        $this->assertStringContainsString(
+            'x-on:click="$dispatch(&#039;tedi-table:filter-action&#039;, JSON.parse(&#039;{"column":"name","action":"apply"}&#039;)); hide(true)"',
+            $html,
+        );
+        $this->assertStringContainsString('"action":"clear"}&#039;)); hide(true)"', $html);
+    }
+
+    public function test_filter_action_attributes_reach_their_button_and_compose_clicks(): void
+    {
+        $html = $this->filterFixture(['filterActionAttributes' => [
+            'apply' => ['wire:click' => "applyFilter('name')", 'x-on:click' => 'done = true'],
+        ]]);
+
+        preg_match_all('/<button[^>]*class="tedi-button[^"]*"[^>]*>/s', $html, $buttons);
+        [$clear, $apply] = $buttons[0];
+
+        $this->assertStringContainsString('wire:click="applyFilter(&#039;name&#039;)"', $apply);
+        $this->assertStringContainsString('hide(true); done = true"', $apply);
+        $this->assertStringNotContainsString('wire:click', $clear);
+    }
+
+    public function test_filter_trigger_attributes_compose_with_toggle(): void
+    {
+        $html = $this->filterFixture(['filterTriggerAttributes' => ['wire:click' => 'resetDraft', 'x-on:click' => 'opened = true']]);
+
+        $this->assertStringContainsString('x-on:click="toggle(); opened = true"', $html);
+        $this->assertStringContainsString('wire:click="resetDraft"', $html);
+    }
+
+    public function test_filter_column_key_is_escaped_in_ids_and_expressions(): void
+    {
+        $html = $this->unescapeJs($this->filterFixture(['key' => "o'neil"]));
+
+        $this->assertStringContainsString('id="t-filter-popover-o&#039;neil_trigger"', $html);
+        $this->assertStringContainsString("x-bind:aria-controls=\"open ? &#039;t-filter-popover-o\\u0027neil&#039; : null\"", $html);
+        $this->assertStringContainsString('"column":"o\\\\u0027neil"', $html);
+    }
+
+    public function test_filter_popover_coexists_with_the_filter_row(): void
+    {
+        $html = $this->filterFixture([], ':enable-column-filters="true"');
+
+        $this->assertHasClass('tedi-table__row--filter', $html, on: 'tedi-table__row--filter');
+        // The row input keeps its id; the popover uses its own.
+        $this->assertStringContainsString('id="t-filter-name"', $html);
+        $this->assertStringContainsString('id="t-filter-popover-name"', $html);
+    }
+
+    public function test_filter_popover_sits_after_a_custom_header_sort_button(): void
+    {
+        $html = Blade::render(<<<'BLADE'
+        @php
+        $header = new \Illuminate\Support\HtmlString('<em>Roll</em>');
+        $template = new \Illuminate\Support\HtmlString('<input>');
+        @endphp
+        <tedi:table id="t" :columns="[['key' => 'role', 'header' => $header, 'label' => 'Roll', 'sortable' => true, 'filterable' => true, 'filterTemplate' => $template]]" :rows="[]" />
+        BLADE);
+
+        $sort = strpos($html, 'aria-label="Sort by Roll');
+        $filter = strpos($html, 'aria-label="Filter Roll"');
+        $this->assertNotFalse($sort);
+        $this->assertNotFalse($filter);
+        $this->assertLessThan($filter, $sort);
+    }
+
     // -- table: cells --------------------------------------------------------
 
     public function test_table_cell_values_are_escaped_unless_htmlable(): void

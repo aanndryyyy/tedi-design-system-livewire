@@ -41,6 +41,25 @@
         </div>
     </div>
 
+    @php
+        $filterBody = new HtmlString('<input aria-label="Filter">');
+        $filterColumns = fn (array $filterable, bool $active = false) => [
+            ['key' => 'name', 'header' => 'Nimi', 'filterable' => $filterable ?: true, 'filterTemplate' => $filterBody, 'filterActive' => $active],
+            ['key' => 'role', 'header' => 'Roll'],
+        ];
+    @endphp
+
+    <div class="gx-case">
+        <div class="gx-case__label">filter popover: filterPopoverWidth small | medium | large | none | CSS length &middot; filterActions apply | clear | cancel &middot; filterActive</div>
+        <div class="gx-case__demo gx-case__demo--stack" style="gap:1.5rem">
+            @foreach (['small', 'medium', 'large', 'none'] as $width)
+                <tedi:table :columns="$filterColumns([])" :rows="$rows" :filter-popover-width="$width" />
+            @endforeach
+            <tedi:table :columns="$filterColumns(['popoverWidth' => '19rem'], true)" :rows="$rows" :filter-actions="['clear', 'cancel', 'apply']" />
+            <tedi:table :columns="$filterColumns(['actions' => []])" :rows="$rows" />
+        </div>
+    </div>
+
     <div class="gx-case">
         <div class="gx-case__label">rowHover &middot; interactive (clickable rows) &middot; activeRowId &middot; selected</div>
         <div class="gx-case__demo gx-case__demo--stack" style="gap:1.5rem">

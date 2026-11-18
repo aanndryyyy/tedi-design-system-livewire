@@ -6,10 +6,9 @@ The Angular description ends "Can be used with Reactive forms and with
 Template-driven forms" — Angular forms APIs this package does not have, so per
 CONTRACT.md §6 that sentence is replaced rather than ported. In Blade the
 `<input type="number">` is the attribute-merge target, so `wire:model` binds the
-value directly; the increment/decrement buttons are template-only and take their
-handlers through `decrement-attributes` / `increment-attributes`.
+value directly, and the bundled `tediNumberField` behaviour steps it from the
+increment/decrement buttons.
 -->
 Bind the value with `wire:model` on the component; it lands on the underlying
-`<input type="number">`. The buttons carry no behaviour of their own — attach
-`wire:click` (or `x-on:click`) via the `decrement-attributes` /
-`increment-attributes` props.
+`<input type="number">`. The decrement and increment buttons step it by `step`
+within `min` / `max` and fire `input` and `change`, so `wire:model` follows.

@@ -9,6 +9,7 @@
         'accept' => '',
         'maxSize' => 0,
         'multiple' => false,
+        'keepRejectedFiles' => false,
         'showRestrictions' => true,
         'error' => '',
         'success' => '',
@@ -32,19 +33,29 @@
             'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
         ],
         'accept' => [
-            'description' => 'Allowed file types as comma-separated extensions and MIME types, e.g. `".pdf,image/*"`. Shown in the hint and set on the input; validate on the server.',
+            'description' => 'Allowed file types as comma-separated extensions and MIME types, e.g. `".pdf,image/*"`. Changing it does not recheck files already listed.',
             'control' => 'text',
             'table' => ['category' => 'inputs', 'type' => ['summary' => 'string']],
         ],
         'maxSize' => [
-            'description' => 'Largest accepted file size, in bytes. Shown in the hint; validate on the server. 0 means not set.',
+            'description' => 'Largest accepted file size, in bytes. Changing it does not recheck files already listed. 0 means not set.',
             'control' => 'number',
             'table' => ['category' => 'inputs', 'type' => ['summary' => 'number']],
         ],
         'multiple' => [
-            'description' => 'Whether more than one file can be selected. Lists even one file as a tag.',
+            'description' => 'Whether more than one file can be selected; a single-file field replaces its file on the next selection.',
             'control' => 'boolean',
             'table' => ['category' => 'inputs', 'type' => ['summary' => 'boolean'], 'defaultValue' => ['summary' => 'false']],
+        ],
+        'keepRejectedFiles' => [
+            'description' => 'Keeps rejected files in the list, marked invalid, instead of discarding them.',
+            'control' => 'boolean',
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'boolean'], 'defaultValue' => ['summary' => 'false']],
+        ],
+        'validator' => [
+            'description' => 'Custom rule for each selected file, including ones `accept` or `maxSize` rejected, returning the rejection reason, if any. Changing it does not recheck files already listed.',
+            'control' => false,
+            'table' => ['category' => 'inputs', 'type' => ['summary' => 'FileUploadValidator']],
         ],
         'showRestrictions' => [
             'description' => 'Shows the allowed types and maximum size in the hint.',
@@ -101,10 +112,10 @@
 ])
 
 {{--
-    Angular's argTypes also list `files` (no control), `keepRejectedFiles`
-    and `validator`, and the `fileRemove` / `filesChange` outputs. The
-    client-side selection pipeline they belong to is not ported — the list is
-    server state (see the component's docblock) — so they have no control here.
+    Angular's argTypes also list `files` (no control) and the `fileRemove` /
+    `filesChange` outputs: the list is server state here (see the component's
+    docblock), and outputs are not ported. `validator` is documented without a
+    control, as upstream; here it is a JavaScript expression string.
     `stacked` is added: it is how the below-`md` branch is reached.
 --}}
 <tedi:form-field>
@@ -118,6 +129,7 @@
         :accept="$accept ?: null"
         :max-size="(int) $maxSize ?: null"
         :multiple="(bool) $multiple"
+        :keep-rejected-files="(bool) $keepRejectedFiles"
         :show-restrictions="(bool) $showRestrictions"
         :error="$error ?: null"
         :success="$success ?: null"

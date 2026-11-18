@@ -1,0 +1,14 @@
+.tedi-date-field-modal {
+  --_tedi-modal-body-padding: 0;
+
+  &__content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &--full-width .tedi-date-field-modal__content {
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+}

@@ -115,6 +115,8 @@
 @use 'components/helpers/timeline/timeline-item/timeline-item.component';
 @use 'components/helpers/timeline/timeline-title/timeline-title.component';
 @use 'components/helpers/timeline/timeline.component';
+// React community DockPanel (CONVENTIONS.md §13).
+@use 'components/layout/dock-panel/dock-panel.module';
 @use 'components/layout/footer/footer-body/footer-body.component';
 @use 'components/layout/footer/footer-bottom/footer-bottom.component';
 @use 'components/layout/footer/footer-section/footer-section.component';
@@ -133,6 +135,10 @@
 @use 'components/layout/header/header-search/header-search.component';
 @use 'components/layout/header/header-top/header-top.component';
 @use 'components/layout/header/header.component';
+// React community map components (CONVENTIONS.md §13). Their `--drag-indicator-*`
+// tokens are not in core yet: map-component-tokens is the stand-in (see the file).
+@use 'map-component-tokens';
+@use 'components/layout/resizer/resizer.module';
 @use 'components/layout/sidenav/sidenav-dropdown-group/sidenav-dropdown-group.component';
 @use 'components/layout/sidenav/sidenav-dropdown-item/sidenav-dropdown-item.component';
 @use 'components/layout/sidenav/sidenav-dropdown/sidenav-dropdown.component';
@@ -141,6 +147,7 @@
 @use 'components/layout/sidenav/sidenav-overlay/sidenav-overlay.component';
 @use 'components/layout/sidenav/sidenav-toggle/sidenav-toggle.component';
 @use 'components/layout/sidenav/sidenav.component';
+@use 'components/layout/split-pane/split-pane.module';
 @use 'components/layout/top-nav/top-nav.module';
 @use 'components/loader/progress-bar/progress-bar.component';
 @use 'components/loader/skeleton/skeleton-block/skeleton-block.component';
@@ -168,6 +175,12 @@
 @use 'components/overlay/dropdown/dropdown.component';
 @use 'components/overlay/info-tooltip/info-tooltip.component';
 @use 'components/overlay/modal/modal.component';
+// Out of alphabetical order on purpose: `.tedi-date-field-modal` resets
+// `--_tedi-modal-body-padding` on the same element `.tedi-modal--small` sets it
+// on, both one class, so it has to come later in the cascade (upstream gets the
+// same order from the date-field modal's component styles loading after the
+// modal's).
+@use 'components/form/date-field/date-field-modal/date-field-modal.component';
 @use 'components/overlay/popover/popover.component';
 @use 'components/overlay/sheet/sheet.module';
 @use 'components/overlay/tooltip/tooltip.component';

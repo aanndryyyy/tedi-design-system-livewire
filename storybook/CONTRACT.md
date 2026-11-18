@@ -76,8 +76,6 @@ The dropped areas, in short:
 
 - Breakpoint props (`xs`/`sm`/`md`/`lg`/`xl`/`xxl`) — not ported anywhere.
 - `output()` events — no event stories.
-- Toast placement — `<tedi:toast>` renders markup only and leaves placement to
-  the consumer.
 - Open/close state driven from Angular — `pagination`'s option-picker modal, the
   `tabs` overflow "More" dropdown, `header.profile` / `header.role` popover
   branch, `footer` mobile layouts.

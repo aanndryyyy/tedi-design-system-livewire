@@ -190,11 +190,11 @@ class NotificationComponentsTest extends TestCase
     public function test_toast_is_not_a_live_region_itself(): void
     {
         // Angular 8+: the toast's alert is always role="none"; `role` only
-        // drives the (unported) ToastService announcer.
+        // picks the politeness of the container's announcement.
         foreach (['status', 'alert', 'none'] as $role) {
             $html = Blade::render('<tedi:toast role="'.$role.'" title="T">Sisu</tedi:toast>');
-            $this->assertStringNotContainsString('role="alert"', $html);
-            $this->assertStringNotContainsString('role="status"', $html);
+            // `\s` before `role`: the toast's own `data-role` is not ARIA.
+            $this->assertDoesNotMatchRegularExpression('/\srole="(alert|status)"/', $html);
             $this->assertStringNotContainsString('aria-live=', $html);
         }
     }
@@ -225,10 +225,29 @@ class NotificationComponentsTest extends TestCase
         $this->assertClassNeverRendered('tedi-toast__progress', $html);
     }
 
-    public function test_toast_pause_on_hover_prop_is_accepted_for_api_parity(): void
+    public function test_toast_carries_its_container_config_as_data_attributes(): void
     {
-        $html = Blade::render('<tedi:toast :pause-on-hover="false">Sisu</tedi:toast>');
-        $this->assertHasClass('tedi-toast__wrapper', $html);
+        // Upstream's ToastService reads role / duration / pauseOnHover /
+        // position from the toast's config; the container behaviour reads
+        // them off these attributes when it adopts a server-rendered toast.
+        $html = Blade::render('<tedi:toast title="T">Sisu</tedi:toast>');
+        $this->assertStringContainsString('data-duration="6000"', $html);
+        $this->assertStringContainsString('data-role="status"', $html);
+        $this->assertStringContainsString('data-pause-on-hover="true"', $html);
+        $this->assertStringNotContainsString('data-position=', $html);
+
+        $html = Blade::render('<tedi:toast title="T" role="alert" :duration="0" :pause-on-hover="false" position="top-left">Sisu</tedi:toast>');
+        $this->assertStringContainsString('data-duration="0"', $html);
+        $this->assertStringContainsString('data-role="alert"', $html);
+        $this->assertStringContainsString('data-pause-on-hover="false"', $html);
+        $this->assertStringContainsString('data-position="top-left"', $html);
+    }
+
+    public function test_toast_consumer_attributes_win_over_its_data_attributes(): void
+    {
+        $html = Blade::render('<tedi:toast id="saved" data-role="none" title="T">Sisu</tedi:toast>');
+        $this->assertStringContainsString('id="saved"', $html);
+        $this->assertSame(1, substr_count($html, 'data-role='));
     }
 
     public function test_toast_progress_bar_type_and_paused_classes(): void
@@ -240,6 +259,68 @@ class NotificationComponentsTest extends TestCase
 
         $html = Blade::render('<tedi:toast :show-progress-bar="true" :paused="true">Sisu</tedi:toast>');
         $this->assertHasClass('tedi-toast__progress--paused', $html, on: 'tedi-toast__progress--paused');
+    }
+
+    // --- toast-container -------------------------------------------------------
+
+    public function test_toast_container_root_is_the_angular_element_with_its_host_class(): void
+    {
+        $html = Blade::render('<tedi:toast-container class="extra" />');
+        $this->assertMatchesRegularExpression('/^<tedi-toast-container\b/', trim($html));
+        $this->assertHasClass('tedi-toast-container', $html, on: 'tedi-toast-container');
+        $this->assertHasClass('extra', $html, on: 'tedi-toast-container');
+        $this->assertStringContainsString('x-data="tediToastContainer"', $html);
+        $this->assertStringContainsString('wire:ignore', $html);
+    }
+
+    public function test_toast_container_is_never_a_live_region(): void
+    {
+        // Announcements go through the root-level announcer regions only.
+        $html = Blade::render('<tedi:toast-container><tedi:toast title="T" role="alert">Sisu</tedi:toast></tedi:toast-container>');
+        $this->assertStringNotContainsString('aria-live=', $html);
+        $this->assertDoesNotMatchRegularExpression('/\srole="(alert|status)"/', $html);
+    }
+
+    public function test_empty_toast_container_renders_no_position_group(): void
+    {
+        // Upstream renders a group only when it has a toast.
+        $html = Blade::render('<tedi:toast-container />');
+        $this->assertClassNeverRendered('tedi-toast-container__position', $this->outsideTemplate($html));
+    }
+
+    public function test_toast_container_renders_slotted_toasts_in_the_default_bottom_right_group(): void
+    {
+        $html = Blade::render('<tedi:toast-container><tedi:toast title="Salvestatud" type="success" position="top-left">Sisu</tedi:toast></tedi:toast-container>');
+        $outside = $this->outsideTemplate($html);
+
+        $this->assertHasClass('tedi-toast-container__position', $outside, on: 'tedi-toast-container__position');
+        $this->assertHasClass('tedi-toast-container__position--bottom-right', $outside, on: 'tedi-toast-container__position');
+        $this->assertMatchesRegularExpression(
+            '/tedi-toast-container__position--bottom-right">\s*<tedi-toast\b[^>]*data-position="top-left"/',
+            $outside,
+        );
+    }
+
+    public function test_toast_container_prototype_is_a_full_toast(): void
+    {
+        // Spawned toasts are clones of this, so it must carry every part the
+        // behaviour fills in: the titled branch, an icon, the progress bar.
+        $html = Blade::render('<tedi:toast-container />');
+        $this->assertMatchesRegularExpression('/<template x-ref="prototype">\s*<tedi-toast\b/', $html);
+
+        preg_match('/<template x-ref="prototype">(.*)<\/template>/s', $html, $m);
+        $prototype = $m[1];
+        $this->assertHasClass('tedi-alert__head', $prototype, on: 'tedi-alert__head');
+        $this->assertHasClass('tedi-alert__title', $prototype, on: 'tedi-alert__title');
+        $this->assertHasClass('tedi-icon', $prototype, on: 'tedi-icon');
+        $this->assertHasClass('tedi-toast__progress', $prototype, on: 'tedi-toast__progress');
+        $this->assertHasClass('tedi-alert__close', $prototype, on: 'tedi-alert__close');
+        $this->assertStringContainsString('title="'.__('tedi::tedi.close').'"', $prototype);
+    }
+
+    private function outsideTemplate(string $html): string
+    {
+        return preg_replace('/<template\b.*?<\/template>/s', '', $html);
     }
 
     // --- status-indicator ----------------------------------------------------
