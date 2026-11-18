@@ -1,3 +1,5 @@
+> **In this port** the React props below map to Blade as follows: `children` → the default slot; `headerActions` / `footer` → the `header-actions` / `footer` slots; `onClose` → `closable` plus the `tedi:close` event; `onCollapsedChange` / `onPresentationChange` → the `tedi:collapsed-change` / `tedi:presentation-change` events; `collapsed` and `defaultCollapsed` → `collapsed`, the server-rendered state (a changed value on a later Livewire render is applied); `className` / `style` → `class` / `style`; `labels` → `:labels`. DockPanelLayout's `panel` → the `panel` slot.
+
 A reusable **non-modal, docked panel**. Expanded panels cover the workspace; minimized panels do not.
 Use **DockPanelLayout** with the workspace as `children` and DockPanel as `panel`.
 The layout reserves a separate row or column for the minimized strip, then releases it when expanded or closed.

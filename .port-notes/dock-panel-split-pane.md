@@ -143,6 +143,46 @@ Behaviour:
    itself is not modified. The composition overrides `hide`, `_onOpen` and
    `_onClose`, which are private to `sheet.js`.
 
+## Story docs
+
+- `README.md` is upstream's `componentDescription`, verbatim apart from two
+  changes: a mapping note at the top (React props to Blade slots, props and
+  events), and the `resizable` paragraph replaced by a not-ported note.
+- `position.md` has one sentence changed: `defaultCollapsed` becomes `collapsed`.
+- The Default story's argType descriptions for `collapsed`, `mobile`, `width`
+  and `maxWidth` are reworded, not copied, because the Blade semantics differ
+  (server-rendered state; no number-as-pixels control; no resizable default).
+- Stories with choice buttons render each choice in its own `x-if`, because a
+  Blade panel's props are server-rendered. Switching choices therefore
+  remounts the content, where upstream keeps it.
+
+## Tooling trap affecting every stream: symlinked `vendor/` tests the MAIN checkout
+
+If `vendor/` is a symlink to the main checkout's, Composer's
+`vendor/composer/autoload_*.php` resolve `$baseDir` through the symlink to the
+**main checkout**. PHPUnit then loads the main repo's `src/TediServiceProvider.php`,
+and with it the main repo's `resources/views`.
+
+- A **new** component fails loudly: "Unable to locate a class or view".
+- An **edit to an existing** component is silently not tested. The suite runs
+  the main checkout's copy.
+
+Other streams that symlinked `vendor/` and edited existing components may have
+reported "green" against the wrong files.
+
+The workaround used here is a real `vendor/` directory:
+
+- `autoload.php`, `composer/` and `bin/` are **copied** from the main
+  checkout's `vendor/`;
+- every other entry is **symlinked**.
+
+`vendor/bin/phpunit` then resolves the worktree's `src/` and views.
+`node_modules` can stay a symlink.
+
+Related: the main checkout's `node_modules` has `@tedi-design-system/core`
+**6.12.0**, while `package-lock.json` pins **6.13.0**. Every stream's local
+`dist/` build used 6.12.
+
 ## Convention-worthy finding (suggest a CONVENTIONS §8 note)
 
 Alpine's merged data proxy writes an assignment to an undeclared property into

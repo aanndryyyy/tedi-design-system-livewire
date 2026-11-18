@@ -13,7 +13,7 @@ top/bottom panels fill its width. Expanded panels overlay the workspace. Minimiz
 stacked above the smaller, bottom-to-top title on side strips, or adjacent at the end of horizontal strips. Inward arrows minimize; outward arrows restore the configured size.
 The same panel and children stay mounted while switching positions or minimizing, so edited
 form values and the content counter are preserved. Switching position buttons restores the
-expanded view by default; set `defaultCollapsed` before opening to start minimized.
+expanded view by default; render the panel with `collapsed` to start minimized (upstream: `defaultCollapsed`).
 Closing is separate: it unmounts this example, and reopening starts with fresh content.
 Custom side heights and top/bottom heights use the existing `height` prop;
 see **Custom dimensions** and **Content height** rather than separate per-edge examples.
