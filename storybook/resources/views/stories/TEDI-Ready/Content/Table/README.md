@@ -1,8 +1,9 @@
 <a href="https://www.figma.com/design/jWiRIXhHRxwVdMSimKX2FF/TEDI-READY-2.45.70?node-id=11335-186161&m=dev" target="_BLANK">Figma ↗</a><br/>
 <a href="https://www.tedi.ee/1ee8444b7/p/557b9f-table" target="_BLANK">Zeroheight ↗</a>
 
-Data table markup. Supports sort affordances, a filter row, expansion, selection,
-pagination chrome, sticky chrome and body row spanning.
+Data table markup. Supports sort affordances, a filter row, per-column filter
+popovers, expansion, selection, pagination chrome, sticky chrome and body row
+spanning.
 
 **This is a documented subset.** The Angular component is a wrapper around
 `@tanstack/angular-table`, and that engine — sorting, filtering, row selection,
@@ -26,8 +27,6 @@ replaces Angular's per-column `cell` `TemplateRef` — see **Actions** and
 |---|---|
 | `GroupedSelectableRows` | Its subject is table-level `groupRowsBy` **behaviour**: one checkbox per group, indeterminate propagation across a group's rows, group-wide selection. All of it is computed by the TanStack row model. The visual result (merged cells, group dividers) is covered by **Grouped Rows**. |
 | `EditableValues` | Cells host Angular reactive-forms controls whose writes go back into the table's `data` signal. Both the form binding and the write-back are engine, not markup. |
-| `Filters` | Demonstrates the built-in filter **popover** (`filterable: true` + a `filterTemplate`, sized by `filterPopoverWidth` / `filterable.popoverWidth`) and, below `filterModalBreakpoint`, the filter **modal**. Both bodies are a `TemplateRef` bound to per-column draft state owned by the engine. The plain filter **row** (`enableColumnFilters`) is ported and appears in **Default**. |
-| `FilterActions` | Configures the footer buttons (`filterActions`, per-column `filterable.actions`, the `cancel` action) of the built-in filter popover and modal, which are not ported — see **Filters**. |
 | `ReorderableRows` | Row drag-and-drop (CDK) plus the keyboard pick-up / move / drop / cancel state machine and its `aria-live` announcements. Not ported. |
 | `ReorderableColumns` | Same, for columns, plus `ColumnReorderPhase` and the `drag` control column. Not ported. |
 | `ServerSide` | `manualPagination` / `manualSorting` with a simulated server round-trip driving the table's state. There is no table-owned state here to drive. |
