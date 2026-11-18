@@ -42,7 +42,18 @@
  * `tedi:collapsed-change` `{ collapsed }`, `tedi:close`, and
  * `tedi:presentation-change` `{ presentation }`.
  *
- * Not ported: `resizable` (React's community Resizer fails the core-token gate).
+ * - **Resizable** (upstream's `renderResizable()` and its two layout effects).
+ *   The server renders the measurement state. `_measure()` reads the panel's
+ *   size and its workspace (the resize layout's offsetParent), computes the
+ *   limits (8% / 92% of the workspace unless `min-*` / `max-*` are given,
+ *   capped by it), starts the `tediResizer` at the measured size within them,
+ *   and leaves the measurement state. A ResizeObserver on the workspace
+ *   updates the limits and clamps the saved size only when it falls outside
+ *   them (upstream's remount with a new `key`). While measuring the panel is
+ *   never minimized, as upstream's `isCollapsed` is not. A switch to the
+ *   sheet drops the measurement, and the next docked presentation measures
+ *   again, as upstream unmounts the Resizer. After a Livewire morph,
+ *   `_applyResize()` restores the measured state over the server's.
  */
 
 import { BREAKPOINTS } from './breakpoint.js';
@@ -87,6 +98,11 @@ export function dockPanel(config) {
             s.marked = false;
             s.sheetFocusResolved = false;
             s.serverCollapsed = this.collapsed;
+            s.measuring = !!cfg.resizable;
+            if (cfg.resizable) {
+                s.layout = s.root.closest('.tedi-dock-panel__resize-layout');
+                s.resizerElement = s.root.previousElementSibling;
+            }
             s.counter = s.root.getAttribute('data-minimize-counter');
             this._collectSlots();
 
@@ -133,6 +149,7 @@ export function dockPanel(config) {
             s.query?.removeEventListener('change', s.onQuery);
             s.counterObserver?.disconnect();
             s.fitObserver?.disconnect();
+            s.workspaceObserver?.disconnect();
             s.offMorph?.();
             this._mark(false);
             s.root = null;
@@ -198,6 +215,7 @@ export function dockPanel(config) {
 
             const next = this._isMobile() ? 'sheet' : 'docked';
             const changed = next !== this.presentation;
+            if (cfg.resizable && next === 'sheet') this._unmeasure();
 
             if (changed) {
                 // Moving a node blurs whatever is focused inside it.
@@ -212,6 +230,12 @@ export function dockPanel(config) {
                 if (restore === 'toggle') this._toggle(next)?.focus();
                 else if (restore && restore.isConnected) restore.focus();
             } else {
+                this._apply();
+            }
+
+            // Measured once the docked shell is showing in its measurement state.
+            if (cfg.resizable && this.presentation === 'docked' && s.measuring) {
+                this._measure();
                 this._apply();
             }
 
@@ -273,21 +297,29 @@ export function dockPanel(config) {
             const collapsed = this.collapsed;
             const isSheet = this.presentation === 'sheet';
             const label = collapsed ? cfg.labels.expand : cfg.labels.collapse;
+            // A resizable panel is never minimized while it is being measured.
+            const docked = collapsed && !s.measuring;
+            const dockedLabel = docked ? cfg.labels.expand : cfg.labels.collapse;
 
             // Docked panel.
-            root.setAttribute('data-collapsed', collapsed ? 'true' : 'false');
-            root.style.display = isSheet ? 'none' : '';
-            root.querySelector('[data-tedi-dock-panel-title]')?.classList.toggle('text-small', collapsed);
+            root.setAttribute('data-collapsed', docked ? 'true' : 'false');
+            if (s.layout) {
+                s.layout.style.display = isSheet ? 'none' : '';
+                this._applyResize();
+            } else {
+                root.style.display = isSheet ? 'none' : '';
+            }
+            root.querySelector('[data-tedi-dock-panel-title]')?.classList.toggle('text-small', docked);
             root.querySelectorAll('[data-tedi-dock-panel-collapsible], .tedi-dock-panel__header-actions')
-                .forEach((element) => setHidden(element, collapsed));
+                .forEach((element) => setHidden(element, docked));
 
             const toggle = this._toggle('docked');
             if (toggle) {
-                toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-                toggle.setAttribute('aria-label', label);
-                toggle.setAttribute('title', label);
+                toggle.setAttribute('aria-expanded', docked ? 'false' : 'true');
+                toggle.setAttribute('aria-label', dockedLabel);
+                toggle.setAttribute('title', dockedLabel);
                 const icon = toggle.querySelector('tedi-icon');
-                if (icon) icon.textContent = collapsed ? 'zoom_out_map' : 'zoom_in_map';
+                if (icon) icon.textContent = docked ? 'zoom_out_map' : 'zoom_in_map';
             }
 
             // The panel id sits on the docked root, or on the sheet's content host.
@@ -357,7 +389,7 @@ export function dockPanel(config) {
             if (!s.root) return;
             this._collectSlots();
 
-            const serverCollapsed = s.root.getAttribute('data-collapsed') === 'true';
+            const serverCollapsed = s.root.getAttribute(cfg.resizable ? 'data-tedi-dock-panel-collapsed' : 'data-collapsed') === 'true';
             if (serverCollapsed !== s.serverCollapsed) {
                 // A changed server value is the application applying its state (controlled mode).
                 s.serverCollapsed = serverCollapsed;
@@ -372,6 +404,115 @@ export function dockPanel(config) {
             // Every moved node is hidden while collapsed (the sheet body only after Alpine's next tick).
             if (target && target.isConnected && !this.collapsed) target.focus();
             else if (target) this._toggle(this.presentation)?.focus();
+        },
+
+        // -- resizable -----------------------------------------------------------
+
+        _isSidePanel() {
+            return cfg.placement === 'left' || cfg.placement === 'right';
+        },
+
+        _resizer() {
+            const element = s.resizerElement;
+            return element && window.Alpine ? window.Alpine.$data(element) : null;
+        },
+
+        /** Upstream's getResizeLimits. */
+        _limits(workspaceWidth, workspaceHeight) {
+            const pick = (value, fallback) => (value === null || value === undefined ? fallback : value);
+            const side = this._isSidePanel();
+            const workspaceSize = side ? workspaceWidth : workspaceHeight;
+            const max = side ? pick(cfg.maxWidth, workspaceWidth * 0.92) : pick(cfg.maxHeight, workspaceHeight * 0.92);
+            const min = side ? pick(cfg.minWidth, workspaceWidth * 0.08) : pick(cfg.minHeight, workspaceHeight * 0.08);
+            const maximumSize = Math.min(workspaceSize, max);
+            return { minimumSize: Math.min(min, maximumSize), maximumSize };
+        },
+
+        _limitProps(limits) {
+            return this._isSidePanel()
+                ? { minWidth: limits.minimumSize, maxWidth: limits.maximumSize }
+                : { minHeight: limits.minimumSize, maxHeight: limits.maximumSize };
+        },
+
+        /** Upstream's layout effect plus the first renderResizable() with workspace dimensions. */
+        _measure() {
+            const workspace = s.layout?.offsetParent;
+            const resizer = this._resizer();
+            if (!workspace || !resizer) return;
+
+            // Still in the measurement state: the panel has its configured size.
+            const dimension = this._isSidePanel() ? 'width' : 'height';
+            const limits = this._limits(workspace.clientWidth, workspace.clientHeight);
+            const panelSize = s.root.getBoundingClientRect()[dimension];
+            const size = Math.min(Math.max(panelSize, limits.minimumSize), limits.maximumSize);
+
+            // A fresh Resizer, as upstream mounts one: upstream's defaults for the other axis.
+            resizer.configure(Object.assign(
+                { handlePosition: cfg.resizeHandle, width: 350, height: 350 },
+                this._limitProps(limits),
+                { [dimension]: size },
+            ));
+
+            s.measuring = false;
+            s.workspace = workspace;
+            s.workspaceSize = { width: workspace.clientWidth, height: workspace.clientHeight };
+            if (typeof ResizeObserver !== 'undefined') {
+                s.workspaceObserver?.disconnect();
+                s.workspaceObserver = new ResizeObserver(() => this._onWorkspaceResize());
+                s.workspaceObserver.observe(workspace);
+            }
+        },
+
+        /** The sheet unmounts upstream's Resizer and drops the workspace dimensions. */
+        _unmeasure() {
+            s.measuring = true;
+            s.workspaceObserver?.disconnect();
+            s.workspaceObserver = null;
+        },
+
+        _onWorkspaceResize() {
+            const workspace = s.workspace;
+            const resizer = this._resizer();
+            if (!workspace || !resizer || s.measuring) return;
+            const width = workspace.clientWidth;
+            const height = workspace.clientHeight;
+            if (s.workspaceSize && s.workspaceSize.width === width && s.workspaceSize.height === height) return;
+            s.workspaceSize = { width, height };
+
+            const dimension = this._isSidePanel() ? 'width' : 'height';
+            const limits = this._limits(width, height);
+            const saved = resizer.size()[dimension];
+            const next = this._limitProps(limits);
+            if (saved < limits.minimumSize || saved > limits.maximumSize) {
+                // Upstream remounts the Resizer at the clamped saved size.
+                next.width = 350;
+                next.height = 350;
+                next[dimension] = Math.min(Math.max(saved, limits.minimumSize), limits.maximumSize);
+            }
+            resizer.configure(next);
+        },
+
+        /** Writes the measurement / measured state onto the resize layout. Idempotent. */
+        _applyResize() {
+            const layout = s.layout;
+            if (!layout || !s.root) return;
+            const measuring = s.measuring;
+            const docked = this.collapsed && !measuring;
+
+            layout.classList.toggle('tedi-dock-panel__resize-measurement', measuring);
+            layout.setAttribute('data-collapsed', docked ? 'true' : 'false');
+            s.root.setAttribute('data-resizable', measuring ? 'false' : 'true');
+
+            // Upstream's resizeLayoutStyle; minimized bars and the measurement ignore the height limits.
+            const free = docked || measuring;
+            layout.style.height = !free && this._isSidePanel() && cfg.layoutHeight ? cfg.layoutHeight : '';
+            layout.style.maxHeight = !free && cfg.layoutMaxHeight ? cfg.layoutMaxHeight : '';
+            layout.style.visibility = measuring && this.collapsed ? 'hidden' : '';
+
+            if (s.resizerElement) {
+                s.resizerElement.style.display = measuring ? 'none' : 'block';
+                if (!measuring) this._resizer()?.configure({});
+            }
         },
 
         // -- shortTitle ----------------------------------------------------------
