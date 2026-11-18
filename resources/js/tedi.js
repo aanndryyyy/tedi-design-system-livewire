@@ -33,9 +33,11 @@
  *   src/sheet.js              tediSheet — the React bottom sheet: open/close, focus, drag and snap points
  *   src/process-timeline.js   tediProcessTimeline — horizontal process timeline falls back to vertical when it overflows
  *   src/rating.js             tediRating — the rating's hover preview and live selected/caption state
+ *   src/dock-panel.js         tediDockPanel, tediDockPanelSheet — the community dock panel: collapse, events, mobile sheet presentation
  */
 import { breakpoint } from './src/breakpoint.js';
 import { carousel } from './src/carousel.js';
+import { dockPanel, dockPanelSheet } from './src/dock-panel.js';
 import { dropdown } from './src/dropdown.js';
 import { fileUpload } from './src/file-upload.js';
 import { filter } from './src/filter.js';
@@ -71,6 +73,8 @@ function register(Alpine) {
     Alpine.data('tediProgressBar', progressBar);
     Alpine.data('tediProcessTimeline', processTimeline);
     Alpine.data('tediRating', rating);
+    Alpine.data('tediDockPanel', dockPanel);
+    Alpine.data('tediDockPanelSheet', dockPanelSheet);
 }
 
 if (window.Alpine) {
