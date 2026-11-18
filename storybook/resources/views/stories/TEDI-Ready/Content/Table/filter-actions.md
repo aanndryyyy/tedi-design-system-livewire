@@ -1,0 +1,5 @@
+`filterActions` picks the footer buttons of every filter popover, in display order. `apply` commits the draft, `clear` removes the column filter, and `cancel` closes and keeps the applied filter as it was, discarding the unapplied draft. The default is `["clear", "apply"]`; this table uses `["cancel", "apply"]`. 
+
+`filterable: { actions }` overrides the list for one column, and an empty list hides the footer.
+
+> **Port note:** there is no filter modal in this port, no table-owned draft and no filter context (`apply()` / `clear()` / `cancel()`) handed to the template: every footer button closes the popover and dispatches `tedi-table:filter-action` (`detail: { column, action }`), and what `apply`, `clear` and `cancel` do to your state is yours to bind — through the column's `filterActionAttributes` (`['cancel' => ['wire:click' => …]]`) or a listener for that event. The per-column override is `'filterable' => ['actions' => ['clear', 'cancel', 'apply']]`. A filter template closes the popover itself with Alpine's `hide(true)`.

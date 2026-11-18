@@ -22,8 +22,7 @@
     }
 
     // A custom header is any Htmlable — here a Blade snippet with an info
-    // popover. Upstream's column also has a filter popover, which is not
-    // ported (see this directory's README).
+    // popover.
     $roleHeader = new \Illuminate\Support\HtmlString(\Illuminate\Support\Facades\Blade::render(<<<'BLADE'
 Roll
 <tedi:popover container-id="table-role-help" position="bottom-start" :prevent-overflow="true">
@@ -46,12 +45,20 @@ Roll
 </tedi:popover>
 BLADE));
 
+    // The column's filter popover body. Upstream labels it from `meta.label`.
+    $textFilter = new \Illuminate\Support\HtmlString(\Illuminate\Support\Facades\Blade::render(<<<'BLADE'
+<tedi:form.label size="small" for="role-filter">Roll</tedi:form.label>
+<tedi:form-field size="small">
+    <tedi:text-field id="role-filter" type="text" />
+</tedi:form-field>
+BLADE));
+
     // The sort itself is the consumer's (CONVENTIONS.md §7.2). With a custom
-    // header the table renders it as-is and adds an icon-only sort button,
-    // named from `label` ("Sort by Roll ascending").
+    // header the table renders it as-is and adds icon-only sort and filter
+    // buttons, both named from `label` ("Sort by Roll ascending", "Filter Roll").
     $columns = [
         ['key' => 'name', 'header' => 'Nimi', 'sortable' => true, 'sort' => 'none'],
-        ['key' => 'role', 'header' => $roleHeader, 'label' => 'Roll', 'sortable' => true, 'sort' => 'none'],
+        ['key' => 'role', 'header' => $roleHeader, 'label' => 'Roll', 'sortable' => true, 'sort' => 'none', 'filterable' => true, 'filterTemplate' => $textFilter],
         ['key' => 'location', 'header' => 'Asukoht', 'sortable' => true, 'sort' => 'none'],
     ];
 @endphp
