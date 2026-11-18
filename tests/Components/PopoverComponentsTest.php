@@ -451,4 +451,19 @@ class PopoverComponentsTest extends TestCase
 
         $this->assertStringContainsString('id="pop-4_title"', $html);
     }
+
+    public function test_popover_content_padding_is_set_inline_on_the_card_scale(): void
+    {
+        // Angular 9.1 (#838).
+        $this->assertStringContainsString('padding: 0.5rem 0.5rem 0.5rem 0.5rem',
+            Blade::render('<tedi:popover-content :padding="0.5">x</tedi:popover-content>'));
+        $this->assertStringContainsString('padding: 1rem 2rem 1rem 2rem',
+            Blade::render('<tedi:popover-content :padding="[\'vertical\' => 1, \'horizontal\' => 2]">x</tedi:popover-content>'));
+        $this->assertStringContainsString('padding: 1rem 0rem 0rem 0.5rem',
+            Blade::render('<tedi:popover-content :padding="[\'top\' => 1, \'left\' => 0.5]">x</tedi:popover-content>'));
+        $this->assertStringNotContainsString('padding:', Blade::render('<tedi:popover-content>x</tedi:popover-content>'));
+        // Combines with a custom width.
+        $this->assertMatchesRegularExpression('/style="[^"]*width: 20rem[^"]*padding: 0rem/',
+            Blade::render('<tedi:popover-content max-width="20rem" :padding="0">x</tedi:popover-content>'));
+    }
 }

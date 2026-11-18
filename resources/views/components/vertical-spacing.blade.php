@@ -15,11 +15,11 @@
     `> :last-child`, `> :first-of-type`), and the slot's top-level elements are
     direct children of this wrapper just as they were of the directive's host.
 
-    DIVERGENCE — style merging. Angular calls `setAttribute('style', …)`, which
-    CLOBBERS any style already on the host. Here `$attributes->style()` merges,
-    so a consumer's own `style="…"` survives alongside the custom property. That
-    is what CONVENTIONS.md §6 requires of every attribute the component computes,
-    and the merged declaration is the same one Angular would have written.
+    Style merging: `$attributes->style()` merges, so a consumer's own
+    `style="…"` survives alongside the custom property (CONVENTIONS.md §6).
+    Since Angular 9.1 (#843) upstream does the same — it binds the custom
+    property through a host `[style.--vertical-spacing-internal]` instead of
+    clobbering the host's `style` — so this is no longer a divergence.
 
     DIVERGENCE — the wrapper is a `<div>`. Angular's host could be any element;
     here the level of DOM is fixed. Inside a flex or grid parent the wrapper, not

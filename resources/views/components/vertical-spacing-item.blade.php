@@ -9,8 +9,8 @@
     one element without making its parent a spacing container.
 
     Ports as a WRAPPER element for the same reason as `tedi:vertical-spacing` —
-    see that file's header for the choicegroup precedent and the style-merging
-    divergence, which apply here unchanged.
+    see that file's header for the choicegroup precedent and the style merging
+    (which, since Angular 9.1, matches upstream).
 
     DIVERGENCE — margin collapse through the wrapper. Angular puts the class on
     the element itself, overriding e.g. an `<h1>`'s UA `margin-bottom`. Here the
