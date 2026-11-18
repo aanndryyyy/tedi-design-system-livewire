@@ -6,7 +6,10 @@
     Covers: both sizes (own and inherited), disabled, read-only (one and several
     files), empty, the single-name and tag list shapes, an invalid and a loading
     file, error / success / hint, both clear-button branches (`stacked`), and the
-    surface owned by a form field's box.
+    surface owned by a form field's box. The client pipeline's prototype
+    template (a danger tag, the clear group, the error text) is part of every
+    editable render, so its classes are harvested too; the last case turns on
+    every pipeline prop.
 --}}
 @php
     $twoFiles = [['name' => 'aruanne.pdf'], ['name' => 'vigane.pdf', 'isValid' => false]];
@@ -27,3 +30,4 @@
 <tedi:file-upload name="failid" :files="$twoFiles" read-only />
 <tedi:file-upload name="failid" :files="[['name' => 'ainus.pdf']]" read-only />
 <tedi:file-upload name="failid" />
+<tedi:file-upload name="failid" multiple keep-rejected-files accept=".pdf" :max-size="1024" validator="(file) => null" />
