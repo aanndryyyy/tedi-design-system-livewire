@@ -70,65 +70,72 @@ function setHidden(element, hidden) {
 
 export function dockPanel(config) {
     const cfg = config || {};
+    // Private state lives here, not on the Alpine object: a nested scope that
+    // assigns an undeclared `this._root` (tediFormField does) would otherwise
+    // write it into this scope through Alpine's merged data proxy.
+    const s = {};
 
     return {
         collapsed: !!cfg.collapsed,
         presentation: 'docked',
 
         init() {
-            this._root = this.$el;
-            this._sheet = null;
-            this._ready = false;
-            this._reported = null;
-            this._marked = false;
-            this._sheetFocusResolved = false;
-            this._serverCollapsed = this.collapsed;
-            this._counter = this._root.getAttribute('data-minimize-counter');
+            s.root = this.$el;
+            s.sheet = null;
+            s.ready = false;
+            s.reported = null;
+            s.marked = false;
+            s.sheetFocusResolved = false;
+            s.serverCollapsed = this.collapsed;
+            s.counter = s.root.getAttribute('data-minimize-counter');
             this._collectSlots();
 
             if (cfg.mobile === null && typeof window.matchMedia === 'function') {
-                this._query = window.matchMedia(`(min-width: ${BREAKPOINTS.md}rem)`);
-                this._onQuery = () => this._present();
-                this._query.addEventListener('change', this._onQuery);
+                s.query = window.matchMedia(`(min-width: ${BREAKPOINTS.md}rem)`);
+                s.onQuery = () => this._present();
+                s.query.addEventListener('change', s.onQuery);
             }
 
             if (typeof MutationObserver !== 'undefined') {
-                this._counterObserver = new MutationObserver(() => this._checkCounter());
-                this._counterObserver.observe(this._root, { attributes: true, attributeFilter: ['data-minimize-counter'] });
+                s.counterObserver = new MutationObserver(() => this._checkCounter());
+                s.counterObserver.observe(s.root, { attributes: true, attributeFilter: ['data-minimize-counter'] });
             }
 
             if (typeof ResizeObserver !== 'undefined') {
-                this._fitObserver = new ResizeObserver(() => this._fitTitles());
+                s.fitObserver = new ResizeObserver(() => this._fitTitles());
             }
 
             const livewire = window.Livewire;
             if (livewire && typeof livewire.hook === 'function') {
                 const offs = [
                     livewire.hook('morph', ({ el }) => {
-                        if (el && this._root && el.contains(this._root)) this._restoreServerLayout();
+                        if (el && s.root && el.contains(s.root)) this._restoreServerLayout();
                     }),
                     livewire.hook('morphed', ({ el }) => {
-                        if (el && this._root && el.contains(this._root)) this._afterMorph();
+                        if (el && s.root && el.contains(s.root)) this._afterMorph();
                     }),
                 ];
-                this._offMorph = () => offs.forEach((off) => typeof off === 'function' && off());
+                s.offMorph = () => offs.forEach((off) => typeof off === 'function' && off());
             }
 
             // The sheet sibling initialises after this element and attaches itself.
             this.$nextTick(() => {
-                this._ready = true;
+                // The counter's initial value is ignored, including one an
+                // x-bind on this element applied after init() ran.
+                s.counter = s.root.getAttribute('data-minimize-counter');
+                s.ready = true;
                 this._present();
                 this._observeTitles();
             });
         },
 
         destroy() {
-            this._query?.removeEventListener('change', this._onQuery);
-            this._counterObserver?.disconnect();
-            this._fitObserver?.disconnect();
-            this._offMorph?.();
+            s.query?.removeEventListener('change', s.onQuery);
+            s.counterObserver?.disconnect();
+            s.fitObserver?.disconnect();
+            s.offMorph?.();
             this._mark(false);
-            this._root = null;
+            s.root = null;
         },
 
         // -- public API ---------------------------------------------------------
@@ -166,10 +173,10 @@ export function dockPanel(config) {
         // -- called by tediDockPanelSheet ----------------------------------------
 
         _attachSheet(scope, element) {
-            this._sheet = scope;
-            this._sheetElement = element;
-            this._spacer = document.querySelector(`[data-tedi-dock-panel-spacer="${CSS.escape(cfg.panelId)}"]`);
-            if (this._ready) this._present();
+            s.sheet = scope;
+            s.sheetElement = element;
+            s.spacer = document.querySelector(`[data-tedi-dock-panel-spacer="${CSS.escape(cfg.panelId)}"]`);
+            if (s.ready) this._present();
         },
 
         /** Upstream's handleSheetDismiss: a drag down on the sheet. */
@@ -181,13 +188,13 @@ export function dockPanel(config) {
         // -- presentation --------------------------------------------------------
 
         _isMobile() {
-            if (!this._sheet) return false;
+            if (!s.sheet) return false;
             if (cfg.mobile !== null && cfg.mobile !== undefined) return !!cfg.mobile;
-            return this._query ? !this._query.matches : false;
+            return s.query ? !s.query.matches : false;
         },
 
         _present() {
-            if (!this._ready || !this._root) return;
+            if (!s.ready || !s.root) return;
 
             const next = this._isMobile() ? 'sheet' : 'docked';
             const changed = next !== this.presentation;
@@ -208,31 +215,31 @@ export function dockPanel(config) {
                 this._apply();
             }
 
-            if (this.presentation === 'sheet' && !this._sheetFocusResolved) {
+            if (this.presentation === 'sheet' && !s.sheetFocusResolved) {
                 // Upstream's initialFocus: a panel that opens as a sheet focuses its first
                 // tabbable element unless minimized; one that was docked first leaves focus alone.
-                this._sheetFocusResolved = true;
-                if (!changed || this.collapsed || this._reported === 'docked') return this._report();
-                this._sheet?._focusFirst();
+                s.sheetFocusResolved = true;
+                if (!changed || this.collapsed || s.reported === 'docked') return this._report();
+                s.sheet?._focusFirst();
             } else if (this.presentation === 'docked') {
-                this._sheetFocusResolved = true;
+                s.sheetFocusResolved = true;
             }
 
             this._report();
         },
 
         _report() {
-            if (this._reported === this.presentation) return;
-            this._reported = this.presentation;
+            if (s.reported === this.presentation) return;
+            s.reported = this.presentation;
             this._dispatch('tedi:presentation-change', { presentation: this.presentation });
         },
 
         // -- DOM ---------------------------------------------------------------
 
         _collectSlots() {
-            this._slots = {};
+            s.slots = {};
             SLOT_NAMES.forEach((name) => {
-                this._slots[name] = this._root.querySelector(`[data-tedi-dock-panel-slot="${name}"]`);
+                s.slots[name] = s.root.querySelector(`[data-tedi-dock-panel-slot="${name}"]`);
             });
         },
 
@@ -241,18 +248,18 @@ export function dockPanel(config) {
         },
 
         _toggle(presentation) {
-            const container = presentation === 'sheet' ? this._sheetElement : this._root;
+            const container = presentation === 'sheet' ? s.sheetElement : s.root;
             return container ? container.querySelector(`[data-tedi-dock-panel-toggle="${presentation}"]`) : null;
         },
 
         _inSlot(element) {
             if (!element) return false;
-            return SLOT_NAMES.some((name) => this._slots[name]?.contains(element));
+            return SLOT_NAMES.some((name) => s.slots[name]?.contains(element));
         },
 
         _moveSlots(container) {
             SLOT_NAMES.forEach((name) => {
-                const slot = this._slots[name];
+                const slot = s.slots[name];
                 const host = this._host(container, name);
                 if (slot && host && slot.parentElement !== host) host.appendChild(slot);
             });
@@ -260,7 +267,7 @@ export function dockPanel(config) {
 
         /** Writes the current state onto the server markup. Idempotent. */
         _apply() {
-            const root = this._root;
+            const root = s.root;
             if (!root) return;
 
             const collapsed = this.collapsed;
@@ -284,11 +291,11 @@ export function dockPanel(config) {
             }
 
             // The panel id sits on the docked root, or on the sheet's content host.
-            const sheetContent = this._host(this._sheetElement, 'content');
+            const sheetContent = this._host(s.sheetElement, 'content');
             if (isSheet && sheetContent) {
                 root.removeAttribute('id');
                 sheetContent.id = cfg.panelId;
-                this._moveSlots(this._sheetElement);
+                this._moveSlots(s.sheetElement);
             } else {
                 if (sheetContent) sheetContent.removeAttribute('id');
                 root.id = cfg.panelId;
@@ -296,21 +303,21 @@ export function dockPanel(config) {
             }
 
             // Sheet.
-            if (this._sheet) {
-                this._sheet.collapsed = collapsed;
-                this._sheet._setPresented(isSheet);
-                setHidden(this._host(this._sheetElement, 'actions'), collapsed);
+            if (s.sheet) {
+                s.sheet.collapsed = collapsed;
+                s.sheet._setPresented(isSheet);
+                setHidden(this._host(s.sheetElement, 'actions'), collapsed);
                 this._toggle('sheet')?.setAttribute('aria-label', label);
             }
 
-            if (this._spacer) this._spacer.style.display = isSheet && collapsed ? '' : 'none';
+            if (s.spacer) s.spacer.style.display = isSheet && collapsed ? '' : 'none';
             this._mark(isSheet && collapsed);
             this._fitTitles();
         },
 
         _mark(on) {
-            if (on === this._marked) return;
-            this._marked = on;
+            if (on === s.marked) return;
+            s.marked = on;
             const html = document.documentElement;
             if (on) {
                 minimizedSheetCount += 1;
@@ -322,14 +329,14 @@ export function dockPanel(config) {
         },
 
         _dispatch(name, detail) {
-            this._root?.dispatchEvent(new CustomEvent(name, { detail, bubbles: true }));
+            s.root?.dispatchEvent(new CustomEvent(name, { detail, bubbles: true }));
         },
 
         _checkCounter() {
-            if (!this._root) return;
-            const value = this._root.getAttribute('data-minimize-counter');
-            if (value === this._counter) return;
-            this._counter = value;
+            if (!s.root || !s.ready) return;
+            const value = s.root.getAttribute('data-minimize-counter');
+            if (value === s.counter) return;
+            s.counter = value;
             this.minimize();
         },
 
@@ -337,47 +344,47 @@ export function dockPanel(config) {
 
         _restoreServerLayout() {
             const active = document.activeElement;
-            this._morphFocus = active instanceof HTMLElement && this._inSlot(active) ? active : null;
-            const sheetContent = this._host(this._sheetElement, 'content');
+            s.morphFocus = active instanceof HTMLElement && this._inSlot(active) ? active : null;
+            const sheetContent = this._host(s.sheetElement, 'content');
             if (sheetContent) sheetContent.removeAttribute('id');
-            if (this._root) {
-                this._root.id = cfg.panelId;
-                this._moveSlots(this._root);
+            if (s.root) {
+                s.root.id = cfg.panelId;
+                this._moveSlots(s.root);
             }
         },
 
         _afterMorph() {
-            if (!this._root) return;
+            if (!s.root) return;
             this._collectSlots();
 
-            const serverCollapsed = this._root.getAttribute('data-collapsed') === 'true';
-            if (serverCollapsed !== this._serverCollapsed) {
+            const serverCollapsed = s.root.getAttribute('data-collapsed') === 'true';
+            if (serverCollapsed !== s.serverCollapsed) {
                 // A changed server value is the application applying its state (controlled mode).
-                this._serverCollapsed = serverCollapsed;
+                s.serverCollapsed = serverCollapsed;
                 this.collapsed = serverCollapsed;
             }
 
             this._apply();
             this._observeTitles();
-            if (this._morphFocus && this._morphFocus.isConnected) this._morphFocus.focus();
-            this._morphFocus = null;
+            if (s.morphFocus && s.morphFocus.isConnected) s.morphFocus.focus();
+            s.morphFocus = null;
         },
 
         // -- shortTitle ----------------------------------------------------------
 
         _titles() {
-            const titles = Array.from(this._root?.querySelectorAll('[data-tedi-dock-panel-fit]') || []);
-            if (this._sheetElement) titles.push(...this._sheetElement.querySelectorAll('[data-tedi-dock-panel-fit]'));
+            const titles = Array.from(s.root?.querySelectorAll('[data-tedi-dock-panel-fit]') || []);
+            if (s.sheetElement) titles.push(...s.sheetElement.querySelectorAll('[data-tedi-dock-panel-fit]'));
             return titles;
         },
 
         _observeTitles() {
-            if (!this._fitObserver) return;
-            this._fitObserver.disconnect();
+            if (!s.fitObserver) return;
+            s.fitObserver.disconnect();
             this._titles().forEach((title) => {
-                this._fitObserver.observe(title);
+                s.fitObserver.observe(title);
                 const measure = title.querySelector('.tedi-dock-panel__title-measure');
-                if (measure) this._fitObserver.observe(measure);
+                if (measure) s.fitObserver.observe(measure);
             });
             this._fitTitles();
         },
@@ -420,6 +427,8 @@ export function dockPanelSheet(config) {
     const cfg = config || {};
     const base = sheet({ open: false, collapsed: false, closeOnBackdropClick: false, closeOnEscape: false });
     const scope = {};
+    // Private state, kept off the Alpine object (see dockPanel).
+    const s = {};
     // Copy with descriptors so the base's getters/setters (`expanded`, `panelStyle`) stay live.
     Object.defineProperties(scope, Object.getOwnPropertyDescriptors(base));
 
@@ -428,34 +437,34 @@ export function dockPanelSheet(config) {
             base.init.call(this);
 
             const panel = document.querySelector(`[data-tedi-dock-panel="${CSS.escape(cfg.panelId)}"]`);
-            this._dock = panel && window.Alpine ? window.Alpine.$data(panel) : null;
+            s.dock = panel && window.Alpine ? window.Alpine.$data(panel) : null;
 
             this.$watch('collapsed', (value) => {
-                if (this._dock && this._dock.collapsed !== value) this._dock.requestCollapsed(value);
+                if (s.dock && s.dock.collapsed !== value) s.dock.requestCollapsed(value);
             });
 
-            this._onEscape = (event) => {
-                if (event.key === 'Escape' && this.open && !this.collapsed && this._dock) {
-                    this._dock.requestCollapsed(true);
+            s.onEscape = (event) => {
+                if (event.key === 'Escape' && this.open && !this.collapsed && s.dock) {
+                    s.dock.requestCollapsed(true);
                 }
             };
-            document.addEventListener('keydown', this._onEscape);
+            document.addEventListener('keydown', s.onEscape);
 
-            this._dock?._attachSheet(this, this.$el);
+            s.dock?._attachSheet(this, this.$el);
         },
 
         destroy() {
-            document.removeEventListener('keydown', this._onEscape);
+            document.removeEventListener('keydown', s.onEscape);
             base.destroy.call(this);
         },
 
         /** Drag-to-dismiss lands here. */
         hide() {
-            this._dock?._sheetDismiss();
+            s.dock?._sheetDismiss();
         },
 
         dockClose() {
-            this._dock?.close();
+            s.dock?.close();
         },
 
         _setPresented(on) {

@@ -1,0 +1,1 @@
+Small and default use the same width, content and footer. Small reduces panel padding using TEDI Modal density tokens. The title defaults to h3 for default and h4 for small, with matching text sizes. The form controls and minimized title styling are unchanged.
