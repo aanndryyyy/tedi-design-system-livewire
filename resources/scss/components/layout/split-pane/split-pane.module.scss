@@ -1,0 +1,109 @@
+.tedi-split-pane {
+  display: flex;
+  width: 100%;
+  height: 100%;
+
+  &--horizontal {
+    flex-direction: row;
+  }
+
+  &--vertical {
+    flex-direction: column;
+  }
+
+  &__pane {
+    position: relative;
+    flex-basis: 0;
+    overflow: hidden;
+  }
+
+  &__divider {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 var(--drag-indicator-vertical-width);
+    background-color: var(--drag-indicator-accent);
+  }
+
+  &__separator {
+    position: absolute;
+    inset: 0;
+    touch-action: none;
+
+    &:focus-visible {
+      outline: var(--tedi-dimensions-03) solid var(--general-border-accent);
+      outline-offset: var(--tedi-dimensions-03);
+    }
+
+    .tedi-split-pane--horizontal & {
+      cursor: col-resize;
+    }
+
+    .tedi-split-pane--vertical & {
+      cursor: row-resize;
+    }
+  }
+
+  &__handle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 12;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--button-sm-icon-size);
+    height: var(--button-sm-icon-size);
+    color: var(--button-floating-secondary-text-default);
+    background-color: var(--button-floating-secondary-background-default);
+    border-radius: var(--button-radius-default);
+    box-shadow: 0 4px 10px 0 var(--tedi-alpha-14);
+    transform: translate(-50%, -50%);
+
+    > span {
+      color: inherit;
+    }
+  }
+
+  &__close {
+    position: absolute;
+    z-index: 13;
+    width: max-content;
+
+    .tedi-split-pane--horizontal & {
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .tedi-split-pane--vertical & {
+      top: 50%;
+      left: 10%;
+      transform: translateY(-50%);
+    }
+  }
+
+  &__ring {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    box-sizing: border-box;
+    pointer-events: none;
+    border: var(--tedi-dimensions-03) solid var(--drag-indicator-accent);
+
+    &--omit-top {
+      border-top-width: 0;
+    }
+
+    &--omit-right {
+      border-right-width: 0;
+    }
+
+    &--omit-bottom {
+      border-bottom-width: 0;
+    }
+
+    &--omit-left {
+      border-left-width: 0;
+    }
+  }
+}

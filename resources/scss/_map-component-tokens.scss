@@ -1,0 +1,47 @@
+/* Not vendored. Stand-in tokens for React's community map components.
+ *
+ * DELETE THIS FILE once @tedi-design-system/core defines
+ * `--drag-indicator-accent`, `--drag-indicator-button-background` and
+ * `--drag-indicator-vertical-width` (core 6.13 defines only
+ * `--drag-indicator-light`). Then drop its `@use` from index.scss.
+ *
+ * Why it exists. The vendored `resizer.module.scss` and
+ * `split-pane.module.scss` (React `community/components/map-components/`)
+ * read these three custom properties, and core does not ship them, so the
+ * modules fail the token gate (CONVENTIONS.md §13.1). Without
+ * `--drag-indicator-vertical-width` the resize handle and the split-pane
+ * divider have zero width. React defines the tokens in
+ * `src/community/styles/_map-component.variables.scss`. That file cannot be
+ * loaded: it is a global `:root` block that also redefines core-owned tokens
+ * (`--button-primary-*`, `--button-neutral-*`, …), which would restyle every
+ * button in this package.
+ *
+ * So this file defines exactly those three tokens, with React's values, and
+ * nothing else:
+ *
+ * - `:root` (React lines 50, 52, 151).
+ * - `.tedi-theme--dark`. React scopes its dark block as `:root.dark-mode`
+ *   (lines 335, 337); core scopes its dark theme as `.tedi-theme--dark`, so
+ *   this file follows core. `--drag-indicator-accent` has the same value in
+ *   both themes and is still restated: a `var()` in a custom property resolves
+ *   on the element that declares it, so a `.tedi-theme--dark` subtree would
+ *   otherwise inherit the value computed against the light `:root`.
+ *   `--drag-indicator-vertical-width` is not in React's dark block.
+ * - React's `@media (width <= 62rem)` and `(width <= 48rem)` overrides
+ *   (lines 212, 265) restate `--drag-indicator-vertical-width` with the same
+ *   value, `var(--tedi-dimensions-03)`, so they are not replicated.
+ *
+ * Every token referenced here is defined by core 6.13: `--general-border-accent`,
+ * `--tedi-primary-200`, `--tedi-alpha-80` and `--tedi-dimensions-03`.
+ */
+
+:root {
+  --drag-indicator-accent: var(--general-border-accent);
+  --drag-indicator-button-background: var(--tedi-primary-200);
+  --drag-indicator-vertical-width: var(--tedi-dimensions-03);
+}
+
+.tedi-theme--dark {
+  --drag-indicator-accent: var(--general-border-accent);
+  --drag-indicator-button-background: var(--tedi-alpha-80);
+}

@@ -1,4 +1,4 @@
-> **In this port** the React props below map to Blade as follows: `children` → the default slot; `headerActions` / `footer` → the `header-actions` / `footer` slots; `onClose` → `closable` plus the `tedi:close` event; `onCollapsedChange` / `onPresentationChange` → the `tedi:collapsed-change` / `tedi:presentation-change` events; `collapsed` and `defaultCollapsed` → `collapsed`, the server-rendered state (a changed value on a later Livewire render is applied); `className` / `style` → `class` / `style`; `labels` → `:labels`. DockPanelLayout's `panel` → the `panel` slot.
+> **In this port** the React props below map to Blade as follows: `children` → the default slot; `headerActions` / `footer` → the `header-actions` / `footer` slots; `onClose` → `closable` plus the `tedi:close` event; `onCollapsedChange` / `onPresentationChange` → the `tedi:collapsed-change` / `tedi:presentation-change` events; `collapsed` and `defaultCollapsed` → `collapsed`, the server-rendered state (a changed value on a later Livewire render is applied); `className` / `style` → `class` / `style`; `labels` → `:labels`. DockPanelLayout's `panel` → the `panel` slot. With `resizable`, the consumer's `style` stays on the panel; upstream moves `zIndex` and the `--dock-panel-gap` / `--dock-panel-rail-size` / `--dock-panel-layer` properties onto the resize layout, so set those on `tedi:dock-panel-layout` instead.
 
 A reusable **non-modal, docked panel**. Expanded panels cover the workspace; minimized panels do not.
 Use **DockPanelLayout** with the workspace as `children` and DockPanel as `panel`.
@@ -52,9 +52,14 @@ Omitted dimensions use side width `xs` (25%), side height 100%, and top/bottom h
 Width is ignored for top/bottom panels, which fill the workspace width.
 Custom dimensions remain capped by the workspace but are not restricted to the preset scale.
 
-> **Not in this port:** `resizable`, `minWidth` and `minHeight`. Resizing renders React's community
-> `Resizer`, whose stylesheet needs `--drag-indicator-*` tokens that `@tedi-design-system/core` does not ship,
-> so it fails this package's token gate. The *Resize width* and *Resize height* stories are not ported.
+Enable `resizable` to drag the edge facing the workspace. The configured preset or custom dimension
+is measured once to initialize Resizer in pixels. Resizing defaults to 8–92% of the current workspace.
+Optional pixel limits (minWidth/maxWidth for sides, minHeight/maxHeight for top/bottom) replace each default independently.
+Limits stay within the workspace; the maximum wins if it is smaller than the minimum.
+Workspace resizing clamps an invalid saved size and preserves a valid one.
+A larger workspace permits further dragging; a saved size within the new limits stays unchanged.
+Minimize/restore preserves the resized dimensions and mounted content; closing and remounting
+starts again from the configured size.
 
 ### Content height and containment
 

@@ -249,4 +249,5 @@ return [
     "stepper.steps" => "Шаги",
     "stepper.status" => "Шаг :current из :total",
     "table-card.select-row" => "Выбрать строку",
+    "splitPaneResize" => "Изменить размер панелей",
 ];

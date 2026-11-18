@@ -90,6 +90,7 @@ class IntegrityTest extends TestCase
             // React-sourced components (CONVENTIONS.md §13).
             'hash-trigger' => 'id="ptk-1"',
             'dock-panel' => 'title="Detailid" :labels="[\'collapse\' => \'Minimeeri\', \'expand\' => \'Taasta\', \'close\' => \'Sulge\']"',
+            'split-pane' => 'direction="horizontal"',
         ];
 
         $failures = [];

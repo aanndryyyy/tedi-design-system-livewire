@@ -52,3 +52,15 @@
         </tedi:dock-panel>
     </x-slot:panel>
 </tedi:dock-panel-layout>
+
+{{-- Resizable: the measurement state the server renders, per placement. --}}
+@foreach (['left', 'right', 'top', 'bottom'] as $placement)
+    <tedi:dock-panel-layout style="height: 20rem">
+        <p>Workspace</p>
+        <x-slot:panel>
+            <tedi:dock-panel title="Details" :labels="$dockPanelLabels" :placement="$placement" resizable :mobile="false">
+                <p>Content</p>
+            </tedi:dock-panel>
+        </x-slot:panel>
+    </tedi:dock-panel-layout>
+@endforeach

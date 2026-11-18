@@ -8,10 +8,13 @@
         'description' => 'Additional information about this item.',
         'placement' => 'right',
         'size' => 'default',
+        'resizable' => false,
         'mobile' => 'Automatic',
         'width' => '',
-        'maxWidth' => '',
         'height' => '',
+        'minWidth' => '',
+        'maxWidth' => '',
+        'minHeight' => '',
         'maxHeight' => '',
         'collapsed' => false,
         'headingElement' => '',
@@ -23,11 +26,14 @@
         'description' => ['control' => 'text', 'description' => 'Text below the title, styled like Modal.Header. Hidden while minimized; omitted or empty text adds no spacing.', 'table' => ['category' => 'Optional props', 'subcategory' => 'Content', 'type' => ['summary' => 'string']]],
         'placement' => ['control' => 'select', 'options' => ['left', 'right', 'top', 'bottom'], 'description' => 'Optional. Edge of the positioned workspace.', 'table' => ['category' => 'Optional props', 'subcategory' => 'Layout', 'defaultValue' => ['summary' => 'right']]],
         'size' => ['control' => 'inline-radio', 'options' => ['small', 'default'], 'description' => 'Optional. Panel density, independent of width/height. Uses TEDI Modal padding tokens. The title defaults to h3 for default and h4 for small, unless headingElement is supplied.', 'table' => ['category' => 'Optional props', 'subcategory' => 'Layout', 'defaultValue' => ['summary' => 'default']]],
+        'resizable' => ['control' => 'boolean', 'description' => 'Enables dragging the workspace-facing edge, within 8–92% of the workspace by default. Pixel min/max props replace the corresponding defaults. Minimize/restore preserves the resized dimensions.', 'table' => ['category' => 'Optional props', 'subcategory' => 'Layout', 'defaultValue' => ['summary' => 'false']]],
         'mobile' => ['control' => 'inline-radio', 'options' => ['Automatic', 'Mobile', 'Desktop'], 'description' => 'Optional. Automatic follows the md breakpoint; Mobile always uses the Sheet; Desktop never does.', 'table' => ['category' => 'Optional props', 'subcategory' => 'Layout', 'defaultValue' => ['summary' => 'Automatic (below md)']]],
         'width' => ['control' => 'text', 'description' => 'Optional. Left/right expanded width: xs=25%, sm=35%, md=50%, lg=65%, xl=80% of workspace width, or a CSS length. Top/bottom ignore it.', 'table' => ['category' => 'Optional props', 'subcategory' => 'Layout', 'defaultValue' => ['summary' => 'xs (25% of workspace width)']]],
-        'maxWidth' => ['control' => 'number', 'description' => 'Maximum side-panel width in pixels. Otherwise the workspace width.', 'table' => ['category' => 'Optional props', 'subcategory' => 'Layout', 'type' => ['summary' => 'number']]],
         'height' => ['control' => 'text', 'description' => 'Optional. Every placement: xs=25%, sm=35%, md=50%, lg=65%, xl=80%, a CSS length, or auto. Percentages use the workspace height.', 'table' => ['category' => 'Optional props', 'subcategory' => 'Layout', 'defaultValue' => ['summary' => '100% (side); 50% (top/bottom)']]],
-        'maxHeight' => ['control' => 'number', 'description' => 'Optional maximum expanded height in pixels. Body content scrolls at this limit.', 'table' => ['category' => 'Optional props', 'subcategory' => 'Layout', 'type' => ['summary' => 'number']]],
+        'minWidth' => ['control' => 'number', 'description' => 'Minimum side-panel resize width in pixels. Defaults to 8% of workspace width.', 'table' => ['category' => 'Optional props', 'subcategory' => 'Layout', 'type' => ['summary' => 'number']]],
+        'maxWidth' => ['control' => 'number', 'description' => 'Maximum side-panel width in pixels. Defaults to 92% when resizable; otherwise workspace width.', 'table' => ['category' => 'Optional props', 'subcategory' => 'Layout', 'type' => ['summary' => 'number']]],
+        'minHeight' => ['control' => 'number', 'description' => 'Minimum top/bottom resize height in pixels. Defaults to 8% of workspace height.', 'table' => ['category' => 'Optional props', 'subcategory' => 'Layout', 'type' => ['summary' => 'number']]],
+        'maxHeight' => ['control' => 'number', 'description' => 'Optional maximum expanded height in pixels. Defaults to 92% of workspace height for top/bottom resizing; otherwise the workspace height. Body content scrolls at this limit.', 'table' => ['category' => 'Optional props', 'subcategory' => 'Layout', 'type' => ['summary' => 'number'], 'defaultValue' => ['summary' => '92% (top/bottom resizing); workspace height otherwise']]],
         'collapsed' => ['control' => 'boolean', 'description' => 'Minimized state the server renders; applied when the panel is opened.', 'table' => ['category' => 'Optional props', 'subcategory' => 'State', 'defaultValue' => ['summary' => 'false']]],
         'headingElement' => ['control' => 'select', 'options' => ['', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'], 'description' => 'Optional. Overrides the title heading and expanded text size. Defaults to h3 for default and h4 for small.', 'table' => ['category' => 'Optional props', 'subcategory' => 'Accessibility', 'defaultValue' => ['summary' => 'h3 (default), h4 (small)']]],
         'id' => ['control' => 'text', 'description' => 'Optional. Panel id; a unique id is generated when omitted.', 'table' => ['category' => 'Optional props', 'subcategory' => 'Accessibility', 'type' => ['summary' => 'string']]],
@@ -84,10 +90,13 @@
                         :description="$description ?: null"
                         :placement="$placement"
                         :size="$size"
+                        :resizable="(bool) $resizable"
                         :mobile="['Mobile' => true, 'Desktop' => false][$mobile] ?? null"
                         :width="$width ?: null"
-                        :max-width="$maxWidth !== '' && $maxWidth !== null ? (int) $maxWidth : null"
                         :height="$height ?: null"
+                        :min-width="$minWidth !== '' && $minWidth !== null ? (int) $minWidth : null"
+                        :max-width="$maxWidth !== '' && $maxWidth !== null ? (int) $maxWidth : null"
+                        :min-height="$minHeight !== '' && $minHeight !== null ? (int) $minHeight : null"
                         :max-height="$maxHeight !== '' && $maxHeight !== null ? (int) $maxHeight : null"
                         :collapsed="(bool) $collapsed"
                         :heading-element="$headingElement ?: null"

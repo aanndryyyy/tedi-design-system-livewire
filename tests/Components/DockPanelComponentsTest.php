@@ -246,6 +246,78 @@ class DockPanelComponentsTest extends TestCase
         $this->assertStringContainsString('x-on:click="toggle()"', $html);
     }
 
+    public function test_resizable_wraps_the_panel_in_the_measurement_state(): void
+    {
+        $html = $this->panel('id="dp" resizable width="md"');
+
+        $layout = $this->tag($html, 'data-tedi-dock-panel-resize=');
+        $this->assertSame(['tedi-dock-panel__resize-layout', 'tedi-dock-panel__resize-measurement'], $this->classesOf($layout));
+        $this->assertStringContainsString('data-placement="right"', $layout);
+        $this->assertStringContainsString('data-collapsed="false"', $layout);
+        $this->assertStringNotContainsString('style=', $layout);
+
+        // layout > frame > resizer + panel, in upstream's order.
+        $this->assertMatchesRegularExpression(
+            '#data-tedi-dock-panel-resize="dp">\s*<div class="tedi-dock-panel__resize-frame">\s*<div [^>]*class="tedi-resize__wrapper tedi-dock-panel__resizer"#',
+            $html
+        );
+        $resizer = $this->tag($html, 'tedi-dock-panel__resizer');
+        $this->assertStringContainsString('display: none', $resizer);
+        $this->assertSame(['tedi-resize__handle-wrapper', 'direction-left'], $this->classesOf($html, 'tedi-resize__handle-wrapper'));
+        $this->assertStringContainsString('data-show-indicator="false"', $html);
+
+        $root = $this->tag($html, 'data-tedi-dock-panel=');
+        $this->assertStringContainsString('data-resizable="false"', $root);
+        $this->assertStringContainsString('data-tedi-dock-panel-collapsed="false"', $root);
+        $this->assertStringContainsString('--dock-panel-width: 50%', $root);
+        $this->assertMatchesRegularExpression('/resizable.{1,6}:true/', $root);
+    }
+
+    public function test_resize_handle_faces_the_workspace(): void
+    {
+        foreach (['left' => 'right', 'right' => 'left', 'top' => 'bottom', 'bottom' => 'top'] as $placement => $handle) {
+            $html = $this->panel('resizable placement="'.$placement.'"');
+            $this->assertHasClass('direction-'.$handle, $html, 'tedi-resize__handle-wrapper');
+            $this->assertStringContainsString('data-placement="'.$placement.'"', $this->tag($html, 'data-tedi-dock-panel-resize='));
+        }
+    }
+
+    public function test_resizable_collapsed_renders_expanded_and_hidden_until_measured(): void
+    {
+        $html = $this->panel('resizable collapsed');
+
+        $this->assertStringContainsString('style="visibility: hidden"', $this->tag($html, 'data-tedi-dock-panel-resize='));
+        $root = $this->tag($html, 'data-tedi-dock-panel=');
+        $this->assertStringContainsString('data-collapsed="false"', $root);
+        $this->assertStringContainsString('data-tedi-dock-panel-collapsed="true"', $root);
+        $this->assertMissingClass('text-small', $html, 'tedi-dock-panel__title');
+        $this->assertStringNotContainsString(' hidden', $this->tag($html, 'tedi-dock-panel__body'));
+        // The sheet still renders the requested state.
+        $this->assertMatchesRegularExpression('/collapsed.{1,6}:true/', $root);
+    }
+
+    public function test_resizable_limits_and_layout_height_config(): void
+    {
+        $html = $this->panel('resizable height="70%" :min-width="240" :max-width="640" :max-height="512"');
+        $root = $this->tag($html, 'data-tedi-dock-panel=');
+
+        // Upstream drops --dock-panel-max-width when resizable; max-height stays.
+        $this->assertStringNotContainsString('--dock-panel-max-width', $root);
+        $this->assertStringContainsString('--dock-panel-max-height: 512px', $root);
+        foreach (['minWidth.{1,6}:240', 'maxWidth.{1,6}:640', 'layoutHeight.{1,16}70%', 'layoutMaxHeight.{1,16}512px', 'resizeHandle.{1,16}left'] as $pattern) {
+            $this->assertMatchesRegularExpression('/'.$pattern.'/', $root);
+        }
+    }
+
+    public function test_not_resizable_renders_no_resize_markup(): void
+    {
+        $html = $this->panel(':max-width="600"');
+
+        $this->assertSame([], $this->classesOf($html, 'tedi-dock-panel__resize-layout'));
+        $this->assertSame([], $this->classesOf($html, 'tedi-resize__wrapper'));
+        $this->assertStringNotContainsString('data-tedi-dock-panel-collapsed', $html);
+    }
+
     public function test_generated_ids_link_title_and_body(): void
     {
         $html = $this->panel();

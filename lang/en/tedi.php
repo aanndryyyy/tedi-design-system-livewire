@@ -249,4 +249,5 @@ return [
     "stepper.steps" => "Steps",
     "stepper.status" => "Step :current of :total",
     "table-card.select-row" => "Select row",
+    "splitPaneResize" => "Resize panes",
 ];

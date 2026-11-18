@@ -74,11 +74,34 @@
     `x-bind:data-minimize-counter`. The Alpine scope also exposes `toggle()`,
     `minimize()`, `expand()`, `close()` and `requestCollapsed(bool)`.
 
-    NOT PORTED. `resizable`, `minWidth` and `minHeight` are not ported. They
-    render React's community `Resizer`, whose stylesheet fails the core-token
-    gate (CONVENTIONS.md §13.1): `--drag-indicator-*` is not in core. The
-    vendored `__resize-*` rules are therefore dead. `defaultCollapsed` is folded
-    into `collapsed`, because Blade renders initial state either way.
+    RESIZABLE. `resizable` wraps the docked panel as upstream's
+    `renderResizable()` does: `tedi-dock-panel__resize-layout` (`data-placement`,
+    `data-collapsed`) > `tedi-dock-panel__resize-frame` > `tedi:resizer`
+    (`tedi-dock-panel__resizer`, handle on the workspace-facing edge, no
+    indicator tab) + the panel. The layout, not the panel, is then the child of
+    `tedi:dock-panel-layout`. The server renders upstream's first commit, the
+    measurement state: `tedi-dock-panel__resize-measurement`, the panel expanded
+    with `data-resizable="false"`, the resizer present but `display: none`, and
+    the layout `visibility: hidden` when `collapsed`. `tediDockPanel` then
+    measures the panel and its workspace (the layout's offsetParent) and
+    starts the resizer at the measured size within the limits.
+    `min-width` / `max-width` (sides) and `min-height` / `max-height` (top/bottom)
+    are pixel limits. Each defaults to 8% / 92% of the workspace and is capped
+    by it; the maximum wins over a larger minimum. A workspace resize updates
+    the limits and clamps a saved size only when it falls outside them. The
+    resized size survives minimize/restore and Livewire morphs. Like upstream,
+    a switch to the sheet and back re-measures, so it starts again from the
+    configured size. `max-width` sets no `--dock-panel-max-width` while
+    resizable. Without JavaScript a resizable panel stays in the measurement
+    state: expanded, or invisible when `collapsed`.
+
+    Upstream also moves the consumer's `zIndex` and the `--dock-panel-gap` /
+    `-rail-size` / `-layer` properties from `style` onto the resize layout. Here
+    the consumer's `style` stays on the panel, unparsed. Set those on the
+    resize layout's parent, or on `tedi:dock-panel-layout`, instead.
+
+    `defaultCollapsed` is folded into `collapsed`, because Blade renders initial
+    state either way.
 --}}
 @props([
     /** Required. Visible heading and accessible name. */
@@ -103,11 +126,17 @@
     'closable' => false,
     /** xs|sm|md|lg|xl preset, a CSS length or a number of pixels. Left/right only. */
     'width' => null,
-    /** Maximum width in pixels. Left/right only. */
+    /** Enable resizing from the workspace-facing edge (tedi:resizer). */
+    'resizable' => false,
+    /** Minimum resize width in pixels. Left/right, resizable only. Defaults to 8% of the workspace width. */
+    'minWidth' => null,
+    /** Maximum width in pixels. Left/right only. Resizable: defaults to 92% of the workspace width. */
     'maxWidth' => null,
     /** xs|sm|md|lg|xl preset, a CSS length, auto or a number of pixels. */
     'height' => null,
-    /** Maximum height in pixels; the body scrolls at it. */
+    /** Minimum resize height in pixels. Top/bottom, resizable only. Defaults to 8% of the workspace height. */
+    'minHeight' => null,
+    /** Maximum height in pixels; the body scrolls at it. Resizable top/bottom: defaults to 92% of the workspace height. */
     'maxHeight' => null,
     /** h1–h6. Defaults to h3, or h4 when size is small. */
     'headingElement' => null,
@@ -132,10 +161,14 @@
     $titleId = $panelId.'-title';
     $bodyId = $panelId.'-body';
     $isCollapsed = (bool) $collapsed;
+    $resizable = (bool) $resizable;
+    // Upstream's first commit of a resizable panel is the measurement state, never minimized.
+    $panelCollapsed = $isCollapsed && ! $resizable;
     $isSidePanel = $placement === 'left' || $placement === 'right';
     $titleElement = $headingElement ?? ($size === 'small' ? 'h4' : 'h3');
     $toggleLabel = $isCollapsed ? $labels['expand'] : $labels['collapse'];
-    $toggleIcon = $isCollapsed ? 'zoom_out_map' : 'zoom_in_map';
+    $panelToggleLabel = $panelCollapsed ? $labels['expand'] : $labels['collapse'];
+    $panelToggleIcon = $panelCollapsed ? 'zoom_out_map' : 'zoom_in_map';
 
     // Upstream renders content in place only when mobile is false. Otherwise it
     // is portalled through `tedi-dock-panel__slot` nodes so it can move into the sheet.
@@ -149,7 +182,7 @@
     if ($width !== null) {
         $styles[] = '--dock-panel-width: '.$dimension($width);
     }
-    if ($isSidePanel && $maxWidth !== null) {
+    if (! $resizable && $isSidePanel && $maxWidth !== null) {
         $styles[] = '--dock-panel-max-width: '.$maxWidth.'px';
     }
     if ($height !== null) {
@@ -164,7 +197,23 @@
         'mobile' => $mobile === null ? null : (bool) $mobile,
         'collapsed' => $isCollapsed,
         'labels' => ['collapse' => $labels['collapse'], 'expand' => $labels['expand']],
+        'resizable' => $resizable,
     ];
+    $resizeHandle = ['left' => 'right', 'right' => 'left', 'top' => 'bottom', 'bottom' => 'top'][$placement] ?? 'left';
+    $number = fn ($value) => $value === null || $value === '' ? null : $value + 0;
+    if ($resizable) {
+        $config += [
+            'placement' => $placement,
+            'resizeHandle' => $resizeHandle,
+            'minWidth' => $number($minWidth),
+            'maxWidth' => $number($maxWidth),
+            'minHeight' => $number($minHeight),
+            'maxHeight' => $number($maxHeight),
+            // The resize layout's expanded height and max-height (upstream's resizeLayoutStyle).
+            'layoutHeight' => $isSidePanel && $height !== null ? $dimension($height) : null,
+            'layoutMaxHeight' => $maxHeight !== null ? $maxHeight.'px' : null,
+        ];
+    }
 
     $rootAttributes = $attributes->class(['tedi-dock-panel'])->merge(array_filter([
         'id' => $panelId,
@@ -172,8 +221,10 @@
         'aria-labelledby' => $titleId,
         'data-placement' => $placement,
         'data-size' => $size,
-        'data-collapsed' => $isCollapsed ? 'true' : 'false',
+        'data-collapsed' => $panelCollapsed ? 'true' : 'false',
         'data-resizable' => 'false',
+        // The state the server asked for; data-collapsed is the measurement state's false.
+        'data-tedi-dock-panel-collapsed' => $resizable ? ($isCollapsed ? 'true' : 'false') : null,
         'data-minimize-counter' => $minimizeCounter === null ? null : (string) $minimizeCounter,
     ], fn ($value) => $value !== null));
     // ->style([]) would print an empty style="".
@@ -189,24 +240,29 @@
     $titleContent = $hasShortTitle ? $fittingTitle() : $title;
 @endphp
 
+@if ($resizable)
+<div class="tedi-dock-panel__resize-layout tedi-dock-panel__resize-measurement" data-placement="{{ $placement }}" data-collapsed="false" @if ($isCollapsed) style="visibility: hidden" @endif data-tedi-dock-panel-resize="{{ $panelId }}">
+<div class="tedi-dock-panel__resize-frame">
+<tedi:resizer class="tedi-dock-panel__resizer" :handle-position="$resizeHandle" style="display: none" />
+@endif
 <div {{ $rootAttributes }} data-tedi-dock-panel="{{ $panelId }}" x-data="tediDockPanel(@js($config))">
     <div class="tedi-dock-panel__header">
         <div class="tedi-dock-panel__header-row">
-            <{{ $titleElement }} id="{{ $titleId }}" tabindex="-1" @class(['tedi-dock-panel__title', 'text-small' => $isCollapsed]) data-tedi-dock-panel-title>{{ $titleContent }}</{{ $titleElement }}>
+            <{{ $titleElement }} id="{{ $titleId }}" tabindex="-1" @class(['tedi-dock-panel__title', 'text-small' => $panelCollapsed]) data-tedi-dock-panel-title>{{ $titleContent }}</{{ $titleElement }}>
 
             @if ($hasHeaderActions)
-                <div class="tedi-dock-panel__header-actions" data-tedi-dock-panel-host="actions" @if ($isCollapsed) hidden @endif>@if ($withSheet)<div class="tedi-dock-panel__slot" data-tedi-dock-panel-slot="actions">{{ $headerActions }}</div>@else{{ $headerActions }}@endif</div>
+                <div class="tedi-dock-panel__header-actions" data-tedi-dock-panel-host="actions" @if ($panelCollapsed) hidden @endif>@if ($withSheet)<div class="tedi-dock-panel__slot" data-tedi-dock-panel-slot="actions">{{ $headerActions }}</div>@else{{ $headerActions }}@endif</div>
             @endif
 
             <div class="tedi-dock-panel__controls">
                 <tedi:button
                     class="tedi-dock-panel__toggle"
                     variant="neutral"
-                    :icon-start="$toggleIcon"
+                    :icon-start="$panelToggleIcon"
                     icon-only
-                    :title="$toggleLabel"
-                    :aria-label="$toggleLabel"
-                    aria-expanded="{{ $isCollapsed ? 'false' : 'true' }}"
+                    :title="$panelToggleLabel"
+                    :aria-label="$panelToggleLabel"
+                    aria-expanded="{{ $panelCollapsed ? 'false' : 'true' }}"
                     aria-controls="{{ $bodyId }}"
                     data-tedi-dock-panel-toggle="docked"
                     x-on:click="toggle()"
@@ -226,11 +282,11 @@
             </div>
         </div>
         @if ($hasDescription)
-            <div class="tedi-dock-panel__description" data-tedi-dock-panel-collapsible @if ($isCollapsed) hidden @endif>{{ $description }}</div>
+            <div class="tedi-dock-panel__description" data-tedi-dock-panel-collapsible @if ($panelCollapsed) hidden @endif>{{ $description }}</div>
         @endif
     </div>
 
-    <div id="{{ $bodyId }}" class="tedi-dock-panel__body" data-tedi-dock-panel-collapsible @if ($isCollapsed) hidden @endif>
+    <div id="{{ $bodyId }}" class="tedi-dock-panel__body" data-tedi-dock-panel-collapsible @if ($panelCollapsed) hidden @endif>
         <div class="tedi-dock-panel__scroll-area">
             <div class="tedi-dock-panel__content" data-tedi-dock-panel-host="content">@if ($withSheet)<div class="tedi-dock-panel__slot" data-tedi-dock-panel-slot="content">{{ $slot }}</div>@else{{ $slot }}@endif</div>
         </div>
@@ -239,6 +295,10 @@
         @endif
     </div>
 </div>
+@if ($resizable)
+</div>
+</div>
+@endif
 @if ($withSheet)
 <div style="display: contents" data-tedi-dock-panel-sheet="{{ $panelId }}" x-data="tediDockPanelSheet(@js(['panelId' => $panelId]))">
     <tedi:sheet-content
