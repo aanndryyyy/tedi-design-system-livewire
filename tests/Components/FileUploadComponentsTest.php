@@ -406,4 +406,12 @@ class FileUploadComponentsTest extends TestCase
 
         return substr($html, $start, strpos($html, $to, $start) - $start);
     }
+
+    public function test_added_announcement_has_singular_and_plural_forms(): void
+    {
+        // "1 file added" / "2 files added": the browser picks by the selection's count.
+        $html = html_entity_decode(Blade::render('<tedi:file-upload input-id="f" multiple />'), ENT_QUOTES);
+        $this->assertStringContainsString('"added":":count file added"', str_replace('\\u0022', '"', $html));
+        $this->assertStringContainsString('"addedPlural":":count files added"', str_replace('\\u0022', '"', $html));
+    }
 }

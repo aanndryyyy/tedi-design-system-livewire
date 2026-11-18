@@ -1102,7 +1102,8 @@
       handleSelection(event) {
         const count = event.target.files ? event.target.files.length : 0;
         if (!count) return;
-        const message = (labels.added || "").replace(":count", String(multiple ? count : 1));
+        const n = multiple ? count : 1;
+        const message = ((n === 1 ? labels.added : labels.addedPlural) || labels.added || "").replace(":count", String(n));
         clearTimeout(this._addTimeout);
         this._addTimeout = setTimeout(() => announce(message, "assertive"), ADD_ANNOUNCE_DELAY);
       },

@@ -14,6 +14,10 @@
     field to style it. A consumer `aria-describedby` is the exception, as in
     text-field.blade.php: it is merged onto the add button, which is what
     upstream's `controlDescribedBy()` does with a host `aria-describedby`.
+    Do not put `required` on the component: it would land on the hidden input,
+    and browsers refuse to submit a form whose invalid control cannot take
+    focus. Mark the label required and validate on the server (upstream has
+    no `required` input either; its forms use `Validators.required`).
 
     THE FILE LIST IS SERVER STATE. Upstream's `files` is a two-way `model()`
     and a ControlValueAccessor fed by the component's own selection pipeline.
@@ -221,7 +225,10 @@
         'inputId' => $inputId,
         'multiple' => (bool) $multiple,
         'labels' => [
-            'added' => __('tedi::tedi.file-upload.added'),
+            // A choice string in en/et ("1 file added" / "2 files added"): both
+            // forms go to the browser, which knows the count.
+            'added' => trans_choice('tedi::tedi.file-upload.added', 1, ['count' => ':count']),
+            'addedPlural' => trans_choice('tedi::tedi.file-upload.added', 2, ['count' => ':count']),
             'removed' => __('tedi::tedi.file-upload.removed'),
             'cleared' => __('tedi::tedi.file-upload.cleared'),
         ],

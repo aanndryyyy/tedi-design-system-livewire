@@ -88,9 +88,13 @@ function forms(key, fn, ps, base, selectors) {
     // Count-dependent wording: render with 1 and 2 and see whether only the number differs.
     const countParam = ps.find((p) => p === 'count');
     if (countParam && !(countParam in ov)) {
-      const one = render(fn, ps, { ...ov, count: 1 }).replace(/\b1\b/, ':count');
-      const two = render(fn, ps, { ...ov, count: 2 }).replace(/\b2\b/, ':count');
-      const five = render(fn, ps, { ...ov, count: 5 }).replace(/\b5\b/, ':count');
+      // Some entries compare `count === 1`, others `count === "1"` (the count
+      // arrives as a string there): render with whichever type changes the wording.
+      const at = (n, cast) => render(fn, ps, { ...ov, count: cast(n) }).replace(new RegExp(`\\b${n}\\b`), ':count');
+      const cast = at(1, String) !== at(2, String) && at(1, Number) === at(2, Number) ? String : Number;
+      const one = at(1, cast);
+      const two = at(2, cast);
+      const five = at(5, cast);
       // Three forms (Russian one/few/many via pluralizeRu): no ranges, so
       // trans_choice applies the locale's own plural rule, which matches.
       out[k] = two !== five ? `${one}|${two}|${five}` : one === two ? two : `{1} ${one}|[0,*] ${two}`;

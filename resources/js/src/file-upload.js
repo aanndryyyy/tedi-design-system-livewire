@@ -35,8 +35,9 @@
 // Config keys:
 //   inputId   — the native input's id (the label's `for`). Required.
 //   multiple  — a single-file field always announces one file added.
-//   labels    — { added, removed, cleared }: the translated strings, with
-//               `:count` / `:file` placeholders left in.
+//   labels    — { added, addedPlural, removed, cleared }: the translated
+//               strings, with `:count` / `:file` placeholders left in.
+//               `added` is the one-file form, `addedPlural` the rest.
 
 import { announce, ensureRegions } from './announcer.js';
 
@@ -95,7 +96,8 @@ export function fileUpload(config = {}) {
             const count = event.target.files ? event.target.files.length : 0;
             if (!count) return;
 
-            const message = (labels.added || '').replace(':count', String(multiple ? count : 1));
+            const n = multiple ? count : 1;
+            const message = ((n === 1 ? labels.added : labels.addedPlural) || labels.added || '').replace(':count', String(n));
 
             clearTimeout(this._addTimeout);
             this._addTimeout = setTimeout(() => announce(message, 'assertive'), ADD_ANNOUNCE_DELAY);
