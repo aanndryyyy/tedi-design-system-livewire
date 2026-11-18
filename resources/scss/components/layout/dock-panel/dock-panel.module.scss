@@ -1,0 +1,441 @@
+.tedi-dock-panel,
+.tedi-dock-panel__resize-layout,
+.tedi-dock-panel-layout {
+  --dock-panel-gap: var(--tedi-dimensions-04);
+  --dock-panel-rail-size: calc(var(--button-md-height) + 2 * var(--dock-panel-gap) + 2px);
+}
+
+.tedi-dock-panel {
+  --dock-panel-width: 25%;
+  --dock-panel-max-width: 100%;
+  --dock-panel-height: 100%;
+  --dock-panel-max-height: 100%;
+  --dock-panel-layer: 1;
+  --dock-panel-padding: var(--modal-body-padding);
+  --dock-panel-header-padding-x: var(--modal-heading-padding-x);
+  --dock-panel-header-padding-y: var(--modal-heading-padding-y);
+  --dock-panel-footer-padding-x: var(--modal-footer-padding-x);
+  --dock-panel-footer-padding-y: var(--modal-footer-padding-y);
+
+  position: absolute;
+  z-index: var(--dock-panel-layer);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: min(100%, var(--dock-panel-max-width));
+  min-height: 0;
+  max-height: var(--dock-panel-max-height);
+  overflow: visible;
+  color: var(--general-text-primary);
+  background: var(--general-surface-primary);
+  border: 1px solid var(--general-border-primary);
+}
+
+.tedi-dock-panel__header {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: var(--tedi-dimensions-05);
+  min-width: 0;
+  padding: var(--dock-panel-header-padding-y) var(--dock-panel-header-padding-x);
+}
+
+.tedi-dock-panel__header-row {
+  display: flex;
+  gap: var(--dock-panel-gap);
+  align-items: center;
+  min-width: 0;
+}
+
+.tedi-dock-panel__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tedi-dock-panel__description {
+  color: var(--general-text-secondary);
+}
+
+.tedi-dock-panel__header-actions,
+.tedi-dock-panel__controls {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--dock-panel-gap);
+  align-items: center;
+}
+
+.tedi-dock-panel__toggle,
+.tedi-dock-panel__close {
+  flex: 0 0 auto;
+}
+
+.tedi-dock-panel[data-collapsed='false'] {
+  .tedi-dock-panel__header {
+    max-height: calc(100% - 1px);
+    overflow: auto;
+  }
+
+  .tedi-dock-panel__header-row,
+  .tedi-dock-panel__header-actions,
+  .tedi-dock-panel__controls {
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+
+  .tedi-dock-panel__title {
+    flex-basis: 0;
+  }
+}
+
+/* A block inside the heading, so it carries its own ellipsis and clips the measuring copy. */
+.tedi-dock-panel__fitting-title {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tedi-dock-panel__title-measure {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  visibility: hidden;
+  inline-size: max-content;
+  pointer-events: none;
+}
+
+.tedi-dock-panel__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-top: 1px solid var(--general-border-primary);
+}
+
+.tedi-dock-panel__scroll-area {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+}
+
+/* Keep padding inside the scrollport so short panels cannot push the footer out of view. */
+.tedi-dock-panel__content {
+  min-width: 0;
+  padding: var(--dock-panel-padding);
+}
+
+.tedi-dock-panel__footer {
+  flex: 0 0 auto;
+  padding: var(--dock-panel-footer-padding-y) var(--dock-panel-footer-padding-x);
+  border-top: 1px solid var(--general-border-primary);
+}
+
+.tedi-dock-panel__resize-measurement > .tedi-dock-panel__resize-frame {
+  flex: 1;
+  height: 100%;
+}
+
+.tedi-dock-panel__resize-layout {
+  position: absolute;
+  inset: 0;
+  z-index: var(--dock-panel-layer, 1);
+  display: flex;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  pointer-events: none;
+}
+
+.tedi-dock-panel__resize-frame {
+  position: relative;
+  display: flex;
+}
+
+.tedi-dock-panel__resize-frame,
+.tedi-dock-panel__resizer {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 0;
+  max-height: 100%;
+  pointer-events: auto;
+}
+
+.tedi-dock-panel-layout {
+  position: relative;
+  box-sizing: border-box;
+  display: grid;
+  grid-template:
+    'top top top' auto
+    'left workspace right' minmax(0, 1fr)
+    'bottom bottom bottom' auto / auto minmax(0, 1fr) auto;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  isolation: isolate;
+}
+
+.tedi-dock-panel-layout__content {
+  position: relative;
+  z-index: 0;
+  grid-area: workspace;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tedi-dock-panel[data-size='small'] {
+  --dock-panel-padding: var(--modal-body-padding-sm);
+  --dock-panel-header-padding-x: var(--modal-heading-padding-x-sm);
+  --dock-panel-header-padding-y: var(--modal-heading-padding-y-sm);
+  --dock-panel-footer-padding-x: var(--modal-footer-padding-x-sm);
+  --dock-panel-footer-padding-y: var(--modal-footer-padding-y-sm);
+}
+
+.tedi-dock-panel[data-placement='left'],
+.tedi-dock-panel[data-placement='right'] {
+  top: 0;
+  width: var(--dock-panel-width);
+  height: var(--dock-panel-height);
+}
+
+.tedi-dock-panel[data-placement='left'] {
+  left: 0;
+}
+
+.tedi-dock-panel[data-placement='right'] {
+  right: 0;
+}
+
+.tedi-dock-panel[data-placement='top'],
+.tedi-dock-panel[data-placement='bottom'] {
+  --dock-panel-height: 50%;
+
+  right: 0;
+  left: 0;
+  height: var(--dock-panel-height);
+}
+
+.tedi-dock-panel[data-placement='top'] {
+  top: 0;
+}
+
+.tedi-dock-panel[data-placement='bottom'] {
+  bottom: 0;
+}
+
+/* Override flex declarations so hidden content does not remain interactive. */
+.tedi-dock-panel__body[hidden],
+.tedi-dock-panel__header-actions[hidden] {
+  display: none;
+}
+
+/* The minimized rail must fit its controls independently of expanded padding density. */
+.tedi-dock-panel[data-collapsed='true'] .tedi-dock-panel__header {
+  padding: var(--dock-panel-gap);
+}
+
+/* Extend the Restore button across the minimized bar, keeping Close separately clickable. */
+.tedi-dock-panel[data-collapsed='true'] .tedi-dock-panel__toggle {
+  position: static;
+
+  &::after {
+    position: absolute;
+    inset: 0;
+    content: '';
+  }
+}
+
+.tedi-dock-panel[data-collapsed='true'] .tedi-dock-panel__close {
+  z-index: 1;
+}
+
+.tedi-dock-panel[data-collapsed='true'][data-placement='left'],
+.tedi-dock-panel[data-collapsed='true'][data-placement='right'] {
+  width: var(--dock-panel-rail-size);
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+
+  .tedi-dock-panel__header,
+  .tedi-dock-panel__header-row {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .tedi-dock-panel__header-row {
+    flex-direction: column;
+  }
+
+  .tedi-dock-panel__title {
+    order: 2;
+    text-align: center;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+
+  .tedi-dock-panel__controls {
+    flex-direction: column-reverse;
+    order: 1;
+  }
+}
+
+.tedi-dock-panel[data-collapsed='true'][data-placement='top'],
+.tedi-dock-panel[data-collapsed='true'][data-placement='bottom'] {
+  height: var(--dock-panel-rail-size);
+  max-height: 100%;
+}
+
+.tedi-dock-panel[data-resizable='true'] {
+  height: 100%;
+  max-height: 100%;
+  pointer-events: auto;
+}
+
+.tedi-dock-panel[data-resizable='true'][data-collapsed='false'] {
+  width: 100%;
+}
+
+.tedi-dock-panel__resize-layout[data-placement='right'] {
+  justify-content: flex-end;
+}
+
+.tedi-dock-panel__resize-layout[data-placement='top'] > .tedi-dock-panel__resize-frame,
+.tedi-dock-panel__resize-layout[data-placement='bottom'] > .tedi-dock-panel__resize-frame,
+.tedi-dock-panel__resize-layout[data-placement='top'] > .tedi-dock-panel__resize-frame > .tedi-dock-panel__resizer,
+.tedi-dock-panel__resize-layout[data-placement='bottom'] > .tedi-dock-panel__resize-frame > .tedi-dock-panel__resizer {
+  flex: 1 1 0;
+}
+
+.tedi-dock-panel__resize-layout[data-placement='top'] > .tedi-dock-panel__resize-frame {
+  align-self: flex-start;
+}
+
+.tedi-dock-panel__resize-layout[data-placement='bottom'] {
+  top: auto;
+
+  > .tedi-dock-panel__resize-frame {
+    align-self: flex-end;
+  }
+}
+
+.tedi-dock-panel__resize-layout[data-collapsed='true'] {
+  overflow: clip;
+
+  > .tedi-dock-panel__resize-frame {
+    min-width: 100%;
+    min-height: 100%;
+  }
+
+  > .tedi-dock-panel__resize-frame > .tedi-dock-panel__resizer {
+    visibility: hidden;
+  }
+
+  > .tedi-dock-panel__resize-frame,
+  > .tedi-dock-panel__resize-frame > .tedi-dock-panel__resizer {
+    flex-shrink: 0;
+    max-width: none;
+    max-height: none;
+    pointer-events: none;
+  }
+}
+
+.tedi-dock-panel__resize-layout[data-collapsed='true'][data-placement='left'],
+.tedi-dock-panel__resize-layout[data-collapsed='true'][data-placement='right'] {
+  width: var(--dock-panel-rail-size);
+}
+
+.tedi-dock-panel__resize-layout[data-collapsed='true'][data-placement='top'],
+.tedi-dock-panel__resize-layout[data-collapsed='true'][data-placement='bottom'] {
+  height: var(--dock-panel-rail-size);
+}
+
+.tedi-dock-panel-layout > .tedi-dock-panel[data-collapsed='true'],
+.tedi-dock-panel-layout > .tedi-dock-panel__resize-layout[data-collapsed='true'] {
+  position: relative;
+  inset: auto;
+  align-self: start;
+}
+
+.tedi-dock-panel-layout > .tedi-dock-panel[data-collapsed='true'][data-placement='left'],
+.tedi-dock-panel-layout > .tedi-dock-panel__resize-layout[data-collapsed='true'][data-placement='left'] {
+  grid-area: left;
+}
+
+.tedi-dock-panel-layout > .tedi-dock-panel[data-collapsed='true'][data-placement='right'],
+.tedi-dock-panel-layout > .tedi-dock-panel__resize-layout[data-collapsed='true'][data-placement='right'] {
+  grid-area: right;
+  justify-self: end;
+}
+
+.tedi-dock-panel-layout > .tedi-dock-panel[data-collapsed='true'][data-placement='top'],
+.tedi-dock-panel-layout > .tedi-dock-panel__resize-layout[data-collapsed='true'][data-placement='top'],
+.tedi-dock-panel-layout > .tedi-dock-panel[data-collapsed='true'][data-placement='bottom'],
+.tedi-dock-panel-layout > .tedi-dock-panel__resize-layout[data-collapsed='true'][data-placement='bottom'] {
+  width: 100%;
+}
+
+.tedi-dock-panel-layout > .tedi-dock-panel[data-collapsed='true'][data-placement='top'],
+.tedi-dock-panel-layout > .tedi-dock-panel__resize-layout[data-collapsed='true'][data-placement='top'] {
+  grid-area: top;
+}
+
+.tedi-dock-panel-layout > .tedi-dock-panel[data-collapsed='true'][data-placement='bottom'],
+.tedi-dock-panel-layout > .tedi-dock-panel__resize-layout[data-collapsed='true'][data-placement='bottom'] {
+  grid-area: bottom;
+}
+
+/* Keeps docked flex, gap and layout unchanged around the moving content node. */
+.tedi-dock-panel__slot {
+  display: contents;
+}
+
+/* Without a scroll lock, scrolling past the end would otherwise move the page behind. */
+.tedi-dock-panel__sheet-body {
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+}
+
+.tedi-dock-panel__sheet-description {
+  margin-bottom: var(--tedi-dimensions-05);
+}
+
+/* One line like Sheet's own header: actions keep their size and only the title truncates. */
+.tedi-dock-panel__sheet-actions {
+  display: flex;
+  gap: var(--tedi-dimensions-04);
+  align-items: center;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.tedi-dock-panel__sheet-spacer {
+  display: none;
+}
+
+/* The minimized Sheet is fixed to the viewport, so this keeps the workspace end clear of it. */
+.tedi-dock-panel-layout > .tedi-dock-panel__sheet-spacer {
+  display: block;
+  grid-area: bottom;
+  height: var(--sheet-header-height);
+}
+
+/* Matches Sheet's own toggle, whose chevron rule is private to its CSS module. */
+.tedi-dock-panel__sheet-toggle > * {
+  scale: 1 -1;
+}

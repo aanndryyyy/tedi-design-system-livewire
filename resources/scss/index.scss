@@ -115,6 +115,8 @@
 @use 'components/helpers/timeline/timeline-item/timeline-item.component';
 @use 'components/helpers/timeline/timeline-title/timeline-title.component';
 @use 'components/helpers/timeline/timeline.component';
+// React community DockPanel (CONVENTIONS.md §13); its resizable mode is not ported.
+@use 'components/layout/dock-panel/dock-panel.module';
 @use 'components/layout/footer/footer-body/footer-body.component';
 @use 'components/layout/footer/footer-bottom/footer-bottom.component';
 @use 'components/layout/footer/footer-section/footer-section.component';
