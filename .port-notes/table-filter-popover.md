@@ -29,7 +29,7 @@ New:
 
 > | `<tedi:table>` | The full markup: toolbar, sortable headers, column filter popovers with their footer actions, control columns, expandable and clickable rows, column menu | The `@tanstack/angular-table` engine — sorting/filtering/selection/expansion state, virtualisation, drag reorder, column resizing, persistence — and the small-viewport filter modal |
 
-### Counts
+### Counts (measured with `git ls-tree` at 8553d19 and at this branch's head)
 
 - Line ~741: "661 stories across 87 components" → **663 stories** (+2: Table
   `Filters`, `FilterActions`). Component count unchanged.
@@ -73,3 +73,14 @@ strip the panel's client-set inline `position/top/left`. This is not verified
 with a live Livewire component. The stories and docs use deferred `wire:model`
 plus an Apply binding, which avoids a round-trip while the panel is open.
 `overlay.js` is outside this stream's ownership.
+
+## Testing note
+
+`vendor/` in a worktree is a symlink to the main checkout, so its
+`vendor/autoload.php` maps `Tedi\Livewire\` to the MAIN checkout's `src/`.
+A plain `vendor/bin/phpunit` then renders the main checkout's views. This branch
+was tested with a bootstrap that re-points the PSR-4 roots at the worktree
+(`$loader->setPsr4('Tedi\\Livewire\\', [worktree.'/src'])`, same for
+`Tests\`). With that bootstrap: 1443 tests OK, ReadmeTest included.
+`tests/fixtures/matrices/table.blade.php` gains a filter-popover case, so
+IntegrityTest's class-existence guard now covers the popover's classes.

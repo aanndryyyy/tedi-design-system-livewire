@@ -82,18 +82,18 @@
 
     $textFilter = $filterTemplate(<<<'BLADE'
 <div style="display: flex; flex-direction: column; gap: var(--tedi-dimensions-02);">
-    <tedi:form.label size="small" for="name-filter">Nimi</tedi:form.label>
+    <tedi:form.label size="small" for="filter-actions-name-filter">Nimi</tedi:form.label>
     <tedi:form-field size="small">
-        <tedi:text-field id="name-filter" type="text" />
+        <tedi:text-field id="filter-actions-name-filter" type="text" />
     </tedi:form-field>
 </div>
 BLADE);
 
     $dateFilter = $filterTemplate(<<<'BLADE'
 <div style="display: flex; flex-direction: column; gap: var(--tedi-dimensions-02);">
-    <tedi:form.label size="small" for="jobStart-filter">Tööalguse kuupäev</tedi:form.label>
+    <tedi:form.label size="small" for="filter-actions-jobStart-filter">Tööalguse kuupäev</tedi:form.label>
     <tedi:form-field size="small">
-        <tedi:date-field input-id="jobStart-filter" size="small" mode="range" placeholder="pp.kk.aaaa – pp.kk.aaaa" :value="$value" />
+        <tedi:date-field input-id="filter-actions-jobStart-filter" size="small" mode="range" placeholder="pp.kk.aaaa – pp.kk.aaaa" :value="$value" />
     </tedi:form-field>
 </div>
 BLADE, ['value' => $jobStartFilter]);
@@ -102,7 +102,7 @@ BLADE, ['value' => $jobStartFilter]);
 <div style="display: flex; flex-direction: column; gap: var(--tedi-dimensions-04);">
     @foreach ($options as $option)
         <label style="display: inline-flex; gap: var(--tedi-dimensions-04); align-items: center;">
-            <tedi:checkbox :id="'status-filter-'.$loop->index" :value="$option" :checked="in_array($option, $selected, true)" />
+            <tedi:checkbox :id="'filter-actions-status-filter-'.$loop->index" :value="$option" :checked="in_array($option, $selected, true)" />
             <span>{{ $option }}</span>
         </label>
     @endforeach
