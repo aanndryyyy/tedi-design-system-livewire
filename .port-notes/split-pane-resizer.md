@@ -66,7 +66,7 @@ Files:
 - Lang: `splitPaneResize` was added to the React block in `en`, `et` and `ru`,
   copied verbatim from `labels-map.ts`. `close` already existed.
 - Tests:
-  - New: `tests/Components/MapComponentsTest.php` (16 tests).
+  - New: `tests/Components/MapComponentsTest.php` (14 tests).
   - Five resizable tests added to `DockPanelComponentsTest.php`.
   - New fixture: `tests/fixtures/matrices/map-components.blade.php`.
   - Resizable panels added to `fixtures/matrices/dock-panel.blade.php`.
@@ -225,10 +225,36 @@ Files:
     - With the automatic `mobile`, the viewport went 1169 → 500px (sheet) →
       1100px (docked). The panel re-measured to 50% (549 of 1098px), and the
       events were `["sheet", "docked"]`.
+    - Rendered `resizable collapsed`: after measurement the layout's
+      `visibility: hidden` is cleared, and it ends as a 54px full-height rail
+      (`data-collapsed="true"`, `data-resizable="true"`, resizer
+      `visibility: hidden`). Restoring gives 50%.
+  - **Morph restore.** This was simulated, not a real Livewire round trip:
+    1. Drag to 599px.
+    2. Call `_restoreServerLayout()` (the `morph` hook).
+    3. Run `Alpine.morph()` of the resize layout to its server HTML. Midway,
+       the DOM is the server's: the measurement class, `data-resizable="false"`,
+       the resizer at `display: none`, `visibility: hidden`.
+    4. Call the resizer's `configure({})` and the panel's `_afterMorph()` (the
+       two `morphed` hooks).
+
+    After that, the width is back at 599px, the measurement class is gone,
+    `data-resizable="true"`, `visibility` is cleared, and the client's
+    expanded state is kept (the server value was unchanged), on the same
+    nodes.
+  - **Hit-testing** (`document.elementFromPoint` at each target's centre)
+    lands inside:
+    - the standalone right and top resize handles;
+    - the dock panel's handle while expanded;
+    - the split-pane separator, its handle and the close button.
+
+    While minimized, the dock panel's handle is not hit; the workspace
+    underneath is. So the resize layout's `pointer-events: none` and the
+    stacking let a real pointer reach exactly the targets upstream intends.
+  - **All pointer, keyboard and touch input was synthetic**, dispatched on
+    the target element.
 - **Not verified in a browser.**
-  - The Livewire morph restore: there was no Livewire component on a static
-    page. That code path is the `morphed` hook re-running the same
-    `_apply()` / `configure()` that the checks above exercise.
+  - A real Livewire `morph` / `morphed` round trip (see the simulation above).
   - The dark theme token values.
   - Blast/Storybook generation of the `Map components` directory. It was
     not run, because `blast:generate-stories` would write into the main
