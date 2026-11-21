@@ -24,9 +24,15 @@
     from `<tedi:popover>`'s `container-id` when that is set (see that
     component's header for the sibling-ARIA divergence), and is generated
     otherwise.
+
+    In hover mode (`open-with="hover"` on the popover, read through `@aware`)
+    the content keeps the popover open while hovered or focused and closes it
+    when focus leaves both it and the trigger (Angular 10.0.0-rc.24, #879).
 --}}
 @aware([
     'containerId' => null,
+    /** The popover's open-with; must equal its @props default — CONVENTIONS.md §3. */
+    'openWith' => 'click',
 ])
 @props([
     /** none|small|medium|large, or any CSS length ('20rem'), applied inline. */
@@ -68,7 +74,15 @@
         ?: ($containerId ? $containerId.'_title' : \Tedi\Livewire\Tedi::id('popover-title'));
 @endphp
 
-<tedi-popover-content {{ $isPresetWidth ? $rootAttributes : $rootAttributes->style(['width: '.$maxWidth]) }}>
+<tedi-popover-content
+    {{ $isPresetWidth ? $rootAttributes : $rootAttributes->style(['width: '.$maxWidth]) }}
+    @if ($openWith === 'hover')
+        x-on:mouseenter="contentEnter()"
+        x-on:mouseleave="contentLeave()"
+        x-on:focusin="cancelHide()"
+        x-on:focusout="hoverFocusOut($event)"
+    @endif
+>
     @if ($title && $showClose)
         <div class="tedi-popover-content__head">
             <h4 class="tedi-popover-content__title" id="{{ $headingId }}">{{ $title }}</h4>

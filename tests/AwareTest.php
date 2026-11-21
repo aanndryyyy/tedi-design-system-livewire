@@ -465,6 +465,26 @@ class AwareTest extends TestCase
         $this->assertHasClass('tedi-popover-content', $content, 'tedi-popover-content');
     }
 
+    // -- popover -> popover-trigger / popover-content @aware(['openWith']) ----
+
+    public function test_popover_open_with_reaches_trigger_and_content(): void
+    {
+        $html = Blade::render(sprintf(self::POPOVER, ' open-with="hover"'));
+
+        $this->assertStringContainsString('x-on:focusin="focusOpen()"', $html);
+        $this->assertStringContainsString('x-on:focusin="cancelHide()"', $html);
+    }
+
+    public function test_popover_open_with_fallback_matches_parent_default(): void
+    {
+        // The parent default is 'click', so omitted and explicit render the same.
+        $this->assertSame(
+            Blade::render(sprintf(self::POPOVER, ' container-id="p2"')),
+            Blade::render(sprintf(self::POPOVER, ' container-id="p2" open-with="click"')),
+        );
+        $this->assertStringContainsString('x-on:click="toggle()"', Blade::render('<tedi:popover-trigger>t</tedi:popover-trigger>'));
+    }
+
     // -- modal / modal-header @aware(['size']) ------------------------------
 
     private const MODAL = '<tedi:modal%s><tedi:modal-header><h3>H</h3></tedi:modal-header></tedi:modal>';

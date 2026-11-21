@@ -1305,6 +1305,9 @@
       /** Resolved side, mirrored to `data-placement` for the arrow CSS. */
       side: parsePlacement(cfg.placement).side === "auto" ? "bottom" : parsePlacement(cfg.placement).side,
       _hideTimer: null,
+      _showTimer: null,
+      /** True while `hide(true)` hands focus back to the trigger. */
+      _restoringFocus: false,
       _lockedScroll: false,
       _frame: null,
       _listeners: [],
@@ -1325,18 +1328,26 @@
         }
       },
       destroy: function() {
+        clearTimeout(this._showTimer);
         this._onClose();
       },
       // -- open state -----------------------------------------------
       show: function() {
         clearTimeout(this._hideTimer);
+        clearTimeout(this._showTimer);
         this.open = true;
       },
       hide: function(focusTrigger) {
         clearTimeout(this._hideTimer);
+        clearTimeout(this._showTimer);
         if (focusTrigger && this.$refs.trigger) {
           var focusable = this._focusableTrigger();
-          if (focusable) focusable.focus({ preventScroll: true });
+          this._restoringFocus = true;
+          try {
+            if (focusable) focusable.focus({ preventScroll: true });
+          } finally {
+            this._restoringFocus = false;
+          }
         }
         this.open = false;
       },
@@ -1347,18 +1358,64 @@
           this.show();
         }
       },
-      /** Hover intent: leaving trigger or panel closes after a delay. */
-      hoverOpen: function() {
+      /**
+       * Hover intent: leaving trigger or panel closes after a delay.
+       * `pointer` is true for `mouseenter`, which waits `showDelay`
+       * (`showTooltipOnHover()` / `showPopoverOnHover()`); focus passes
+       * nothing and opens at once.
+       */
+      hoverOpen: function(pointer) {
         if (cfg.openWith === "none") return;
-        this.show();
+        var delay = pointer ? cfg.showDelay || 0 : 0;
+        if (!delay) {
+          this.show();
+          return;
+        }
+        clearTimeout(this._hideTimer);
+        if (this.open) return;
+        var self = this;
+        clearTimeout(this._showTimer);
+        this._showTimer = setTimeout(function() {
+          self.show();
+        }, delay);
+      },
+      /** popover.component.ts `showPopoverOnFocus()`: not while focus is handed back. */
+      focusOpen: function() {
+        if (this._restoringFocus) return;
+        this.hoverOpen(false);
+      },
+      /**
+       * popover.component.ts `scheduleHide()`: like `hoverClose()`, but a
+       * popover whose content holds focus stays open.
+       */
+      scheduleHide: function() {
+        clearTimeout(this._showTimer);
+        clearTimeout(this._hideTimer);
+        if (this.$refs.panel && this.$refs.panel.contains(document.activeElement)) return;
+        this.hoverClose();
+      },
+      /**
+       * The hover popover's `focusout` on the trigger and the content:
+       * close unless the pointer is on the content or focus moves to the
+       * trigger or the panel.
+       */
+      hoverFocusOut: function(event) {
+        if (this._contentHovered) return;
+        if (this._contains(event.relatedTarget)) return;
+        this.hide(false);
       },
       hoverClose: function() {
         if (cfg.openWith === "none") return;
         var self = this;
+        clearTimeout(this._showTimer);
         clearTimeout(this._hideTimer);
         this._hideTimer = setTimeout(function() {
           if (!self._contentHovered) self.hide(false);
         }, cfg.hoverDelay == null ? 100 : cfg.hoverDelay);
+      },
+      /** Cancels a pending hover close (the hover popover content's `focusin`). */
+      cancelHide: function() {
+        clearTimeout(this._hideTimer);
       },
       contentEnter: function() {
         this._contentHovered = true;

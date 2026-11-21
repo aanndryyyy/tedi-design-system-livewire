@@ -6,6 +6,7 @@
     'args' => [
         'position' => 'top',
         'preventOverflow' => true,
+        'delay' => 0,
         'timeoutDelay' => 100,
         'offset' => 4,
         'interactive' => true,
@@ -46,6 +47,16 @@
                 'category' => 'tooltip',
                 'type' => ['summary' => 'boolean'],
                 'defaultValue' => ['summary' => 'true'],
+            ],
+        ],
+        'delay' => [
+            'control' => 'select',
+            'description' => 'Time in ms the pointer has to stay over the trigger before the tooltip opens on hover. Focus and click open it right away.',
+            'options' => [0, 100, 200, 300],
+            'table' => [
+                'category' => 'tooltip',
+                'type' => ['summary' => 'TooltipDelay'],
+                'defaultValue' => ['summary' => '0'],
             ],
         ],
         'timeoutDelay' => [
@@ -90,6 +101,7 @@
 
 <tedi:tooltip
     :position="$position"
+    :delay="(int) $delay"
     :timeout-delay="(int) $timeoutDelay"
     :offset="(int) $offset"
     :prevent-overflow="(bool) $preventOverflow"

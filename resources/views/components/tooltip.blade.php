@@ -46,6 +46,10 @@
     (see tooltip-trigger.blade.php). Without JS no description is wired, which
     matches Angular's SSR output (its content is not rendered while closed).
 
+    `delay` (Angular 10.0.0-rc.24, #879) is how long the pointer has to stay
+    on the trigger before a hover opens the tooltip: `tediOverlay`'s
+    `showDelay`. Focus and click open it at once; closing is unaffected.
+
     `open` is the initial open state, not a two-way model: Angular's `open`
     input distinguishes `undefined` (uncontrolled) from a boolean (controlled),
     which Blade's `isset()`-based `@props` cannot represent (CONVENTIONS.md §3).
@@ -60,6 +64,8 @@
     'openWith' => 'both',
     /** Initial open state. Use with open-with="none" for external control. */
     'open' => false,
+    /** 0|100|200|300 — ms the pointer has to stay on the trigger before a hover opens the tooltip. Focus and click open it right away. */
+    'delay' => 0,
     /** ms before a hover-opened tooltip closes once the pointer leaves. */
     'timeoutDelay' => 100,
     /** Extra px between tooltip and trigger, on top of the 8px base gap. */
@@ -79,6 +85,7 @@
         preventOverflow: {{ $preventOverflow ? 'true' : 'false' }},
         openWith: @js($openWith),
         hoverDelay: {{ (int) $timeoutDelay }},
+        showDelay: {{ (int) $delay }},
         open: {{ $open ? 'true' : 'false' }},
     })"
     @unless ($descriptionId) x-id="['tedi-tooltip']" @endunless

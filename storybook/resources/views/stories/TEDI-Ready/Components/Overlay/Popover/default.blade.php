@@ -11,6 +11,8 @@
         'withBorder' => false,
         'withArrow' => true,
         'lockScroll' => false,
+        'openWith' => 'click',
+        'delay' => 0,
         'timeoutDelay' => 100,
         'offset' => 8,
         'maxWidth' => 'small',
@@ -90,9 +92,29 @@
                 'defaultValue' => ['summary' => 'false'],
             ],
         ],
+        'openWith' => [
+            'control' => 'radio',
+            'description' => 'How the popover is opened. With `hover` it also opens on trigger focus and clicking the trigger does not toggle it.',
+            'options' => ['click', 'hover'],
+            'table' => [
+                'category' => 'popover inputs',
+                'type' => ['summary' => 'PopoverOpenWith'],
+                'defaultValue' => ['summary' => 'click'],
+            ],
+        ],
+        'delay' => [
+            'control' => 'select',
+            'description' => 'Time in ms the pointer has to stay over the trigger before the popover opens on hover. Only applies with `openWith="hover"`.',
+            'options' => [0, 100, 200, 300],
+            'table' => [
+                'category' => 'popover inputs',
+                'type' => ['summary' => 'PopoverDelay'],
+                'defaultValue' => ['summary' => '0'],
+            ],
+        ],
         'timeoutDelay' => [
             'control' => 'number',
-            'description' => 'Delay in ms before the popover closes when neither the trigger nor the content is hovered.',
+            'description' => 'Delay in ms before the popover closes when neither the trigger nor the content is hovered. Only applies with `openWith="hover"`.',
             'table' => [
                 'category' => 'popover inputs',
                 'type' => ['summary' => 'number'],
@@ -167,6 +189,8 @@
     <tedi:popover
         container-id="popover-default"
         :position="$position"
+        :open-with="$openWith"
+        :delay="(int) $delay"
         :prevent-overflow="(bool) $preventOverflow"
         :dismissible="(bool) $dismissible"
         :hide-on-scroll="(bool) $hideOnScroll"

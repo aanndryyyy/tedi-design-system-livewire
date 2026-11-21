@@ -77,7 +77,16 @@ class TooltipComponentsTest extends TestCase
         $this->assertStringContainsString('preventOverflow: true', $html);
         $this->assertStringContainsString("openWith: 'both'", $html);
         $this->assertStringContainsString('hoverDelay: 100', $html);
+        $this->assertStringContainsString('showDelay: 0', $html);
         $this->assertStringContainsString('open: false', $html);
+    }
+
+    /** Angular 10.0.0-rc.24 (#879): TooltipDelay = 0 | 100 | 200 | 300. */
+    public function test_tooltip_delay_reaches_the_overlay_engine(): void
+    {
+        foreach ([0, 100, 200, 300] as $delay) {
+            $this->assertStringContainsString('showDelay: '.$delay, $this->tooltip(':delay="'.$delay.'"'));
+        }
     }
 
     public function test_tooltip_forwards_offset_timeout_and_prevent_overflow(): void
@@ -124,7 +133,8 @@ class TooltipComponentsTest extends TestCase
         foreach (['hover', 'both'] as $openWith) {
             $html = $this->tooltip('open-with="'.$openWith.'"');
 
-            $this->assertStringContainsString('x-on:mouseenter="hoverOpen()"', $html);
+            // Angular 10.0.0-rc.24 (#879): the pointer waits for `delay`, focus does not.
+            $this->assertStringContainsString('x-on:mouseenter="hoverOpen(true)"', $html);
             $this->assertStringContainsString('x-on:mouseleave="hoverClose()"', $html);
             $this->assertStringContainsString('x-on:focusin="hoverOpen()"', $html);
             $this->assertStringContainsString('x-on:focusout="hoverClose()"', $html);
@@ -133,7 +143,7 @@ class TooltipComponentsTest extends TestCase
         foreach (['click', 'none'] as $openWith) {
             $html = $this->tooltip('open-with="'.$openWith.'"');
 
-            $this->assertStringNotContainsString('hoverOpen()', $html);
+            $this->assertStringNotContainsString('hoverOpen(', $html);
         }
     }
 
