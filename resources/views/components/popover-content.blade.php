@@ -78,7 +78,7 @@
     {{ $isPresetWidth ? $rootAttributes : $rootAttributes->style(['width: '.$maxWidth]) }}
     @if ($openWith === 'hover')
         x-on:mouseenter="contentEnter()"
-        x-on:mouseleave="contentLeave()"
+        x-on:mouseleave="_contentHovered = false; scheduleHide()"
         x-on:focusin="cancelHide()"
         x-on:focusout="hoverFocusOut($event)"
     @endif

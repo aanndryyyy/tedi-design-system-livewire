@@ -22,6 +22,8 @@ section covers both.
 
 - **BREAKING** `valid` / `error` are a polite live region without
   `role="alert"`; a hint is not a live region (#901).
+- `attachment`'s error text now renders `tedi:feedback-text`, as upstream
+  does, so it follows the same live region.
 
 `popover`, `tooltip`
 

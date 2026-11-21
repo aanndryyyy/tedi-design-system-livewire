@@ -172,7 +172,7 @@ class PopoverComponentsTest extends TestCase
         $this->assertStringContainsString('x-on:keydown.escape="hide(false)"', $hover);
         $this->assertStringNotContainsString('x-on:click="toggle()"', $hover);
         // The content keeps it open while hovered or focused.
-        $this->assertMatchesRegularExpression('/<tedi-popover-content[^>]*x-on:mouseenter="contentEnter\(\)"[^>]*x-on:mouseleave="contentLeave\(\)"[^>]*x-on:focusin="cancelHide\(\)"[^>]*x-on:focusout="hoverFocusOut\(\$event\)"/s', $hover);
+        $this->assertMatchesRegularExpression('/<tedi-popover-content[^>]*x-on:mouseenter="contentEnter\(\)"[^>]*x-on:mouseleave="_contentHovered = false; scheduleHide\(\)"[^>]*x-on:focusin="cancelHide\(\)"[^>]*x-on:focusout="hoverFocusOut\(\$event\)"/s', $hover);
 
         // Click mode (default and explicit) keeps the click toggle and no hover handlers.
         foreach (['', ' open-with="click"'] as $attr) {

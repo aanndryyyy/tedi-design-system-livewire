@@ -45,7 +45,7 @@
             this.bottom = !atBottom;
         },
     }"
-    x-init="update(); const ro = new ResizeObserver(() => update()); ro.observe($refs.inner); ro.observe($refs.content)"
+    x-init="update(); const ro = new ResizeObserver(() => update()); ro.observe($refs.inner); ro.observe($refs.tediScrollFadeContent)"
     {{ $attributes->class(['tedi-scroll-fade']) }}
     :class="{
         'tedi-scroll-fade--top-{{ $fadeSize }}': top && {{ $showTop }},
@@ -63,7 +63,7 @@
             'tedi-scroll-fade__inner--custom-scroll' => $scrollBar === 'custom',
         ])
     >
-        <div x-ref="content">
+        <div x-ref="tediScrollFadeContent">
             {{ $slot }}
         </div>
     </div>

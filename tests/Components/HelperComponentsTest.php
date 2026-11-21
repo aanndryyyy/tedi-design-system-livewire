@@ -27,6 +27,9 @@ class HelperComponentsTest extends TestCase
         $this->assertHasClass('tedi-attachment__feedback', $html, on: 'tedi-feedback-text');
         $this->assertHasClass('tedi-feedback-text--error', $html, on: 'tedi-feedback-text');
         $this->assertStringContainsString('Too large', $html);
+        // Angular 10.0.0-rc.23 (#901): the error is a polite live region, no role.
+        $this->assertStringContainsString('aria-live="polite"', $html);
+        $this->assertStringNotContainsString('role="alert"', $html);
     }
 
     public function test_attachment_invalid_shows_error_visual_without_feedback_text(): void
@@ -216,8 +219,8 @@ class HelperComponentsTest extends TestCase
     {
         $html = Blade::render('<tedi:scroll-fade><p>content</p></tedi:scroll-fade>');
 
-        $this->assertMatchesRegularExpression('/class="tedi-scroll-fade__inner[^"]*"[^>]*>\s*<div x-ref="content">\s*<p>content<\/p>\s*<\/div>\s*<\/div>/s', $html);
-        $this->assertStringContainsString('ro.observe($refs.inner); ro.observe($refs.content)', $html);
+        $this->assertMatchesRegularExpression('/class="tedi-scroll-fade__inner[^"]*"[^>]*>\s*<div x-ref="tediScrollFadeContent">\s*<p>content<\/p>\s*<\/div>\s*<\/div>/s', $html);
+        $this->assertStringContainsString('ro.observe($refs.inner); ro.observe($refs.tediScrollFadeContent)', $html);
         $this->assertStringNotContainsString('tedi-scroll-fade__content', $html);
     }
 
