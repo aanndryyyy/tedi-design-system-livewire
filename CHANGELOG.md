@@ -2,6 +2,76 @@
 
 ## Unreleased
 
+### Angular 10.0.0-rc.27 / React 21.0.0-rc.24 sync
+
+Syncs Angular 10.0.0-rc.21 → 10.0.0-rc.27 and React 21.0.0-rc.17 →
+21.0.0-rc.24; core stays at 6.13.0. **Breaking:** `sidenav` now needs the
+bundle, and `feedback-text`'s live region changes. The README's "Upgrading"
+section covers both.
+
+`sidenav`
+
+- **BREAKING** the state moves from inline Alpine into the bundled
+  `tediSidenav` behaviour (same property names), so `@tediScripts` is required.
+- The open mobile drawer traps focus (#916): focus moves in and Tab wraps
+  inside it, the page behind it is `inert` except the toggle, the overlay, the
+  toast container and the announcer regions, Escape closes it, and closing it
+  by any path returns focus to the toggle.
+
+`feedback-text`
+
+- **BREAKING** `valid` / `error` are a polite live region without
+  `role="alert"`; a hint is not a live region (#901).
+
+`popover`, `tooltip`
+
+- New `delay` (0 | 100 | 200 | 300 ms) before a pointer hover opens them; focus
+  and click open at once, and leaving cancels a pending open (#879).
+- `popover`: new `open-with` (`click` | `hover`). In hover mode the trigger
+  opens on hover and focus, a click no longer toggles it, the content keeps it
+  open while hovered or focused, Escape closes it, and `timeout-delay` applies.
+- `tediOverlay`: `showDelay` config, `focusOpen()`, `scheduleHide()`,
+  `hoverFocusOut()`, `cancelHide()`; `hide(true)` no longer lets the
+  trigger's focus reopen a hover popover.
+- Storybook: the `delay` / `openWith` controls on both Default stories.
+
+`button`
+
+- New `size="extra-small"` for icon-only buttons (#785), with the vendored
+  SCSS and the Extra Small Icon Only story.
+
+`select`
+
+- A consumer's `aria-describedby` is kept and the feedback id is appended,
+  de-duplicated (#885).
+
+`scroll-fade`
+
+- The slot sits in a content wrapper that the ResizeObserver also watches, so
+  content added or removed inside a `max-height` cap recomputes the fade
+  (#924). Upstream's unstyled `tedi-scroll-fade__content` class is dropped.
+  Storybook: Dynamic Content.
+
+`status-badge`, `select`
+
+- Re-vendored SCSS (`vertical-align: top` on the badge, #875; the option-group
+  rules of Angular's combobox, which the native select does not use).
+
+Not ported
+
+- `select` option groups as `role="group"` (#854): `groupBy` is not part of the
+  native-select subset.
+- React-only: `meta.sortable` and the TanStack filter popover on the table, the
+  file-dropzone state colours, removing the large button size, and the search
+  and category-search button sizing. Angular is the source for all of these
+  components (CONVENTIONS.md §13).
+
+Dependencies
+
+- Storybook app: `livewire/livewire` 4.4.8 → 4.4.9 (security fixes),
+  `laravel/framework` 12.70.2 → 12.73.0 (Blast 1.11 caps it at Laravel 12).
+  Root Composer and npm dependencies were already current.
+
 ### Previously unported upstream features
 
 Ports what the Angular 10 sync below left out, plus React's community

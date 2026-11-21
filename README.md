@@ -216,6 +216,21 @@ block already *is* the primary appearance).
 
 ## Upgrading
 
+### Breaking changes in the Angular 10.0.0-rc.27 sync
+
+- **`sidenav`**: its state now runs in the bundled `tediSidenav` behaviour
+  instead of inline Alpine, so the sidenav needs `@tediScripts` (or
+  `dist/tedi.js`) on the page; without it the nav renders its server state and
+  no longer toggles. The Alpine property names (`tediSidenavCollapsed`,
+  `tediSidenavMobileOpen`, …) are unchanged. While the mobile drawer is open
+  everything outside the nav, the toggle, the overlay, the toast container
+  and the announcer regions is `inert`, so other page controls cannot be
+  reached until it closes.
+- **`feedback-text`**: `valid` and `error` texts no longer carry
+  `role="alert"` and are `aria-live="polite"` instead of `assertive`; a `hint`
+  has no `aria-live` at all. Tests that assert the old attributes need
+  updating.
+
 ### Breaking changes in the previously unported upstream features
 
 - **`number-field`**: the increment and decrement buttons now step the value
@@ -866,8 +881,8 @@ here (`git -C .reference/angular diff <sha> origin/rc -- src/tedi src/community`
 
 | Repo | Version | Commit |
 |---|---|---|
-| `TEDI-Design-System/angular` (`rc`) | 10.0.0-rc.21 | `6ecb1ee5` |
-| `TEDI-Design-System/react` (`rc`) | 21.0.0-rc.17 | `917b2ce8` |
+| `TEDI-Design-System/angular` (`rc`) | 10.0.0-rc.27 | `e78f1cd1` |
+| `TEDI-Design-System/react` (`rc`) | 21.0.0-rc.24 | `3f2b8e8b` |
 | `TEDI-Design-System/core` (`rc`) | 6.13.0 | `face373b` |
 
 `.reference/` holds plain clones of the three repos and is git-ignored. The
