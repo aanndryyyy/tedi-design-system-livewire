@@ -5,6 +5,9 @@
     Since Angular 8.0 the host always carries an `id` — the `id` prop, or a
     generated `tedi-feedback-text-…` — so a container can name it in a
     control's `aria-describedby`.
+
+    Since Angular 10.0.0-rc.23 (#901) valid and error texts are a polite live
+    region with no `role`; a hint carries no `aria-live` at all.
 --}}
 @props([
     /** Id of the element. Generated when not set. */
@@ -18,8 +21,8 @@
 ])
 
 @php
-    $role = in_array($type, ['valid', 'error'], true) ? 'alert' : null;
-    $ariaLive = in_array($type, ['valid', 'error'], true) ? 'assertive' : 'polite';
+    // ariaLive()
+    $ariaLive = in_array($type, ['valid', 'error'], true) ? 'polite' : null;
     // elementId()
     $elementId = ($id !== null && $id !== '') ? $id : \Tedi\Livewire\Tedi::id('tedi-feedback-text');
 @endphp
@@ -34,8 +37,7 @@
 --}}
 <tedi-feedback-text
     id="{{ $elementId }}"
-    @if ($role) role="{{ $role }}" @endif
-    aria-live="{{ $ariaLive }}"
+    @if ($ariaLive) aria-live="{{ $ariaLive }}" @endif
     {{ $attributes->class([
         'tedi-feedback-text',
         'tedi-feedback-text--'.$type,

@@ -207,6 +207,20 @@ class HelperComponentsTest extends TestCase
         $this->assertStringContainsString('content', $html);
     }
 
+    /**
+     * Angular 10.0.0-rc.26 (#924): the slot is wrapped in a content element the
+     * ResizeObserver also watches, so content added inside a max-height cap
+     * recomputes the fade.
+     */
+    public function test_scroll_fade_observes_a_content_wrapper(): void
+    {
+        $html = Blade::render('<tedi:scroll-fade><p>content</p></tedi:scroll-fade>');
+
+        $this->assertMatchesRegularExpression('/class="tedi-scroll-fade__inner[^"]*"[^>]*>\s*<div x-ref="content">\s*<p>content<\/p>\s*<\/div>\s*<\/div>/s', $html);
+        $this->assertStringContainsString('ro.observe($refs.inner); ro.observe($refs.content)', $html);
+        $this->assertStringNotContainsString('tedi-scroll-fade__content', $html);
+    }
+
     public function test_scroll_fade_default_scrollbar_omits_custom_class(): void
     {
         $html = Blade::render('<tedi:scroll-fade scroll-bar="default">content</tedi:scroll-fade>');

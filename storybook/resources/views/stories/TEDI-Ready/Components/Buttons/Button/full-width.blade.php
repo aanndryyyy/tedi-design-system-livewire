@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'Full Width',
-    'order' => 11,
+    'order' => 12,
     'status' => 'stable',
 ])
 

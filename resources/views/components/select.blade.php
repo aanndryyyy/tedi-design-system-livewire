@@ -55,6 +55,12 @@
       `name[]` for PHP to read an array.
     * `aria-invalid="true"` in the error state and `aria-describedby` pointing
       at the feedback text (`{inputId}-feedback`, #673).
+    * External `aria-describedby` ids (10.0.0-rc.23, #885): a consumer's own
+      `aria-describedby` is kept and the feedback id is appended, de-duplicated
+      (`describedByAttr()`). Angular's `setDescribedBy()` is that same
+      attribute here; bind it (`:aria-describedby`) to change it.
+    * Option groups (10.0.0-rc.22, #854) need no port: `groupBy` is dropped,
+      and a native <select> would expose `<optgroup>`s itself.
 --}}
 @props([
     /** Id for the <select>, also used for the label's `for`. Auto-generated (Tedi::id()) when omitted. */
@@ -114,6 +120,11 @@
 
     // feedbackId()
     $feedbackId = $feedbackText ? $inputId.'-feedback' : null;
+    // describedByAttr(): the external ids, then the feedback text id.
+    $describedBy = array_values(array_unique(array_filter(array_merge(
+        preg_split('/\s+/', (string) $attributes->get('aria-describedby', '')),
+        [$feedbackId],
+    ))));
 
     $normalizedOptions = [];
     foreach ($options as $key => $option) {
@@ -147,10 +158,10 @@
         @if ($required) required @endif
         @disabled($disabled)
         @if ($allowMultiple) multiple @endif
-        {{ $attributes->merge(array_filter([
+        {{ $attributes->except('aria-describedby')->merge(array_filter([
             'name' => ($name !== null && $name !== '') ? $name : null,
             'aria-invalid' => $state === 'error' ? 'true' : null,
-            'aria-describedby' => $feedbackId,
+            'aria-describedby' => $describedBy !== [] ? implode(' ', $describedBy) : null,
         ], fn ($v) => $v !== null))->class([
             'tedi-select__trigger',
             'tedi-input',

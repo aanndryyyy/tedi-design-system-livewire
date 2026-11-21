@@ -40,8 +40,8 @@
         ],
         'size' => [
             'control' => 'radio',
-            'options' => ['default', 'small'],
-            'description' => 'Defines the size of the button.',
+            'options' => ['default', 'small', 'extra-small'],
+            'description' => 'Defines the size of the button. The `extra-small` size is only intended for icon-only buttons.',
             'table' => [
                 'category' => 'inputs',
                 'defaultValue' => ['summary' => 'default'],

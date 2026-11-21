@@ -10,7 +10,7 @@
 @props([
     /** primary|secondary|neutral|success|danger|danger-neutral|primary-inverted|secondary-inverted|neutral-inverted|primary-button-group|secondary-button-group */
     'variant' => 'primary',
-    /** default|small */
+    /** default|small|extra-small — extra-small is only intended for icon-only buttons. */
     'size' => 'default',
     /** Renders as <a> when set. */
     'href' => null,
@@ -33,7 +33,7 @@
     $iconFirst = $iconOnly || (bool) $iconStart;
     $iconLast  = $iconOnly || (bool) $iconEnd;
 
-    $iconSize = $size === 'small' ? 18 : 24;
+    $iconSize = in_array($size, ['small', 'extra-small'], true) ? 18 : 24;
 @endphp
 
 <{{ $tag }}

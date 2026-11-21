@@ -1,6 +1,6 @@
 @storybook([
     'name' => 'Link As Button',
-    'order' => 12,
+    'order' => 13,
     'status' => 'stable',
 ])
 
