@@ -143,6 +143,47 @@ class PopoverComponentsTest extends TestCase
         $this->assertFalse($config['lockScroll']);
         $this->assertSame(100, $config['hoverDelay']);
         $this->assertSame('click', $config['openWith']);
+        $this->assertSame(0, $config['showDelay']);
+    }
+
+    /**
+     * Angular 10.0.0-rc.24 (#879): PopoverOpenWith = click | hover and
+     * PopoverDelay = 0 | 100 | 200 | 300 reach the engine.
+     */
+    public function test_popover_open_with_and_delay_reach_the_overlay_engine(): void
+    {
+        foreach ([0, 100, 200, 300] as $delay) {
+            $config = $this->overlayConfig(Blade::render('<tedi:popover open-with="hover" :delay="'.$delay.'">x</tedi:popover>'));
+            $this->assertSame('hover', $config['openWith']);
+            $this->assertSame($delay, $config['showDelay']);
+        }
+    }
+
+    public function test_hover_popover_trigger_opens_on_hover_and_focus_not_click(): void
+    {
+        $hover = Blade::render(
+            '<tedi:popover open-with="hover"><x-slot:trigger><tedi:popover-trigger>Ava</tedi:popover-trigger></x-slot:trigger>'
+            .'<tedi:popover-content>Sisu</tedi:popover-content></tedi:popover>'
+        );
+
+        $this->assertStringContainsString('x-on:mouseenter="hoverOpen(true)"', $hover);
+        $this->assertStringContainsString('x-on:mouseleave="scheduleHide()"', $hover);
+        $this->assertStringContainsString('x-on:focusin="focusOpen()"', $hover);
+        $this->assertStringContainsString('x-on:keydown.escape="hide(false)"', $hover);
+        $this->assertStringNotContainsString('x-on:click="toggle()"', $hover);
+        // The content keeps it open while hovered or focused.
+        $this->assertMatchesRegularExpression('/<tedi-popover-content[^>]*x-on:mouseenter="contentEnter\(\)"[^>]*x-on:mouseleave="_contentHovered = false; scheduleHide\(\)"[^>]*x-on:focusin="cancelHide\(\)"[^>]*x-on:focusout="hoverFocusOut\(\$event\)"/s', $hover);
+
+        // Click mode (default and explicit) keeps the click toggle and no hover handlers.
+        foreach (['', ' open-with="click"'] as $attr) {
+            $click = Blade::render(
+                '<tedi:popover'.$attr.'><x-slot:trigger><tedi:popover-trigger>Ava</tedi:popover-trigger></x-slot:trigger>'
+                .'<tedi:popover-content>Sisu</tedi:popover-content></tedi:popover>'
+            );
+            $this->assertStringContainsString('x-on:click="toggle()"', $click);
+            $this->assertStringNotContainsString('hoverOpen(', $click);
+            $this->assertStringNotContainsString('contentEnter()', $click);
+        }
     }
 
     public function test_popover_behaviour_props_reach_the_overlay_engine(): void

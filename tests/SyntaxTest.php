@@ -64,6 +64,25 @@ class SyntaxTest extends TestCase
         $this->assertHasClass('tedi-button--icon-only', $out, 'tedi-button');
     }
 
+    public function test_button_size_union(): void
+    {
+        // ButtonSize = "default" | "small" | "extra-small" (Angular 10.0.0-rc.25).
+        foreach (['default', 'small', 'extra-small'] as $size) {
+            $out = Blade::render('<tedi:button size="'.$size.'" icon-only icon-start="close" aria-label="Sulge" />');
+            $this->assertHasClass('tedi-button--'.$size, $out, 'tedi-button');
+            $this->assertHasClass('tedi-button--icon-only', $out, 'tedi-button');
+        }
+
+        // extra-small renders small's 18px icon (--icon-03), not the default 24px.
+        $xs = Blade::render('<tedi:button size="extra-small" icon-only icon-start="close" aria-label="Sulge" />');
+        $sm = Blade::render('<tedi:button size="small" icon-only icon-start="close" aria-label="Sulge" />');
+        $this->assertStringContainsString('--_tedi-icon-size: var(--icon-03)', $xs);
+        $this->assertSame(
+            str_replace('tedi-button--small', 'tedi-button--extra-small', $sm),
+            $xs,
+        );
+    }
+
     public function test_button_family_is_left_out_of_print(): void
     {
         // Angular 8+: BaseButtonDirective, ClosingButton, CollapseButton and

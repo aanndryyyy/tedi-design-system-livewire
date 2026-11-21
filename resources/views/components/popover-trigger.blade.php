@@ -18,6 +18,12 @@
             aria-haspopup="dialog" aria-expanded="false"
             x-ref="trigger" x-on:click="toggle()" x-bind:aria-expanded="open">…</tedi:button>
 
+    With `open-with="hover"` such a hand-wired trigger binds the hover
+    handlers this component renders instead of `x-on:click`:
+    `x-on:mouseenter="hoverOpen(true)" x-on:mouseleave="scheduleHide()"
+    x-on:focusin="focusOpen()" x-on:focusout="hoverFocusOut($event)"
+    x-on:keydown.escape="hide(false)"`.
+
     `containerId` arrives through `@aware` from `<tedi:popover>` — see that
     component's header for why the pairing is explicit rather than generated.
     Without it the trigger renders no `id`/`aria-controls`, since a dangling id
@@ -25,6 +31,8 @@
 --}}
 @aware([
     'containerId' => null,
+    /** The popover's open-with; must equal its @props default — CONVENTIONS.md §3. */
+    'openWith' => 'click',
 ])
 @props([
     /** Host element the directive is applied to. */
@@ -50,7 +58,15 @@
         'aria-expanded' => $interactive ? 'false' : null,
     ])) }}
     x-ref="trigger"
-    x-on:click="toggle()"
+    @if ($openWith === 'hover')
+        x-on:mouseenter="hoverOpen(true)"
+        x-on:mouseleave="scheduleHide()"
+        x-on:focusin="focusOpen()"
+        x-on:focusout="hoverFocusOut($event)"
+        x-on:keydown.escape="hide(false)"
+    @else
+        x-on:click="toggle()"
+    @endif
     @if ($interactive)
         x-bind:aria-expanded="open"
         @if ($containerId)

@@ -479,7 +479,7 @@ or is shared by several components — currently `tediBreakpoint`,
 `tediModal`, `tediTableOfContents`, `tediTableOfContentsCollapsible`,
 `tediScrollVisibility`, `tediHashTrigger`, `tediSheet`, `tediProcessTimeline`,
 `tediRating`, `tediDateField`, `tediToastContainer`, `tediNumberField`,
-`tediDockPanel`, `tediDockPanelSheet`, `tediResizer` and `tediSplitPane`. The header comment
+`tediDockPanel`, `tediDockPanelSheet`, `tediResizer`, `tediSplitPane` and `tediSidenav`. The header comment
 of `resources/js/tedi.js` lists them with one line each.
 
 **The JS layout.** `resources/js/tedi.js` is the entry point and holds nothing
@@ -491,7 +491,7 @@ under `resources/js/src/`, exporting a factory of the same name:
 | `src/breakpoint.js` | `breakpoint` | Shared by `hide-at` and `show-at`; one `matchMedia` query off core's `$grid-breakpoints`, with `mode` choosing which side is visible |
 | `src/position.js` | placement maths | Pure functions over rectangles — no Alpine, no DOM writes |
 | `src/overlay.js` | `overlay` | Open/close, dismissal, and the DOM writes that apply `position.js` |
-| `src/dropdown.js` | `dropdown`, `dropdownTrigger` | `dropdown` composes `overlay` and adds the ARIA menu keyboard layer (§11). `dropdownTrigger` is the trigger directive's init/keys (`initTrigger`, `triggerActivationKeydown`, `triggerKeyup`, `triggerFocusout`), mixed into every x-data that renders `tedi:dropdown-trigger` |
+| `src/dropdown.js` | `dropdown`, `dropdownTrigger`, `getFocusableElements` | `dropdown` composes `overlay` and adds the ARIA menu keyboard layer (§11). `dropdownTrigger` is the trigger directive's init/keys (`initTrigger`, `triggerActivationKeydown`, `triggerKeyup`, `triggerFocusout`), mixed into every x-data that renders `tedi:dropdown-trigger` |
 | `src/filter.js` | `filter` | Composes `overlay`, mixes in `dropdownTrigger`, and adds the filter's selection state plus its `aria-activedescendant` listbox layer — deliberately **not** `dropdown`, whose roving-tabindex menu is a different ARIA pattern |
 | `src/form-field.js` | `formField` | The clear button's live visibility and reset: follows typing, and `clear()` empties the control, fires `input` and `change` and focuses it. The scope sits on `.tedi-form-field__buttons`, beside the slotted control |
 | `src/file-upload.js` | `fileUpload` | The selection pipeline in a capture-phase `change` listener on the root (so it runs before Livewire's `wire:model` handler): duplicates, `accept` / `maxSize` / `validator`, and `input.files` rewritten with a `DataTransfer` (appended for `multiple`); kept rejected files, the rejection summary and a client clear button cloned from an inert `<template>` of prototypes and re-applied after every Livewire morph from the template's `data-state`. Also the picker, label naming and announcements. The file list itself is server state |
@@ -513,6 +513,7 @@ under `resources/js/src/`, exporting a factory of the same name:
 | `src/dock-panel.js` | `dockPanel`, `dockPanelSheet` | The community dock panel: collapse state, events, and the mobile presentation — moves the content/footer/action slot nodes between the docked panel and a `tediSheet`-based sheet (`dockPanelSheet` composes `sheet()` by property descriptors and reroutes Escape / drag-dismiss to the panel). Resizable mode: measures the panel and workspace, drives `tediResizer` with upstream's limits, clamps on workspace resize. Restores the server layout on Livewire `morph` and re-applies on `morphed`; private state lives in a closure, not on the Alpine object |
 | `src/resizer.js` | `resizer` | The community resizer: mouse drag of the wrapper's inline width/height between limits; re-applies the size after a Livewire morph. `configure()` / `size()` let `tediDockPanel` drive it |
 | `src/split-pane.js` | `splitPane` | The community split pane: mouse/touch drag and keyboard on the `role="separator"`, live `flex-grow` / `aria-valuenow`, `tedi:ratio-change` / `tedi:close`; re-applies the ratio after a Livewire morph |
+| `src/sidenav.js` | `sidenav` | The sidenav's collapse and mobile-drawer state (item count, drawer offset, scroll lock), formerly inline, and the open drawer's focus trap: focus in, Tab wraps, everything but the nav, the toggle and the kept regions `inert` (upstream's `hideOutside()`), Escape closes, focus returns to the toggle. Property names are unchanged because `tedi:sidenav.item` reads them through Alpine's data stack |
 
 A new behaviour is a new file in `src/` plus two lines in `tedi.js` (an import
 and an `Alpine.data()` call). Do not add a second `Alpine.data()` call site.

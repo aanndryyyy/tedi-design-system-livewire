@@ -25,9 +25,9 @@
     classes are folded directly into this component's `actions` slot
     wrapper — same classes, same default, one file.
 
-    FeedbackTextComponent isn't ported yet, so the error message below the
-    card is rendered inline with its exact class list instead of via
-    <tedi:feedback-text>.
+    The error message below the card is `tedi:feedback-text` with
+    `type="error"`, as upstream renders it, so it follows that component's
+    live region (polite, no `role`, since Angular 10.0.0-rc.23 #901).
 --}}
 @props([
     /** File name to display. */
@@ -98,8 +98,6 @@
     </div>
 
     @if ($error)
-        <span class="tedi-attachment__feedback tedi-feedback-text tedi-feedback-text--error tedi-feedback-text--left" role="alert" aria-live="assertive">
-            {{ $error }}
-        </span>
+        <tedi:feedback-text type="error" class="tedi-attachment__feedback" :text="$error" />
     @endif
 </div>

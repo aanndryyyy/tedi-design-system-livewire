@@ -18,7 +18,9 @@
     - listens to `tedi-sidenav:toggle` for the drawer state;
     - on click, dispatches `tedi-sidenav:toggle` `{ open: false }` and
       `tedi-sidenav:close-all`, which is Angular's
-      `isMobileOpen.set(false)` + `handleGoToMainMenu()`.
+      `isMobileOpen.set(false)` + `handleGoToMainMenu()`. Since Angular
+      10.0.0-rc.26 that is `closeMobileDrawer()`, which also focuses the
+      toggle; `tediSidenav` does that when its focus trap is released.
 
     Angular 8+ also binds `style.top` to `SideNavService.drawerTop()` so the
     scrim starts below the header, like the drawer. The toggle's measured `top`

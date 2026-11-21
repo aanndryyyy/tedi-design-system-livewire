@@ -60,12 +60,15 @@ class FormFieldComponentsTest extends TestCase
 
             $this->assertHasClass('tedi-feedback-text--'.$type, $html, on: 'tedi-feedback-text--'.$type);
 
+            // Angular 10.0.0-rc.23 (#901): no role at all; valid and error
+            // are a polite live region, a hint is not a live region.
+            $this->assertStringNotContainsString('role=', $html);
+
             if ($type === 'hint') {
-                $this->assertStringNotContainsString('role="alert"', $html);
-                $this->assertStringContainsString('aria-live="polite"', $html);
+                $this->assertStringNotContainsString('aria-live=', $html);
             } else {
-                $this->assertStringContainsString('role="alert"', $html);
-                $this->assertStringContainsString('aria-live="assertive"', $html);
+                $this->assertStringContainsString('aria-live="polite"', $html);
+                $this->assertStringNotContainsString('aria-live="assertive"', $html);
             }
         }
     }
@@ -548,6 +551,23 @@ BLADE);
         $this->assertStringNotContainsString('aria-invalid', $html);
         $this->assertStringNotContainsString('aria-describedby', $html);
         $this->assertStringNotContainsString('name=', $html);
+    }
+
+    /**
+     * Angular 10.0.0-rc.23 (#885): external aria-describedby ids are kept and
+     * the feedback id follows them, without duplicates.
+     */
+    public function test_select_keeps_external_described_by_ids(): void
+    {
+        $html = Blade::render('<tedi:select input-id="s-d" aria-describedby="own-error  other" :options="[]" :feedback-text="[\'text\' => \'Viga\', \'type\' => \'error\']" />');
+        $this->assertMatchesRegularExpression('/<select[^>]*aria-describedby="own-error other s-d-feedback"/s', $html);
+        $this->assertSame(1, substr_count($html, 'aria-describedby='));
+
+        $html = Blade::render('<tedi:select input-id="s-d" aria-describedby="s-d-feedback own" :options="[]" :feedback-text="[\'text\' => \'Vihje\']" />');
+        $this->assertMatchesRegularExpression('/<select[^>]*aria-describedby="s-d-feedback own"/s', $html);
+
+        $html = Blade::render('<tedi:select input-id="s-d" aria-describedby="own" :options="[]" />');
+        $this->assertMatchesRegularExpression('/<select[^>]*aria-describedby="own"/s', $html);
     }
 
     public function test_select_clearable_props_are_inert_and_do_not_leak(): void

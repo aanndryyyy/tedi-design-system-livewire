@@ -8,6 +8,13 @@
     that is otherwise identical to Angular: same wrapper/inner structure, same
     class names. `scrolledToTop` / `scrolledToBottom` outputs are not
     re-emitted (CONVENTIONS.md §7.2) — bind your own `x-on:scroll` if needed.
+
+    Since Angular 10.0.0-rc.26 (#924) the slot sits in a content wrapper that
+    the ResizeObserver also watches: a scroller capped by `max-height` keeps
+    its own size when content is added (a Livewire morph, an `x-for`), so only
+    the wrapper's resize reveals it. Upstream's wrapper class
+    `tedi-scroll-fade__content` has no rule in the vendored SCSS, so it is
+    dropped (CONVENTIONS.md §4) and the wrapper is found by `x-ref`.
 --}}
 @props([
     /** 0|10|20 */
@@ -38,7 +45,7 @@
             this.bottom = !atBottom;
         },
     }"
-    x-init="update(); new ResizeObserver(() => update()).observe($refs.inner)"
+    x-init="update(); const ro = new ResizeObserver(() => update()); ro.observe($refs.inner); ro.observe($refs.tediScrollFadeContent)"
     {{ $attributes->class(['tedi-scroll-fade']) }}
     :class="{
         'tedi-scroll-fade--top-{{ $fadeSize }}': top && {{ $showTop }},
@@ -56,6 +63,8 @@
             'tedi-scroll-fade__inner--custom-scroll' => $scrollBar === 'custom',
         ])
     >
-        {{ $slot }}
+        <div x-ref="tediScrollFadeContent">
+            {{ $slot }}
+        </div>
     </div>
 </div>

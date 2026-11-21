@@ -1305,6 +1305,9 @@
       /** Resolved side, mirrored to `data-placement` for the arrow CSS. */
       side: parsePlacement(cfg.placement).side === "auto" ? "bottom" : parsePlacement(cfg.placement).side,
       _hideTimer: null,
+      _showTimer: null,
+      /** True while `hide(true)` hands focus back to the trigger. */
+      _restoringFocus: false,
       _lockedScroll: false,
       _frame: null,
       _listeners: [],
@@ -1325,18 +1328,26 @@
         }
       },
       destroy: function() {
+        clearTimeout(this._showTimer);
         this._onClose();
       },
       // -- open state -----------------------------------------------
       show: function() {
         clearTimeout(this._hideTimer);
+        clearTimeout(this._showTimer);
         this.open = true;
       },
       hide: function(focusTrigger) {
         clearTimeout(this._hideTimer);
+        clearTimeout(this._showTimer);
         if (focusTrigger && this.$refs.trigger) {
           var focusable = this._focusableTrigger();
-          if (focusable) focusable.focus({ preventScroll: true });
+          this._restoringFocus = true;
+          try {
+            if (focusable) focusable.focus({ preventScroll: true });
+          } finally {
+            this._restoringFocus = false;
+          }
         }
         this.open = false;
       },
@@ -1347,18 +1358,64 @@
           this.show();
         }
       },
-      /** Hover intent: leaving trigger or panel closes after a delay. */
-      hoverOpen: function() {
+      /**
+       * Hover intent: leaving trigger or panel closes after a delay.
+       * `pointer` is true for `mouseenter`, which waits `showDelay`
+       * (`showTooltipOnHover()` / `showPopoverOnHover()`); focus passes
+       * nothing and opens at once.
+       */
+      hoverOpen: function(pointer) {
         if (cfg.openWith === "none") return;
-        this.show();
+        var delay = pointer ? cfg.showDelay || 0 : 0;
+        if (!delay) {
+          this.show();
+          return;
+        }
+        clearTimeout(this._hideTimer);
+        if (this.open) return;
+        var self = this;
+        clearTimeout(this._showTimer);
+        this._showTimer = setTimeout(function() {
+          self.show();
+        }, delay);
+      },
+      /** popover.component.ts `showPopoverOnFocus()`: not while focus is handed back. */
+      focusOpen: function() {
+        if (this._restoringFocus) return;
+        this.hoverOpen(false);
+      },
+      /**
+       * popover.component.ts `scheduleHide()`: like `hoverClose()`, but a
+       * popover whose content holds focus stays open.
+       */
+      scheduleHide: function() {
+        clearTimeout(this._showTimer);
+        clearTimeout(this._hideTimer);
+        if (this.$refs.panel && this.$refs.panel.contains(document.activeElement)) return;
+        this.hoverClose();
+      },
+      /**
+       * The hover popover's `focusout` on the trigger and the content:
+       * close unless the pointer is on the content or focus moves to the
+       * trigger or the panel.
+       */
+      hoverFocusOut: function(event) {
+        if (this._contentHovered) return;
+        if (this._contains(event.relatedTarget)) return;
+        this.hide(false);
       },
       hoverClose: function() {
         if (cfg.openWith === "none") return;
         var self = this;
+        clearTimeout(this._showTimer);
         clearTimeout(this._hideTimer);
         this._hideTimer = setTimeout(function() {
           if (!self._contentHovered) self.hide(false);
         }, cfg.hoverDelay == null ? 100 : cfg.hoverDelay);
+      },
+      /** Cancels a pending hover close (the hover popover content's `focusin`). */
+      cancelHide: function() {
+        clearTimeout(this._hideTimer);
       },
       contentEnter: function() {
         this._contentHovered = true;
@@ -3561,6 +3618,125 @@
     };
   }
 
+  // resources/js/src/sidenav.js
+  var KEEP_ACTIVE_SELECTOR = 'tedi-sidenav-overlay, tedi-toast-container, [id^="tedi-toast-announcer-"]';
+  var TOGGLE_SELECTOR = "button[tedi-sidenav-toggle]:not(.tedi-sidenav-toggle--hidden)";
+  function hideOutside(keep) {
+    const hidden = [];
+    const isKept = (el) => keep.includes(el) || el.matches(KEEP_ACTIVE_SELECTOR);
+    const walk = (parent) => {
+      for (const child of Array.from(parent.children)) {
+        if (isKept(child)) {
+          continue;
+        }
+        if (keep.some((el) => child.contains(el))) {
+          walk(child);
+        } else if (!child.hasAttribute("inert")) {
+          child.setAttribute("inert", "");
+          hidden.push(child);
+        }
+      }
+    };
+    walk(keep[0].getRootNode());
+    return () => hidden.forEach((el) => el.removeAttribute("inert"));
+  }
+  function sidenav(config = {}) {
+    const {
+      collapsed = false,
+      mobile = false,
+      mobileOpen = false,
+      mobileItemOpen = false
+    } = config;
+    return {
+      tediSidenavCollapsed: !!collapsed,
+      tediSidenavMobileOpen: !!mobileOpen,
+      tediSidenavDrawerTop: null,
+      tediSidenavPreviousOverflow: null,
+      tediSidenavOpenCount: mobileItemOpen ? 1 : 0,
+      _tediSidenavRoot: null,
+      _tediSidenavTrap: null,
+      init() {
+        this._tediSidenavRoot = this.$el;
+      },
+      get tediSidenavDrawerOpen() {
+        return !!mobile && this.tediSidenavMobileOpen;
+      },
+      get tediSidenavMobileItemOpen() {
+        return !!mobile && this.tediSidenavOpenCount > 0;
+      },
+      tediSidenavLockScroll(lock) {
+        if (lock && this.tediSidenavPreviousOverflow === null) {
+          this.tediSidenavPreviousOverflow = document.body.style.overflow;
+          document.body.style.overflow = "hidden";
+        } else if (!lock && this.tediSidenavPreviousOverflow !== null) {
+          document.body.style.overflow = this.tediSidenavPreviousOverflow;
+          this.tediSidenavPreviousOverflow = null;
+        }
+      },
+      /** The drawer-open effect: focus in, Tab wraps, page inert, Escape closes. */
+      tediSidenavTrapFocus(open) {
+        if (open && !this._tediSidenavTrap) {
+          const nav = this._tediSidenavRoot;
+          const toggle = document.querySelector(TOGGLE_SELECTOR);
+          const showOutside = hideOutside(toggle ? [nav, toggle] : [nav]);
+          const onKeydown = (event) => {
+            if (event.key === "Escape") {
+              this.tediSidenavCloseDrawer();
+              return;
+            }
+            if (event.key !== "Tab" || !nav.contains(document.activeElement)) return;
+            const focusable = getFocusableElements(nav);
+            if (!focusable.length) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+              event.preventDefault();
+              last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+              event.preventDefault();
+              first.focus();
+            }
+          };
+          document.addEventListener("keydown", onKeydown);
+          this._tediSidenavTrap = () => {
+            document.removeEventListener("keydown", onKeydown);
+            showOutside();
+            const active2 = document.activeElement;
+            if (toggle && (!active2 || active2 === document.body || nav.contains(active2))) {
+              toggle.focus();
+            }
+          };
+          this.$nextTick(() => {
+            if (!this._tediSidenavTrap || nav.contains(document.activeElement)) return;
+            const target = nav.querySelector("[cdkFocusInitial], [cdkfocusinitial]") || getFocusableElements(nav)[0];
+            if (target) target.focus();
+          });
+        } else if (!open && this._tediSidenavTrap) {
+          const release = this._tediSidenavTrap;
+          this._tediSidenavTrap = null;
+          release();
+        }
+      },
+      /** sidenav.service.ts `closeMobileDrawer()`; focus follows from the trap release. */
+      tediSidenavCloseDrawer() {
+        this.tediSidenavMobileOpen = false;
+        this.$dispatch("tedi-sidenav:toggle", { open: false });
+        this.tediSidenavCloseAll();
+      },
+      destroy() {
+        this.tediSidenavLockScroll(false);
+        this.tediSidenavTrapFocus(false);
+      },
+      tediSidenavItemToggled(isOpen) {
+        this.tediSidenavOpenCount = Math.max(0, this.tediSidenavOpenCount + (isOpen ? 1 : -1));
+      },
+      tediSidenavCloseAll() {
+        this.tediSidenavOpenCount = 0;
+        this.$dispatch("tedi-sidenav:close-all");
+      }
+    };
+  }
+
   // resources/js/src/search.js
   var FIELD_OVERLAY_GAP = 4;
   var FOCUSABLE_SELECTOR2 = [
@@ -4490,6 +4666,7 @@
     Alpine.data("tediDockPanelSheet", dockPanelSheet);
     Alpine.data("tediResizer", resizer);
     Alpine.data("tediSplitPane", splitPane);
+    Alpine.data("tediSidenav", sidenav);
   }
   if (window.Alpine) {
     register(window.Alpine);

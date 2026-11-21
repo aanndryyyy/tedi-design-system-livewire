@@ -56,6 +56,10 @@
     skips `button` / `a[href]` targets, which already turn the key into a
     click; handling it twice would toggle twice.
 
+    `mouseenter` passes `true` to `hoverOpen()`, so it waits the tooltip's
+    `delay` (`showTooltipOnHover()`); `focusin` opens at once, and leaving
+    cancels a pending open (`cancelPendingShow()`).
+
     Touch handling (`touchstart`/`touchend`) is not ported — see
     tooltip.blade.php's header.
 --}}
@@ -109,7 +113,7 @@
         })()"
     @endif
     @if ($opensOnHover)
-        x-on:mouseenter="hoverOpen()"
+        x-on:mouseenter="hoverOpen(true)"
         x-on:mouseleave="hoverClose()"
         x-on:focusin="hoverOpen()"
         x-on:focusout="hoverClose()"

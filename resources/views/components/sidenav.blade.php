@@ -58,6 +58,14 @@
     page behind it is scroll-locked (`body { overflow: hidden }`), restoring the
     previous value on close or teardown, as upstream's effect does.
 
+    FOCUS TRAP (Angular 10.0.0-rc.26, #916): while the mobile drawer is open,
+    focus moves into it and Tab wraps inside it, the page behind it (except
+    the toggle, the overlay, the toast container and the announcer regions) is
+    `inert`, Escape closes it, and closing it returns focus to the toggle.
+    The state lives in `tediSidenav` (resources/js/src/sidenav.js), so the
+    sidenav needs the `@tediScripts` bundle; the property names the items read
+    are unchanged.
+
     NOT PORTED: `handleBackToMainMenu()`'s focus restoration to the previously
     open item, and the item-registry itself — the same focus-management
     exclusion the overlay components make (CONVENTIONS.md §11).
@@ -100,40 +108,14 @@
         'tedi-sidenav--mobile-item-open' => $mobileItemOpen,
         'tedi-sidenav--hidden' => $mobile && ! $mobileOpen,
     ]) }}
-    x-data="{
-        tediSidenavCollapsed: {{ $isCollapsed ? 'true' : 'false' }},
-        tediSidenavMobileOpen: {{ $mobileOpen ? 'true' : 'false' }},
-        tediSidenavDrawerTop: null,
-        tediSidenavPreviousOverflow: null,
-        get tediSidenavDrawerOpen() {
-            return {{ $mobile ? 'true' : 'false' }} && this.tediSidenavMobileOpen;
-        },
-        tediSidenavLockScroll(lock) {
-            if (lock && this.tediSidenavPreviousOverflow === null) {
-                this.tediSidenavPreviousOverflow = document.body.style.overflow;
-                document.body.style.overflow = 'hidden';
-            } else if (! lock && this.tediSidenavPreviousOverflow !== null) {
-                document.body.style.overflow = this.tediSidenavPreviousOverflow;
-                this.tediSidenavPreviousOverflow = null;
-            }
-        },
-        destroy() {
-            this.tediSidenavLockScroll(false);
-        },
-        tediSidenavOpenCount: {{ $mobileItemOpen ? 1 : 0 }},
-        get tediSidenavMobileItemOpen() {
-            return {{ $mobile ? 'true' : 'false' }} && this.tediSidenavOpenCount > 0;
-        },
-        tediSidenavItemToggled(isOpen) {
-            this.tediSidenavOpenCount = Math.max(0, this.tediSidenavOpenCount + (isOpen ? 1 : -1));
-        },
-        tediSidenavCloseAll() {
-            this.tediSidenavOpenCount = 0;
-            this.$dispatch('tedi-sidenav:close-all');
-        },
-    }"
+    x-data="tediSidenav({
+        collapsed: @js($isCollapsed),
+        mobile: @js((bool) $mobile),
+        mobileOpen: @js((bool) $mobileOpen),
+        mobileItemOpen: @js((bool) $mobileItemOpen),
+    })"
     x-on:tedi-sidenav:toggle.window="tediSidenavMobileOpen = $event.detail.open; tediSidenavDrawerTop = $event.detail.top ?? null"
-    x-effect="tediSidenavLockScroll(tediSidenavDrawerOpen)"
+    x-effect="tediSidenavLockScroll(tediSidenavDrawerOpen); tediSidenavTrapFocus(tediSidenavDrawerOpen)"
     x-bind:style="{ top: tediSidenavDrawerOpen && tediSidenavDrawerTop !== null ? tediSidenavDrawerTop + 'px' : '' }"
     x-on:tedi-sidenav:close-all.window="tediSidenavOpenCount = 0"
     x-bind:class="{

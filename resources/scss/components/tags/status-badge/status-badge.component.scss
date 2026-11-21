@@ -18,6 +18,7 @@ $badge-variants: ("filled", "filled-bordered", "bordered");
   font-size: var(--body-small-regular-size);
   font-weight: var(--body-small-regular-weight);
   line-height: var(--body-small-regular-line-height);
+  vertical-align: top;
   color: var(--_status-badge-text);
   text-decoration: none;
   background: var(--_status-badge-background);

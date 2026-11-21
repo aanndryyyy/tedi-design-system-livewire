@@ -179,7 +179,7 @@ summary:
 | `multiselect` | Deprecated upstream (use TEDI-ready Select `multiple`); upstream removed its stories, so it has no Storybook entry. The deprecation console warning is not ported |
 | `table` | Markup layer only, the same spirit as `select`. `@tanstack/angular-table` is not ported, so sorting, filtering, selection and expansion **state** are the consumer's and come back in through `:columns` / `:rows`. With the engine go row virtualisation, drag reorder, column resizing and `state` persistence. The column filter popover is ported (`filterable` + an Htmlable `filterTemplate`, `filterActive`, `filter-popover-width`, `filter-actions`). Its draft state and `clearOnClose` are yours; the footer buttons run the column's `filterActionAttributes` and dispatch `tedi-table:filter-action` (detail `{column, action}`), then close. The small-viewport filter modal and `filterModalBreakpoint` / `filterModalFullscreen` are not ported: the popover is used at every width |
 | `carousel` | Content + navigation sit in `.tedi-carousel__body`, which `tedi:carousel-content` renders itself; an `overlay` navigation goes in its `navigation` slot instead of directly inside `tedi:carousel`. The looping clone buffer, wheel scrolling, per-breakpoint `slidesPerView`/`gap` and LiveAnnouncer are not ported |
-| `sidenav` | `SideNavService`'s signals become explicit props (`collapsed`, `mobile`, `mobileOpen`, `mobileItemOpen`); the sibling `sidenav.toggle` / `sidenav.overlay` talk to the nav over window events. `desktopBreakpoint` is not declared at all. The drawer `top` comes from `sidenav.toggle` over the `tedi-sidenav:toggle` event and is re-measured on window resize, not with a `ResizeObserver` on the header; `header.toggle` does not supply it |
+| `sidenav` | `SideNavService`'s signals become explicit props (`collapsed`, `mobile`, `mobileOpen`, `mobileItemOpen`); the sibling `sidenav.toggle` / `sidenav.overlay` talk to the nav over window events. `desktopBreakpoint` is not declared at all. The drawer `top` comes from `sidenav.toggle` over the `tedi-sidenav:toggle` event and is re-measured on window resize, not with a `ResizeObserver` on the header; `header.toggle` does not supply it. The open drawer's focus trap (`tediSidenav`) keeps the toggle, the overlay, the toast container and the announcer regions active; a Livewire morph of an element it made `inert` drops the attribute until the drawer reopens |
 | `button-group` | `enableMobileDropdown` + `mobileBreakpoint` become the explicit `dropdownMode` prop; the collapsed dropdown is built from `items` only, so a slot-only group cannot collapse |
 | `breadcrumbs`, `horizontal-stepper`, `button-group` | Angular's `contentChildren` registration becomes explicit props — an `items` array, or `step-number` on each stepper item |
 | `vertical-stepper-item` | Same `contentChildren` case: nested steps go in the `sub-items` slot and each carries `:sub-item="true"`, because Blade cannot set it on the slot's children. `route`/RouterLink becomes a plain `href`, and `routerLinkActive`'s auto-selection (plus the `opened` effect it drives) becomes explicit `:selected` / `:opened`. `tedi-vertical-stepper--compact` dropped — TEDI ships no rule for it |
@@ -215,6 +215,21 @@ class on both group components, and `tedi-tag--primary` (the base `.tedi-tag`
 block already *is* the primary appearance).
 
 ## Upgrading
+
+### Breaking changes in the Angular 10.0.0-rc.27 sync
+
+- **`sidenav`**: its state now runs in the bundled `tediSidenav` behaviour
+  instead of inline Alpine, so the sidenav needs `@tediScripts` (or
+  `dist/tedi.js`) on the page; without it the nav renders its server state and
+  no longer toggles. The Alpine property names (`tediSidenavCollapsed`,
+  `tediSidenavMobileOpen`, …) are unchanged. While the mobile drawer is open
+  everything outside the nav, the toggle, the overlay, the toast container
+  and the announcer regions is `inert`, so other page controls cannot be
+  reached until it closes.
+- **`feedback-text`**: `valid` and `error` texts no longer carry
+  `role="alert"` and are `aria-live="polite"` instead of `assertive`; a `hint`
+  has no `aria-live` at all. Tests that assert the old attributes need
+  updating.
 
 ### Breaking changes in the previously unported upstream features
 
@@ -866,8 +881,8 @@ here (`git -C .reference/angular diff <sha> origin/rc -- src/tedi src/community`
 
 | Repo | Version | Commit |
 |---|---|---|
-| `TEDI-Design-System/angular` (`rc`) | 10.0.0-rc.21 | `6ecb1ee5` |
-| `TEDI-Design-System/react` (`rc`) | 21.0.0-rc.17 | `917b2ce8` |
+| `TEDI-Design-System/angular` (`rc`) | 10.0.0-rc.27 | `e78f1cd1` |
+| `TEDI-Design-System/react` (`rc`) | 21.0.0-rc.24 | `3f2b8e8b` |
 | `TEDI-Design-System/core` (`rc`) | 6.13.0 | `face373b` |
 
 `.reference/` holds plain clones of the three repos and is git-ignored. The

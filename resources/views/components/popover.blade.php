@@ -64,6 +64,18 @@
     `focusElementBeforeTrigger`). Escape-to-close, outside-click dismissal and
     focus return to the trigger are ported by `tediOverlay`.
 
+    HOVER MODE (Angular 10.0.0-rc.24, #879). `open-with="hover"` opens the
+    popover on pointer hover and on trigger focus, and a click on the trigger
+    no longer toggles it. `delay` is how long the pointer has to stay on the
+    trigger first (`tediOverlay`'s `showDelay`; focus opens at once), and
+    `timeout-delay` is the close delay once neither the trigger nor the
+    content is hovered — it applies only in hover mode. Focus inside the
+    content keeps it open; Escape closes it. The trigger and the content read
+    `openWith` through `@aware`, so both hover handlers are only rendered in
+    hover mode and click mode's markup is unchanged. The port never moves
+    focus into the panel on open, so upstream's "a hover-opened popover never
+    takes focus" holds in both modes.
+
     `output()`-style events are not re-emitted (CONVENTIONS.md §3); a consumer
     binds `wire:click` / `x-on:` on the trigger via `$attributes`.
 --}}
@@ -82,7 +94,11 @@
     'withArrow' => true,
     /** Lock scrolling on the rest of the page while open. */
     'lockScroll' => false,
-    /** Delay (ms) before a hover-closed overlay hides. */
+    /** click|hover — with hover it also opens on trigger focus, and clicking the trigger does not toggle it. */
+    'openWith' => 'click',
+    /** 0|100|200|300 — ms the pointer has to stay on the trigger before a hover opens it. Only with open-with="hover". */
+    'delay' => 0,
+    /** Delay (ms) before the popover closes when neither the trigger nor the content is hovered. Only with open-with="hover". */
     'timeoutDelay' => 100,
     /** Gap in px between trigger and popover; the arrow's 12px is added on top when `withArrow`. */
     'offset' => 8,
@@ -112,7 +128,8 @@
         'hideOnScroll' => (bool) $hideOnScroll,
         'lockScroll' => (bool) $lockScroll,
         'hoverDelay' => (int) $timeoutDelay,
-        'openWith' => 'click',
+        'openWith' => $openWith === 'hover' ? 'hover' : 'click',
+        'showDelay' => (int) $delay,
     ];
 @endphp
 

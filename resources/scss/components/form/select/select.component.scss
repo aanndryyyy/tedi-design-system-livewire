@@ -257,6 +257,20 @@
     }
   }
 
+  &__group {
+    display: block;
+
+    &--unlabelled,
+    &--unlabelled > .tedi-select__group-options {
+      display: contents;
+    }
+  }
+
+  &__group-options {
+    padding: 0;
+    margin: 0;
+  }
+
   &__group-name {
     display: block;
     padding: var(--dropdown-group-label-padding-y)
@@ -360,6 +374,20 @@
     );
     padding: var(--dropdown-body-padding-y) var(--dropdown-body-padding-x);
 
+    .tedi-select__group:not(.tedi-select__group--unlabelled) {
+      grid-column: 1 / -1;
+
+      > .tedi-select__group-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, var(--tedi-swatch-size));
+        gap: var(--tedi-swatch-gap);
+      }
+    }
+
+    .tedi-select__group-name {
+      grid-column: 1 / -1;
+    }
+
     .tedi-dropdown-item {
       display: flex;
       align-items: center;
@@ -386,6 +414,25 @@
       &:hover:not(.tedi-dropdown-item--disabled) {
         background: transparent;
       }
+    }
+
+    // A selectable group heading is a full-width checkbox row, not a swatch.
+    .tedi-dropdown-item.tedi-select__group-name--selectable {
+      justify-content: flex-start;
+      width: 100%;
+      height: auto;
+      min-height: 40px;
+      padding: var(--dropdown-item-padding-y) var(--dropdown-item-padding-x);
+      border-radius: 0;
+
+      &:hover {
+        color: var(--dropdown-item-hover-text);
+        background: var(--dropdown-item-hover-background);
+      }
+    }
+
+    .tedi-select__group-name--selectable ~ .tedi-dropdown-item {
+      padding: var(--layout-grid-gutters-02);
     }
   }
 }

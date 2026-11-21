@@ -27,6 +27,9 @@ class HelperComponentsTest extends TestCase
         $this->assertHasClass('tedi-attachment__feedback', $html, on: 'tedi-feedback-text');
         $this->assertHasClass('tedi-feedback-text--error', $html, on: 'tedi-feedback-text');
         $this->assertStringContainsString('Too large', $html);
+        // Angular 10.0.0-rc.23 (#901): the error is a polite live region, no role.
+        $this->assertStringContainsString('aria-live="polite"', $html);
+        $this->assertStringNotContainsString('role="alert"', $html);
     }
 
     public function test_attachment_invalid_shows_error_visual_without_feedback_text(): void
@@ -205,6 +208,20 @@ class HelperComponentsTest extends TestCase
         $this->assertHasClass('tedi-scroll-fade__inner', $html, on: 'tedi-scroll-fade__inner');
         $this->assertHasClass('tedi-scroll-fade__inner--custom-scroll', $html, on: 'tedi-scroll-fade__inner');
         $this->assertStringContainsString('content', $html);
+    }
+
+    /**
+     * Angular 10.0.0-rc.26 (#924): the slot is wrapped in a content element the
+     * ResizeObserver also watches, so content added inside a max-height cap
+     * recomputes the fade.
+     */
+    public function test_scroll_fade_observes_a_content_wrapper(): void
+    {
+        $html = Blade::render('<tedi:scroll-fade><p>content</p></tedi:scroll-fade>');
+
+        $this->assertMatchesRegularExpression('/class="tedi-scroll-fade__inner[^"]*"[^>]*>\s*<div x-ref="tediScrollFadeContent">\s*<p>content<\/p>\s*<\/div>\s*<\/div>/s', $html);
+        $this->assertStringContainsString('ro.observe($refs.inner); ro.observe($refs.tediScrollFadeContent)', $html);
+        $this->assertStringNotContainsString('tedi-scroll-fade__content', $html);
     }
 
     public function test_scroll_fade_default_scrollbar_omits_custom_class(): void

@@ -162,10 +162,10 @@ $neutral-variants: "neutral", "neutral-inverted", "danger-neutral";
   }
 }
 
-@mixin button-icon-size($size) {
+@mixin button-icon-size($size, $padding-size: $size) {
   width: var(--button-#{$size}-icon-size);
   height: var(--button-#{$size}-icon-size);
-  padding: var(--button-#{$size}-icon-padding);
+  padding: var(--button-#{$padding-size}-icon-padding);
 }
 
 @mixin button-size($size) {
