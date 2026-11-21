@@ -179,7 +179,7 @@ class SidenavComponentsTest extends TestCase
         $html = Blade::render('<tedi:sidenav mobile>x</tedi:sidenav>');
         $this->assertStringContainsString('tediSidenavDrawerTop = $event.detail.top ?? null', $html);
         $this->assertStringContainsString('x-bind:style="{ top: tediSidenavDrawerOpen', $html);
-        $this->assertStringContainsString('x-effect="tediSidenavLockScroll(tediSidenavDrawerOpen)"', $html);
+        $this->assertStringContainsString('x-effect="tediSidenavLockScroll(tediSidenavDrawerOpen); tediSidenavTrapFocus(tediSidenavDrawerOpen)"', $html);
 
         $html = Blade::render('<tedi:sidenav.overlay mobile />');
         $this->assertStringContainsString('tediSidenavOverlayTop = $event.detail.top ?? null', $html);
@@ -187,6 +187,28 @@ class SidenavComponentsTest extends TestCase
         $html = Blade::render('<tedi:sidenav.toggle mobile />');
         $this->assertStringContainsString("this.\$el.closest('header') ?? this.\$el", $html);
         $this->assertStringContainsString("top: tediSidenavToggleTop()", $html);
+    }
+
+    /**
+     * Angular 10.0.0-rc.26 (#916): the open mobile drawer traps focus, makes the
+     * page inert and closes on Escape. That runs in tediSidenav, which receives
+     * the server state as its config.
+     */
+    public function test_sidenav_state_and_focus_trap_run_in_tedi_sidenav(): void
+    {
+        $html = Blade::render('<tedi:sidenav mobile mobile-open>x</tedi:sidenav>');
+        $this->assertMatchesRegularExpression('/x-data="tediSidenav\(\{\s*collapsed: false,\s*mobile: true,\s*mobileOpen: true,\s*mobileItemOpen: false,\s*\}\)"/', $html);
+        $this->assertStringContainsString('tediSidenavTrapFocus(tediSidenavDrawerOpen)', $html);
+
+        // collapsed is forced off while mobile, in the config as in the class list.
+        $html = Blade::render('<tedi:sidenav mobile collapsed>x</tedi:sidenav>');
+        $this->assertStringContainsString('collapsed: false,', $html);
+        $html = Blade::render('<tedi:sidenav collapsed>x</tedi:sidenav>');
+        $this->assertStringContainsString('collapsed: true,', $html);
+
+        $js = file_get_contents(__DIR__.'/../../resources/js/src/sidenav.js');
+        $this->assertStringContainsString("'tedi-sidenav-overlay, tedi-toast-container, [id^=\"tedi-toast-announcer-\"]'", $js);
+        $this->assertStringContainsString("Alpine.data('tediSidenav', sidenav)", file_get_contents(__DIR__.'/../../resources/js/tedi.js'));
     }
 
     /** §7 #1: desktopBreakpoint is not declared, so it leaks as a stray attribute. */

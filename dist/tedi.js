@@ -3561,6 +3561,125 @@
     };
   }
 
+  // resources/js/src/sidenav.js
+  var KEEP_ACTIVE_SELECTOR = 'tedi-sidenav-overlay, tedi-toast-container, [id^="tedi-toast-announcer-"]';
+  var TOGGLE_SELECTOR = "button[tedi-sidenav-toggle]:not(.tedi-sidenav-toggle--hidden)";
+  function hideOutside(keep) {
+    const hidden = [];
+    const isKept = (el) => keep.includes(el) || el.matches(KEEP_ACTIVE_SELECTOR);
+    const walk = (parent) => {
+      for (const child of Array.from(parent.children)) {
+        if (isKept(child)) {
+          continue;
+        }
+        if (keep.some((el) => child.contains(el))) {
+          walk(child);
+        } else if (!child.hasAttribute("inert")) {
+          child.setAttribute("inert", "");
+          hidden.push(child);
+        }
+      }
+    };
+    walk(keep[0].getRootNode());
+    return () => hidden.forEach((el) => el.removeAttribute("inert"));
+  }
+  function sidenav(config = {}) {
+    const {
+      collapsed = false,
+      mobile = false,
+      mobileOpen = false,
+      mobileItemOpen = false
+    } = config;
+    return {
+      tediSidenavCollapsed: !!collapsed,
+      tediSidenavMobileOpen: !!mobileOpen,
+      tediSidenavDrawerTop: null,
+      tediSidenavPreviousOverflow: null,
+      tediSidenavOpenCount: mobileItemOpen ? 1 : 0,
+      _tediSidenavRoot: null,
+      _tediSidenavTrap: null,
+      init() {
+        this._tediSidenavRoot = this.$el;
+      },
+      get tediSidenavDrawerOpen() {
+        return !!mobile && this.tediSidenavMobileOpen;
+      },
+      get tediSidenavMobileItemOpen() {
+        return !!mobile && this.tediSidenavOpenCount > 0;
+      },
+      tediSidenavLockScroll(lock) {
+        if (lock && this.tediSidenavPreviousOverflow === null) {
+          this.tediSidenavPreviousOverflow = document.body.style.overflow;
+          document.body.style.overflow = "hidden";
+        } else if (!lock && this.tediSidenavPreviousOverflow !== null) {
+          document.body.style.overflow = this.tediSidenavPreviousOverflow;
+          this.tediSidenavPreviousOverflow = null;
+        }
+      },
+      /** The drawer-open effect: focus in, Tab wraps, page inert, Escape closes. */
+      tediSidenavTrapFocus(open) {
+        if (open && !this._tediSidenavTrap) {
+          const nav = this._tediSidenavRoot;
+          const toggle = document.querySelector(TOGGLE_SELECTOR);
+          const showOutside = hideOutside(toggle ? [nav, toggle] : [nav]);
+          const onKeydown = (event) => {
+            if (event.key === "Escape") {
+              this.tediSidenavCloseDrawer();
+              return;
+            }
+            if (event.key !== "Tab" || !nav.contains(document.activeElement)) return;
+            const focusable = getFocusableElements(nav);
+            if (!focusable.length) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+              event.preventDefault();
+              last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+              event.preventDefault();
+              first.focus();
+            }
+          };
+          document.addEventListener("keydown", onKeydown);
+          this._tediSidenavTrap = () => {
+            document.removeEventListener("keydown", onKeydown);
+            showOutside();
+            const active2 = document.activeElement;
+            if (toggle && (!active2 || active2 === document.body || nav.contains(active2))) {
+              toggle.focus();
+            }
+          };
+          this.$nextTick(() => {
+            if (!this._tediSidenavTrap || nav.contains(document.activeElement)) return;
+            const target = nav.querySelector("[cdkFocusInitial], [cdkfocusinitial]") || getFocusableElements(nav)[0];
+            if (target) target.focus();
+          });
+        } else if (!open && this._tediSidenavTrap) {
+          const release = this._tediSidenavTrap;
+          this._tediSidenavTrap = null;
+          release();
+        }
+      },
+      /** sidenav.service.ts `closeMobileDrawer()`; focus follows from the trap release. */
+      tediSidenavCloseDrawer() {
+        this.tediSidenavMobileOpen = false;
+        this.$dispatch("tedi-sidenav:toggle", { open: false });
+        this.tediSidenavCloseAll();
+      },
+      destroy() {
+        this.tediSidenavLockScroll(false);
+        this.tediSidenavTrapFocus(false);
+      },
+      tediSidenavItemToggled(isOpen) {
+        this.tediSidenavOpenCount = Math.max(0, this.tediSidenavOpenCount + (isOpen ? 1 : -1));
+      },
+      tediSidenavCloseAll() {
+        this.tediSidenavOpenCount = 0;
+        this.$dispatch("tedi-sidenav:close-all");
+      }
+    };
+  }
+
   // resources/js/src/search.js
   var FIELD_OVERLAY_GAP = 4;
   var FOCUSABLE_SELECTOR2 = [
@@ -4490,6 +4609,7 @@
     Alpine.data("tediDockPanelSheet", dockPanelSheet);
     Alpine.data("tediResizer", resizer);
     Alpine.data("tediSplitPane", splitPane);
+    Alpine.data("tediSidenav", sidenav);
   }
   if (window.Alpine) {
     register(window.Alpine);

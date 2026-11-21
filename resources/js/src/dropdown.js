@@ -85,7 +85,7 @@ var SPACE_ACTIVATED_SELECTOR = 'input[type="checkbox"], input[type="radio"]';
 var INTERACTIVE_CONTENT_SELECTOR = 'a[href], button';
 
 /** Port of `tedi/utils/elements.util.ts` — getFocusableElements(). */
-function getFocusableElements(container) {
+export function getFocusableElements(container) {
     return Array.prototype.filter.call(
         container.querySelectorAll(FOCUSABLE_SELECTOR),
         function (el) {

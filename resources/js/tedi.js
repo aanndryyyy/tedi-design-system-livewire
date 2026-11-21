@@ -39,6 +39,7 @@
  *   src/dock-panel.js         tediDockPanel, tediDockPanelSheet — the community dock panel: collapse, events, mobile sheet presentation, resizable mode
  *   src/resizer.js            tediResizer — the community resizer: mouse drag of a box's width or height between limits
  *   src/split-pane.js         tediSplitPane — the community split pane: divider drag, touch and keyboard, ratio events
+ *   src/sidenav.js            tediSidenav — the sidenav's collapse and mobile-drawer state, scroll lock and the open drawer's focus trap
  */
 import { breakpoint } from './src/breakpoint.js';
 import { carousel } from './src/carousel.js';
@@ -59,6 +60,7 @@ import { rating } from './src/rating.js';
 import { resizer } from './src/resizer.js';
 import { scrollVisibility } from './src/scroll-visibility.js';
 import { sheet } from './src/sheet.js';
+import { sidenav } from './src/sidenav.js';
 import { search } from './src/search.js';
 import { splitPane } from './src/split-pane.js';
 import { tableOfContents, tableOfContentsCollapsible } from './src/table-of-contents.js';
@@ -90,6 +92,7 @@ function register(Alpine) {
     Alpine.data('tediDockPanelSheet', dockPanelSheet);
     Alpine.data('tediResizer', resizer);
     Alpine.data('tediSplitPane', splitPane);
+    Alpine.data('tediSidenav', sidenav);
 }
 
 if (window.Alpine) {
